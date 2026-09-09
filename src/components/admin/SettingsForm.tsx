@@ -88,17 +88,21 @@ export function SettingsForm({
   }
 
   return (
-    <div className="max-w-3xl space-y-10">
-      <Section
+    <div className="space-y-[22px]">
+      <Card
         title="Identité"
-        note="Ces informations alimentent le pied de page et les données structurées Schema.org."
+        note="Le nom du site et le vôtre, tels qu’ils apparaissent partout sur le site."
       >
-        <Field label="Nom du site" value={form.siteName} onChange={(v) => set('siteName', v)} />
         <Field
-          label="Nom de la praticienne"
+          label="Nom du site"
+          value={form.siteName}
+          onChange={(v) => set('siteName', v)}
+        />
+        <Field
+          label="Votre nom"
           value={form.practitionerName}
           onChange={(v) => set('practitionerName', v)}
-          help="Apparaît dans le JSON-LD Person — essentiel pour la recherche du nom."
+          help="Permet aussi qu’on vous trouve par votre nom sur Google."
         />
         <Field
           label="Titre professionnel"
@@ -112,26 +116,56 @@ export function SettingsForm({
           onChange={(v) => set('tagline', v)}
           full
         />
-      </Section>
+      </Card>
 
-      <Section
-        title="Contact"
-        note="Utilisé par la section Contact du site, le pied de page et le JSON-LD LocalBusiness. Un champ vide est simplement omis — rien n’est inventé."
+      <Card
+        title="Coordonnées"
+        note="Utilisées par la section Contact et le pied de page. Un champ vide est simplement omis — rien n’est inventé."
       >
-        <Field label="E-mail" value={form.contactEmail} onChange={(v) => set('contactEmail', v)} />
-        <Field label="Téléphone" value={form.contactPhone} onChange={(v) => set('contactPhone', v)} />
-        <Field label="Rue" value={form.addressStreet} onChange={(v) => set('addressStreet', v)} full />
-        <Field label="Code postal" value={form.addressPostalCode} onChange={(v) => set('addressPostalCode', v)} />
-        <Field label="Ville" value={form.addressCity} onChange={(v) => set('addressCity', v)} />
-        <Field label="Latitude" value={form.latitude} onChange={(v) => set('latitude', v)} placeholder="48.1213" />
-        <Field label="Longitude" value={form.longitude} onChange={(v) => set('longitude', v)} placeholder="-1.6033" />
         <Field
-          label="Lien de prise de rendez-vous"
-          value={form.bookingUrl}
-          onChange={(v) => set('bookingUrl', v)}
-          placeholder="https://…"
-          help="Si vide, le bouton « Prendre rendez-vous » pointe vers la section Contact."
+          label="Adresse e-mail"
+          value={form.contactEmail}
+          onChange={(v) => set('contactEmail', v)}
+        />
+        <Field
+          label="Téléphone"
+          value={form.contactPhone}
+          onChange={(v) => set('contactPhone', v)}
+        />
+      </Card>
+
+      <Card
+        title="Adresse du cabinet"
+        note="L’adresse affichée sur le site — elle aide aussi Google à situer le cabinet."
+      >
+        <Field
+          label="Rue"
+          value={form.addressStreet}
+          onChange={(v) => set('addressStreet', v)}
           full
+        />
+        <Field
+          label="Code postal"
+          value={form.addressPostalCode}
+          onChange={(v) => set('addressPostalCode', v)}
+        />
+        <Field
+          label="Ville"
+          value={form.addressCity}
+          onChange={(v) => set('addressCity', v)}
+        />
+        <Field
+          label="Latitude"
+          value={form.latitude}
+          onChange={(v) => set('latitude', v)}
+          placeholder="48.1213"
+          help="Facultatif — situe le cabinet sur les cartes."
+        />
+        <Field
+          label="Longitude"
+          value={form.longitude}
+          onChange={(v) => set('longitude', v)}
+          placeholder="-1.6033"
         />
 
         <div className="sm:col-span-2">
@@ -142,9 +176,9 @@ export function SettingsForm({
             onChange={(e) => set('practicalInfo', e.target.value)}
           />
         </div>
-      </Section>
+      </Card>
 
-      <Section title="Horaires">
+      <Card title="Horaires">
         <RepeatableList
           items={hours}
           onChange={setHours}
@@ -165,14 +199,22 @@ export function SettingsForm({
             </>
           )}
         />
-      </Section>
+      </Card>
 
-      <Section title="Réseaux">
+      <Card title="Liens">
+        <Field
+          label="Lien de prise de rendez-vous"
+          value={form.bookingUrl}
+          onChange={(v) => set('bookingUrl', v)}
+          placeholder="https://…"
+          help="Si vide, le bouton « Prendre rendez-vous » mène vers la section Contact."
+          full
+        />
         <RepeatableList
           items={socials}
           onChange={setSocials}
           blank={{ label: '', url: '' }}
-          addLabel="Ajouter un lien"
+          addLabel="Ajouter un réseau"
           render={(item, update) => (
             <>
               <Input
@@ -188,20 +230,20 @@ export function SettingsForm({
             </>
           )}
         />
-      </Section>
+      </Card>
 
-      <Section
-        title="SEO par défaut"
-        note="Valeurs de repli quand une page ne définit pas les siennes."
+      <Card
+        title="Référencement par défaut"
+        note="Ce que Google affiche quand une page ne définit pas son propre titre ou sa propre description."
       >
         <Field
-          label="Titre par défaut"
+          label="Titre pour Google"
           value={form.defaultSeoTitle}
           onChange={(v) => set('defaultSeoTitle', v)}
           full
         />
         <div className="sm:col-span-2">
-          <Label className="mb-2 block">Description par défaut</Label>
+          <Label className="mb-2 block">Description pour Google</Label>
           <Textarea
             rows={3}
             value={form.defaultSeoDescription}
@@ -209,16 +251,20 @@ export function SettingsForm({
           />
         </div>
         <MediaPicker
-          label="Image de partage par défaut"
+          label="Image de partage"
           value={ogMediaId}
           onChange={setOgMediaId}
           library={library}
           className="max-w-xs"
         />
-      </Section>
+      </Card>
 
-      <div className="sticky bottom-0 flex justify-end border-t border-border bg-background/90 py-4 backdrop-blur">
-        <Button onClick={save} disabled={pending}>
+      <div className="sticky bottom-0 flex justify-end border-t border-border bg-ivory/90 py-4 backdrop-blur">
+        <Button
+          className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+          onClick={save}
+          disabled={pending}
+        >
           {pending ? 'Enregistrement…' : 'Enregistrer les paramètres'}
         </Button>
       </div>
@@ -226,7 +272,7 @@ export function SettingsForm({
   )
 }
 
-function Section({
+function Card({
   title,
   note,
   children,
@@ -236,10 +282,14 @@ function Section({
   children: React.ReactNode
 }) {
   return (
-    <section>
-      <h2 className="text-sm font-semibold">{title}</h2>
+    <section className="rounded-xl border border-border bg-white px-[22px] py-5">
+      <h2 className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        {title}
+      </h2>
       {note && (
-        <p className="mt-1 max-w-[70ch] text-sm text-muted-foreground">{note}</p>
+        <p className="mt-1.5 max-w-[62ch] text-[12px] leading-[1.6] text-muted-foreground">
+          {note}
+        </p>
       )}
       <div className="mt-4 grid gap-4 sm:grid-cols-2">{children}</div>
     </section>

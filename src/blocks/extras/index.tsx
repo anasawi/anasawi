@@ -17,7 +17,7 @@ import { z } from 'zod'
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
 import { ActionLink } from '@/components/site/ActionLink'
-import { Reveal } from '@/components/motion/Reveal'
+import { Reveal } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
 
 /**

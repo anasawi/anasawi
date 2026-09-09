@@ -2,14 +2,19 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { MaskLines, Reveal } from '@/components/site/anim'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { Reveal } from '@/components/motion/Reveal'
+import { Aster, SectionIndex } from '@/components/site/ornaments'
+
+/*
+ * Inspirer confiance — les paroles de celles et ceux qui sont passés par là.
+ */
 
 /* ════════════════════════════════════════════════════════════════════
    Témoignage — Simple
-   Une seule parole, centrée et sobre : filet court, serif italique,
-   nom en dessous. Rien qui cherche à convaincre — juste une voix.
+   Une seule voix, centrée et sobre : filet court, serif italique,
+   nom en dessous. Rien qui cherche à convaincre.
    ════════════════════════════════════════════════════════════════════ */
 
 export const temoignageSimpleSchema = z.object({
@@ -26,15 +31,17 @@ function TemoignageSimple({
   return (
     <div className="container-editorial">
       <figure className="mx-auto max-w-[36rem] text-center">
-        <span
-          aria-hidden="true"
-          className="mx-auto mb-10 block h-px w-12 bg-line-strong"
-        />
+        <Reveal>
+          <span
+            aria-hidden="true"
+            className="mx-auto mb-10 block h-10 w-px bg-line-strong"
+          />
+        </Reveal>
 
         <blockquote>
           <Reveal delay={0.08}>
-            <p className="font-serif text-[1.3rem] italic leading-[1.6] text-ink">
-              {data.quote}
+            <p className="font-serif text-[clamp(1.25rem,1.9vw,1.6rem)] font-light italic leading-[1.6] text-ink">
+              « {data.quote} »
             </p>
           </Reveal>
         </blockquote>
@@ -43,12 +50,12 @@ function TemoignageSimple({
           <Reveal delay={0.2}>
             <figcaption className="mt-8">
               {data.name && (
-                <span className="block text-[0.9rem] text-ink">
+                <span className="block font-serif text-[1rem] font-light italic text-blue-deep">
                   {data.name}
                 </span>
               )}
               {data.role && (
-                <span className="mt-1 block text-[0.78rem] uppercase tracking-[0.14em] text-stone">
+                <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
                   {data.role}
                 </span>
               )}
@@ -85,9 +92,9 @@ export const temoignageSimpleBlock: BlockDefinition<
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   Témoignage — Grande citation
-   Un guillemet décoratif géant, une citation en très grande serif,
-   un auteur en eyebrow. La typographie est le seul décor.
+   Témoignage — La nuit (proposition I de la planche)
+   Fond nuit, arche en filet qui respire, halo bleu, citation centrée
+   en très grande serif. La section la plus solennelle du site.
    ════════════════════════════════════════════════════════════════════ */
 
 export const temoignageGrandSchema = z.object({
@@ -97,30 +104,41 @@ export const temoignageGrandSchema = z.object({
 
 function TemoignageGrand({
   data,
+  ctx,
 }: BlockProps<z.output<typeof temoignageGrandSchema>>) {
   if (!data.quote) return null
 
   return (
-    <div className="container-editorial">
-      <figure className="mx-auto max-w-[54rem] text-center">
-        <span
-          aria-hidden="true"
-          className="block font-serif text-[7rem] leading-none text-ink/10"
-        >
-          «
-        </span>
+    <div className="relative overflow-clip bg-night py-[calc(var(--spacing-section)*1.1)] text-center text-ivory">
+      <SectionIndex index={ctx.index} label="parole" light className="top-7" />
 
-        <blockquote className="-mt-10">
-          <Reveal delay={0.1}>
-            <p className="font-serif text-[clamp(1.8rem,3.2vw,2.6rem)] leading-[1.35] text-ink">
+      {/* L'arche en filet qui respire. */}
+      <div
+        aria-hidden="true"
+        className="amaswi-breathe pointer-events-none absolute left-1/2 top-1/2 aspect-[3/4] w-[min(460px,56vw)] -translate-x-1/2 -translate-y-1/2 rounded-arch border border-ivory/15"
+      />
+      {/* Le halo bleu. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute left-1/2 top-1/2 aspect-square w-[min(560px,68vw)] -translate-x-1/2 -translate-y-1/2 rounded-full bg-[radial-gradient(circle,rgba(123,163,182,0.14),transparent_65%)]"
+      />
+
+      <figure className="container-editorial relative">
+        <Reveal>
+          <Aster className="text-[24px] text-blue" />
+        </Reveal>
+
+        <blockquote className="mx-auto mt-7 max-w-[62rem]">
+          <MaskLines delay={0.12}>
+            <p className="font-serif text-[clamp(2.1rem,4.4vw,4.5rem)] font-light leading-[1.28] [&_em]:text-blue">
               <Emphasis text={data.quote} />
             </p>
-          </Reveal>
+          </MaskLines>
         </blockquote>
 
         {data.author && (
-          <Reveal delay={0.25}>
-            <figcaption className="label-eyebrow mt-10">
+          <Reveal delay={0.3}>
+            <figcaption className="mt-10 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/55">
               {data.author}
             </figcaption>
           </Reveal>
@@ -133,29 +151,30 @@ function TemoignageGrand({
 export const temoignageGrandBlock: BlockDefinition<
   typeof temoignageGrandSchema
 > = {
-  label: 'Témoignage — Grande citation',
-  description: 'Guillemet géant, citation en très grande serif.',
+  label: 'Témoignage — La nuit',
+  description:
+    'Fond nuit, halo qui respire, une seule parole en très grande serif.',
   group: 'Sections',
   schema: temoignageGrandSchema,
   suggestedAnchor: 'temoignages',
+  bleed: true,
   fields: [
     field.textarea('quote', 'Citation', {
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Astérisques pour le mot en bleu : *de l’aide*.',
     }),
     field.text('author', 'Auteur'),
   ],
   defaults: {
-    quote:
-      'Pour la première fois, quelqu’un m’écoutait *vraiment* — sans chercher à me réparer.',
-    author: 'THOMAS · ACCOMPAGNÉ DEPUIS 2023',
+    quote: 'Le courage, c’est de demander *de l’aide*.',
+    author: 'Une patiente, accompagnée deux ans',
   },
   Component: TemoignageGrand,
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   Témoignages — Multiples
-   Trois voix côte à côte, séparées par de fins filets verticaux,
-   révélées en léger décalé.
+   Témoignages — Trois voix (proposition J de la planche)
+   Trois paroles sur un fil : les voix latérales nues, la voix
+   centrale posée sur une carte bleu brume légèrement remontée.
    ════════════════════════════════════════════════════════════════════ */
 
 export const temoignagesMultiplesSchema = z.object({
@@ -170,19 +189,22 @@ export const temoignagesMultiplesSchema = z.object({
 
 function TemoignagesMultiples({
   data,
+  ctx,
 }: BlockProps<z.output<typeof temoignagesMultiplesSchema>>) {
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="ils en parlent" className="-top-14" />
+
       {(data.eyebrow || data.title) && (
-        <div className="max-w-[46rem]">
+        <div className="mx-auto max-w-[44rem] text-center">
           {data.eyebrow && (
             <Reveal>
-              <Eyebrow>{data.eyebrow}</Eyebrow>
+              <Eyebrow className="justify-center">{data.eyebrow}</Eyebrow>
             </Reveal>
           )}
           {data.title && (
-            <Reveal delay={0.06}>
-              <h2 className="mt-8 text-[length:var(--text-h2)]">
+            <Reveal delay={0.08}>
+              <h2 className="mt-7 text-[length:var(--text-h2)]">
                 <Emphasis text={data.title} />
               </h2>
             </Reveal>
@@ -191,32 +213,60 @@ function TemoignagesMultiples({
       )}
 
       {data.items.length > 0 && (
-        <div className="mt-20 grid grid-cols-1 gap-y-14 lg:grid-cols-3 lg:gap-y-0">
-          {data.items.map((item, i) => (
-            <Reveal key={i} delay={Math.min(0.05 + i * 0.08, 0.45)}>
-              <figure className="h-full border-l border-line pl-8 lg:pr-8">
-                <blockquote>
-                  <p className="font-serif text-[1.1rem] italic leading-[1.65] text-ink">
-                    {item.quote}
-                  </p>
-                </blockquote>
-                {(item.name || item.role) && (
-                  <figcaption className="mt-7">
-                    {item.name && (
-                      <span className="block text-[0.9rem] text-ink">
-                        {item.name}
+        <div className="mt-16 grid grid-cols-1 items-start gap-y-12 lg:grid-cols-3 lg:gap-x-10">
+          {data.items.map((item, i) => {
+            const central = i % 3 === 1
+
+            if (central) {
+              return (
+                <Reveal key={i} delay={0.12}>
+                  <figure className="rounded-[28px] bg-blue-mist px-8 py-11 text-center lg:-mt-4">
+                    <span
+                      aria-hidden="true"
+                      className="block font-serif text-[54px] font-light leading-[0.4] text-blue-deep opacity-40"
+                    >
+                      “
+                    </span>
+                    <blockquote>
+                      <p className="mt-5 font-serif text-[clamp(1.25rem,1.9vw,1.7rem)] font-light italic leading-[1.5] text-night">
+                        « {item.quote} »
+                      </p>
+                    </blockquote>
+                    <figcaption className="mt-6">
+                      <span
+                        aria-hidden="true"
+                        className="mx-auto mb-4 block h-8 w-px bg-blue-deep/35"
+                      />
+                      <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-deep">
+                        {[item.name, item.role].filter(Boolean).join(' — ')}
                       </span>
-                    )}
-                    {item.role && (
-                      <span className="mt-1 block text-[0.75rem] uppercase tracking-[0.14em] text-stone">
-                        {item.role}
-                      </span>
-                    )}
+                    </figcaption>
+                  </figure>
+                </Reveal>
+              )
+            }
+
+            return (
+              <Reveal key={i} delay={i % 3 === 0 ? 0 : 0.24}>
+                <figure className="px-2 text-center lg:pt-6">
+                  <blockquote>
+                    <p className="font-serif text-[clamp(1.1rem,1.7vw,1.5rem)] font-light italic leading-[1.55] text-ink">
+                      « {item.quote} »
+                    </p>
+                  </blockquote>
+                  <figcaption className="mt-6">
+                    <span
+                      aria-hidden="true"
+                      className="mx-auto mb-4 block h-8 w-px bg-line-strong"
+                    />
+                    <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                      {[item.name, item.role].filter(Boolean).join(' — ')}
+                    </span>
                   </figcaption>
-                )}
-              </figure>
-            </Reveal>
-          ))}
+                </figure>
+              </Reveal>
+            )
+          })}
         </div>
       )}
     </div>
@@ -226,8 +276,9 @@ function TemoignagesMultiples({
 export const temoignagesMultiplesBlock: BlockDefinition<
   typeof temoignagesMultiplesSchema
 > = {
-  label: 'Témoignages — Multiples',
-  description: 'Trois voix côte à côte, séparées de filets fins.',
+  label: 'Témoignages — Trois voix',
+  description:
+    'Trois paroles sur un fil, la voix centrale sur une carte bleu brume.',
   group: 'Sections',
   schema: temoignagesMultiplesSchema,
   suggestedAnchor: 'temoignages',
@@ -246,26 +297,23 @@ export const temoignagesMultiplesBlock: BlockDefinition<
     ),
   ],
   defaults: {
-    eyebrow: 'TÉMOIGNAGES',
-    title: 'Ce qu’ils en *retiennent*.',
+    eyebrow: 'Ils en parlent',
+    title: '',
     items: [
       {
-        quote:
-          'Un espace où j’ai pu déposer ce que je n’avais jamais dit à personne.',
-        name: 'Claire',
-        role: 'Accompagnée un an',
+        quote: 'J’ai retrouvé un sol sous mes pieds.',
+        name: 'M.',
+        role: 'deux ans',
       },
       {
-        quote:
-          'J’ai retrouvé un sommeil que je croyais perdu, et surtout une forme de paix.',
-        name: 'Malik',
-        role: 'Accompagné huit mois',
+        quote: 'Une écoute qui ne juge jamais, qui n’attend rien.',
+        name: 'S.',
+        role: '41 ans',
       },
       {
-        quote:
-          'On avance à son rythme, sans jamais se sentir jugé. C’est ce qui change tout.',
-        name: 'Élise',
-        role: 'Accompagnée six mois',
+        quote: 'Mon fils a recommencé à parler.',
+        name: 'Une maman',
+        role: '',
       },
     ],
   },

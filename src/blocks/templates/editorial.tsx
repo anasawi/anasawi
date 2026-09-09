@@ -2,15 +2,62 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import { toParagraphs, type BlockDefinition, type BlockProps } from '../types'
+import { Reveal, WordsIgnite } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
+import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
-import { Eyebrow } from '@/components/site/Eyebrow'
-import { ImageReveal } from '@/components/motion/ImageReveal'
-import { Reveal } from '@/components/motion/Reveal'
+import { Aster, SectionIndex } from '@/components/site/ornaments'
+
+/*
+ * Sections éditoriales — les respirations typographiques du site.
+ */
+
+/**
+ * Le manifeste de la maquette : les mots s'allument un à un, et les
+ * passages entre astérisques deviennent l'italique bleue soulignée.
+ * Les segments partagent une seule horloge — l'allumage reste continu.
+ */
+export function IgniteEmphasis({
+  text,
+  className,
+}: {
+  text: string
+  className?: string
+}) {
+  const parts = text.split(/(\*[^*]+\*)/g).filter((part) => part.trim().length > 0)
+  let words = 0
+
+  return (
+    <p className={className}>
+      {parts.map((part, i) => {
+        const em = part.startsWith('*') && part.endsWith('*') && part.length > 2
+        const raw = (em ? part.slice(1, -1) : part).trim()
+        const delay = 0.18 + words * 0.065
+        words += raw.split(/\s+/).filter(Boolean).length
+
+        return (
+          <span key={i}>
+            {i > 0 ? ' ' : null}
+            <WordsIgnite
+              as="span"
+              text={raw}
+              delay={delay}
+              className={
+                em
+                  ? 'border-b-2 border-blue pb-0.5 italic text-blue-deep'
+                  : undefined
+              }
+            />
+          </span>
+        )
+      })}
+    </p>
+  )
+}
 
 /* ════════════════════════════════════════════════════════════════════
    Éditorial — Texte centré
-   Une grande déclaration serif au centre de la page, un paragraphe
+   Le manifeste doux : ✳, une déclaration serif centrée, un paragraphe
    d'appui, un lien discret. Respiration entre deux sections denses.
    ════════════════════════════════════════════════════════════════════ */
 
@@ -22,19 +69,22 @@ export const texteCentreSchema = z.object({
   href: z.string().default('#contact'),
 })
 
-function TexteCentre({ data }: BlockProps<z.output<typeof texteCentreSchema>>) {
+function TexteCentre({
+  data,
+  ctx,
+}: BlockProps<z.output<typeof texteCentreSchema>>) {
   return (
-    <div className="container-editorial">
-      <div className="mx-auto max-w-[44rem] text-center">
-        {data.eyebrow && (
-          <Reveal delay={0.05}>
-            <Eyebrow className="justify-center">{data.eyebrow}</Eyebrow>
-          </Reveal>
-        )}
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="respiration" className="-top-14" />
+
+      <div className="mx-auto max-w-[46rem] text-center">
+        <Reveal>
+          <Aster className="text-[24px] text-blue-deep" />
+        </Reveal>
 
         {data.statement && (
-          <Reveal delay={0.12}>
-            <p className="mt-10 font-serif text-[clamp(1.6rem,3vw,2.6rem)] leading-[1.3] text-ink">
+          <Reveal delay={0.1}>
+            <p className="mt-7 font-serif text-[clamp(1.6rem,3vw,2.7rem)] font-light leading-[1.42] text-ink">
               <Emphasis text={data.statement} />
             </p>
           </Reveal>
@@ -42,15 +92,23 @@ function TexteCentre({ data }: BlockProps<z.output<typeof texteCentreSchema>>) {
 
         {data.text && (
           <Reveal delay={0.2}>
-            <p className="mx-auto mt-8 max-w-[38rem] text-[0.975rem] leading-[1.78] text-ink-soft">
+            <p className="mx-auto mt-7 max-w-[52ch] text-[15px] leading-[1.9] text-ink-soft">
               {data.text}
             </p>
           </Reveal>
         )}
 
+        {data.eyebrow && (
+          <Reveal delay={0.28}>
+            <p className="mt-9 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+              {data.eyebrow}
+            </p>
+          </Reveal>
+        )}
+
         {data.label && (
-          <Reveal delay={0.3}>
-            <div className="mt-10 flex justify-center">
+          <Reveal delay={0.34}>
+            <div className="mt-9 flex justify-center">
               <ActionLink href={data.href} variant="ghost">
                 {data.label}
               </ActionLink>
@@ -64,20 +122,23 @@ function TexteCentre({ data }: BlockProps<z.output<typeof texteCentreSchema>>) {
 
 export const texteCentreBlock: BlockDefinition<typeof texteCentreSchema> = {
   label: 'Éditorial — Texte centré',
-  description: 'Grande déclaration serif centrée, paragraphe d’appui, lien.',
+  description:
+    'Le manifeste doux : ✳, déclaration serif centrée, paragraphe d’appui.',
   group: 'Sections',
   schema: texteCentreSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
     field.textarea('statement', 'Déclaration', {
       help: 'Astérisques pour l’italique : *mot*.',
     }),
     field.textarea('text', 'Paragraphe d’appui'),
+    field.text('eyebrow', 'Petit label sous le texte', {
+      placeholder: 'L’essentiel',
+    }),
     field.text('label', 'Lien — libellé'),
     field.text('href', 'Lien — destination'),
   ],
   defaults: {
-    eyebrow: 'L’ESSENTIEL',
+    eyebrow: 'L’essentiel',
     statement:
       'On ne guérit pas en allant plus vite. On guérit en s’accordant enfin le *temps*.',
     text: 'C’est souvent la première chose que l’on redécouvre ici : le droit de ralentir, d’écouter ce qui se passe en soi, sans obligation de résultat.',
@@ -88,9 +149,10 @@ export const texteCentreBlock: BlockDefinition<typeof texteCentreSchema> = {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   Éditorial — Manifeste
-   Titre à gauche, texte composé en deux colonnes typographiques à
-   droite, ouvert par une lettrine serif — la page d'une revue.
+   Éditorial — Manifeste (proposition H de la planche)
+   ✳, une conviction en très grande serif dont les mots s'allument un
+   à un — le passage entre astérisques souligné de bleu — et un méta
+   discret en dessous.
    ════════════════════════════════════════════════════════════════════ */
 
 export const manifesteSchema = z.object({
@@ -99,74 +161,65 @@ export const manifesteSchema = z.object({
   body: z.string().default(''),
 })
 
-function Manifeste({ data }: BlockProps<z.output<typeof manifesteSchema>>) {
-  const paragraphs = toParagraphs(data.body)
+function Manifeste({ data, ctx }: BlockProps<z.output<typeof manifesteSchema>>) {
+  /* `title` porte la conviction ; `body` (héritage) sert de repli. */
+  const statement = data.title.trim() || toParagraphs(data.body)[0] || ''
 
   return (
-    <div className="container-editorial">
-      <div className="grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-x-24">
-        <div className="lg:col-span-4">
-          {data.eyebrow && (
-            <Reveal>
-              <Eyebrow>{data.eyebrow}</Eyebrow>
-            </Reveal>
-          )}
-          {data.title && (
-            <Reveal delay={0.08}>
-              <h2 className="mt-8 max-w-[14ch] text-[length:var(--text-h2)]">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
-          )}
-        </div>
+    <div className="container-editorial relative text-center">
+      <SectionIndex index={ctx.index} label="conviction" className="-top-14" />
 
-        {paragraphs.length > 0 && (
-          <div className="lg:col-span-7 lg:col-start-6">
-            <Reveal delay={0.15}>
-              <div className="text-[0.975rem] leading-[1.85] text-ink-soft lg:columns-2 lg:gap-12">
-                {paragraphs.map((p, i) => (
-                  <p
-                    key={i}
-                    className={
-                      i === 0
-                        ? 'break-inside-avoid first-letter:float-left first-letter:mr-3 first-letter:mt-1 first-letter:font-serif first-letter:text-[3.2em] first-letter:leading-[0.8] first-letter:text-ink'
-                        : 'mt-[1.1em] break-inside-avoid'
-                    }
-                  >
-                    {p}
-                  </p>
-                ))}
-              </div>
-            </Reveal>
-          </div>
-        )}
-      </div>
+      <Reveal>
+        <Aster className="text-[26px] text-blue-deep" />
+      </Reveal>
+
+      {statement && (
+        <div className="mx-auto mt-7 max-w-[64rem]">
+          <IgniteEmphasis
+            text={statement}
+            className="font-serif text-[clamp(1.9rem,3.6vw,3.6rem)] font-light leading-[1.42] text-ink"
+          />
+        </div>
+      )}
+
+      {data.eyebrow && (
+        <Reveal delay={0.3}>
+          <p className="mt-10 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+            {data.eyebrow}
+          </p>
+        </Reveal>
+      )}
     </div>
   )
 }
 
 export const manifesteBlock: BlockDefinition<typeof manifesteSchema> = {
   label: 'Éditorial — Manifeste',
-  description: 'Texte en deux colonnes typographiques, ouvert par une lettrine.',
+  description:
+    'Une conviction en très grande serif dont les mots s’allument un à un.',
   group: 'Sections',
   schema: manifesteSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
-    field.text('title', 'Titre', { full: true }),
-    field.richtext('body', 'Texte du manifeste'),
+    field.textarea('title', 'La conviction', {
+      help: 'Astérisques pour le mot-pivot souligné : *s’entendent*.',
+    }),
+    field.text('eyebrow', 'Petit label sous le texte', {
+      placeholder: 'Ma conviction',
+    }),
   ],
   defaults: {
-    eyebrow: 'MANIFESTE',
-    title: 'Ce en quoi je *crois*.',
-    body: 'Il n’existe pas de méthode universelle pour aller mieux. Il existe des personnes, des histoires, des rythmes — et un cadre suffisamment sûr pour que chacun puisse déposer ce qu’il porte.\n\nJe crois que la thérapie n’est pas un lieu où l’on vient être réparé, mais un espace où l’on réapprend à s’écouter. Le silence y a autant de valeur que la parole, et la lenteur n’y est jamais un échec.\n\nJe crois enfin que demander de l’aide est un geste de courage, pas de faiblesse. C’est souvent le premier pas du chemin — et il compte double.',
+    eyebrow: 'Ma conviction',
+    title:
+      'On ne répare pas les gens. On les écoute, jusqu’à ce qu’ils *s’entendent* à nouveau eux-mêmes.',
+    body: '',
   },
   Component: Manifeste,
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   Éditorial — Image pleine largeur
-   Une très grande image panoramique, un titre en surimpression sur
-   voile discret, une légende alignée à droite. Le reste est du vide.
+   Éditorial — La grande arche
+   Une très grande image en arche, presque pleine page, dévoilée par
+   le rideau. Titre en surimpression douce, légende en méta.
    ════════════════════════════════════════════════════════════════════ */
 
 export const imagePleineSchema = z.object({
@@ -182,17 +235,19 @@ function ImagePleine({
   const image = ctx.resolveMedia(data.mediaId)
 
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="en images" className="-top-14" />
+
       <div className="relative">
-        <ImageReveal
+        <BlockImage
           media={image}
-          sizes="100vw"
-          className="aspect-3/2 w-full md:aspect-21/9"
+          sizes="(max-width: 768px) 92vw, 88vw"
+          className="aspect-[3/3.4] w-full rounded-t-[min(240px,26vw)] rounded-b-[28px] sm:aspect-[16/9] md:aspect-[21/9] md:rounded-t-[min(240px,19vw)]"
         />
 
         {data.title && (
-          <div className="pointer-events-none absolute inset-x-0 bottom-0 bg-gradient-to-t from-black/45 to-transparent px-8 pb-8 pt-24 md:px-12">
-            <p className="font-serif text-[clamp(1.3rem,2.2vw,1.9rem)] leading-[1.2] text-white/95">
+          <div className="pointer-events-none absolute inset-x-0 bottom-0 rounded-b-[28px] bg-gradient-to-t from-black/45 to-transparent px-8 pb-8 pt-24 text-center md:px-12">
+            <p className="font-serif text-[clamp(1.3rem,2.2vw,1.9rem)] font-light leading-[1.25] text-white/95">
               <Emphasis text={data.title} />
             </p>
           </div>
@@ -201,7 +256,7 @@ function ImagePleine({
 
       {data.caption && (
         <Reveal delay={0.1}>
-          <p className="mt-5 text-right text-[0.8rem] tracking-[0.02em] text-stone">
+          <p className="mt-5 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
             {data.caption}
           </p>
         </Reveal>
@@ -211,14 +266,14 @@ function ImagePleine({
 }
 
 export const imagePleineBlock: BlockDefinition<typeof imagePleineSchema> = {
-  label: 'Éditorial — Image pleine largeur',
-  description: 'Image panoramique, titre en surimpression, légende discrète.',
+  label: 'Éditorial — La grande arche',
+  description: 'Une immense image en arche, titre en surimpression douce.',
   group: 'Sections',
   schema: imagePleineSchema,
   fields: [
     field.text('title', 'Titre superposé', {
       full: true,
-      help: 'Optionnel — affiché en bas à gauche de l’image.',
+      help: 'Optionnel — affiché en bas de l’image.',
     }),
     field.text('caption', 'Légende', { full: true }),
     field.media('mediaId', 'Image'),

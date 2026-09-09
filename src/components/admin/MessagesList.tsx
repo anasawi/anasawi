@@ -7,7 +7,7 @@ import { toast } from 'sonner'
 import { ConfirmDelete } from './ConfirmDelete'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { cn, formatDate, toE164 } from '@/lib/utils'
+import { cn, formatDate, toE164, truncate } from '@/lib/utils'
 import { deleteMessage, markMessageRead } from '@/server/actions/content'
 import type { ContactMessage } from '@/server/db/schema'
 
@@ -19,19 +19,25 @@ export function MessagesList({ messages }: { messages: ContactMessage[] }) {
 
   if (items.length === 0) {
     return (
-      <p className="rounded-lg border border-dashed border-border px-4 py-14 text-center text-sm text-muted-foreground">
-        Aucun message reçu.
-      </p>
+      <div className="rounded-xl border border-border bg-white px-6 py-14 text-center">
+        <p className="text-[13px] text-muted-foreground">
+          Aucun message pour l’instant — ils arriveront ici quand un visiteur
+          vous écrira.
+        </p>
+      </div>
     )
   }
 
   return (
-    <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border">
+    <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
       {items.map((message) => {
         const open = openId === message.id
 
         return (
-          <li key={message.id} className={cn(!message.isRead && 'bg-accent/40')}>
+          <li
+            key={message.id}
+            className={cn(!message.isRead && 'bg-blue-mist/30')}
+          >
             <button
               type="button"
               onClick={() => {
@@ -50,31 +56,34 @@ export function MessagesList({ messages }: { messages: ContactMessage[] }) {
                 }
               }}
               aria-expanded={open}
-              className="flex w-full items-center gap-3 px-4 py-3 text-left transition-colors hover:bg-muted/35"
+              className="flex w-full items-center gap-3 px-5 py-3.5 text-left transition-colors duration-150 hover:bg-ivory/50"
             >
               <span className="min-w-0 flex-1">
                 <span className="flex items-center gap-2">
-                  <span className="truncate text-sm font-medium">
+                  <span className="truncate text-[13px] font-medium">
                     {message.name}
                   </span>
                   {!message.isRead && <Badge>Nouveau</Badge>}
                 </span>
-                <span className="mt-0.5 block truncate text-xs text-muted-foreground">
-                  {message.email}
+                <span className="mt-1 block truncate text-[12.5px] text-muted-foreground">
+                  {truncate(message.message, 110)}
                 </span>
               </span>
 
               <time
                 dateTime={message.createdAt.toISOString()}
-                className="shrink-0 text-xs text-muted-foreground"
+                className="shrink-0 text-[11.5px] text-muted-foreground"
               >
                 {formatDate(message.createdAt)}
               </time>
             </button>
 
             {open && (
-              <div className="border-t border-border bg-background px-4 py-4">
-                <p className="whitespace-pre-wrap text-sm leading-relaxed">
+              <div className="border-t border-border bg-ivory/40 px-5 py-4">
+                <p className="text-[12px] text-muted-foreground">
+                  {message.email}
+                </p>
+                <p className="mt-2.5 whitespace-pre-wrap text-[13px] leading-relaxed">
                   {message.message}
                 </p>
 

@@ -122,21 +122,33 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
   return (
     <>
       <div className="mb-4 flex items-center justify-between gap-4">
-        <p className="text-sm text-muted-foreground">
-          Les questions actives alimentent aussi les données structurées
-          <code className="mx-1 rounded bg-muted px-1 py-0.5 text-xs">FAQPage</code>
-          lues par Google.
+        <p className="text-[12.5px] text-muted-foreground">
+          Les questions visibles aident aussi Google à mieux présenter votre
+          site.
         </p>
-        <Button onClick={() => setDraft(emptyDraft)}>
+        <Button
+          className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+          onClick={() => setDraft(emptyDraft)}
+        >
           <Plus />
           Nouvelle question
         </Button>
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-14 text-center text-sm text-muted-foreground">
-          Aucune question pour l’instant.
-        </p>
+        <div className="rounded-xl border border-border bg-white px-6 py-14 text-center">
+          <p className="text-[13px] text-muted-foreground">
+            Aucune question pour l’instant — commencez par celles qu’on vous
+            pose le plus souvent.
+          </p>
+          <Button
+            className="mt-4 rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+            onClick={() => setDraft(emptyDraft)}
+          >
+            <Plus />
+            Ajouter une question
+          </Button>
+        </div>
       ) : (
         <DndContext
           sensors={sensors}
@@ -148,7 +160,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
             items={items.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
           >
-            <ul className="space-y-2">
+            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
               {items.map((item) => (
                 <FaqRow
                   key={item.id}
@@ -252,6 +264,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
               Annuler
             </Button>
             <Button
+              className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
               onClick={save}
               disabled={
                 pending || !draft?.question.trim() || !draft?.answer.trim()
@@ -285,8 +298,8 @@ function FaqRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'flex items-center gap-3 rounded-lg border border-border p-3',
-        isDragging && 'z-10 shadow-md',
+        'group flex items-center gap-3 bg-white px-4 py-3 transition-colors duration-150 hover:bg-ivory/50',
+        isDragging && 'relative z-10 rounded-lg border border-border shadow-sm',
         !item.isActive && 'opacity-60',
       )}
     >
@@ -295,7 +308,7 @@ function FaqRow({
         {...attributes}
         {...listeners}
         aria-label={`Déplacer « ${item.question} »`}
-        className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+        className="cursor-grab touch-none text-muted-foreground/50 opacity-0 transition-opacity active:cursor-grabbing group-focus-within:opacity-100 group-hover:opacity-100"
       >
         <GripVertical className="h-4 w-4" />
       </button>
@@ -313,11 +326,18 @@ function FaqRow({
         aria-label="Afficher cette question"
       />
 
-      <Button variant="ghost" size="icon" onClick={onEdit} aria-label="Modifier">
-        <Pencil />
-      </Button>
+      <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onEdit}
+          aria-label="Modifier"
+        >
+          <Pencil />
+        </Button>
 
-      <ConfirmDelete label={item.question} onConfirm={onDeleted} />
+        <ConfirmDelete label={item.question} onConfirm={onDeleted} />
+      </span>
     </li>
   )
 }

@@ -15,7 +15,7 @@ export function isHexColor(value: string): boolean {
 /** Normalise `#abc` en `#aabbcc`, minuscules. */
 export function normalizeHex(value: string): string {
   const raw = value.trim().toLowerCase()
-  if (!HEX.test(raw)) return '#fcfaf7'
+  if (!HEX.test(raw)) return '#fbf8f2'
   if (raw.length === 4) {
     return `#${raw[1]}${raw[1]}${raw[2]}${raw[2]}${raw[3]}${raw[3]}`
   }
@@ -72,8 +72,8 @@ function mix(from: string, to: string, amount: number): string {
   })
 }
 
-const INK = '#1c201e'
-const IVORY = '#fcfaf7'
+const INK = '#2b2f2c'
+const IVORY = '#fbf8f2'
 
 /**
  * Choisit l'encre la plus lisible sur un fond donné.
@@ -157,10 +157,10 @@ export const SECTION_SWATCH_GROUPS: readonly SwatchGroup[] = [
   {
     label: 'Ivoire',
     swatches: [
-      { hex: '#fcfaf7', name: 'Ivoire — charte' },
-      { hex: '#f6f2ec', name: 'Ivoire chaud — charte' },
-      { hex: '#efe9e0', name: 'Ivoire soutenu' },
-      { hex: '#e5ded3', name: 'Ivoire profond' },
+      { hex: '#fbf8f2', name: 'Ivoire — charte' },
+      { hex: '#f8f4ea', name: 'Crème — charte' },
+      { hex: '#f4eee3', name: 'Sable — charte' },
+      { hex: '#eae2d2', name: 'Ivoire profond' },
     ],
   },
   {
@@ -180,15 +180,15 @@ export const SECTION_SWATCH_GROUPS: readonly SwatchGroup[] = [
       { hex: '#f1efec', name: 'Gris très clair' },
       { hex: '#e2ddd6', name: 'Gris clair' },
       { hex: '#c2bcb4', name: 'Gris moyen' },
-      { hex: '#918b84', name: 'Gris chaud — charte' },
+      { hex: '#98988e', name: 'Gris chaud — charte' },
     ],
   },
   {
-    label: 'Anthracite',
+    label: 'Encre',
     swatches: [
-      { hex: '#4e5551', name: 'Encre douce — charte' },
-      { hex: '#313835', name: 'Anthracite clair' },
-      { hex: '#1c201e', name: 'Anthracite — charte' },
+      { hex: '#565c56', name: 'Encre douce — charte' },
+      { hex: '#2e424f', name: 'Nuit — charte' },
+      { hex: '#2b2f2c', name: 'Encre — charte' },
     ],
   },
 ]
@@ -198,4 +198,4 @@ export const SECTION_SWATCHES = SECTION_SWATCH_GROUPS.flatMap(
   (group) => group.swatches,
 )
 
-export const DEFAULT_SECTION_COLOR = '#fcfaf7'
+export const DEFAULT_SECTION_COLOR = '#fbf8f2'

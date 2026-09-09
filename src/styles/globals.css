@@ -3,64 +3,85 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ══════════════════════════════════════════════════════════════════════
-   AMASWI — Design tokens
-   Ivoire, bleu brume, gris chaud, anthracite. Filets fins, pas d'ombres.
+   AMASWI — Design tokens (ADN « sanctuaire », planche V8)
+   Ivoire sable, bleu brume, encre végétale. Arches, serif italique,
+   astérisque ✳. Filets fins, ombres rares et très douces.
    ══════════════════════════════════════════════════════════════════════ */
 
 @theme {
   /* ── Surfaces ──────────────────────────────────────────────────────
-     Blanc chaud : lit comme du blanc, mais garde assez de jaune pour que
-     l'anthracite ne cogne pas. Les trois niveaux sont volontairement très
-     proches — l'alternance de sections doit se sentir, pas se voir. */
-  --color-ivory: #fcfaf7;
-  --color-ivory-warm: #f6f2ec;
-  --color-ivory-deep: #ede7de;
+     Trois blancs chauds de la maquette : ivoire (fond), sable et crème
+     (alternances de sections). L'alternance se sent, ne se voit pas. */
+  --color-ivory: #fbf8f2;
+  --color-sand: #f4eee3;
+  --color-cream: #f8f4ea;
+  /* Alias historiques — encore consommés par d'anciens blocs. */
+  --color-ivory-warm: #f4eee3;
+  --color-ivory-deep: #eae2d2;
 
   /* ── Encre ────────────────────────────────────────────────────────
-     Quatre niveaux seulement. Toute nuance supplémentaire de gris est
-     une décision qu'on n'a pas prise. */
-  --color-ink: #1c201e; /* titres, texte fort — 15.1:1 sur ivory */
-  --color-ink-soft: #4e5551; /* texte courant — 8.2:1 */
-  --color-stone: #918b84; /* labels, méta — 4.6:1, jamais sous 14px */
+     Encre végétale (vert-gris très sombre) plutôt qu'anthracite neutre. */
+  --color-ink: #2b2f2c; /* titres, texte fort */
+  --color-ink-soft: #565c56; /* texte courant */
+  --color-soft: #565c56; /* alias maquette */
+  --color-stone: #98988e; /* labels, méta — jamais sous 14px */
+
+  /* ── Fond nuit — sections sombres, citations, contact ───────────── */
+  --color-night: #2e424f;
 
   /* ── Filets ───────────────────────────────────────────────────────
-     Deux épaisseurs de gris, pas une. `line` sépare, `line-strong`
-     structure. Sur un fond plus blanc, un filet unique disparaît. */
-  --color-line: #e9e4dc;
-  --color-line-strong: #d6cfc4;
+     Deux opacités de l'encre : `line` sépare, `line-strong` structure. */
+  --color-line: rgba(43, 47, 44, 0.09);
+  --color-line-strong: rgba(43, 47, 44, 0.18);
 
-  /* ── Accent ───────────────────────────────────────────────────────
-     Bleu conservé en aplat, mais assombri : le pastel d'origine passait
-     mal sous texte anthracite et faisait « site de santé ». */
-  --color-blue: #7ba3b6; /* aplat des CTA — ink dessus : 6.6:1 */
-  --color-blue-deep: #46728a; /* survol, filets, labels — ivoire dessus : 5.0:1 */
-  --color-blue-ink: #2f5a70; /* texte sur fond bleu clair — 7.4:1 sur mist */
-  --color-blue-mist: #eaf1f4; /* aplat de section très doux */
+  /* ── Accent ─────────────────────────────────────────────────────── */
+  --color-blue: #7ba3b6; /* bleu brume — ornements, filets actifs */
+  --color-blue-deep: #46728a; /* CTA, labels, survols */
+  --color-blue-ink: #2f5a70; /* texte sur fond bleu clair */
+  --color-blue-mist: #eaf1f4; /* aplat très doux, pastilles actives */
 
-  /* Typographie */
-  --font-serif: var(--font-newsreader), 'Iowan Old Style', Georgia, serif;
-  --font-sans: var(--font-hanken), ui-sans-serif, system-ui, sans-serif;
+  /* Typographie — Cormorant Garamond (light, italiques) + Karla */
+  --font-serif:
+    var(--font-cormorant), 'Cormorant Garamond', 'Iowan Old Style', Georgia,
+    serif;
+  --font-sans: var(--font-karla), 'Karla', ui-sans-serif, system-ui, sans-serif;
 
-  /* ── Échelle fluide — aucun breakpoint, croissance continue ───────
-     Le display est plafonné à 5.6rem : au-delà, « espace intérieur »
-     ne tient plus sur une ligne dans la colonne éditoriale. */
+  /* ── Échelle fluide — aucun breakpoint, croissance continue ─────── */
   --text-label: 0.72rem;
   --text-display: clamp(2.6rem, 5vw, 5.6rem);
   --text-h2: clamp(1.9rem, 3.4vw, 3.25rem);
   --text-h3: clamp(1.2rem, 1.6vw, 1.55rem);
   --text-lead: clamp(1.05rem, 1.2vw, 1.22rem);
 
-  /* ── Respiration ─────────────────────────────────────────────────
-     Une seule échelle pour toutes les sections. `section-lg` sert aux
-     respirations (citation, CTA), qui ont besoin de plus de vide autour
-     qu'un bloc de contenu. */
-  --spacing-section: clamp(7rem, 14vw, 14rem);
-  --spacing-section-lg: clamp(9rem, 18vw, 18rem);
-  --spacing-gutter: clamp(1.5rem, 5vw, 6rem);
+  /* ── Respiration — valeurs calibrées de la maquette ──────────────
+     `section-lg` sert aux respirations (citation, CTA) qui ont besoin
+     de plus de vide autour qu'un bloc de contenu. */
+  --spacing-section: clamp(100px, 17vh, 190px);
+  --spacing-section-lg: clamp(120px, 21vh, 230px);
+  --spacing-gutter: clamp(24px, 6vw, 100px);
+
+  /* ── Arche signature — pilule en haut, presque droite en bas ────── */
+  --radius-arch: 999px 999px 20px 20px;
 
   /* Courbes — une seule, partout */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
   --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
+}
+
+/* ── Alias maquette + défauts d'identité ──────────────────────────────
+   Les noms courts (`--arch`, `--gutter`, `--sp`, `--ease`) sont ceux de la
+   planche V8 : les templates les consomment tels quels. Ils pointent vers
+   les tokens du thème pour que les surcharges d'identité (`identityCss`)
+   se propagent mécaniquement. */
+
+:root {
+  --arch: 999px 999px 20px 20px;
+  --gutter: var(--spacing-gutter);
+  --sp: var(--spacing-section);
+  --ease: var(--ease-out-soft);
+
+  /* Boutons en pilule par défaut — l'identité admin peut le réduire. */
+  --button-radius: 999px;
 }
 
 /* ── shadcn/ui — utilisé uniquement dans /admin ───────────────────── */
@@ -155,19 +176,18 @@
     background-color: var(--color-ivory);
     color: var(--color-ink);
     font-family: var(--font-sans);
+    font-size: 15px;
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
-    letter-spacing: -0.011em;
   }
 
   h1,
   h2,
   h3 {
     font-family: var(--font-serif);
-    font-weight: 400;
-    letter-spacing: -0.022em;
-    line-height: 1.02;
+    font-weight: 300;
+    line-height: 1.08;
     text-wrap: balance;
   }
 
@@ -184,20 +204,20 @@
 
   ::selection {
     background-color: var(--color-blue-mist);
-    color: var(--color-ink);
+    color: var(--color-blue-deep);
   }
 
-  /* Lenis */
-  html.lenis,
-  html.lenis body {
-    height: auto;
+  /* Curseur personnalisé — la classe est posée par <CustomCursor> quand
+     le pointeur est fin et que le mouvement n'est pas réduit. */
+  @media (hover: hover) and (pointer: fine) {
+    html.amaswi-cursor body,
+    html.amaswi-cursor a,
+    html.amaswi-cursor button,
+    html.amaswi-cursor [data-cursor] {
+      cursor: none;
+    }
   }
-  .lenis.lenis-smooth {
-    scroll-behavior: auto !important;
-  }
-  .lenis.lenis-stopped {
-    overflow: hidden;
-  }
+
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -213,9 +233,9 @@
 
 @utility label-eyebrow {
   font-family: var(--font-sans);
-  font-size: var(--text-label);
-  font-weight: 500;
-  letter-spacing: 0.18em;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.24em;
   text-transform: uppercase;
   color: var(--color-blue-deep);
 }
@@ -236,12 +256,58 @@
   }
 }
 
-/* Masque de révélation par ligne — utilisé par SplitText */
+/* Masque de révélation par ligne — utilisé par MaskLines / SplitChars */
 @utility line-mask {
   display: block;
   overflow: hidden;
   padding-bottom: 0.08em;
   margin-bottom: -0.08em;
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   Animations continues — tempo constant, jamais liées au scroll.
+   Consommées par les primitives (<Marquee>, <CircleText>) et par les
+   templates (halo qui respire). Neutralisées par prefers-reduced-motion
+   via le bloc global ci-dessous.
+   ══════════════════════════════════════════════════════════════════════ */
+
+@keyframes amaswi-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes amaswi-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@keyframes amaswi-breathe {
+  0%,
+  100% {
+    transform: scale(1);
+    opacity: 0.14;
+  }
+  50% {
+    transform: scale(1.04);
+    opacity: 0.2;
+  }
+}
+
+.amaswi-spin {
+  animation: amaswi-spin 26s linear infinite;
+}
+
+.amaswi-marquee {
+  animation: amaswi-marquee 38s linear infinite;
+}
+
+.amaswi-breathe {
+  animation: amaswi-breathe 9s ease-in-out infinite;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

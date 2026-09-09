@@ -67,20 +67,22 @@ export function IdentityEditor({ initial }: { initial: Identity }) {
   )
 
   return (
-    <div className="mx-auto max-w-xl space-y-6 p-6">
-      <fieldset className="divide-y divide-border rounded-lg border border-border px-4">
-        <legend className="px-1 text-[0.68rem] font-medium uppercase tracking-wider text-muted-foreground">
-          Couleurs d’accent
-        </legend>
-        {color('accent', 'Accent profond', 'Survols, filets, labels, liens.')}
-        {color('accentSoft', 'Aplat des boutons', 'Le fond des appels à l’action.')}
-        {color('mist', 'Bleu brume', 'Fonds doux : encarts, panneaux, pastilles.')}
-      </fieldset>
+    <div className="space-y-[22px]">
+      <section className="rounded-xl border border-border bg-white px-[22px] py-5">
+        <h4 className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+          Couleurs
+        </h4>
+        <div className="mt-1 divide-y divide-border">
+          {color('accent', 'Accent profond', 'Survols, filets, labels, liens.')}
+          {color('accentSoft', 'Aplat des boutons', 'Le fond des appels à l’action.')}
+          {color('mist', 'Bleu brume', 'Fonds doux : encarts, panneaux, pastilles.')}
+        </div>
+      </section>
 
-      <fieldset className="space-y-4 rounded-lg border border-border p-4">
-        <legend className="px-1 text-[0.68rem] font-medium uppercase tracking-wider text-muted-foreground">
+      <section className="space-y-4 rounded-xl border border-border bg-white px-[22px] py-5">
+        <h4 className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
           Formes et respiration
-        </legend>
+        </h4>
 
         <div>
           <Label className="mb-1.5 block">
@@ -116,7 +118,7 @@ export function IdentityEditor({ initial }: { initial: Identity }) {
                 onClick={() => setValue((v) => ({ ...v, spacing: key }))}
                 className={`rounded-md border px-3 py-1.5 text-[0.78rem] transition-colors ${
                   (value.spacing ?? 'normal') === key
-                    ? 'border-foreground bg-foreground text-background'
+                    ? 'border-blue-deep bg-blue-mist/60 text-blue-ink'
                     : 'border-border text-muted-foreground hover:text-foreground'
                 }`}
               >
@@ -125,7 +127,7 @@ export function IdentityEditor({ initial }: { initial: Identity }) {
             ))}
           </div>
         </div>
-      </fieldset>
+      </section>
 
       <div className="flex items-center gap-2">
         <Button disabled={pending} onClick={() => save(value)}>

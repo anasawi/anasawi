@@ -3,9 +3,8 @@ import { redirect } from 'next/navigation'
 import { Toaster } from 'sonner'
 
 import { AdminPill, EyeIcon } from '@/components/site/AdminPill'
-import { Sidebar } from '@/components/admin/Sidebar'
+import { AdminRail } from '@/components/admin/AdminRail'
 import { auth } from '@/lib/auth'
-import { getAdminPages } from '@/server/queries'
 
 export const metadata: Metadata = {
   title: 'Administration — AMASWI',
@@ -27,19 +26,9 @@ export default async function AdminLayout({
 
   const userName = session.user.name ?? session.user.email ?? 'Admin'
 
-  /* Les pages du site alimentent le groupe « Pages » de la sidebar.
-     Chargées ici, dans le layout : la sidebar est un composant client et
-     ne peut pas interroger la base elle-même. */
-  const pages = (await getAdminPages()).map((page) => ({
-    id: page.id,
-    title: page.title,
-    isHome: page.isHome,
-    published: page.status === 'published',
-  }))
-
   return (
     <div className="admin-shell flex h-svh overflow-hidden bg-background text-foreground antialiased">
-      <Sidebar userName={userName} pages={pages} />
+      <AdminRail userName={userName} />
 
       <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
         {children}

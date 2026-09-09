@@ -1,6 +1,8 @@
+import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { TemplateEditor } from '@/components/admin/TemplateEditor'
 import {
+  getAdminPages,
   getAllFaq,
   getAllMedia,
   getAllServices,
@@ -20,25 +22,25 @@ export const dynamic = 'force-dynamic'
  * publier n'existe pas, la page EST la donnée.
  */
 export default async function HomeBuilderPage() {
-  const [page, media, services, faqItems, settings, saved] = await Promise.all([
-    getHomePageForAdmin(),
-    getAllMedia(),
-    getAllServices(),
-    getAllFaq(),
-    getSettings(),
-    getSavedSections(),
-  ])
+  const [page, media, services, faqItems, settings, saved, allPages] =
+    await Promise.all([
+      getHomePageForAdmin(),
+      getAllMedia(),
+      getAllServices(),
+      getAllFaq(),
+      getSettings(),
+      getSavedSections(),
+      getAdminPages(),
+    ])
 
   if (!page) {
     return (
-      <>
+      <AdminContent>
         <PageHeader title="Page d’accueil" />
-        <div className="p-8">
-          <p className="text-[0.82rem] text-muted-foreground">
-            Page d’accueil introuvable. Lancez <code>npm run db:seed</code>.
-          </p>
-        </div>
-      </>
+        <p className="text-[13px] text-muted-foreground">
+          Page d’accueil introuvable. Lancez <code>npm run db:seed</code>.
+        </p>
+      </AdminContent>
     )
   }
 
@@ -51,6 +53,12 @@ export default async function HomeBuilderPage() {
       initialSections={page.sections}
       data={{ services, faqItems, settings, media }}
       saved={saved}
+      pages={allPages.map((p) => ({
+        id: p.id,
+        title: p.title,
+        isHome: p.isHome,
+        published: p.status === 'published',
+      }))}
     />
   )
 }

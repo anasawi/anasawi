@@ -46,6 +46,8 @@ import { quoteBlock } from './quote'
 import { servicesBlock } from './services'
 import {
   aproposAsymetriqueBlock,
+  aproposCitationBlock,
+  aproposMedaillonBlock,
   aproposParcoursBlock,
   aproposPortraitBlock,
 } from './templates/apropos'
@@ -53,7 +55,26 @@ import {
   approcheColonnesBlock,
   processusVerticalBlock,
 } from './templates/approche'
-import { contactMinimalBlock } from './templates/contact'
+import {
+  chiffresClefsBlock,
+  engagementsBlock,
+  logosPresseBlock,
+} from './templates/confiance'
+import {
+  appelDouxBlock,
+  contactCarteBlock,
+  contactMinimalBlock,
+} from './templates/contact'
+import {
+  bandeauRespirerBlock,
+  citationSouligneeBlock,
+  galerieArchesBlock,
+  imageLegendeBlock,
+  listeAtoutsBlock,
+  separateurAsterisqueBlock,
+  texteDeuxColonnesBlock,
+  videoArcheBlock,
+} from './templates/contenu'
 import { ctaImageBlock, ctaImmersifBlock } from './templates/cta'
 import {
   imagePleineBlock,
@@ -62,14 +83,19 @@ import {
 } from './templates/editorial'
 import { faqEditorialeBlock } from './templates/faq'
 import {
+  heroBandeauBlock,
   heroEditorialBlock,
   heroMinimalBlock,
   heroPleinEcranBlock,
 } from './templates/heros'
 import {
+  seanceDerouleBlock,
+  servicesArchesBlock,
+  servicesDetailBlock,
   servicesImmersifsBlock,
   servicesListeBlock,
   servicesNumerotesBlock,
+  tarifsSobreBlock,
 } from './templates/services'
 import {
   temoignageGrandBlock,
@@ -98,40 +124,68 @@ export const blockRegistry = {
      toute composition personnalisée. */
   columns: columnsBlock,
   canvas: canvasBlock,
-  hero: heroBlock,
-  about: aboutBlock,
-  services: servicesBlock,
-  approach: approachBlock,
-  faq: faqBlock,
-  contact: contactBlock,
-  quote: quoteBlock,
-  imageText: imageTextBlock,
-  gallery: galleryBlock,
-  cta: ctaBlock,
-
-  /* Sections — bibliothèque de templates. */
   sectionVierge: viergeBlock,
+
+  /* Se présenter. */
   heroPleinEcran: heroPleinEcranBlock,
+  hero: heroBlock,
   heroEditorial: heroEditorialBlock,
   heroMinimal: heroMinimalBlock,
+  heroBandeau: heroBandeauBlock,
+  about: aboutBlock,
   aproposPortrait: aproposPortraitBlock,
   aproposAsymetrique: aproposAsymetriqueBlock,
+  aproposMedaillon: aproposMedaillonBlock,
+  aproposCitation: aproposCitationBlock,
   aproposParcours: aproposParcoursBlock,
-  servicesListe: servicesListeBlock,
-  servicesNumerotes: servicesNumerotesBlock,
-  servicesImmersifs: servicesImmersifsBlock,
-  texteCentre: texteCentreBlock,
-  manifeste: manifesteBlock,
-  imagePleine: imagePleineBlock,
+  approach: approachBlock,
   approcheColonnes: approcheColonnesBlock,
   processusVertical: processusVerticalBlock,
-  temoignageSimple: temoignageSimpleBlock,
+
+  /* Présenter son offre. */
+  servicesListe: servicesListeBlock,
+  servicesArches: servicesArchesBlock,
+  services: servicesBlock,
+  servicesNumerotes: servicesNumerotesBlock,
+  servicesImmersifs: servicesImmersifsBlock,
+  servicesDetail: servicesDetailBlock,
+  seanceDeroule: seanceDerouleBlock,
+  tarifsSobre: tarifsSobreBlock,
+
+  /* Inspirer confiance. */
   temoignageGrand: temoignageGrandBlock,
   temoignagesMultiples: temoignagesMultiplesBlock,
+  temoignageSimple: temoignageSimpleBlock,
+  chiffresClefs: chiffresClefsBlock,
+  engagements: engagementsBlock,
+  logosPresse: logosPresseBlock,
   faqEditoriale: faqEditorialeBlock,
+  faq: faqBlock,
+
+  /* Enrichir le contenu. */
+  manifeste: manifesteBlock,
+  texteCentre: texteCentreBlock,
+  citationSoulignee: citationSouligneeBlock,
+  quote: quoteBlock,
+  imageText: imageTextBlock,
+  bandeauRespirer: bandeauRespirerBlock,
+  imagePleine: imagePleineBlock,
+  galerieArches: galerieArchesBlock,
+  gallery: galleryBlock,
+  imageLegende: imageLegendeBlock,
+  texteDeuxColonnes: texteDeuxColonnesBlock,
+  listeAtouts: listeAtoutsBlock,
+  videoArche: videoArcheBlock,
+  separateurAsterisque: separateurAsterisqueBlock,
+
+  /* Être contactée. */
+  contactMinimal: contactMinimalBlock,
+  contact: contactBlock,
+  contactCarte: contactCarteBlock,
+  cta: ctaBlock,
   ctaImage: ctaImageBlock,
   ctaImmersif: ctaImmersifBlock,
-  contactMinimal: contactMinimalBlock,
+  appelDoux: appelDouxBlock,
 
   /* Contenu */
   heading: headingBlock,
@@ -219,16 +273,17 @@ export const blockGroups = (
    composant. Ajouter un template = un composant + une entrée ici.
    ════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Les catégories suivent l'INTENTION de l'utilisatrice (« que voulez-vous
+ * ajouter ? »), pas la taxonomie technique des templates :
+ * se présenter, présenter son offre, inspirer confiance, enrichir le
+ * contenu, être contactée.
+ */
 export const TEMPLATE_CATEGORIES = [
-  'Base',
-  'Hero',
-  'À propos',
-  'Accompagnements',
-  'Éditorial',
-  'Approche',
-  'Témoignages',
-  'FAQ',
-  'Appel à l’action',
+  'Présentation',
+  'Accompagnement',
+  'Confiance',
+  'Contenu',
   'Contact',
 ] as const
 
@@ -238,38 +293,67 @@ export type TemplateCategory = (typeof TEMPLATE_CATEGORIES)[number]
     rendu interne : titre, image, colonnes…) n'apparaît pas dans la
     bibliothèque. */
 const CATEGORY_OF: Partial<Record<BlockType, TemplateCategory>> = {
-  sectionVierge: 'Base',
-  hero: 'Hero',
-  heroPleinEcran: 'Hero',
-  heroEditorial: 'Hero',
-  heroMinimal: 'Hero',
-  about: 'À propos',
-  aproposPortrait: 'À propos',
-  aproposAsymetrique: 'À propos',
-  aproposParcours: 'À propos',
-  services: 'Accompagnements',
-  servicesListe: 'Accompagnements',
-  servicesNumerotes: 'Accompagnements',
-  servicesImmersifs: 'Accompagnements',
-  approach: 'Approche',
-  approcheColonnes: 'Approche',
-  processusVertical: 'Approche',
-  temoignageSimple: 'Témoignages',
-  temoignageGrand: 'Témoignages',
-  temoignagesMultiples: 'Témoignages',
-  faq: 'FAQ',
-  faqEditoriale: 'FAQ',
-  contact: 'Contact',
+  /* Se présenter : ouvertures de page, qui je suis, mon approche. */
+  heroPleinEcran: 'Présentation',
+  hero: 'Présentation',
+  heroEditorial: 'Présentation',
+  heroMinimal: 'Présentation',
+  heroBandeau: 'Présentation',
+  about: 'Présentation',
+  aproposPortrait: 'Présentation',
+  aproposAsymetrique: 'Présentation',
+  aproposMedaillon: 'Présentation',
+  aproposCitation: 'Présentation',
+  aproposParcours: 'Présentation',
+  approach: 'Présentation',
+  approcheColonnes: 'Présentation',
+  processusVertical: 'Présentation',
+
+  /* Présenter son offre. */
+  servicesListe: 'Accompagnement',
+  servicesArches: 'Accompagnement',
+  services: 'Accompagnement',
+  servicesNumerotes: 'Accompagnement',
+  servicesImmersifs: 'Accompagnement',
+  servicesDetail: 'Accompagnement',
+  seanceDeroule: 'Accompagnement',
+  tarifsSobre: 'Accompagnement',
+
+  /* Inspirer confiance. */
+  temoignageGrand: 'Confiance',
+  temoignagesMultiples: 'Confiance',
+  temoignageSimple: 'Confiance',
+  chiffresClefs: 'Confiance',
+  engagements: 'Confiance',
+  logosPresse: 'Confiance',
+  faqEditoriale: 'Confiance',
+  faq: 'Confiance',
+
+  /* Enrichir le contenu — la section vierge d'abord. */
+  sectionVierge: 'Contenu',
+  manifeste: 'Contenu',
+  texteCentre: 'Contenu',
+  citationSoulignee: 'Contenu',
+  quote: 'Contenu',
+  imageText: 'Contenu',
+  bandeauRespirer: 'Contenu',
+  imagePleine: 'Contenu',
+  galerieArches: 'Contenu',
+  gallery: 'Contenu',
+  imageLegende: 'Contenu',
+  texteDeuxColonnes: 'Contenu',
+  listeAtouts: 'Contenu',
+  videoArche: 'Contenu',
+  separateurAsterisque: 'Contenu',
+
+  /* Être contactée — le contact ET les invitations à l'action. */
   contactMinimal: 'Contact',
-  quote: 'Éditorial',
-  imageText: 'Éditorial',
-  gallery: 'Éditorial',
-  texteCentre: 'Éditorial',
-  manifeste: 'Éditorial',
-  imagePleine: 'Éditorial',
-  cta: 'Appel à l’action',
-  ctaImage: 'Appel à l’action',
-  ctaImmersif: 'Appel à l’action',
+  contact: 'Contact',
+  contactCarte: 'Contact',
+  cta: 'Contact',
+  ctaImage: 'Contact',
+  ctaImmersif: 'Contact',
+  appelDoux: 'Contact',
 }
 
 export type TemplateOption = BlockOption & { category: TemplateCategory }

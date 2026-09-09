@@ -2,13 +2,12 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { MaskLines, Reveal } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
+import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { ImageReveal } from '@/components/motion/ImageReveal'
-import { Parallax } from '@/components/motion/Parallax'
 import { Prose } from '@/components/site/Prose'
-import { Reveal } from '@/components/motion/Reveal'
 import { cn } from '@/lib/utils'
 
 export const imageTextSchema = z.object({
@@ -24,10 +23,12 @@ export const imageTextSchema = z.object({
 
 export type ImageTextPayload = z.output<typeof imageTextSchema>
 
+/* Le portrait prend l'arche signature ; les autres formats gardent des
+   coins doux. */
 const ratios = {
-  portrait: 'aspect-3/4',
-  square: 'aspect-square',
-  landscape: 'aspect-4/3',
+  portrait: 'aspect-[3/4] rounded-arch',
+  square: 'aspect-square rounded-[28px]',
+  landscape: 'aspect-[4/3] rounded-[28px]',
 } as const
 
 /** Bloc générique : le seul qui serve à créer des sections non prévues. */
@@ -44,19 +45,22 @@ function ImageText({ data, ctx }: BlockProps<ImageTextPayload>) {
             imageFirst ? 'lg:order-1' : 'lg:order-2 lg:col-start-8',
           )}
         >
-          <Parallax amount={5}>
-            <ImageReveal
-              media={image}
-              sizes="(max-width: 1024px) 100vw, 40vw"
-              className={cn('w-full', ratios[data.ratio])}
-            />
-          </Parallax>
+          <BlockImage
+            media={image}
+            sizes="(max-width: 1024px) 88vw, 38vw"
+            className={cn(
+              'mx-auto w-full max-w-[26rem] lg:mx-0',
+              ratios[data.ratio],
+            )}
+          />
         </div>
 
         <div
           className={cn(
             'lg:col-span-5',
-            imageFirst ? 'lg:order-2 lg:col-start-8' : 'lg:order-1 lg:col-start-2',
+            imageFirst
+              ? 'lg:order-2 lg:col-start-8'
+              : 'lg:order-1 lg:col-start-2',
           )}
         >
           {data.eyebrow && (
@@ -65,21 +69,23 @@ function ImageText({ data, ctx }: BlockProps<ImageTextPayload>) {
             </Reveal>
           )}
           {data.title && (
-            <Reveal delay={0.06}>
-              <h2 className="mt-8 text-[length:var(--text-h2)]">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
+            <h2 className="mt-7 text-[length:var(--text-h2)]">
+              <MaskLines delay={0.08}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
           {data.body && (
-            <Reveal delay={0.12}>
-              <Prose text={data.body} className="mt-8 max-w-[52ch]" />
+            <Reveal delay={0.14}>
+              <Prose text={data.body} className="mt-7 max-w-[52ch]" />
             </Reveal>
           )}
           {data.ctaLabel && data.ctaHref && (
-            <Reveal delay={0.18}>
+            <Reveal delay={0.2}>
               <div className="mt-10">
-                <ActionLink href={data.ctaHref} variant="outline">
+                <ActionLink href={data.ctaHref} variant="ghost">
                   {data.ctaLabel}
                 </ActionLink>
               </div>
@@ -93,7 +99,7 @@ function ImageText({ data, ctx }: BlockProps<ImageTextPayload>) {
 
 export const imageTextBlock: BlockDefinition<typeof imageTextSchema> = {
   label: 'Éditorial — Image + texte',
-  description: 'Bloc polyvalent, image à gauche ou à droite.',
+  description: 'Bloc polyvalent, arche à gauche ou à droite.',
   group: 'Sections',
   schema: imageTextSchema,
   fields: [
@@ -106,7 +112,7 @@ export const imageTextBlock: BlockDefinition<typeof imageTextSchema> = {
       { value: 'right', label: 'Droite' },
     ]),
     field.select('ratio', 'Format de l’image', [
-      { value: 'portrait', label: 'Portrait 3:4' },
+      { value: 'portrait', label: 'Arche (portrait)' },
       { value: 'square', label: 'Carré' },
       { value: 'landscape', label: 'Paysage 4:3' },
     ]),

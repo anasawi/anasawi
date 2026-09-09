@@ -1,10 +1,12 @@
-import Image from 'next/image'
 import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { MaskLines, Reveal } from '@/components/site/anim'
+import { BlockImage } from '@/components/site/BlockImage'
+import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { Reveal } from '@/components/motion/Reveal'
+import { SectionIndex } from '@/components/site/ornaments'
 import { cn } from '@/lib/utils'
 
 export const gallerySchema = z.object({
@@ -15,68 +17,64 @@ export const gallerySchema = z.object({
 
 export type GalleryPayload = z.output<typeof gallerySchema>
 
-/**
- * Grille décalée : une image sur trois est abaissée. La régularité d'une
- * grille stricte tue l'impression éditoriale ; le décalage la restaure sans
- * désordre.
- */
+/* Arches et coins doux alternés, une image sur trois abaissée : la
+   régularité d'une grille stricte tuerait l'impression éditoriale. */
+const SHAPES = [
+  { ratio: 'aspect-[3/4]', round: 'rounded-arch', offset: '' },
+  { ratio: 'aspect-[4/4.4]', round: 'rounded-[28px]', offset: 'lg:mt-20' },
+  { ratio: 'aspect-[3/4.2]', round: 'rounded-arch', offset: 'lg:mt-8' },
+] as const
+
 function Gallery({ data, ctx }: BlockProps<GalleryPayload>) {
   const images = data.mediaIds
     .map((id) => ctx.resolveMedia(id))
     .filter((m): m is NonNullable<typeof m> => m !== null)
 
-  if (images.length === 0) return null
-
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="en images" className="-top-14" />
+
       {(data.eyebrow || data.title) && (
-        <div className="mb-20 max-w-[34rem]">
+        <div className="mb-16 max-w-[34rem]">
           {data.eyebrow && (
             <Reveal>
               <Eyebrow>{data.eyebrow}</Eyebrow>
             </Reveal>
           )}
           {data.title && (
-            <Reveal delay={0.06}>
-              <h2 className="mt-7 text-[length:var(--text-h2)]">{data.title}</h2>
-            </Reveal>
+            <h2 className="mt-6 text-[length:var(--text-h2)]">
+              <MaskLines delay={0.08}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-x-8 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-        {images.map((image, i) => (
-          <Reveal key={`${image.id}-${i}`} delay={(i % 3) * 0.08}>
-            <figure
-              className={cn(
-                'group',
-                i % 3 === 1 && 'lg:mt-20',
-                i % 3 === 2 && 'lg:mt-8',
-              )}
-            >
-              <div className="relative aspect-4/5 overflow-hidden">
-                <Image
-                  src={image.url}
-                  alt={image.alt}
-                  fill
-                  sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 32vw"
-                  className="object-cover transition-transform duration-[1.3s] ease-[var(--ease-out-soft)] group-hover:scale-[1.045]"
-                  {...(image.blurDataUrl
-                    ? {
-                        placeholder: 'blur' as const,
-                        blurDataURL: image.blurDataUrl,
-                      }
-                    : {})}
+      <div className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+        {(images.length > 0 ? images : [null, null, null]).map((image, i) => {
+          const shape = SHAPES[i % SHAPES.length] ?? SHAPES[0]
+
+          return (
+            <Reveal key={image ? `${image.id}-${i}` : i} delay={(i % 3) * 0.09}>
+              <figure className={cn(shape.offset)}>
+                <BlockImage
+                  media={image}
+                  sizes="(max-width: 640px) 88vw, (max-width: 1024px) 44vw, 30vw"
+                  className={cn('w-full', shape.ratio, shape.round)}
+                  placeholder={i % 3}
                 />
-              </div>
-              {image.caption && (
-                <figcaption className="mt-4 text-[0.8rem] text-stone">
-                  {image.caption}
-                </figcaption>
-              )}
-            </figure>
-          </Reveal>
-        ))}
+                {image?.caption && (
+                  <figcaption className="mt-4 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                    {image.caption}
+                  </figcaption>
+                )}
+              </figure>
+            </Reveal>
+          )
+        })}
       </div>
     </div>
   )
@@ -84,13 +82,15 @@ function Gallery({ data, ctx }: BlockProps<GalleryPayload>) {
 
 export const galleryBlock: BlockDefinition<typeof gallerySchema> = {
   label: 'Éditorial — Galerie',
-  description: 'Grille d’images décalée.',
+  description: 'Grille d’arches décalées, légendes en méta.',
   group: 'Sections',
   schema: gallerySchema,
   fields: [
     field.text('eyebrow', 'Label supérieur'),
     field.text('title', 'Titre', { full: true }),
-    field.mediaList('mediaIds', 'Images'),
+    field.mediaList('mediaIds', 'Images', {
+      help: 'La légende de chaque image vient de la bibliothèque de médias.',
+    }),
   ],
   defaults: { eyebrow: '', title: '', mediaIds: [] },
   Component: Gallery,

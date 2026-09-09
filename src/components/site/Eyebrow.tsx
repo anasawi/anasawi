@@ -1,9 +1,11 @@
 import { cn } from '@/lib/utils'
 
 /**
- * Petit label en capitales précédé d'un filet.
- * Le filet se déploie de 0 à sa largeur au scroll — le seul mouvement
- * décoratif du site, et il est purement CSS.
+ * Label supérieur de section — « ✳  QUI JE SUIS ».
+ *
+ * L'astérisque signature remplace l'ancien filet : c'est le méta-texte de la
+ * planche V8, en capitales espacées de 0.24em. La couleur vient du thème de
+ * la section (`--color-blue-deep` est recalculé sur fond sombre).
  */
 export function Eyebrow({
   children,
@@ -17,18 +19,14 @@ export function Eyebrow({
   return (
     <p
       className={cn(
-        'label-eyebrow flex items-center gap-4',
-        tone === 'muted' && 'text-stone',
+        'flex items-baseline gap-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.24em]',
+        tone === 'accent' ? 'text-blue-deep' : 'text-stone',
         className,
       )}
     >
-      <span
-        aria-hidden="true"
-        className={cn(
-          'h-px w-8 shrink-0',
-          tone === 'accent' ? 'bg-blue' : 'bg-line',
-        )}
-      />
+      <span aria-hidden="true" className="font-serif text-[1.25em] font-normal">
+        ✳
+      </span>
       <span>{children}</span>
     </p>
   )

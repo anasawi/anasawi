@@ -2,17 +2,48 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import {
+  CircleText,
+  Marquee,
+  MaskLines,
+  Reveal,
+  SplitChars,
+} from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
+import { BlockImage } from '@/components/site/BlockImage'
+import { Emphasis, stripEmphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { ImageReveal } from '@/components/motion/ImageReveal'
-import { Reveal } from '@/components/motion/Reveal'
-import { SplitText } from '@/components/motion/SplitText'
+import { Aster, SectionIndex } from '@/components/site/ornaments'
+import type { Settings } from '@/server/db/schema'
+
+/*
+ * Les héros de la bibliothèque — les ouvertures de page.
+ * Tous parlent la langue de la planche V8 : arche, serif Cormorant en
+ * lettres qui montent, astérisque signature, boutons sobres.
+ */
+
+/** `*ligne*` entière → italique ; sinon on retire les astérisques (le
+    SplitChars anime des lettres brutes, pas du balisage). */
+function splitLine(line: string): { text: string; italic: boolean } {
+  const trimmed = line.trim()
+  const whole = /^\*(.+)\*$/.exec(trimmed)
+  if (whole && whole[1]) return { text: whole[1], italic: true }
+  return { text: stripEmphasis(trimmed), italic: false }
+}
+
+/** « anne winzeried · thérapeute · » — la couronne du texte circulaire. */
+function ringText(settings: Settings): string {
+  const parts = [
+    settings.practitionerName || 'Anne Winzeried',
+    settings.practitionerTitle || 'thérapeute',
+  ].filter(Boolean)
+  return `${parts.join(' · ').toLowerCase()} · `
+}
 
 /* ════════════════════════════════════════════════════════════════════
-   Hero — Plein écran
-   Image immersive sur toute la hauteur, texte blanc calé en bas à
-   gauche sur un voile dégradé. Indépendant du thème de section :
-   l'image porte son propre contraste.
+   Hero — L'arche (proposition A de la planche)
+   Arche centrale, titre serif géant qui l'enlace lettre à lettre,
+   texte circulaire qui tourne, méta ✳ au-dessus, boutons sobres.
    ════════════════════════════════════════════════════════════════════ */
 
 export const heroPleinEcranSchema = z.object({
@@ -32,81 +63,87 @@ function HeroPleinEcran({
 }: BlockProps<z.output<typeof heroPleinEcranSchema>>) {
   const image = ctx.resolveMedia(data.mediaId)
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
+  const first = ctx.index === 0
 
   return (
-    <div className="relative flex min-h-[100svh] items-end">
-      {/* Image de fond — LCP : peinte immédiatement, sans animation. */}
-      <ImageReveal
-        media={image}
-        instant
-        priority
-        sizes="100vw"
-        className="absolute inset-0 h-full w-full"
-      />
+    <div className="relative overflow-x-clip px-[var(--spacing-gutter)] pb-[calc(var(--spacing-section)*0.9)] pt-36 text-center lg:pt-44">
+      <SectionIndex index={ctx.index} label="ouverture" />
 
-      {/* Voile dégradé — garantit la lisibilité du texte, quel que soit
-          le sujet de la photographie. */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 bg-gradient-to-t from-black/55 via-black/25 to-transparent"
-      />
+      {data.eyebrow && (
+        <Reveal>
+          <Eyebrow className="justify-center">{data.eyebrow}</Eyebrow>
+        </Reveal>
+      )}
 
-      <div className="container-editorial relative z-10 pb-24 pt-40">
-        <div className="max-w-[46rem]">
-          {data.eyebrow && (
-            <Reveal delay={0.05}>
-              {/* Eyebrow recomposé en clair : le composant Eyebrow porte le
-                  bleu du thème, illisible sur une photographie sombre. */}
-              <p className="flex items-center gap-4 font-sans text-[length:var(--text-label)] font-medium uppercase tracking-[0.18em] text-white/70">
-                <span
-                  aria-hidden="true"
-                  className="h-px w-8 shrink-0 bg-white/50"
+      {/* L'arche et le titre qui l'enlace. */}
+      <div className="relative mx-auto mt-11 max-w-[1560px]">
+        {/* Pas de Reveal autour de l'image : c'est le LCP — le rideau
+            (`ImageVeil`) ne joue que lorsqu'elle n'est pas la première
+            section. */}
+        <BlockImage
+          media={image}
+          instant={first}
+          priority={first}
+          sizes="(max-width: 640px) 80vw, 44vw"
+          className="mx-auto aspect-[3/4.2] w-[min(300px,80vw)] rounded-arch sm:w-[min(360px,60vw)] lg:w-[min(360px,44vw)]"
+        />
+
+        {lines.length > 0 && (
+          <h1 className="pointer-events-none absolute inset-0 grid content-center justify-items-center font-serif text-[clamp(3.1rem,9vw,9.4rem)] font-light leading-[1.02] text-ink">
+            {lines.map((line, i) => {
+              const { text, italic } = splitLine(line)
+              return (
+                <SplitChars
+                  key={i}
+                  text={text}
+                  italic={italic}
+                  delay={0.35 + i * 0.18}
+                  className={
+                    i % 2 === 0
+                      ? '-translate-x-[5vw] lg:-translate-x-[7vw]'
+                      : 'translate-x-[4vw] lg:translate-x-[5vw]'
+                  }
                 />
-                <span>{data.eyebrow}</span>
-              </p>
-            </Reveal>
-          )}
+              )
+            })}
+          </h1>
+        )}
 
-          {lines.length > 0 && (
-            <SplitText
-              as="h1"
-              lines={lines}
-              delay={0.12}
-              className="mt-8 text-[length:var(--text-display)] leading-[1.05] text-white"
-              emphasis
-            />
-          )}
-
-          {data.intro && (
-            <Reveal delay={0.35}>
-              <p className="mt-8 max-w-[36rem] text-[length:var(--text-lead)] leading-[1.7] text-white/85">
-                {data.intro}
-              </p>
-            </Reveal>
-          )}
-
-          {(data.primaryLabel || data.secondaryLabel) && (
-            <Reveal delay={0.45}>
-              <div className="mt-12 flex flex-wrap items-center gap-4">
-                {data.primaryLabel && (
-                  <ActionLink href={data.primaryHref} variant="primary">
-                    {data.primaryLabel}
-                  </ActionLink>
-                )}
-                {data.secondaryLabel && (
-                  <ActionLink
-                    href={data.secondaryHref}
-                    variant="ghost"
-                    className="text-white/80 hover:text-white"
-                  >
-                    {data.secondaryLabel}
-                  </ActionLink>
-                )}
-              </div>
-            </Reveal>
-          )}
-        </div>
+        <CircleText
+          text={ringText(ctx.settings)}
+          center="✳"
+          className="absolute -bottom-2 right-[max(10vw,calc(50%-330px))] hidden h-auto w-[min(120px,13vw)] sm:block"
+        />
       </div>
+
+      {data.intro && (
+        <Reveal delay={0.5}>
+          <p className="mx-auto mt-12 max-w-[46ch] text-[15px] leading-[1.9] text-ink-soft">
+            {data.intro}
+          </p>
+        </Reveal>
+      )}
+
+      {(data.primaryLabel || data.secondaryLabel) && (
+        <Reveal delay={0.62}>
+          <div className="mt-9 flex flex-wrap items-center justify-center gap-3.5">
+            {data.primaryLabel && (
+              <ActionLink href={data.primaryHref} variant="primary">
+                {data.primaryLabel}
+              </ActionLink>
+            )}
+            {data.secondaryLabel && (
+              <ActionLink
+                href={data.secondaryHref}
+                variant="ghost"
+                withArrow={false}
+              >
+                {data.secondaryLabel}
+              </ActionLink>
+            )}
+          </div>
+        </Reveal>
+      )}
     </div>
   )
 }
@@ -114,8 +151,9 @@ function HeroPleinEcran({
 export const heroPleinEcranBlock: BlockDefinition<
   typeof heroPleinEcranSchema
 > = {
-  label: 'Hero — Plein écran',
-  description: 'Image immersive pleine hauteur, texte clair calé en bas.',
+  label: 'Hero — L’arche',
+  description:
+    'L’ouverture signature : arche centrale, grand titre qui l’enlace, texte circulaire.',
   group: 'Sections',
   schema: heroPleinEcranSchema,
   suggestedAnchor: 'accueil',
@@ -123,7 +161,7 @@ export const heroPleinEcranBlock: BlockDefinition<
   bleed: true,
   fields: [
     field.text('eyebrow', 'Label supérieur', {
-      placeholder: 'THÉRAPIE · ACCOMPAGNEMENT · ÉCOUTE',
+      placeholder: 'Thérapie — Cesson-Sévigné & visio',
     }),
     field.list(
       'titleLines',
@@ -131,28 +169,25 @@ export const heroPleinEcranBlock: BlockDefinition<
       [field.text('text', 'Ligne', { full: true })],
       {
         addLabel: 'Ajouter une ligne',
-        help: 'Entourez un mot d’astérisques pour le mettre en italique : *mot*.',
+        help: 'Deux lignes courtes, idéalement. Entourez une ligne d’astérisques pour l’italique : *son souffle*.',
       },
     ),
-    field.textarea('intro', 'Texte d’introduction'),
-    field.text('primaryLabel', 'CTA principal — libellé'),
-    field.text('primaryHref', 'CTA principal — lien'),
-    field.text('secondaryLabel', 'CTA secondaire — libellé'),
-    field.text('secondaryHref', 'CTA secondaire — lien'),
-    field.media('mediaId', 'Image de fond'),
+    field.textarea('intro', 'Phrase d’introduction'),
+    field.text('primaryLabel', 'Bouton principal — libellé'),
+    field.text('primaryHref', 'Bouton principal — lien'),
+    field.text('secondaryLabel', 'Bouton discret — libellé'),
+    field.text('secondaryHref', 'Bouton discret — lien'),
+    field.media('mediaId', 'Image de l’arche'),
   ],
   defaults: {
-    eyebrow: 'THÉRAPIE · ACCOMPAGNEMENT · ÉCOUTE',
-    titleLines: [
-      { text: 'Un espace pour' },
-      { text: 'déposer ce qui *pèse*.' },
-    ],
+    eyebrow: 'Thérapie — Cesson-Sévigné & visio',
+    titleLines: [{ text: 'Retrouver' }, { text: '*son souffle.*' }],
     intro:
-      'Un accompagnement à votre rythme, dans un cadre calme et confidentiel, pour retrouver de l’air là où tout semblait serré.',
+      'Un espace stable et confidentiel pour déposer ce qui pèse — et avancer à votre rythme.',
     primaryLabel: 'Prendre rendez-vous',
     primaryHref: '#contact',
     secondaryLabel: 'Découvrir l’approche',
-    secondaryHref: '#a-propos',
+    secondaryHref: '#approche',
     mediaId: null,
   },
   Component: HeroPleinEcran,
@@ -160,9 +195,9 @@ export const heroPleinEcranBlock: BlockDefinition<
 
 /* ════════════════════════════════════════════════════════════════════
    Hero — Éditorial
-   Composition magazine : un très grand titre qui traverse la page,
-   puis une grille asymétrique — introduction à gauche, portrait
-   décalé qui remonte sous le titre à droite.
+   Composition magazine : très grand titre qui traverse la page en
+   lignes masquées, arche portrait décalée à droite qui remonte
+   dessous, introduction et mention le long d'un filet.
    ════════════════════════════════════════════════════════════════════ */
 
 export const heroEditorialSchema = z.object({
@@ -179,33 +214,36 @@ function HeroEditorial({
 }: BlockProps<z.output<typeof heroEditorialSchema>>) {
   const image = ctx.resolveMedia(data.mediaId)
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
+  const first = ctx.index === 0
 
   return (
-    <div className="flex min-h-[90svh] flex-col justify-center px-[var(--spacing-gutter)] pb-24 pt-40">
+    <div className="relative flex min-h-[88svh] flex-col justify-center px-[var(--spacing-gutter)] pb-24 pt-36 lg:pt-44">
+      <SectionIndex index={ctx.index} label="ouverture" />
+
       <div className="mx-auto w-full max-w-[1560px]">
         {data.eyebrow && (
-          <Reveal delay={0.05}>
+          <Reveal>
             <Eyebrow>{data.eyebrow}</Eyebrow>
           </Reveal>
         )}
 
-        {/* Le titre traverse : ~10 colonnes sur 12, l'image remontera
-            dessous. C'est ce chevauchement qui fait la page magazine. */}
         {lines.length > 0 && (
-          <SplitText
-            as="h1"
-            lines={lines}
-            delay={0.12}
-            className="mt-10 text-[length:var(--text-display)] leading-[1.02] lg:max-w-[83%]"
-            emphasis
-          />
+          <h1 className="mt-9 font-serif text-[clamp(2.8rem,7vw,7.4rem)] font-light leading-[1.04] text-ink lg:max-w-[84%]">
+            <MaskLines delay={0.15}>
+              {lines.map((line, i) => (
+                <span key={i}>
+                  <Emphasis text={line} />
+                </span>
+              ))}
+            </MaskLines>
+          </h1>
         )}
 
-        <div className="mt-16 grid grid-cols-1 gap-16 lg:mt-20 lg:grid-cols-12 lg:gap-x-12">
+        <div className="mt-14 grid grid-cols-1 gap-14 lg:mt-16 lg:grid-cols-12 lg:gap-x-12">
           <div className="lg:col-span-5">
             {data.intro && (
               <Reveal delay={0.3}>
-                <p className="max-w-[34rem] text-[length:var(--text-lead)] leading-[1.7] text-ink-soft">
+                <p className="max-w-[34rem] text-[length:var(--text-lead)] leading-[1.75] text-ink-soft">
                   {data.intro}
                 </p>
               </Reveal>
@@ -213,12 +251,12 @@ function HeroEditorial({
 
             {data.note && (
               <Reveal delay={0.4}>
-                <div className="mt-12 flex items-start gap-5">
+                <div className="mt-11 flex items-start gap-5">
                   <span
                     aria-hidden="true"
                     className="mt-1 h-16 w-px shrink-0 bg-line-strong"
                   />
-                  <p className="max-w-[24rem] text-[0.85rem] leading-[1.7] text-stone">
+                  <p className="max-w-[24rem] text-[0.85rem] leading-[1.75] text-stone">
                     {data.note}
                   </p>
                 </div>
@@ -226,14 +264,19 @@ function HeroEditorial({
             )}
           </div>
 
-          {/* Portrait décalé — remonte légèrement sous le titre. */}
-          <div className="lg:col-span-6 lg:col-start-7 lg:-mt-16">
-            <ImageReveal
+          {/* Arche portrait, remontée sous le titre. */}
+          <div className="relative lg:col-span-5 lg:col-start-8 lg:-mt-24">
+            <BlockImage
               media={image}
-              instant
-              priority
-              sizes="(max-width: 1024px) 100vw, 44vw"
-              className="aspect-3/4 w-full"
+              instant={first}
+              priority={first}
+              sizes="(max-width: 1024px) 88vw, 38vw"
+              className="mx-auto aspect-[3/4] w-full max-w-[26rem] rounded-arch lg:mx-0"
+            />
+            <CircleText
+              text={ringText(ctx.settings)}
+              center="✳"
+              className="absolute -bottom-6 -left-6 hidden h-auto w-[110px] lg:block"
             />
           </div>
         </div>
@@ -246,7 +289,7 @@ export const heroEditorialBlock: BlockDefinition<typeof heroEditorialSchema> =
   {
     label: 'Hero — Éditorial',
     description:
-      'Grand titre magazine qui traverse la page, portrait décalé à droite.',
+      'Grand titre magazine qui traverse la page, arche portrait décalée à droite.',
     group: 'Sections',
     schema: heroEditorialSchema,
     suggestedAnchor: 'accueil',
@@ -265,19 +308,19 @@ export const heroEditorialBlock: BlockDefinition<typeof heroEditorialSchema> =
       ),
       field.textarea('intro', 'Texte d’introduction'),
       field.textarea('note', 'Mention descriptive', {
-        help: 'Courte précision affichée sous l’introduction, le long du filet.',
+        help: 'Courte précision affichée le long du filet, sous l’introduction.',
       }),
       field.media('mediaId', 'Portrait'),
     ],
     defaults: {
-      eyebrow: 'CABINET DE THÉRAPIE',
+      eyebrow: 'Cabinet de thérapie',
       titleLines: [
         { text: 'Avancer vers un' },
         { text: 'équilibre *durable*.' },
       ],
       intro:
-        'Chaque parcours commence par une écoute attentive. Nous prenons le temps de comprendre ce qui vous amène, avant de tracer ensemble un chemin qui vous ressemble.',
-      note: 'Consultations au cabinet ou à distance, sur rendez-vous uniquement.',
+        'Chaque chemin commence par une écoute. Nous prenons le temps de comprendre ce qui vous amène, avant d’avancer — ensemble, et à votre rythme.',
+      note: 'Consultations au cabinet de Cesson-Sévigné ou en visio, sur rendez-vous uniquement.',
       mediaId: null,
     },
     Component: HeroEditorial,
@@ -285,8 +328,8 @@ export const heroEditorialBlock: BlockDefinition<typeof heroEditorialSchema> =
 
 /* ════════════════════════════════════════════════════════════════════
    Hero — Minimal
-   Typographie seule, centrée dans une immense respiration. Aucun
-   décor : le vide et le serif portent tout.
+   Typographie seule dans une immense respiration : le serif monte
+   lettre à lettre, un filet vertical descend, rien d'autre.
    ════════════════════════════════════════════════════════════════════ */
 
 export const heroMinimalSchema = z.object({
@@ -297,48 +340,59 @@ export const heroMinimalSchema = z.object({
   linkHref: z.string().default('#contact'),
 })
 
-function HeroMinimal({ data }: BlockProps<z.output<typeof heroMinimalSchema>>) {
+function HeroMinimal({
+  data,
+  ctx,
+}: BlockProps<z.output<typeof heroMinimalSchema>>) {
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
 
   return (
-    <div className="flex min-h-[85svh] flex-col items-center justify-center px-[var(--spacing-gutter)] py-32 text-center">
+    <div className="relative flex min-h-[85svh] flex-col items-center justify-center px-[var(--spacing-gutter)] py-32 text-center">
+      <SectionIndex index={ctx.index} label="ouverture" />
+
       {data.eyebrow && (
-        <Reveal delay={0.05}>
+        <Reveal>
           <Eyebrow className="justify-center">{data.eyebrow}</Eyebrow>
         </Reveal>
       )}
 
       {lines.length > 0 && (
-        <SplitText
-          as="h1"
-          lines={lines}
-          delay={0.12}
-          className="mt-12 max-w-[60rem] text-[length:var(--text-display)] leading-[1.04]"
-          emphasis
-        />
+        <h1 className="mt-11 max-w-[62rem] font-serif text-[clamp(2.9rem,7.5vw,7.8rem)] font-light leading-[1.05] text-ink">
+          {lines.map((line, i) => {
+            const { text, italic } = splitLine(line)
+            return (
+              <SplitChars
+                key={i}
+                text={text}
+                italic={italic}
+                delay={0.2 + i * 0.16}
+              />
+            )
+          })}
+        </h1>
       )}
 
       {data.intro && (
-        <Reveal delay={0.35}>
-          <p className="mx-auto mt-10 max-w-[36rem] text-[length:var(--text-lead)] leading-[1.7] text-ink-soft">
+        <Reveal delay={0.5}>
+          <p className="mx-auto mt-10 max-w-[44ch] text-[15px] leading-[1.9] text-ink-soft">
             {data.intro}
           </p>
         </Reveal>
       )}
 
       {data.linkLabel && (
-        <Reveal delay={0.45}>
-          <div className="mt-12">
-            <ActionLink href={data.linkHref} variant="ghost">
+        <Reveal delay={0.6}>
+          <div className="mt-11">
+            <ActionLink href={data.linkHref} variant="primary">
               {data.linkLabel}
             </ActionLink>
           </div>
         </Reveal>
       )}
 
-      {/* Filet vertical de 6rem — rappel du trait du logo. */}
-      <Reveal delay={0.5}>
-        <span aria-hidden="true" className="mt-20 block h-24 w-px bg-line" />
+      <Reveal delay={0.7}>
+        <span aria-hidden="true" className="mt-16 block h-20 w-px bg-line-strong" />
+        <Aster className="mt-5 block text-[18px] text-blue-deep" />
       </Reveal>
     </div>
   )
@@ -360,23 +414,147 @@ export const heroMinimalBlock: BlockDefinition<typeof heroMinimalSchema> = {
       [field.text('text', 'Ligne', { full: true })],
       {
         addLabel: 'Ajouter une ligne',
-        help: 'Astérisques pour l’italique : *mot*.',
+        help: 'Entourez une ligne d’astérisques pour l’italique : *s’apaiser*.',
       },
     ),
     field.textarea('intro', 'Ligne d’introduction'),
-    field.text('linkLabel', 'Lien — libellé'),
-    field.text('linkHref', 'Lien — destination'),
+    field.text('linkLabel', 'Bouton — libellé'),
+    field.text('linkHref', 'Bouton — lien'),
   ],
   defaults: {
-    eyebrow: 'THÉRAPIE · ÉCOUTE',
-    titleLines: [
-      { text: 'Ce qui se dépose' },
-      { text: 'peut enfin *s’apaiser*.' },
-    ],
+    eyebrow: 'Thérapie · Écoute',
+    titleLines: [{ text: 'Ce qui se dépose' }, { text: '*peut s’apaiser.*' }],
     intro:
       'Un espace de parole confidentiel, pour traverser ce qui pèse et retrouver un souffle.',
     linkLabel: 'Prendre rendez-vous',
     linkHref: '#contact',
   },
   Component: HeroMinimal,
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Hero — Avec bandeau
+   Ouverture typographique centrée, refermée par le bandeau défilant
+   de la maquette (proposition B) : les mots-souffle en serif italique,
+   séparés d'astérisques, sur fond sable.
+   ════════════════════════════════════════════════════════════════════ */
+
+export const heroBandeauSchema = z.object({
+  eyebrow: z.string().default(''),
+  titleLines: z.array(z.object({ text: z.string() })).default([]),
+  intro: z.string().default(''),
+  primaryLabel: z.string().default(''),
+  primaryHref: z.string().default('#contact'),
+  marqueeWords: z.string().default(''),
+})
+
+function HeroBandeau({
+  data,
+  ctx,
+}: BlockProps<z.output<typeof heroBandeauSchema>>) {
+  const lines = data.titleLines.map((l) => l.text).filter(Boolean)
+  const words = data.marqueeWords
+    .split(/[,;·]/)
+    .map((w) => w.trim())
+    .filter(Boolean)
+
+  return (
+    <div className="relative">
+      <SectionIndex index={ctx.index} label="ouverture" />
+
+      <div className="flex min-h-[74svh] flex-col items-center justify-center px-[var(--spacing-gutter)] pb-20 pt-36 text-center lg:pt-44">
+        {data.eyebrow && (
+          <Reveal>
+            <Eyebrow className="justify-center">{data.eyebrow}</Eyebrow>
+          </Reveal>
+        )}
+
+        {lines.length > 0 && (
+          <h1 className="mt-10 max-w-[58rem] font-serif text-[clamp(2.8rem,6.8vw,7rem)] font-light leading-[1.06] text-ink">
+            <MaskLines delay={0.15}>
+              {lines.map((line, i) => (
+                <span key={i}>
+                  <Emphasis text={line} />
+                </span>
+              ))}
+            </MaskLines>
+          </h1>
+        )}
+
+        {data.intro && (
+          <Reveal delay={0.35}>
+            <p className="mx-auto mt-10 max-w-[46ch] text-[15px] leading-[1.9] text-ink-soft">
+              {data.intro}
+            </p>
+          </Reveal>
+        )}
+
+        {data.primaryLabel && (
+          <Reveal delay={0.45}>
+            <div className="mt-10">
+              <ActionLink href={data.primaryHref} variant="primary">
+                {data.primaryLabel}
+              </ActionLink>
+            </div>
+          </Reveal>
+        )}
+      </div>
+
+      {words.length > 0 && (
+        <div className="bg-sand py-7">
+          <Marquee duration={38}>
+            {words.map((word, i) => (
+              <span
+                key={i}
+                className="flex items-center font-serif text-[clamp(1.6rem,3vw,2.9rem)] font-light italic leading-none text-ink-soft"
+              >
+                <span className="px-[1.25vw]">{word}</span>
+                <Aster className="text-[0.55em] not-italic text-blue-deep" />
+              </span>
+            ))}
+          </Marquee>
+        </div>
+      )}
+    </div>
+  )
+}
+
+export const heroBandeauBlock: BlockDefinition<typeof heroBandeauSchema> = {
+  label: 'Hero — Avec bandeau',
+  description:
+    'Titre centré, refermé par le bandeau de mots qui défilent sur fond sable.',
+  group: 'Sections',
+  schema: heroBandeauSchema,
+  suggestedAnchor: 'accueil',
+  navigable: true,
+  bleed: true,
+  fields: [
+    field.text('eyebrow', 'Label supérieur'),
+    field.list(
+      'titleLines',
+      'Titre — une entrée par ligne',
+      [field.text('text', 'Ligne', { full: true })],
+      {
+        addLabel: 'Ajouter une ligne',
+        help: 'Astérisques pour l’italique : *mot*.',
+      },
+    ),
+    field.textarea('intro', 'Phrase d’introduction'),
+    field.text('primaryLabel', 'Bouton — libellé'),
+    field.text('primaryHref', 'Bouton — lien'),
+    field.text('marqueeWords', 'Mots du bandeau', {
+      full: true,
+      help: 'Séparés par des virgules — ils défilent en boucle.',
+    }),
+  ],
+  defaults: {
+    eyebrow: 'Thérapie — Cesson-Sévigné & visio',
+    titleLines: [{ text: 'Un espace pour' }, { text: 'déposer ce qui *pèse*.' }],
+    intro:
+      'Un accompagnement à votre rythme, dans un cadre calme et confidentiel.',
+    primaryLabel: 'Prendre rendez-vous',
+    primaryHref: '#contact',
+    marqueeWords: 'respirer, déposer, traverser, s’apaiser',
+  },
+  Component: HeroBandeau,
 }

@@ -9,14 +9,12 @@ export default async function FaqAdminPage() {
   const items = await getAllFaq()
 
   return (
-    <>
+    <AdminContent width="wide">
       <PageHeader
-        title="FAQ"
-        description="Questions fréquentes affichées dans l’accordéon du site."
+        title="Questions fréquentes"
+        description="Les questions que vos visiteurs se posent souvent, et vos réponses — affichées sur le site."
       />
-      <AdminContent>
-        <FaqManager items={items} />
-      </AdminContent>
-    </>
+      <FaqManager items={items} />
+    </AdminContent>
   )
 }

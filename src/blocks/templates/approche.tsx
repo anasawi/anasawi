@@ -2,15 +2,35 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { MaskLines, Reveal } from '@/components/site/anim'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
-import { Reveal } from '@/components/motion/Reveal'
+import { SectionIndex } from '@/components/site/ornaments'
+
+/*
+ * L'approche — principes et déroulés.
+ */
+
+const NUMBER_WORDS = [
+  'un',
+  'deux',
+  'trois',
+  'quatre',
+  'cinq',
+  'six',
+  'sept',
+  'huit',
+] as const
+
+function numberWord(i: number): string {
+  return NUMBER_WORDS[i] ?? String(i + 1)
+}
 
 /* ════════════════════════════════════════════════════════════════════
    Approche — Principes
-   Trois colonnes ouvertes par un filet supérieur appuyé et un petit
-   numéro bleu. Une grille de revue, pas des cartes.
+   Trois colonnes ouvertes par un filet appuyé et un index serif
+   italique en toutes lettres. Une grille de revue, pas des cartes.
    ════════════════════════════════════════════════════════════════════ */
 
 export const approcheColonnesSchema = z.object({
@@ -24,9 +44,12 @@ export const approcheColonnesSchema = z.object({
 
 function ApprocheColonnes({
   data,
+  ctx,
 }: BlockProps<z.output<typeof approcheColonnesSchema>>) {
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="approche" className="-top-14" />
+
       <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
         <div className="lg:col-span-5">
           {data.eyebrow && (
@@ -35,17 +58,19 @@ function ApprocheColonnes({
             </Reveal>
           )}
           {data.title && (
-            <Reveal delay={0.06}>
-              <h2 className="mt-8 text-[length:var(--text-h2)]">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
+            <h2 className="mt-7 text-[length:var(--text-h2)]">
+              <MaskLines delay={0.08}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
         </div>
 
         {data.intro && (
           <div className="lg:col-span-5 lg:col-start-8 lg:pt-4">
-            <Reveal delay={0.12}>
+            <Reveal delay={0.14}>
               <Prose text={data.intro} size="lead" />
             </Reveal>
           </div>
@@ -53,20 +78,20 @@ function ApprocheColonnes({
       </div>
 
       {data.items.length > 0 && (
-        <div className="mt-20 grid grid-cols-1 gap-x-12 gap-y-14 lg:grid-cols-3">
+        <div className="mt-16 grid grid-cols-1 gap-x-12 gap-y-14 lg:mt-20 lg:grid-cols-3">
           {data.items.map((item, i) => (
-            <Reveal key={i} delay={Math.min(0.1 + i * 0.07, 0.45)}>
+            <Reveal key={i} delay={Math.min(0.1 + i * 0.08, 0.45)}>
               <div className="h-full border-t border-line-strong pt-8">
-                <span className="text-[0.8rem] font-medium tracking-[0.1em] text-blue-deep">
-                  {String(i + 1).padStart(2, '0')} ·
+                <span className="font-serif text-[1.2rem] font-light italic text-blue-deep">
+                  {numberWord(i)}
                 </span>
                 {item.title && (
-                  <h3 className="mt-4 text-[length:var(--text-h3)]">
+                  <h3 className="mt-3 text-[length:var(--text-h3)]">
                     {item.title}
                   </h3>
                 )}
                 {item.text && (
-                  <p className="mt-4 max-w-[42ch] text-[0.94rem] leading-[1.78] text-ink-soft">
+                  <p className="mt-4 max-w-[42ch] text-[0.94rem] leading-[1.8] text-ink-soft">
                     {item.text}
                   </p>
                 )}
@@ -83,7 +108,8 @@ export const approcheColonnesBlock: BlockDefinition<
   typeof approcheColonnesSchema
 > = {
   label: 'Approche — Principes',
-  description: 'Trois principes en colonnes, filets supérieurs appuyés.',
+  description:
+    'Trois principes en colonnes, filets appuyés, index en toutes lettres.',
   group: 'Sections',
   schema: approcheColonnesSchema,
   suggestedAnchor: 'approche',
@@ -100,7 +126,7 @@ export const approcheColonnesBlock: BlockDefinition<
     ),
   ],
   defaults: {
-    eyebrow: 'L’APPROCHE',
+    eyebrow: 'L’approche',
     title: 'Trois principes, un seul *cap*.',
     intro: '',
     items: [
@@ -124,8 +150,8 @@ export const approcheColonnesBlock: BlockDefinition<
 /* ════════════════════════════════════════════════════════════════════
    Approche — Processus vertical
    Une fine ligne centrale, des étapes alternées de part et d'autre,
-   chacune ouverte par un grand numéro serif italique. En mobile :
-   une pile simple le long d'un bord gauche.
+   chacune ouverte par son index serif italique. En mobile : une pile
+   simple le long d'un bord gauche.
    ════════════════════════════════════════════════════════════════════ */
 
 export const processusVerticalSchema = z.object({
@@ -138,9 +164,12 @@ export const processusVerticalSchema = z.object({
 
 function ProcessusVertical({
   data,
+  ctx,
 }: BlockProps<z.output<typeof processusVerticalSchema>>) {
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="le chemin" className="-top-14" />
+
       <div className="mx-auto max-w-[44rem] text-center">
         {data.eyebrow && (
           <Reveal>
@@ -148,16 +177,18 @@ function ProcessusVertical({
           </Reveal>
         )}
         {data.title && (
-          <Reveal delay={0.06}>
-            <h2 className="mt-8 text-[length:var(--text-h2)]">
-              <Emphasis text={data.title} />
-            </h2>
-          </Reveal>
+          <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <MaskLines delay={0.08}>
+              <span>
+                <Emphasis text={data.title} />
+              </span>
+            </MaskLines>
+          </h2>
         )}
       </div>
 
       {data.steps.length > 0 && (
-        <div className="relative mt-20 lg:mt-28">
+        <div className="relative mt-16 lg:mt-24">
           {/* Ligne centrale — invisible en mobile, où la pile suffit. */}
           <div
             aria-hidden="true"
@@ -178,17 +209,17 @@ function ProcessusVertical({
                           : 'lg:col-start-2 lg:pl-20'
                       }
                     >
-                      <span className="font-serif text-[2.6rem] italic leading-none text-blue-deep">
-                        {String(i + 1).padStart(2, '0')}
+                      <span className="font-serif text-[2.2rem] font-light italic leading-none text-blue-deep">
+                        {numberWord(i)}
                       </span>
                       {step.title && (
-                        <h3 className="mt-5 text-[length:var(--text-h3)]">
+                        <h3 className="mt-4 text-[length:var(--text-h3)]">
                           {step.title}
                         </h3>
                       )}
                       {step.text && (
                         <p
-                          className={`mt-3 max-w-[44ch] text-[0.94rem] leading-[1.78] text-ink-soft ${
+                          className={`mt-3 max-w-[44ch] text-[0.94rem] leading-[1.8] text-ink-soft ${
                             left ? 'lg:ml-auto' : ''
                           }`}
                         >
@@ -227,7 +258,7 @@ export const processusVerticalBlock: BlockDefinition<
     ),
   ],
   defaults: {
-    eyebrow: 'COMMENT ÇA SE PASSE',
+    eyebrow: 'Comment ça se passe',
     title: 'Le déroulé d’un *accompagnement*.',
     steps: [
       {

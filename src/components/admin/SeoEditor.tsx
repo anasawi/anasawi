@@ -57,17 +57,39 @@ export function SeoEditor({
         return
       }
 
-      toast.success('SEO enregistré.')
+      toast.success('Référencement enregistré.')
       router.refresh()
     })
   }
 
   return (
-    <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px]">
-      <div className="space-y-5">
+    <div className="space-y-[22px]">
+      {/* Aperçu du résultat Google — approximatif mais suffisant pour
+          juger d'une troncature avant publication. Il suit la saisie. */}
+      <Card title="Aperçu sur Google">
+        <div className="rounded-lg border border-border bg-ivory/60 px-4 py-3.5">
+          <p className="truncate text-[0.72rem] text-[#4d5156]">{url}</p>
+          <p className="mt-1 line-clamp-2 text-[1.05rem] leading-snug text-[#1a0dab]">
+            {previewTitle}
+          </p>
+          <p className="mt-1 line-clamp-3 text-[0.8rem] leading-relaxed text-[#4d5156]">
+            {description ||
+              'Renseignez une description ci-dessous — c’est elle que Google affiche sous le titre.'}
+          </p>
+        </div>
+
+        {(!robotsIndex || !robotsFollow) && (
+          <p className="rounded-md bg-[#fbf6e9] px-3.5 py-2.5 text-[12px] leading-relaxed text-[#6b551f]">
+            Les moteurs de recherche sont bridés sur cette page : elle
+            n’apparaîtra normalement pas dans les résultats.
+          </p>
+        )}
+      </Card>
+
+      <Card title="Titre et description">
         <div>
           <div className="mb-2 flex items-baseline justify-between">
-            <Label htmlFor="seo-title">Titre SEO</Label>
+            <Label htmlFor="seo-title">Titre pour Google</Label>
             <Counter value={title.length} max={TITLE_MAX} />
           </div>
           <Input
@@ -80,7 +102,7 @@ export function SeoEditor({
 
         <div>
           <div className="mb-2 flex items-baseline justify-between">
-            <Label htmlFor="seo-description">Meta description</Label>
+            <Label htmlFor="seo-description">Description pour Google</Label>
             <Counter value={description.length} max={DESCRIPTION_MAX} />
           </div>
           <Textarea
@@ -90,27 +112,21 @@ export function SeoEditor({
             onChange={(e) => setDescription(e.target.value)}
           />
         </div>
+      </Card>
 
-        <div>
-          <Label htmlFor="seo-canonical" className="mb-2 block">
-            URL canonique
-          </Label>
-          <Input
-            id="seo-canonical"
-            value={canonical}
-            placeholder={url}
-            onChange={(e) => setCanonical(e.target.value)}
-          />
-          <p className="mt-1.5 text-xs text-muted-foreground">
-            Vide = {url}. À ne renseigner que si cette page duplique un contenu
-            existant ailleurs.
-          </p>
-        </div>
+      <Card title="Partage et visibilité">
+        <MediaPicker
+          label="Image de partage"
+          value={ogMediaId}
+          onChange={setOgMediaId}
+          library={library}
+          className="max-w-xs"
+        />
 
         <div className="grid gap-3 sm:grid-cols-2">
           <div className="flex items-center justify-between rounded-md border border-border px-3.5 py-2.5">
             <Label htmlFor="seo-index" className="cursor-pointer">
-              Indexer (index)
+              Autoriser les moteurs de recherche
             </Label>
             <Switch
               id="seo-index"
@@ -121,7 +137,7 @@ export function SeoEditor({
 
           <div className="flex items-center justify-between rounded-md border border-border px-3.5 py-2.5">
             <Label htmlFor="seo-follow" className="cursor-pointer">
-              Suivre les liens (follow)
+              Autoriser le suivi des liens
             </Label>
             <Switch
               id="seo-follow"
@@ -130,46 +146,51 @@ export function SeoEditor({
             />
           </div>
         </div>
+      </Card>
 
-        <MediaPicker
-          label="Image de partage (Open Graph)"
-          value={ogMediaId}
-          onChange={setOgMediaId}
-          library={library}
-          className="max-w-xs"
-        />
-
-        <Button onClick={save} disabled={pending}>
-          {pending ? 'Enregistrement…' : 'Enregistrer'}
-        </Button>
-      </div>
-
-      {/* Aperçu du snippet Google — approximatif mais suffisant pour
-          juger d'une troncature avant publication. */}
-      <aside className="h-fit rounded-lg border border-border p-4">
-        <p className="mb-3 text-xs font-medium uppercase tracking-[0.12em] text-muted-foreground">
-          Aperçu Google
-        </p>
-        <div className="rounded-md bg-white p-3">
-          <p className="truncate text-xs text-[#4d5156]">{url}</p>
-          <p className="mt-1 line-clamp-2 text-[1.05rem] leading-snug text-[#1a0dab]">
-            {previewTitle}
-          </p>
-          <p className="mt-1 line-clamp-3 text-[0.82rem] leading-relaxed text-[#4d5156]">
-            {description || 'Aucune description renseignée.'}
+      <Card title="Réglage avancé">
+        <div>
+          <Label htmlFor="seo-canonical" className="mb-2 block">
+            Adresse de référence
+          </Label>
+          <Input
+            id="seo-canonical"
+            value={canonical}
+            placeholder={url}
+            onChange={(e) => setCanonical(e.target.value)}
+          />
+          <p className="mt-1.5 text-xs text-muted-foreground">
+            À laisser vide dans la plupart des cas ({url}). Utile seulement si
+            ce contenu existe déjà à une autre adresse.
           </p>
         </div>
+      </Card>
 
-        {(!robotsIndex || !robotsFollow) && (
-          <p className="mt-3 rounded-md bg-[#fbf6e9] px-3 py-2 text-xs leading-relaxed text-[#6b551f]">
-            Cette page est en {!robotsIndex ? 'noindex' : ''}
-            {!robotsIndex && !robotsFollow ? ', ' : ''}
-            {!robotsFollow ? 'nofollow' : ''} — elle n’apparaîtra pas
-            normalement dans les résultats.
-          </p>
-        )}
-      </aside>
+      <Button
+        className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+        onClick={save}
+        disabled={pending}
+      >
+        {pending ? 'Enregistrement…' : 'Enregistrer'}
+      </Button>
     </div>
+  )
+}
+
+function Card({
+  title,
+  children,
+}: {
+  title: string
+  children: React.ReactNode
+}) {
+  return (
+    <section className="rounded-xl border border-border bg-white px-[22px] py-5">
+      <h4 className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+        {title}
+      </h4>
+      <div className="mt-4 space-y-5">{children}</div>
+    </section>
   )
 }
 

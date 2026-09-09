@@ -6,9 +6,9 @@ import type { BlockDefinition, BlockProps } from '../types'
 import { ActionLink } from '@/components/site/ActionLink'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { ImageReveal } from '@/components/motion/ImageReveal'
+import { BlockImage } from '@/components/site/BlockImage'
 import { Prose } from '@/components/site/Prose'
-import { Reveal } from '@/components/motion/Reveal'
+import { Reveal } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
 
 /**
@@ -188,10 +188,10 @@ function ImageBlock({ data, ctx }: BlockProps<z.output<typeof imageSchema>>) {
 
   return (
     <figure>
-      <ImageReveal
+      <BlockImage
         media={media}
         sizes="(max-width: 1024px) 100vw, 50vw"
-        className={cn('w-full', ratios[data.ratio], data.rounded && 'rounded-[3px]')}
+        className={cn('w-full', ratios[data.ratio], data.rounded && 'rounded-[18px]')}
       />
       {data.caption && <Caption>{data.caption}</Caption>}
     </figure>

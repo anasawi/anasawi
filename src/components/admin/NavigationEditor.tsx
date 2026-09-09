@@ -53,15 +53,16 @@ export function NavigationEditor({
   )
 
   return (
-    <div className="mx-auto max-w-2xl space-y-5 p-6">
-      <ul className="divide-y divide-border rounded-lg border border-border">
+    <div className="space-y-5">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
         {items.length === 0 && (
-          <li className="px-4 py-6 text-center text-[0.8rem] text-muted-foreground">
-            Aucune entrée — ajoutez des pages ou des ancres ci-dessous.
+          <li className="px-4 py-10 text-center text-[13px] text-muted-foreground">
+            Votre menu est vide pour l’instant — ajoutez des pages ou des
+            sections ci-dessous.
           </li>
         )}
         {items.map((item, i) => (
-          <li key={i} className="flex items-center gap-2 px-3 py-2.5">
+          <li key={i} className="flex items-center gap-2 px-4 py-3">
             <div className="flex shrink-0 flex-col">
               <button
                 type="button"
@@ -111,8 +112,8 @@ export function NavigationEditor({
       {/* Suggestions : pages publiées et ancres de l'accueil */}
       {remaining.length > 0 && (
         <div>
-          <p className="mb-2 text-[0.68rem] font-medium uppercase tracking-wider text-muted-foreground">
-            Ajouter
+          <p className="mb-2 text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+            Ajouter au menu
           </p>
           <div className="flex flex-wrap gap-1.5">
             {remaining.map((s) => (
@@ -146,6 +147,7 @@ export function NavigationEditor({
 
       <div className="flex items-center gap-3">
         <Button
+          className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
           disabled={pending || items.some((i) => !i.label.trim() || !i.href.trim())}
           onClick={() =>
             start(async () => {
@@ -162,8 +164,8 @@ export function NavigationEditor({
           {pending ? 'Enregistrement…' : 'Enregistrer le menu'}
         </Button>
         <p className="text-[0.72rem] text-muted-foreground">
-          Ancre nue (« contact »), chemin interne (« /approche », « /#contact »)
-          ou URL https.
+          Un lien peut mener vers une page du site, une section de l’accueil
+          (« contact », « /#contact ») ou une adresse https://…
         </p>
       </div>
     </div>

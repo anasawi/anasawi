@@ -9,14 +9,12 @@ export default async function SettingsPage() {
   const [settings, library] = await Promise.all([getSettings(), getAllMedia()])
 
   return (
-    <>
+    <AdminContent>
       <PageHeader
-        title="Paramètres"
-        description="Identité, coordonnées et valeurs SEO par défaut du site."
+        title="Coordonnées & horaires"
+        description="Tout ce que vos visiteurs doivent savoir pour vous joindre — et ce que Google affiche de vous."
       />
-      <AdminContent>
-        <SettingsForm settings={settings} library={library} />
-      </AdminContent>
-    </>
+      <SettingsForm settings={settings} library={library} />
+    </AdminContent>
   )
 }

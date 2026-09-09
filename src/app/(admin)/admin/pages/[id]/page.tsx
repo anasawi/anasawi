@@ -2,6 +2,7 @@ import { notFound } from 'next/navigation'
 
 import { TemplateEditor } from '@/components/admin/TemplateEditor'
 import {
+  getAdminPages,
   getAllFaq,
   getAllMedia,
   getAllServices,
@@ -23,14 +24,16 @@ export default async function PageBuilderPage({
 }) {
   const { id } = await params
 
-  const [page, media, services, faqItems, settings, saved] = await Promise.all([
-    getPageById(id),
-    getAllMedia(),
-    getAllServices(),
-    getAllFaq(),
-    getSettings(),
-    getSavedSections(),
-  ])
+  const [page, media, services, faqItems, settings, saved, allPages] =
+    await Promise.all([
+      getPageById(id),
+      getAllMedia(),
+      getAllServices(),
+      getAllFaq(),
+      getSettings(),
+      getSavedSections(),
+      getAdminPages(),
+    ])
 
   if (!page) notFound()
 
@@ -43,6 +46,12 @@ export default async function PageBuilderPage({
       initialSections={page.sections}
       data={{ services, faqItems, settings, media }}
       saved={saved}
+      pages={allPages.map((p) => ({
+        id: p.id,
+        title: p.title,
+        isHome: p.isHome,
+        published: p.status === 'published',
+      }))}
     />
   )
 }

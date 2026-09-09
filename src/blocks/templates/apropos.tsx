@@ -2,17 +2,22 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { CircleText, Counter, MaskLines, Reveal } from '@/components/site/anim'
+import { ActionLink } from '@/components/site/ActionLink'
+import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { ImageReveal } from '@/components/motion/ImageReveal'
 import { Prose } from '@/components/site/Prose'
-import { Reveal } from '@/components/motion/Reveal'
+import { SectionIndex } from '@/components/site/ornaments'
+
+/*
+ * Se présenter — les compositions « qui je suis » de la bibliothèque.
+ */
 
 /* ════════════════════════════════════════════════════════════════════
-   À propos — Portrait éditorial
-   Portrait haut à gauche, colonne de texte décalée vers le bas à
-   droite, signée en serif italique. Le décalage vertical crée la
-   tension éditoriale — pas d'ornement.
+   À propos — Portrait (proposition D de la planche)
+   Arche portrait à gauche avec badge du nom en pilule, titre serif en
+   lignes masquées à droite, rangée de chiffres qui se comptent.
    ════════════════════════════════════════════════════════════════════ */
 
 export const aproposPortraitSchema = z.object({
@@ -22,6 +27,17 @@ export const aproposPortraitSchema = z.object({
   body: z.string().default(''),
   signature: z.string().default(''),
   mediaId: z.string().uuid().nullable().default(null),
+  stats: z
+    .array(
+      z.object({
+        value: z.number().default(0),
+        suffix: z.string().default(''),
+        label: z.string().default(''),
+      }),
+    )
+    .default([]),
+  linkLabel: z.string().default(''),
+  linkHref: z.string().default('#contact'),
 })
 
 function AproposPortrait({
@@ -31,18 +47,28 @@ function AproposPortrait({
   const image = ctx.resolveMedia(data.mediaId)
 
   return (
-    <div className="container-editorial">
-      <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-x-24">
-        <div className="lg:col-span-5">
-          <ImageReveal
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="à propos" className="-top-14" />
+
+      <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-12 lg:gap-x-12">
+        {/* Arche portrait + badge du nom. */}
+        <div className="relative mx-auto w-full max-w-[24rem] lg:col-span-4 lg:col-start-2 lg:mx-0">
+          <BlockImage
             media={image}
-            sizes="(max-width: 1024px) 100vw, 38vw"
-            className="aspect-3/4 w-full"
+            sizes="(max-width: 1024px) 88vw, 32vw"
+            className="aspect-[3/4] w-full rounded-arch"
+            placeholder={1}
           />
+          {data.signature && (
+            <Reveal delay={0.3}>
+              <span className="absolute -right-4 bottom-9 z-[3] rounded-full border border-line-strong bg-ivory px-6 py-3 font-serif text-[17px] font-light italic text-blue-deep shadow-[0_14px_40px_rgba(43,47,44,0.08)] lg:-right-7">
+                {data.signature}
+              </span>
+            </Reveal>
+          )}
         </div>
 
-        {/* Colonne décalée vers le bas — la lecture descend avec elle. */}
-        <div className="lg:col-span-6 lg:col-start-7 lg:pt-28">
+        <div className="lg:col-span-6 lg:col-start-7">
           {data.eyebrow && (
             <Reveal>
               <Eyebrow>{data.eyebrow}</Eyebrow>
@@ -50,34 +76,58 @@ function AproposPortrait({
           )}
 
           {data.title && (
-            <Reveal delay={0.08}>
-              <h2 className="mt-8 text-[length:var(--text-h2)]">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
+            <h2 className="mt-6 max-w-[24ch] font-serif text-[clamp(1.75rem,2.8vw,2.9rem)] font-light leading-[1.3] text-ink">
+              <MaskLines delay={0.1}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
 
           {data.intro && (
-            <Reveal delay={0.14}>
-              <p className="mt-8 max-w-[50ch] text-[length:var(--text-lead)] leading-[1.65] text-ink">
+            <Reveal delay={0.16}>
+              <p className="mt-7 max-w-[50ch] text-[length:var(--text-lead)] leading-[1.7] text-ink">
                 {data.intro}
               </p>
             </Reveal>
           )}
 
           {data.body && (
-            <Reveal delay={0.2}>
-              <Prose text={data.body} className="mt-7 max-w-[56ch]" />
+            <Reveal delay={0.22}>
+              <Prose text={data.body} className="mt-6 max-w-[56ch]" />
             </Reveal>
           )}
 
-          {data.signature && (
+          {data.stats.length > 0 && (
             <Reveal delay={0.28}>
-              <div className="mt-12 border-t border-line pt-8">
-                <p className="font-serif text-[1.3rem] italic leading-snug text-ink">
-                  {data.signature}
-                </p>
+              <div className="mt-11 flex flex-wrap gap-x-12 gap-y-8">
+                {data.stats.map((stat, i) => (
+                  <div key={i}>
+                    <span className="font-serif text-[2.5rem] font-light italic leading-none text-blue-deep">
+                      <Counter value={stat.value} />
+                      {stat.suffix}
+                    </span>
+                    <p className="mt-2 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                      {stat.label}
+                    </p>
+                  </div>
+                ))}
               </div>
+            </Reveal>
+          )}
+
+          {data.linkLabel && (
+            <Reveal delay={0.36}>
+              <p className="mt-10">
+                <ActionLink
+                  href={data.linkHref}
+                  variant="ghost"
+                  className="border-0 px-0 py-0 hover:bg-transparent"
+                >
+                  {data.linkLabel}
+                </ActionLink>
+              </p>
             </Reveal>
           )}
         </div>
@@ -89,40 +139,60 @@ function AproposPortrait({
 export const aproposPortraitBlock: BlockDefinition<
   typeof aproposPortraitSchema
 > = {
-  label: 'À propos — Portrait éditorial',
-  description: 'Portrait à gauche, texte décalé vers le bas, signature.',
+  label: 'À propos — Portrait',
+  description:
+    'Arche portrait avec badge du nom, titre serif, chiffres qui se comptent.',
   group: 'Sections',
   schema: aproposPortraitSchema,
   suggestedAnchor: 'a-propos',
   navigable: true,
   fields: [
     field.text('eyebrow', 'Label supérieur'),
-    field.text('title', 'Titre', { full: true }),
+    field.textarea('title', 'Titre', {
+      help: 'Astérisques pour l’italique : *mot*.',
+    }),
     field.textarea('intro', 'Accroche'),
     field.richtext('body', 'Présentation'),
-    field.text('signature', 'Signature', {
-      placeholder: 'Amaswi — thérapeute',
+    field.text('signature', 'Badge sur le portrait', {
+      placeholder: 'Anne Winzeried',
     }),
     field.media('mediaId', 'Portrait'),
+    field.list(
+      'stats',
+      'Chiffres clés',
+      [
+        field.number('value', 'Nombre'),
+        field.text('suffix', 'Après le nombre', { placeholder: '+, h…' }),
+        field.text('label', 'Légende'),
+      ],
+      { addLabel: 'Ajouter un chiffre' },
+    ),
+    field.text('linkLabel', 'Lien — libellé'),
+    field.text('linkHref', 'Lien — destination'),
   ],
   defaults: {
-    eyebrow: 'À PROPOS',
-    title: 'Une présence *attentive*, avant toute méthode.',
-    intro:
-      'Je vous accueille dans un cadre calme, sans jugement, où chaque mot a le temps d’arriver.',
-    body: 'Formée à l’écoute active et aux approches psychocorporelles, j’accompagne depuis plusieurs années des personnes traversant des périodes de doute, de transition ou d’épuisement.\n\nMon travail ne consiste pas à donner des réponses toutes faites, mais à ouvrir un espace où les vôtres peuvent émerger.',
-    signature: 'Amaswi',
+    eyebrow: 'Qui je suis',
+    title:
+      'Quinze ans à accueillir ce qui vient — les silences comme les débordements — *sans jamais juger*.',
+    intro: '',
+    body: '',
+    signature: 'Anne Winzeried',
     mediaId: null,
+    stats: [
+      { value: 15, suffix: '', label: 'ans de pratique' },
+      { value: 400, suffix: '+', label: 'personnes' },
+      { value: 48, suffix: ' h', label: 'de réponse' },
+    ],
+    linkLabel: 'Mon parcours',
+    linkHref: '#parcours',
   },
   Component: AproposPortrait,
 }
 
 /* ════════════════════════════════════════════════════════════════════
    À propos — Asymétrique
-   Titre en haut à droite, image carrée qui descend à gauche, un
-   chiffre clé en grande serif qui chevauche le bord de l'image, deux
-   colonnes de texte. Le chiffre est posé sans fond : il reste juste
-   sur le vide entre les colonnes, quel que soit le thème de section.
+   Titre en haut à droite, arche carrée descendue à gauche, chiffre
+   serif italique qui chevauche son bord, deux colonnes de texte.
    ════════════════════════════════════════════════════════════════════ */
 
 export const aproposAsymetriqueSchema = z.object({
@@ -142,26 +212,29 @@ function AproposAsymetrique({
   const image = ctx.resolveMedia(data.mediaId)
 
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="à propos" className="-top-14" />
+
       <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-x-12">
-        {/* Image carrée, descendue — le titre la surplombe. */}
+        {/* Arche descendue — le titre la surplombe. */}
         <div className="relative order-2 lg:order-1 lg:col-span-5 lg:mt-24">
-          <ImageReveal
+          <BlockImage
             media={image}
             sizes="(max-width: 1024px) 100vw, 38vw"
-            className="aspect-square w-full"
+            className="aspect-[4/4.6] w-full rounded-arch"
+            placeholder={1}
           />
 
           {(data.statValue || data.statLabel) && (
             <Reveal delay={0.25}>
               <div className="mt-8 lg:absolute lg:bottom-10 lg:right-0 lg:mt-0 lg:translate-x-1/3 lg:text-right">
                 {data.statValue && (
-                  <p className="font-serif text-[clamp(3rem,5vw,4.5rem)] leading-none text-blue-deep">
+                  <p className="font-serif text-[clamp(3rem,5vw,4.5rem)] font-light italic leading-none text-blue-deep">
                     {data.statValue}
                   </p>
                 )}
                 {data.statLabel && (
-                  <p className="mt-3 text-[0.72rem] uppercase tracking-[0.16em] text-stone">
+                  <p className="mt-3 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
                     {data.statLabel}
                   </p>
                 )}
@@ -170,7 +243,7 @@ function AproposAsymetrique({
           )}
         </div>
 
-        <div className="order-1 lg:order-2 lg:col-span-7 lg:col-start-6">
+        <div className="order-1 lg:order-2 lg:col-span-6 lg:col-start-7">
           {data.eyebrow && (
             <Reveal>
               <Eyebrow>{data.eyebrow}</Eyebrow>
@@ -178,22 +251,24 @@ function AproposAsymetrique({
           )}
 
           {data.title && (
-            <Reveal delay={0.08}>
-              <h2 className="mt-8 max-w-[22ch] text-[length:var(--text-h2)]">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
+            <h2 className="mt-7 max-w-[22ch] text-[length:var(--text-h2)]">
+              <MaskLines delay={0.08}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
 
           {(data.body || data.secondBody) && (
-            <div className="mt-14 grid grid-cols-1 gap-10 sm:grid-cols-2">
+            <div className="mt-12 grid grid-cols-1 gap-10 sm:grid-cols-2">
               {data.body && (
                 <Reveal delay={0.16}>
                   <Prose text={data.body} />
                 </Reveal>
               )}
               {data.secondBody && (
-                <Reveal delay={0.22}>
+                <Reveal delay={0.24}>
                   <Prose text={data.secondBody} />
                 </Reveal>
               )}
@@ -210,7 +285,7 @@ export const aproposAsymetriqueBlock: BlockDefinition<
 > = {
   label: 'À propos — Asymétrique',
   description:
-    'Titre à droite, image carrée descendue, chiffre clé en chevauchement.',
+    'Titre à droite, arche descendue à gauche, chiffre italique en chevauchement.',
   group: 'Sections',
   schema: aproposAsymetriqueSchema,
   suggestedAnchor: 'a-propos',
@@ -218,7 +293,7 @@ export const aproposAsymetriqueBlock: BlockDefinition<
   fields: [
     field.text('eyebrow', 'Label supérieur'),
     field.text('title', 'Titre', { full: true }),
-    field.text('statValue', 'Chiffre clé', { placeholder: '10 ans' }),
+    field.text('statValue', 'Chiffre clé', { placeholder: '15 ans' }),
     field.text('statLabel', 'Légende du chiffre', {
       placeholder: 'd’accompagnement',
     }),
@@ -227,9 +302,9 @@ export const aproposAsymetriqueBlock: BlockDefinition<
     field.media('mediaId', 'Image'),
   ],
   defaults: {
-    eyebrow: 'À PROPOS',
+    eyebrow: 'À propos',
     title: 'Un accompagnement construit sur la *confiance*.',
-    statValue: '10 ans',
+    statValue: '15 ans',
     statLabel: 'd’accompagnement',
     body: 'Chaque personne arrive avec une histoire singulière. Mon rôle est de l’accueillir telle qu’elle est, sans grille imposée, et de cheminer à ses côtés.',
     secondBody:
@@ -242,8 +317,8 @@ export const aproposAsymetriqueBlock: BlockDefinition<
 /* ════════════════════════════════════════════════════════════════════
    À propos — Parcours
    Introduction fixée à gauche, chronologie à droite : chaque étape
-   sur un filet vertical, ponctuée d'un point bleu, avec un décalage
-   horizontal progressif qui fait descendre le regard.
+   sur un filet vertical, ponctuée d'un point bleu, décalage
+   horizontal progressif.
    ════════════════════════════════════════════════════════════════════ */
 
 export const aproposParcoursSchema = z.object({
@@ -259,9 +334,12 @@ const PARCOURS_OFFSETS = ['', 'lg:ml-10', 'lg:ml-20', 'lg:ml-28'] as const
 
 function AproposParcours({
   data,
+  ctx,
 }: BlockProps<z.output<typeof aproposParcoursSchema>>) {
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="parcours" className="-top-14" />
+
       <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-x-24">
         <div className="lg:sticky lg:top-32 lg:col-span-4 lg:self-start">
           {data.eyebrow && (
@@ -270,11 +348,13 @@ function AproposParcours({
             </Reveal>
           )}
           {data.title && (
-            <Reveal delay={0.08}>
-              <h2 className="mt-8 max-w-[14ch] text-[length:var(--text-h2)]">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
+            <h2 className="mt-7 max-w-[14ch] text-[length:var(--text-h2)]">
+              <MaskLines delay={0.08}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
           {data.intro && (
             <Reveal delay={0.14}>
@@ -296,14 +376,13 @@ function AproposParcours({
                     last ? 'pb-2' : 'pb-16'
                   } ${offset}`}
                 >
-                  {/* Point sur la ligne — le seul accent de couleur. */}
                   <span
                     aria-hidden="true"
-                    className="absolute -left-[3.5px] top-1.5 block h-[7px] w-[7px] rounded-full bg-blue-deep"
+                    className="absolute -left-1 top-1.5 block h-[7px] w-[7px] rounded-full bg-blue-deep"
                   />
 
                   {step.year && (
-                    <p className="text-[0.72rem] font-medium uppercase tracking-[0.18em] text-blue-deep">
+                    <p className="font-serif text-[15px] font-light italic text-blue-deep">
                       {step.year}
                     </p>
                   )}
@@ -313,7 +392,7 @@ function AproposParcours({
                     </h3>
                   )}
                   {step.text && (
-                    <p className="mt-3 max-w-[46ch] text-[0.94rem] leading-[1.75] text-ink-soft">
+                    <p className="mt-3 max-w-[46ch] text-[0.94rem] leading-[1.8] text-ink-soft">
                       {step.text}
                     </p>
                   )}
@@ -334,7 +413,7 @@ export const aproposParcoursBlock: BlockDefinition<
   description: 'Chronologie d’étapes le long d’un filet, introduction fixe.',
   group: 'Sections',
   schema: aproposParcoursSchema,
-  suggestedAnchor: 'a-propos',
+  suggestedAnchor: 'parcours',
   navigable: true,
   fields: [
     field.text('eyebrow', 'Label supérieur'),
@@ -352,15 +431,15 @@ export const aproposParcoursBlock: BlockDefinition<
     ),
   ],
   defaults: {
-    eyebrow: 'PARCOURS',
+    eyebrow: 'Parcours',
     title: 'Le chemin qui m’a menée *ici*.',
     intro:
-      'Un parcours fait de formations exigeantes et de rencontres décisives — chacune a affiné ma manière d’accompagner.',
+      'Des formations exigeantes, des rencontres décisives — chacune a affiné ma manière d’accompagner.',
     steps: [
       {
         year: '2012',
         title: 'Formation initiale',
-        text: 'Diplôme en psychologie clinique, suivi d’une spécialisation en accompagnement des transitions de vie.',
+        text: 'Diplôme en psychologie clinique, puis spécialisation dans l’accompagnement des transitions de vie.',
       },
       {
         year: '2016',
@@ -370,9 +449,196 @@ export const aproposParcoursBlock: BlockDefinition<
       {
         year: '2019',
         title: 'Ouverture du cabinet',
-        text: 'Installation dans un lieu pensé comme un refuge : lumière douce, silence, confidentialité.',
+        text: 'Installation rue Saint-Martin, dans un lieu pensé comme un refuge : lumière douce, silence, confidentialité.',
       },
     ],
   },
   Component: AproposParcours,
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   À propos — Le médaillon (proposition L de la planche)
+   Un grand chiffre serif italique dans un médaillon circulaire, une
+   couronne de texte qui tourne autour, la phrase qui le porte à côté.
+   ════════════════════════════════════════════════════════════════════ */
+
+export const aproposMedaillonSchema = z.object({
+  value: z.number().default(15),
+  unit: z.string().default(''),
+  ring: z.string().default(''),
+  title: z.string().default(''),
+  text: z.string().default(''),
+})
+
+function AproposMedaillon({
+  data,
+  ctx,
+}: BlockProps<z.output<typeof aproposMedaillonSchema>>) {
+  return (
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="en chiffres" className="-top-14" />
+
+      <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-x-10">
+        <Reveal className="lg:col-span-4 lg:col-start-2 lg:justify-self-center">
+          <div className="relative mx-auto grid aspect-square w-[min(270px,64vw)] place-items-center rounded-full border border-line-strong">
+            <span className="font-serif text-[clamp(5.25rem,9.5vw,9.25rem)] font-light italic leading-none text-blue-deep">
+              <Counter value={data.value} />
+            </span>
+            {data.unit && (
+              <span className="absolute bottom-[17%] text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                {data.unit}
+              </span>
+            )}
+            {data.ring && (
+              <CircleText
+                text={data.ring}
+                duration={40}
+                className="absolute -inset-[9%] h-auto w-[118%]"
+              />
+            )}
+          </div>
+        </Reveal>
+
+        <div className="text-center lg:col-span-6 lg:col-start-6 lg:text-left">
+          {data.title && (
+            <Reveal delay={0.12}>
+              <p className="font-serif text-[clamp(1.5rem,2.4vw,2.5rem)] font-light leading-[1.35] text-ink">
+                <Emphasis text={data.title} />
+              </p>
+            </Reveal>
+          )}
+          {data.text && (
+            <Reveal delay={0.2}>
+              <p className="mx-auto mt-5 max-w-[44ch] text-[14px] leading-[1.85] text-ink-soft lg:mx-0">
+                {data.text}
+              </p>
+            </Reveal>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+export const aproposMedaillonBlock: BlockDefinition<
+  typeof aproposMedaillonSchema
+> = {
+  label: 'À propos — Le médaillon',
+  description:
+    'Un grand chiffre dans un médaillon, une couronne de texte qui tourne autour.',
+  group: 'Sections',
+  schema: aproposMedaillonSchema,
+  suggestedAnchor: 'a-propos',
+  fields: [
+    field.number('value', 'Le chiffre'),
+    field.text('unit', 'Sous le chiffre', { placeholder: 'années' }),
+    field.text('ring', 'Texte de la couronne', {
+      full: true,
+      help: 'Il tourne autour du médaillon — terminez par « · ».',
+    }),
+    field.textarea('title', 'Phrase principale', {
+      help: 'Astérisques pour l’italique : *mot*.',
+    }),
+    field.textarea('text', 'Texte d’appui'),
+  ],
+  defaults: {
+    value: 15,
+    unit: 'années',
+    ring: 'quinze années d’écoute · quinze années de présence · ',
+    title: 'années à accompagner ce qui *déborde*.',
+    text: 'Deuils, séparations, épuisements, transitions — et tout ce qui n’a pas encore de nom.',
+  },
+  Component: AproposMedaillon,
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   À propos — Citation personnelle
+   Un petit portrait rond, une conviction en grande serif, la
+   signature en italique. La présentation la plus intime.
+   ════════════════════════════════════════════════════════════════════ */
+
+export const aproposCitationSchema = z.object({
+  quote: z.string().default(''),
+  name: z.string().default(''),
+  role: z.string().default(''),
+  mediaId: z.string().uuid().nullable().default(null),
+})
+
+function AproposCitation({
+  data,
+  ctx,
+}: BlockProps<z.output<typeof aproposCitationSchema>>) {
+  const image = ctx.resolveMedia(data.mediaId)
+
+  return (
+    <div className="container-editorial">
+      <figure className="mx-auto max-w-[52rem] text-center">
+        <Reveal>
+          <BlockImage
+            media={image}
+            sizes="112px"
+            className="mx-auto aspect-square w-24 rounded-full sm:w-28"
+            placeholder={1}
+          />
+        </Reveal>
+
+        {data.quote && (
+          <blockquote className="mt-10">
+            <Reveal delay={0.12}>
+              <p className="font-serif text-[clamp(1.6rem,3vw,2.7rem)] font-light leading-[1.4] text-ink">
+                <Emphasis text={data.quote} />
+              </p>
+            </Reveal>
+          </blockquote>
+        )}
+
+        {(data.name || data.role) && (
+          <Reveal delay={0.24}>
+            <figcaption className="mt-9">
+              <span
+                aria-hidden="true"
+                className="mx-auto mb-5 block h-9 w-px bg-line-strong"
+              />
+              {data.name && (
+                <span className="block font-serif text-[1.1rem] font-light italic text-blue-deep">
+                  {data.name}
+                </span>
+              )}
+              {data.role && (
+                <span className="mt-2 block text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                  {data.role}
+                </span>
+              )}
+            </figcaption>
+          </Reveal>
+        )}
+      </figure>
+    </div>
+  )
+}
+
+export const aproposCitationBlock: BlockDefinition<
+  typeof aproposCitationSchema
+> = {
+  label: 'À propos — Citation personnelle',
+  description: 'Petit portrait rond, conviction en grande serif, signature.',
+  group: 'Sections',
+  schema: aproposCitationSchema,
+  suggestedAnchor: 'a-propos',
+  fields: [
+    field.textarea('quote', 'La phrase', {
+      help: 'Astérisques pour l’italique : *mot*.',
+    }),
+    field.text('name', 'Nom'),
+    field.text('role', 'Précision', { placeholder: 'Thérapeute' }),
+    field.media('mediaId', 'Portrait rond'),
+  ],
+  defaults: {
+    quote:
+      'Je ne crois pas aux méthodes toutes faites. Je crois aux personnes, à leur rythme, et à ce qui se répare quand on *écoute vraiment*.',
+    name: 'Anne Winzeried',
+    role: 'Thérapeute — Cesson-Sévigné',
+    mediaId: null,
+  },
+  Component: AproposCitation,
 }

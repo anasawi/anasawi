@@ -1,3 +1,4 @@
+import { AdminContent } from '@/components/admin/AdminContent'
 import { NavigationEditor } from '@/components/admin/NavigationEditor'
 import { PageHeader } from '@/components/admin/PageHeader'
 import {
@@ -37,11 +38,12 @@ export default async function NavigationAdminPage() {
   ]
 
   return (
-    <>
-      <PageHeader title="Navigation" />
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <NavigationEditor initial={initial} suggestions={suggestions} />
-      </div>
-    </>
+    <AdminContent>
+      <PageHeader
+        title="Menu du site"
+        description="Les liens affichés en haut de chaque page, dans l’ordre où vos visiteurs les voient."
+      />
+      <NavigationEditor initial={initial} suggestions={suggestions} />
+    </AdminContent>
   )
 }

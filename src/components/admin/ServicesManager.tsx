@@ -139,16 +139,29 @@ export function ServicesManager({
   return (
     <>
       <div className="mb-4 flex justify-end">
-        <Button onClick={() => setDraft(emptyDraft)}>
+        <Button
+          className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+          onClick={() => setDraft(emptyDraft)}
+        >
           <Plus />
           Nouvel accompagnement
         </Button>
       </div>
 
       {items.length === 0 ? (
-        <p className="rounded-lg border border-dashed border-border px-4 py-14 text-center text-sm text-muted-foreground">
-          Aucun accompagnement pour l’instant.
-        </p>
+        <div className="rounded-xl border border-border bg-white px-6 py-14 text-center">
+          <p className="text-[13px] text-muted-foreground">
+            Aucun accompagnement pour l’instant — créez le premier pour le
+            présenter sur votre site.
+          </p>
+          <Button
+            className="mt-4 rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+            onClick={() => setDraft(emptyDraft)}
+          >
+            <Plus />
+            Créer un accompagnement
+          </Button>
+        </div>
       ) : (
         <DndContext
           sensors={sensors}
@@ -160,7 +173,7 @@ export function ServicesManager({
             items={items.map((s) => s.id)}
             strategy={verticalListSortingStrategy}
           >
-            <ul className="space-y-2">
+            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
               {items.map((service) => (
                 <ServiceRow
                   key={service.id}
@@ -235,7 +248,7 @@ export function ServicesManager({
 
               <div>
                 <Label htmlFor="s-slug" className="mb-2 block">
-                  Slug
+                  Adresse de la page
                 </Label>
                 <Input
                   id="s-slug"
@@ -319,7 +332,11 @@ export function ServicesManager({
             >
               Annuler
             </Button>
-            <Button onClick={save} disabled={pending || !draft?.title.trim()}>
+            <Button
+              className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+              onClick={save}
+              disabled={pending || !draft?.title.trim()}
+            >
               {pending ? 'Enregistrement…' : 'Enregistrer'}
             </Button>
           </DialogFooter>
@@ -348,8 +365,8 @@ function ServiceRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'flex items-center gap-3 rounded-lg border border-border p-3',
-        isDragging && 'z-10 shadow-md',
+        'group flex items-center gap-3 bg-white px-4 py-3 transition-colors duration-150 hover:bg-ivory/50',
+        isDragging && 'relative z-10 rounded-lg border border-border shadow-sm',
         !service.isActive && 'opacity-60',
       )}
     >
@@ -358,7 +375,7 @@ function ServiceRow({
         {...attributes}
         {...listeners}
         aria-label={`Déplacer ${service.title}`}
-        className="cursor-grab touch-none text-muted-foreground active:cursor-grabbing"
+        className="cursor-grab touch-none text-muted-foreground/50 opacity-0 transition-opacity active:cursor-grabbing group-focus-within:opacity-100 group-hover:opacity-100"
       >
         <GripVertical className="h-4 w-4" />
       </button>
@@ -388,16 +405,18 @@ function ServiceRow({
         aria-label={`Afficher ${service.title}`}
       />
 
-      <Button
-        variant="ghost"
-        size="icon"
-        onClick={onEdit}
-        aria-label={`Modifier ${service.title}`}
-      >
-        <Pencil />
-      </Button>
+      <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={onEdit}
+          aria-label={`Modifier ${service.title}`}
+        >
+          <Pencil />
+        </Button>
 
-      <ConfirmDelete label={service.title} onConfirm={onDeleted} />
+        <ConfirmDelete label={service.title} onConfirm={onDeleted} />
+      </span>
     </li>
   )
 }

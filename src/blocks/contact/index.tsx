@@ -2,12 +2,13 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { MaskLines, Reveal } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
 import { ContactForm } from '@/components/site/ContactForm'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
-import { Reveal } from '@/components/motion/Reveal'
+import { SectionIndex } from '@/components/site/ornaments'
 import { toE164 } from '@/lib/utils'
 import type { OpeningHour } from '@/server/db/schema'
 
@@ -36,7 +37,9 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
   ].filter((line): line is string => Boolean(line && line.trim()))
 
   return (
-    <div className="container-editorial">
+    <div className="container-editorial relative">
+      <SectionIndex index={ctx.index} label="contact" className="-top-14" />
+
       <div className="grid grid-cols-1 gap-20 lg:grid-cols-12 lg:gap-x-24">
         {/* ── Coordonnées ─────────────────────────────────────── */}
         <div className="lg:col-span-5">
@@ -47,26 +50,28 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
           )}
 
           {data.title && (
-            <Reveal delay={0.06}>
-              <h2 className="mt-8 max-w-[14ch] text-[length:var(--text-h2)]">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
+            <h2 className="mt-7 max-w-[14ch] text-[length:var(--text-h2)]">
+              <MaskLines delay={0.08}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
 
           {data.intro && (
-            <Reveal delay={0.12}>
-              <Prose text={data.intro} className="mt-8 max-w-[42ch]" />
+            <Reveal delay={0.14}>
+              <Prose text={data.intro} className="mt-7 max-w-[42ch]" />
             </Reveal>
           )}
 
-          <Reveal delay={0.18}>
-            <dl className="mt-14 border-t border-line-strong">
+          <Reveal delay={0.2}>
+            <dl className="mt-12 border-t border-line-strong">
               {s.contactPhone && (
                 <Row label="Téléphone">
                   <a
                     href={`tel:${toE164(s.contactPhone)}`}
-                    className="transition-colors duration-400 hover:text-blue-deep"
+                    className="font-serif text-[1.1rem] font-light transition-colors duration-400 hover:text-blue-deep"
                   >
                     {s.contactPhone}
                   </a>
@@ -77,7 +82,7 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
                 <Row label="E-mail">
                   <a
                     href={`mailto:${s.contactEmail}`}
-                    className="break-all transition-colors duration-400 hover:text-blue-deep"
+                    className="break-all font-serif text-[1.1rem] font-light transition-colors duration-400 hover:text-blue-deep"
                   >
                     {s.contactEmail}
                   </a>
@@ -112,16 +117,16 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
           </Reveal>
 
           {s.practicalInfo && (
-            <Reveal delay={0.24}>
+            <Reveal delay={0.26}>
               <Prose
                 text={s.practicalInfo}
-                className="mt-10 max-w-[44ch] text-[0.88rem]"
+                className="mt-9 max-w-[44ch] text-[0.88rem]"
               />
             </Reveal>
           )}
 
           {s.bookingUrl && data.bookingLabel && (
-            <Reveal delay={0.28}>
+            <Reveal delay={0.3}>
               <div className="mt-10">
                 <ActionLink href={s.bookingUrl} variant="primary" external>
                   {data.bookingLabel}
@@ -134,7 +139,7 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
         {/* ── Formulaire ──────────────────────────────────────── */}
         {data.showForm && (
           <div className="lg:col-span-6 lg:col-start-7">
-            <Reveal delay={0.14}>
+            <Reveal delay={0.16}>
               <ContactForm />
             </Reveal>
           </div>
@@ -152,11 +157,11 @@ function Row({
   children: React.ReactNode
 }) {
   return (
-    <div className="grid grid-cols-[9rem_1fr] gap-4 border-b border-line py-7">
-      <dt className="text-[0.72rem] uppercase tracking-[0.16em] text-stone">
+    <div className="grid grid-cols-[8.5rem_1fr] gap-4 border-b border-line py-6">
+      <dt className="text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
         {label}
       </dt>
-      <dd className="text-[0.95rem] leading-[1.6] text-ink">{children}</dd>
+      <dd className="text-[0.95rem] leading-[1.65] text-ink">{children}</dd>
     </div>
   )
 }
@@ -177,7 +182,7 @@ export const contactBlock: BlockDefinition<typeof contactSectionSchema> = {
     field.text('bookingLabel', 'Bouton de prise de rendez-vous'),
   ],
   defaults: {
-    eyebrow: 'CONTACT',
+    eyebrow: 'Contact',
     title: '',
     intro: '',
     showForm: true,

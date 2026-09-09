@@ -16,14 +16,12 @@ export default async function MessagesPage() {
     .limit(200)
 
   return (
-    <>
+    <AdminContent width="wide">
       <PageHeader
         title="Messages"
-        description="Demandes reçues via le formulaire de contact du site."
+        description="Ce que vos visiteurs vous écrivent depuis le formulaire de contact du site."
       />
-      <AdminContent>
-        <MessagesList messages={messages} />
-      </AdminContent>
-    </>
+      <MessagesList messages={messages} />
+    </AdminContent>
   )
 }

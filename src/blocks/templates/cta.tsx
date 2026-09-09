@@ -2,17 +2,22 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { MaskLines, Reveal } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
+import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
-import { ImageReveal } from '@/components/motion/ImageReveal'
-import { Reveal } from '@/components/motion/Reveal'
-import { SplitText } from '@/components/motion/SplitText'
+import { Aster } from '@/components/site/ornaments'
+
+/*
+ * Les invitations à l'action — toujours sobres : le fond fonce, la
+ * flèche glisse, rien d'autre.
+ */
 
 /* ════════════════════════════════════════════════════════════════════
    Appel à l'action — Avec image
-   Carte en deux moitiés : photographie à gauche, panneau bleu brume
-   à droite. Le panneau porte son propre fond, donc ses couleurs de
-   texte sont posées en dur (bleu encre) — indépendantes du thème.
+   Carte en deux moitiés aux coins doux : photographie d'un côté,
+   panneau bleu brume de l'autre. Les couleurs du panneau sont posées
+   en dur — indépendantes du thème de section.
    ════════════════════════════════════════════════════════════════════ */
 
 export const ctaImageSchema = z.object({
@@ -29,39 +34,37 @@ function CtaImage({ data, ctx }: BlockProps<z.output<typeof ctaImageSchema>>) {
 
   return (
     <div className="container-editorial">
-      <div className="grid grid-cols-1 overflow-hidden rounded-[4px] lg:grid-cols-2">
-        <ImageReveal
+      <div className="grid grid-cols-1 overflow-hidden rounded-[28px] lg:grid-cols-2">
+        <BlockImage
           media={image}
+          tone="cream"
           sizes="(max-width: 1024px) 100vw, 50vw"
-          className="aspect-4/3 w-full lg:aspect-auto lg:h-full"
+          className="aspect-[4/3] w-full lg:aspect-auto lg:h-full"
         />
 
         <div className="flex flex-col justify-center bg-blue-mist px-8 py-16 md:px-14 md:py-20">
           {data.eyebrow && (
             <Reveal delay={0.1}>
-              {/* Eyebrow recomposé : le panneau a son propre fond, les
-                  couleurs du thème de section ne s'y appliquent pas. */}
-              <p className="flex items-center gap-4 font-sans text-[length:var(--text-label)] font-medium uppercase tracking-[0.18em] text-blue-ink/80">
-                <span
-                  aria-hidden="true"
-                  className="h-px w-8 shrink-0 bg-blue-ink/40"
-                />
+              <p className="flex items-baseline gap-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-ink/80">
+                <Aster className="text-[1.25em] font-normal" />
                 <span>{data.eyebrow}</span>
               </p>
             </Reveal>
           )}
 
           {data.title && (
-            <Reveal delay={0.16}>
-              <h2 className="mt-7 max-w-[18ch] text-[clamp(1.7rem,2.8vw,2.6rem)] leading-[1.15] text-blue-ink">
-                <Emphasis text={data.title} />
-              </h2>
-            </Reveal>
+            <h2 className="mt-6 max-w-[18ch] font-serif text-[clamp(1.7rem,2.8vw,2.6rem)] font-light leading-[1.15] text-blue-ink">
+              <MaskLines delay={0.16}>
+                <span>
+                  <Emphasis text={data.title} />
+                </span>
+              </MaskLines>
+            </h2>
           )}
 
           {data.text && (
             <Reveal delay={0.22}>
-              <p className="mt-6 max-w-[44ch] text-[0.95rem] leading-[1.75] text-blue-ink/80">
+              <p className="mt-6 max-w-[44ch] text-[0.95rem] leading-[1.8] text-blue-ink/80">
                 {data.text}
               </p>
             </Reveal>
@@ -96,7 +99,7 @@ export const ctaImageBlock: BlockDefinition<typeof ctaImageSchema> = {
     field.media('mediaId', 'Image'),
   ],
   defaults: {
-    eyebrow: 'PREMIER PAS',
+    eyebrow: 'Premier pas',
     title: 'Et si on en *parlait* ?',
     text: 'Le premier échange est sans engagement : il sert simplement à faire connaissance et à voir si le cadre vous convient.',
     label: 'Prendre rendez-vous',
@@ -107,10 +110,9 @@ export const ctaImageBlock: BlockDefinition<typeof ctaImageSchema> = {
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   Appel à l'action — Immersif
-   Une image pleine largeur sous un voile sombre, une seule grande
-   ligne serif blanche au centre, un bouton. Le texte clair est posé
-   sur l'image — indépendant du thème de section.
+   Appel à l'action — L'arche immersive
+   Une grande arche pleine d'image sous un voile nuit, une seule
+   phrase serif ivoire au centre, un bouton clair.
    ════════════════════════════════════════════════════════════════════ */
 
 export const ctaImmersifSchema = z.object({
@@ -128,46 +130,61 @@ function CtaImmersif({
   const lines = data.lines.map((l) => l.text).filter(Boolean)
 
   return (
-    <div className="relative flex min-h-[60svh] items-center justify-center px-[var(--spacing-gutter)] py-28">
-      <ImageReveal
-        media={image}
-        sizes="100vw"
-        className="absolute inset-0 h-full w-full"
-      />
+    <div className="container-editorial">
+      <div className="relative flex min-h-[58svh] items-center justify-center overflow-hidden rounded-t-[min(240px,26vw)] rounded-b-[28px] px-8 py-24 md:rounded-t-[min(240px,19vw)]">
+        <BlockImage
+          media={image}
+          instant
+          sizes="92vw"
+          className="absolute inset-0 h-full w-full"
+        />
+        <div
+          aria-hidden="true"
+          className="absolute inset-0 bg-night/55"
+        />
 
-      <div aria-hidden="true" className="absolute inset-0 bg-black/50" />
-
-      <div className="relative z-10 mx-auto max-w-[46rem] text-center">
-        {lines.length > 0 && (
-          <SplitText
-            as="h2"
-            lines={lines}
-            delay={0.1}
-            className="text-[clamp(1.9rem,3.6vw,3.2rem)] leading-[1.15] text-white"
-            emphasis
-          />
-        )}
-
-        {data.label && (
-          <Reveal delay={0.3}>
-            <div className="mt-11 flex justify-center">
-              <ActionLink href={data.href} variant="primary">
-                {data.label}
-              </ActionLink>
-            </div>
+        <div className="relative z-10 mx-auto max-w-[46rem] text-center">
+          <Reveal>
+            <Aster className="text-[22px] text-blue" />
           </Reveal>
-        )}
+
+          {lines.length > 0 && (
+            <h2 className="mt-6 font-serif text-[clamp(1.9rem,3.8vw,3.6rem)] font-light leading-[1.15] text-ivory">
+              <MaskLines delay={0.12}>
+                {lines.map((line, i) => (
+                  <span key={i}>
+                    <Emphasis text={line} />
+                  </span>
+                ))}
+              </MaskLines>
+            </h2>
+          )}
+
+          {data.label && (
+            <Reveal delay={0.3}>
+              <div className="mt-10 flex justify-center">
+                <ActionLink
+                  href={data.href}
+                  variant="primary"
+                  className="bg-ivory text-night hover:bg-cream"
+                >
+                  {data.label}
+                </ActionLink>
+              </div>
+            </Reveal>
+          )}
+        </div>
       </div>
     </div>
   )
 }
 
 export const ctaImmersifBlock: BlockDefinition<typeof ctaImmersifSchema> = {
-  label: 'Appel à l’action — Immersif',
-  description: 'Image pleine largeur, voile sombre, ligne serif centrée.',
+  label: 'Appel à l’action — L’arche immersive',
+  description:
+    'Une grande arche pleine d’image sous un voile nuit, phrase serif au centre.',
   group: 'Sections',
   schema: ctaImmersifSchema,
-  bleed: true,
   fields: [
     field.list(
       'lines',

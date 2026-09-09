@@ -89,6 +89,8 @@ const FALLBACK_SETTINGS: Settings = {
   defaultSeoTitle: null,
   defaultSeoDescription: null,
   defaultOgMediaId: null,
+  navigation: null,
+  identity: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }

@@ -1,60 +1,51 @@
 import { and, count, eq, isNull } from 'drizzle-orm'
 import {
-  HelpCircle,
+  ExternalLink,
   Image as ImageIcon,
-  LayoutTemplate,
   Mail,
-  Sparkles,
+  PenLine,
 } from 'lucide-react'
 import Link from 'next/link'
 
-import { getBlock } from '@/blocks/registry'
 import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
-import { Badge } from '@/components/ui/badge'
 import { db } from '@/server/db'
-import {
-  contactMessages,
-  faqItems,
-  media,
-  sections,
-  services,
-} from '@/server/db/schema'
+import { contactMessages, media, sections } from '@/server/db/schema'
 import { getHomePageForAdmin, getSettings } from '@/server/queries'
 
 export const dynamic = 'force-dynamic'
 
 async function counts(pageId: string | null) {
-  const [sectionRows, serviceRows, faqRows, mediaRows, unreadRows] =
-    await Promise.all([
-      pageId
-        ? db
-            .select({ n: count() })
-            .from(sections)
-            /* Seules les sections de premier niveau : les blocs placés dans
-               une colonne ne sont pas des sections de la page. */
-            .where(
-              and(eq(sections.pageId, pageId), isNull(sections.parentId)),
-            )
-        : Promise.resolve([{ n: 0 }]),
-      db.select({ n: count() }).from(services),
-      db.select({ n: count() }).from(faqItems),
-      db.select({ n: count() }).from(media),
-      db
-        .select({ n: count() })
-        .from(contactMessages)
-        .where(eq(contactMessages.isRead, false)),
-    ])
+  const [sectionRows, mediaRows, unreadRows] = await Promise.all([
+    pageId
+      ? db
+          .select({ n: count() })
+          .from(sections)
+          /* Seules les sections de premier niveau : les blocs placés dans
+             une colonne ne sont pas des sections de la page. */
+          .where(and(eq(sections.pageId, pageId), isNull(sections.parentId)))
+      : Promise.resolve([{ n: 0 }]),
+    db.select({ n: count() }).from(media),
+    db
+      .select({ n: count() })
+      .from(contactMessages)
+      .where(eq(contactMessages.isRead, false)),
+  ])
 
   return {
     sections: sectionRows[0]?.n ?? 0,
-    services: serviceRows[0]?.n ?? 0,
-    faq: faqRows[0]?.n ?? 0,
     media: mediaRows[0]?.n ?? 0,
     unread: unreadRows[0]?.n ?? 0,
   }
 }
 
+/**
+ * Tableau de bord — un accueil, pas un cockpit.
+ *
+ * Quatre cartes qui répondent aux vraies questions du matin : mon site
+ * est-il en ligne, quelqu'un m'a-t-il écrit, où reprendre la main.
+ * Aucune donnée nouvelle : tout vient des requêtes déjà en place.
+ */
 export default async function DashboardPage() {
   const [home, settings] = await Promise.all([
     getHomePageForAdmin(),
@@ -62,139 +53,131 @@ export default async function DashboardPage() {
   ])
   const stats = await counts(home?.id ?? null)
 
-  const cards = [
-    {
-      href: '/admin/accueil',
-      label: 'Sections',
-      value: stats.sections,
-      icon: LayoutTemplate,
-    },
-    {
-      href: '/admin/accompagnements',
-      label: 'Accompagnements',
-      value: stats.services,
-      icon: Sparkles,
-    },
-    { href: '/admin/faq', label: 'Questions', value: stats.faq, icon: HelpCircle },
-    { href: '/admin/medias', label: 'Médias', value: stats.media, icon: ImageIcon },
-    {
-      href: '/admin/messages',
-      label: 'Messages non lus',
-      value: stats.unread,
-      icon: Mail,
-    },
-  ]
+  const firstName = settings.practitionerName?.split(' ')[0]
+  const homeOnline = home?.status === 'published'
 
-  /* Signale les réglages manquants qui dégradent le SEO ou le JSON-LD.
-     Mieux vaut le dire ici que laisser une donnée absente passer en prod. */
-  const warnings = [
-    !settings.practitionerName && 'le nom de la praticienne',
-    !settings.contactEmail && 'l’e-mail de contact',
-    !settings.contactPhone && 'le téléphone',
+  /* Signale les informations manquantes qui dégradent la présentation
+     du site sur Google. Mieux vaut le dire ici, en douceur. */
+  const missing = [
+    !settings.practitionerName && 'votre nom',
+    !settings.contactEmail && 'votre e-mail de contact',
+    !settings.contactPhone && 'votre téléphone',
     !settings.addressCity && 'l’adresse du cabinet',
-    !settings.defaultSeoDescription && 'la description SEO par défaut',
+    !settings.defaultSeoDescription && 'la description pour Google',
   ].filter((w): w is string => Boolean(w))
 
+  const cardClass =
+    'group rounded-xl border border-border bg-white p-5 transition-colors duration-150 hover:border-blue-deep'
+  const cardTitleClass = 'flex items-center gap-2.5'
+  const cardLabelClass =
+    'text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground'
+  const iconClass = 'h-[17px] w-[17px] text-blue-deep'
+
   return (
-    <>
-      <PageHeader title="Tableau de bord" />
+    <AdminContent>
+      <PageHeader
+        title={firstName ? `Bonjour ${firstName}` : 'Bonjour'}
+        description="Votre site se modifie ici, à votre rythme — voici où il en est aujourd’hui."
+      />
 
-      <AdminContent>
-        <div className="mb-7">
-          <p className="font-serif text-[1.5rem] leading-tight tracking-[-0.02em]">
-            {settings.practitionerName
-              ? `Le site d’${settings.practitionerName}`
-              : 'Votre site'}
-          </p>
-          <p className="mt-1.5 text-[0.82rem] text-muted-foreground">
-            Tout le contenu public se modifie ici — aucune ligne de code à
-            toucher.
-          </p>
-        </div>
-
-        <div className="grid grid-cols-2 gap-2.5 lg:grid-cols-5">
-          {cards.map((card) => (
-            <Link
-              key={card.href}
-              href={card.href}
-              className="group rounded-[6px] border border-border bg-card p-3.5 transition-colors duration-150 hover:border-input"
+      <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">
+        <Link href="/admin/accueil" className={cardClass}>
+          <span className={cardTitleClass}>
+            <PenLine className={iconClass} strokeWidth={1.6} />
+            <span className={cardLabelClass}>Mon site</span>
+            <span
+              className={`ml-auto shrink-0 rounded-full px-2 py-px text-[0.65rem] font-medium ${
+                homeOnline
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-muted text-muted-foreground'
+              }`}
             >
-              <card.icon
-                className="h-[15px] w-[15px] text-blue-deep/70 transition-colors group-hover:text-blue-deep"
-                strokeWidth={1.75}
-              />
-              {/* Chiffre en serif : c'est le seul endroit du CMS où une
-                  donnée mérite d'être regardée plutôt que lue. */}
-              <p className="mt-3 font-serif text-[1.75rem] leading-none tabular-nums">
-                {card.value}
-              </p>
-              <p className="mt-2 text-[0.73rem] text-muted-foreground">
-                {card.label}
-              </p>
-            </Link>
-          ))}
+              {homeOnline ? 'En ligne' : 'Brouillon'}
+            </span>
+          </span>
+          <p className="mt-3 font-serif text-[1.3rem] leading-snug">
+            Modifier mon site
+          </p>
+          <p className="mt-1.5 text-[12px] text-muted-foreground">
+            {stats.sections}{' '}
+            {stats.sections > 1 ? 'sections' : 'section'} sur votre page
+            d’accueil.
+          </p>
+        </Link>
+
+        <Link href="/admin/messages" className={cardClass}>
+          <span className={cardTitleClass}>
+            <Mail className={iconClass} strokeWidth={1.6} />
+            <span className={cardLabelClass}>Messages</span>
+            {stats.unread > 0 && (
+              <span className="ml-auto shrink-0 rounded-full bg-blue-mist px-2 py-px text-[0.65rem] font-medium text-blue-ink">
+                {stats.unread} {stats.unread > 1 ? 'nouveaux' : 'nouveau'}
+              </span>
+            )}
+          </span>
+          <p className="mt-3 font-serif text-[1.3rem] leading-snug">
+            {stats.unread > 0
+              ? `${stats.unread} ${stats.unread > 1 ? 'messages à lire' : 'message à lire'}`
+              : 'Tout est lu'}
+          </p>
+          <p className="mt-1.5 text-[12px] text-muted-foreground">
+            {stats.unread > 0
+              ? 'Quelqu’un vous a écrit depuis le site.'
+              : 'Les prochains messages de vos visiteurs arriveront ici.'}
+          </p>
+        </Link>
+
+        <Link href="/admin/medias" className={cardClass}>
+          <span className={cardTitleClass}>
+            <ImageIcon className={iconClass} strokeWidth={1.6} />
+            <span className={cardLabelClass}>Photos</span>
+          </span>
+          <p className="mt-3 font-serif text-[1.3rem] leading-snug">
+            Ajouter une photo
+          </p>
+          <p className="mt-1.5 text-[12px] text-muted-foreground">
+            {stats.media > 0
+              ? `${stats.media} ${stats.media > 1 ? 'photos prêtes' : 'photo prête'} à être utilisées dans vos sections.`
+              : 'Vos photos seront prêtes à être utilisées dans vos sections.'}
+          </p>
+        </Link>
+
+        <a
+          href="/"
+          target="_blank"
+          rel="noreferrer"
+          className={cardClass}
+        >
+          <span className={cardTitleClass}>
+            <ExternalLink className={iconClass} strokeWidth={1.6} />
+            <span className={cardLabelClass}>Aperçu</span>
+          </span>
+          <p className="mt-3 font-serif text-[1.3rem] leading-snug">
+            Voir le site
+          </p>
+          <p className="mt-1.5 text-[12px] text-muted-foreground">
+            Votre site, tel que vos visiteurs le découvrent.
+          </p>
+        </a>
+      </div>
+
+      {missing.length > 0 && (
+        <div className="mt-[22px] rounded-xl border border-[#e8dcbe] bg-[#fcf8ee] px-[22px] py-5">
+          <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-[#6b551f]">
+            À compléter quand vous aurez un moment
+          </p>
+          <p className="mt-2 text-[12.5px] leading-[1.6] text-[#6b551f]/90">
+            Il manque encore {missing.join(', ')}. Renseigner ces informations
+            aide Google à bien présenter votre site.
+          </p>
+          <Link
+            href="/admin/parametres"
+            className="mt-2.5 inline-block text-[12.5px] font-medium text-[#6b551f] underline underline-offset-2"
+          >
+            Compléter mes informations
+          </Link>
         </div>
-
-        {warnings.length > 0 && (
-          <div className="mt-7 rounded-[6px] border border-[#e8dcbe] bg-[#fcf8ee] px-4 py-3.5">
-            <p className="text-[0.8rem] font-medium text-[#6b551f]">
-              Réglages à compléter
-            </p>
-            <p className="mt-1 text-[0.78rem] leading-[1.6] text-[#6b551f]/85">
-              Ces champs restent vides et sont donc omis des données
-              structurées transmises à Google : {warnings.join(', ')}.
-            </p>
-            <Link
-              href="/admin/parametres"
-              className="mt-2.5 inline-block text-[0.78rem] font-medium text-[#6b551f] underline underline-offset-2"
-            >
-              Compléter les paramètres
-            </Link>
-          </div>
-        )}
-
-        {home && (
-          <section className="mt-9">
-            <h2 className="mb-2.5 text-[0.7rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">
-              Sections de la page
-            </h2>
-
-            <ul className="divide-y divide-border overflow-hidden rounded-[6px] border border-border bg-card">
-              {home.sections
-                .filter((section) => !section.parentId)
-                .sort((a, b) => a.sortOrder - b.sortOrder)
-                .map((section) => (
-                  <li key={section.id}>
-                    <Link
-                      href="/admin/accueil"
-                      className="flex items-center justify-between gap-4 px-4 py-2.5 transition-colors duration-150 hover:bg-secondary/50"
-                    >
-                      <span className="flex min-w-0 items-center gap-2.5">
-                        <span
-                          aria-hidden="true"
-                          className="h-3 w-3 shrink-0 rounded-[3px] ring-1 ring-inset ring-black/10"
-                          style={{ backgroundColor: section.backgroundColor }}
-                        />
-                        <span className="truncate text-[0.82rem]">
-                          {section.navLabel ?? getBlock(section.type)?.label ?? section.type}
-                        </span>
-                        {section.anchor && (
-                          <span className="shrink-0 text-[0.73rem] text-muted-foreground">
-                            #{section.anchor}
-                          </span>
-                        )}
-                      </span>
-
-                      <Badge variant={section.isActive ? 'success' : 'muted'}>
-                        {section.isActive ? 'Visible' : 'Masquée'}
-                      </Badge>
-                    </Link>
-                  </li>
-                ))}
-            </ul>
-          </section>
-        )}
-      </AdminContent>
-    </>
+      )}
+    </AdminContent>
   )
 }

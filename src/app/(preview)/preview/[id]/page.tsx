@@ -46,8 +46,8 @@ export default async function PreviewPage({
     <MotionProvider>
       <Header
         items={navItems}
-        ctaLabel="Prendre rendez-vous"
-        ctaHref={settings.bookingUrl?.trim() || '#contact'}
+        ctaLabel="Rendez-vous"
+        ctaHref={settings.bookingUrl?.trim() || '/#contact'}
       />
       <main>
         <SectionRenderer sections={page.sections} />

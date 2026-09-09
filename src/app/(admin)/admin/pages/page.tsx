@@ -1,3 +1,4 @@
+import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { PagesManager } from '@/components/admin/PagesManager'
 import { getAdminPages } from '@/server/queries'
@@ -8,11 +9,12 @@ export default async function PagesAdminPage() {
   const pages = await getAdminPages()
 
   return (
-    <>
-      <PageHeader title="Pages" />
-      <div className="min-h-0 flex-1 overflow-y-auto">
-        <PagesManager pages={pages} />
-      </div>
-    </>
+    <AdminContent width="wide">
+      <PageHeader
+        title="Pages"
+        description="Toutes les pages de votre site — l’accueil et celles que vous ajoutez."
+      />
+      <PagesManager pages={pages} />
+    </AdminContent>
   )
 }

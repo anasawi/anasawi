@@ -65,60 +65,56 @@ export function MediaManager({ items: initial }: { items: Media[] }) {
       <UploadField onUploaded={(media) => setItems((prev) => [media, ...prev])} />
 
       {items.length === 0 ? (
-        <p className="mt-8 rounded-lg border border-dashed border-border px-4 py-14 text-center text-sm text-muted-foreground">
-          Aucun média pour l’instant.
+        <p className="mt-6 rounded-[14px] border-[1.5px] border-dashed border-foreground/20 px-4 py-14 text-center text-[13px] text-muted-foreground">
+          Aucune image pour l’instant — ajoutez-en une ci-dessus.
         </p>
       ) : (
-        <ul className="mt-8 grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+        <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
           {items.map((media) => (
             <li
               key={media.id}
-              className="overflow-hidden rounded-lg border border-border"
+              className="group relative aspect-4/3 overflow-hidden rounded-[10px] border border-border bg-muted"
+              title={media.alt}
             >
-              <span className="relative block aspect-4/3 bg-muted">
-                <Image
-                  src={media.url}
-                  alt={media.alt}
-                  fill
-                  sizes="(max-width: 640px) 50vw, 240px"
-                  className="object-cover"
+              <Image
+                src={media.url}
+                alt={media.alt}
+                fill
+                sizes="(max-width: 640px) 50vw, 240px"
+                className="object-cover"
+              />
+
+              {/* Voile sombre + actions, au survol seulement. */}
+              <span className="absolute inset-0 hidden items-end gap-1.5 bg-[rgba(28,32,30,0.42)] p-2 group-hover:flex">
+                <button
+                  type="button"
+                  onClick={() => openEditor(media)}
+                  className="rounded-md bg-white px-2 py-1 text-[10.5px] text-foreground transition-colors hover:bg-ivory"
+                >
+                  Modifier
+                </button>
+                <ConfirmDelete
+                  label={media.filename}
+                  description="Le fichier sera retiré du stockage. Les sections qui l’utilisent afficheront un vide."
+                  trigger={
+                    <button
+                      type="button"
+                      className="rounded-md bg-white px-2 py-1 text-[10.5px] text-red-700 transition-colors hover:bg-ivory"
+                    >
+                      Supprimer
+                    </button>
+                  }
+                  onConfirm={async () => {
+                    const result = await deleteMedia(media.id)
+                    if (result.ok) {
+                      setItems((prev) =>
+                        prev.filter((m) => m.id !== media.id),
+                      )
+                    }
+                    return result
+                  }}
                 />
               </span>
-
-              <div className="p-3">
-                <p className="truncate text-xs font-medium">{media.filename}</p>
-                <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                  {media.alt}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                  {media.width > 0
-                    ? `${media.width} × ${media.height}`
-                    : 'Vectoriel'}
-                </p>
-
-                <div className="mt-2.5 flex items-center justify-between">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => openEditor(media)}
-                  >
-                    Modifier
-                  </Button>
-                  <ConfirmDelete
-                    label={media.filename}
-                    description="Le fichier sera retiré du stockage. Les sections qui l’utilisent afficheront un vide."
-                    onConfirm={async () => {
-                      const result = await deleteMedia(media.id)
-                      if (result.ok) {
-                        setItems((prev) =>
-                          prev.filter((m) => m.id !== media.id),
-                        )
-                      }
-                      return result
-                    }}
-                  />
-                </div>
-              </div>
             </li>
           ))}
         </ul>

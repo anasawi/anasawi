@@ -81,6 +81,7 @@ import {
 } from '@/server/actions/pages'
 import type { Section } from '@/server/db/schema'
 import { MotionProvider } from '@/components/motion/MotionProvider'
+import { AnimProvider } from '@/components/site/anim'
 import {
   SectionsView,
   type SectionsViewData,
@@ -1470,13 +1471,17 @@ export function GridBuilder({
                   de Motion — sans lui, les animations d'apparition ne se
                   jouent jamais et le contenu reste à opacité 0. */}
               <MotionProvider>
-                <SectionsView
-                  key={`${viewport}-${mode}`}
-                  sections={sections}
-                  data={data}
-                  editable={editing}
-                  breakpoint={viewport}
-                />
+                {/* Animations coupées : le canvas montre l'état final des
+                    sections, immédiatement visible. */}
+                <AnimProvider enabled={false}>
+                  <SectionsView
+                    key={`${viewport}-${mode}`}
+                    sections={sections}
+                    data={data}
+                    editable={editing}
+                    breakpoint={viewport}
+                  />
+                </AnimProvider>
               </MotionProvider>
 
               {/* ── Overlays (dans le repère mis à l'échelle) ──────── */}

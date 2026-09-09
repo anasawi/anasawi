@@ -18,6 +18,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { MotionProvider } from '@/components/motion/MotionProvider'
+import { AnimProvider } from '@/components/site/anim'
 import {
   SectionsView,
   type SectionsViewData,
@@ -97,8 +98,8 @@ export function TemplateLibrary({
       disabled={busy !== null}
       onClick={() => void pick(() => onPick(option.type, option.label), option.type)}
       className={cn(
-        'group rounded-lg border border-border p-2.5 text-left transition-colors',
-        'hover:border-foreground/30 focus-visible:border-foreground/40',
+        'group rounded-[11px] border border-border p-2.5 text-left transition-[border-color,transform] duration-150',
+        'hover:-translate-y-0.5 hover:border-blue-deep focus-visible:border-blue-deep',
         busy === option.type && 'opacity-60',
       )}
     >
@@ -116,7 +117,7 @@ export function TemplateLibrary({
     <div
       key={model.id}
       className={cn(
-        'group relative rounded-lg border border-border p-2.5 transition-colors hover:border-foreground/30',
+        'group relative rounded-[11px] border border-border p-2.5 transition-[border-color,transform] duration-150 hover:-translate-y-0.5 hover:border-blue-deep',
         busy === model.id && 'opacity-60',
       )}
     >
@@ -162,7 +163,7 @@ export function TemplateLibrary({
         <DialogHeader className="shrink-0 space-y-0 border-b border-border px-5 py-3">
           <div className="flex items-center justify-between gap-6 pr-8">
             <DialogTitle className="shrink-0 font-serif text-[1.05rem] font-normal">
-              Choisir un modèle de section
+              Que voulez-vous ajouter ?
             </DialogTitle>
             <div className="relative w-64">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
@@ -180,26 +181,9 @@ export function TemplateLibrary({
           {/* Catégories */}
           {!searching && (
             <nav className="w-44 shrink-0 space-y-0.5 overflow-y-auto border-r border-border p-2.5">
-              {saved.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setActive(MINE)}
-                  className={cn(
-                    'flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[0.78rem] transition-colors',
-                    active === MINE
-                      ? 'bg-secondary text-foreground'
-                      : 'text-muted-foreground hover:text-foreground',
-                  )}
-                >
-                  <span className="flex items-center gap-1.5">
-                    <Bookmark className="h-3 w-3" />
-                    Mes sections
-                  </span>
-                  <span className="text-[0.65rem] text-muted-foreground">
-                    {saved.length}
-                  </span>
-                </button>
-              )}
+              <p className="px-2.5 pb-1 pt-2 text-[0.66rem] uppercase tracking-[0.09em] text-muted-foreground">
+                Bibliothèque
+              </p>
               {templateLibrary.map((group) => (
                 <button
                   key={group.category}
@@ -208,7 +192,7 @@ export function TemplateLibrary({
                   className={cn(
                     'flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[0.78rem] transition-colors',
                     active === group.category
-                      ? 'bg-secondary text-foreground'
+                      ? 'bg-white text-foreground shadow-[0_1px_2px_rgba(28,32,30,0.05)]'
                       : 'text-muted-foreground hover:text-foreground',
                   )}
                 >
@@ -218,6 +202,31 @@ export function TemplateLibrary({
                   </span>
                 </button>
               ))}
+              {saved.length > 0 && (
+                <>
+                  <p className="px-2.5 pb-1 pt-3 text-[0.66rem] uppercase tracking-[0.09em] text-muted-foreground">
+                    Personnel
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setActive(MINE)}
+                    className={cn(
+                      'flex w-full items-center justify-between rounded-md px-2.5 py-1.5 text-left text-[0.78rem] transition-colors',
+                      active === MINE
+                        ? 'bg-white text-foreground shadow-[0_1px_2px_rgba(28,32,30,0.05)]'
+                        : 'text-muted-foreground hover:text-foreground',
+                    )}
+                  >
+                    <span className="flex items-center gap-1.5">
+                      <Bookmark className="h-3 w-3" />
+                      Mes sections
+                    </span>
+                    <span className="text-[0.65rem] text-muted-foreground">
+                      {saved.length}
+                    </span>
+                  </button>
+                </>
+              )}
             </nav>
           )}
 
@@ -328,11 +337,15 @@ export function TemplatePreview({
         }}
       >
         <MotionProvider>
-          <SectionsView
-            sections={[section]}
-            data={data}
-            breakpoint="desktop"
-          />
+          {/* Animations coupées : la vignette montre l'état final, jamais
+              un contenu invisible. */}
+          <AnimProvider enabled={false}>
+            <SectionsView
+              sections={[section]}
+              data={data}
+              breakpoint="desktop"
+            />
+          </AnimProvider>
         </MotionProvider>
       </div>
     </div>

@@ -10,25 +10,20 @@ import {
 } from 'react'
 import { useRouter } from 'next/navigation'
 import {
-  Copy,
   Eye,
-  EyeOff,
-  GripVertical,
   Monitor,
   Pencil,
   Plus,
   Redo2,
   Smartphone,
   Tablet,
-  Trash2,
   Undo2,
-  UploadCloud,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import type { HistoryEntry } from './history'
-import { LayersPanel } from './LayersPanel'
 import { SectionInspector, type SectionDraft } from './SectionInspector'
+import { SectionRail } from './SectionRail'
 import { TemplateLibrary } from './TemplateLibrary'
 import { getBlock } from '@/blocks/registry'
 import { GRID_VIEWPORTS, type Breakpoint } from '@/lib/grid'
@@ -49,18 +44,27 @@ import {
 } from '@/server/actions/pages'
 import type { SavedSection, Section } from '@/server/db/schema'
 import { MotionProvider } from '@/components/motion/MotionProvider'
+import { AnimProvider } from '@/components/site/anim'
 import {
   SectionsView,
   type SectionsViewData,
 } from '@/components/site/SectionsView'
 
+/** Une page du site, pour le menu déroulant de la barre du haut. */
+export type EditorPage = {
+  id: string
+  title: string
+  isHome: boolean
+  published: boolean
+}
+
 /**
  * L'éditeur de page du CMS — la philosophie « modèle → contenu ».
  *
- * À gauche, l'arborescence des sections de la page. Au centre, la vraie
- * page. À droite, le formulaire de la section sélectionnée, en
- * enregistrement automatique : on choisit un beau design, on remplit ses
- * informations — jamais de grille, de coordonnées ni de CSS.
+ * À gauche, la liste des sections de la page. Au centre, la vraie page.
+ * À droite, le formulaire de la section sélectionnée, en enregistrement
+ * automatique : on choisit un beau design, on remplit ses informations —
+ * jamais de grille, de coordonnées ni de CSS.
  */
 export function TemplateEditor({
   pageId,
@@ -70,6 +74,7 @@ export function TemplateEditor({
   initialSections,
   data,
   saved,
+  pages,
 }: {
   pageId: string
   pageTitle: string
@@ -80,6 +85,8 @@ export function TemplateEditor({
   data: SectionsViewData
   /** Modèles personnels (« Mes sections »). */
   saved: SavedSection[]
+  /** Toutes les pages du site — le menu de la barre du haut. */
+  pages: EditorPage[]
 }) {
   const router = useRouter()
 
@@ -105,16 +112,13 @@ export function TemplateEditor({
     { id: string; top: number; height: number }[]
   >([])
   const [hoverId, setHoverId] = useState<string | null>(null)
-  /** Glisser vertical d'une section : index de départ + frontière visée. */
-  const [sectionDrag, setSectionDrag] = useState<{
-    id: string
-    from: number
-    boundary: number
-  } | null>(null)
   /** Insertion depuis un « + » entre deux sections. */
   const insertIndexRef = useRef<number | null>(null)
-  /** Suppression en deux temps : premier clic arme, second confirme. */
-  const [armedDelete, setArmedDelete] = useState<string | null>(null)
+
+  /** État d'écriture du panneau — l'indicateur « Enregistré » du haut. */
+  const [saveState, setSaveState] = useState<'saved' | 'dirty' | 'saving'>(
+    'saved',
+  )
 
   const vw = GRID_VIEWPORTS[viewport]
   const scale = Math.min(1, (paneWidth - 48) / vw)
@@ -126,6 +130,11 @@ export function TemplateEditor({
   )
   const selected = selectedId ? (byId.get(selectedId) ?? null) : null
 
+  /* Panneau fermé : plus d'écriture en cours à afficher. */
+  useEffect(() => {
+    if (!selected) setSaveState('saved')
+  }, [selected])
+
   /** Sections racine dans l'ordre de la page. */
   const roots = useMemo(
     () =>
@@ -134,6 +143,22 @@ export function TemplateEditor({
         .sort((a, b) => a.sortOrder - b.sortOrder),
     [sections],
   )
+
+  /* ── Menu des pages (chip de la barre du haut) ───────────────────── */
+
+  const [pageMenuOpen, setPageMenuOpen] = useState(false)
+  const pageMenuRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!pageMenuOpen) return
+    const onDown = (e: PointerEvent) => {
+      if (!pageMenuRef.current?.contains(e.target as Node)) {
+        setPageMenuOpen(false)
+      }
+    }
+    window.addEventListener('pointerdown', onDown)
+    return () => window.removeEventListener('pointerdown', onDown)
+  }, [pageMenuOpen])
 
   /* ── Historique (⌘Z / ⌘⇧Z) ───────────────────────────────────────── */
 
@@ -461,7 +486,7 @@ export function TemplateEditor({
     [router],
   )
 
-  /* ── Actions de la barre de survol ───────────────────────────────── */
+  /* ── Réordonner, masquer, dupliquer ──────────────────────────────── */
 
   const reorderTo = useCallback(
     async (id: string, from: number, boundary: number) => {
@@ -631,11 +656,11 @@ export function TemplateEditor({
     [byId, editing, pushHistory, router],
   )
 
-  /* ── Survol et glisser vertical sur le canvas ────────────────────── */
+  /* ── Survol du canvas ────────────────────────────────────────────── */
 
   const onPaneMove = useCallback(
     (e: React.PointerEvent) => {
-      if (!editing || sectionDrag) return
+      if (!editing) return
       const stage = stageRef.current
       if (!stage) return
       const box = stage.getBoundingClientRect()
@@ -649,47 +674,8 @@ export function TemplateEditor({
       )
       setHoverId((cur) => ((found?.id ?? null) === cur ? cur : (found?.id ?? null)))
     },
-    [editing, scale, sectionDrag, sectionRects],
+    [editing, scale, sectionRects],
   )
-
-  const beginSectionDrag = useCallback(
-    (e: React.PointerEvent, id: string) => {
-      if (e.button !== 0) return
-      e.preventDefault()
-      e.stopPropagation()
-      const from = roots.findIndex((r) => r.id === id)
-      const stage = stageRef.current
-      if (from < 0 || !stage) return
-
-      const compute = (clientY: number) => {
-        const box = stage.getBoundingClientRect()
-        const y = (clientY - box.top) / scale
-        let boundary = 0
-        for (const r of sectionRects) if (y > r.top + r.height / 2) boundary++
-        return boundary
-      }
-
-      setSectionDrag({ id, from, boundary: compute(e.clientY) })
-      const onMove = (ev: PointerEvent) =>
-        setSectionDrag({ id, from, boundary: compute(ev.clientY) })
-      const onUp = (ev: PointerEvent) => {
-        window.removeEventListener('pointermove', onMove)
-        const boundary = compute(ev.clientY)
-        setSectionDrag(null)
-        void reorderTo(id, from, boundary)
-      }
-      window.addEventListener('pointermove', onMove)
-      window.addEventListener('pointerup', onUp, { once: true })
-    },
-    [reorderTo, roots, scale, sectionRects],
-  )
-
-  /* La corbeille armée se désarme toute seule. */
-  useEffect(() => {
-    if (!armedDelete) return
-    const timer = setTimeout(() => setArmedDelete(null), 2500)
-    return () => clearTimeout(timer)
-  }, [armedDelete])
 
   /* ── Publication ─────────────────────────────────────────────────── */
 
@@ -719,62 +705,134 @@ export function TemplateEditor({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
       {/* ── Barre supérieure ─────────────────────────────────────── */}
-      <header className="flex h-12 shrink-0 items-center justify-between border-b border-border bg-[#fcfaf7] px-3">
-        <div className="flex items-center gap-2">
-          <h1 className="max-w-56 truncate font-serif text-[0.92rem]">
-            {pageTitle}
-          </h1>
+      <header className="flex h-[54px] shrink-0 items-center gap-3.5 border-b border-border bg-ivory px-[18px]">
+        {/* Chip de la page — ouvre le menu des pages du site. */}
+        <div ref={pageMenuRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setPageMenuOpen((open) => !open)}
+            aria-haspopup="menu"
+            aria-expanded={pageMenuOpen}
+            className="flex items-center gap-2 rounded-lg px-2.5 py-[5px] transition-colors hover:bg-white/90"
+          >
+            <span className="max-w-56 truncate font-serif text-[15px]">
+              {pageTitle}
+            </span>
+            <span aria-hidden="true" className="text-[10px] text-muted-foreground">
+              ▼
+            </span>
+          </button>
 
+          {pageMenuOpen && (
+            <div
+              role="menu"
+              className="absolute left-0 top-[calc(100%+6px)] z-40 w-60 rounded-[10px] border border-border bg-white p-1.5 shadow-[0_10px_30px_rgba(28,32,30,0.14)]"
+            >
+              {pages.map((page) => {
+                const current = page.id === pageId
+                return (
+                  <button
+                    key={page.id}
+                    type="button"
+                    role="menuitem"
+                    onClick={() => {
+                      setPageMenuOpen(false)
+                      if (!current) {
+                        router.push(
+                          page.isHome
+                            ? '/admin/accueil'
+                            : `/admin/pages/${page.id}`,
+                        )
+                      }
+                    }}
+                    className={cn(
+                      'flex w-full items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-left text-[12.5px] transition-colors',
+                      current
+                        ? 'bg-blue-mist/60 text-foreground'
+                        : 'text-ink-soft hover:bg-blue-mist/40 hover:text-foreground',
+                    )}
+                  >
+                    <span
+                      aria-hidden="true"
+                      title={page.published ? 'Publiée' : 'Brouillon'}
+                      className={cn(
+                        'h-[6px] w-[6px] shrink-0 rounded-full',
+                        page.published
+                          ? 'bg-[#3e9e6f]'
+                          : 'bg-muted-foreground/40',
+                      )}
+                    />
+                    <span className="truncate">{page.title}</span>
+                  </button>
+                )
+              })}
+              <div className="mx-1 my-1 border-t border-border" />
+              <button
+                type="button"
+                role="menuitem"
+                onClick={() => {
+                  setPageMenuOpen(false)
+                  router.push('/admin/pages')
+                }}
+                className="w-full rounded-[7px] px-2.5 py-[7px] text-left text-[12.5px] text-muted-foreground transition-colors hover:bg-blue-mist/40 hover:text-foreground"
+              >
+                Gérer les pages…
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* État de publication — rien à dire quand tout est publié. */}
+        {!publishedAt ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-muted px-2.5 py-1 text-[11.5px] text-muted-foreground">
+            <span className="h-[6px] w-[6px] rounded-full bg-muted-foreground/50" />
+            Jamais publiée
+          </span>
+        ) : dirty ? (
+          <span className="flex items-center gap-1.5 rounded-full bg-[#fdf4e4] px-2.5 py-1 text-[11.5px] text-[#8a5f1e]">
+            <span className="h-[6px] w-[6px] rounded-full bg-[#c98a2d]" />
+            Modifications non publiées
+          </span>
+        ) : null}
+
+        {/* Enregistrement automatique — permanent et discret. */}
+        <span
+          className="flex items-center gap-1.5 text-[12px] text-stone"
+          aria-live="polite"
+        >
           <span
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-2 py-0.5 text-[0.65rem] font-medium',
-              !publishedAt
-                ? 'bg-muted text-muted-foreground'
-                : dirty
-                  ? 'bg-amber-100 text-amber-800'
-                  : 'bg-emerald-100 text-emerald-800',
+              'h-[6px] w-[6px] rounded-full',
+              saveState === 'saved' ? 'bg-[#3e9e6f]' : 'bg-muted-foreground/50',
             )}
-          >
-            <span
-              className={cn(
-                'h-1.5 w-1.5 rounded-full',
-                !publishedAt
-                  ? 'bg-muted-foreground'
-                  : dirty
-                    ? 'bg-amber-500'
-                    : 'bg-emerald-500',
-              )}
-            />
-            {!publishedAt
-              ? 'Jamais publiée'
-              : dirty
-                ? 'Modifications non publiées'
-                : 'Publiée'}
-          </span>
+          />
+          {saveState === 'saved' ? 'Enregistré' : 'Enregistrement…'}
+        </span>
 
-          <span className="h-4 w-px bg-border" />
+        <div className="flex-1" />
 
+        <div className="flex items-center gap-0.5">
           <button
             type="button"
             onClick={() => void runHistory('undo')}
             disabled={undoStack.current.length === 0}
             title="Annuler (⌘Z)"
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/90 hover:text-foreground disabled:opacity-30"
           >
-            <Undo2 className="h-4 w-4" />
+            <Undo2 className="h-4 w-4" strokeWidth={1.6} />
           </button>
           <button
             type="button"
             onClick={() => void runHistory('redo')}
             disabled={redoStack.current.length === 0}
             title="Rétablir (⌘⇧Z)"
-            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-30"
+            className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/90 hover:text-foreground disabled:opacity-30"
           >
-            <Redo2 className="h-4 w-4" />
+            <Redo2 className="h-4 w-4" strokeWidth={1.6} />
           </button>
         </div>
 
-        <div className="flex items-center gap-0.5 rounded-lg border border-border p-0.5">
+        <div className="flex items-center gap-px rounded-[9px] border border-foreground/15 p-[2px]">
           {VIEWPORT_ICONS.map(({ bp, icon: Icon, label }) => (
             <button
               key={bp}
@@ -782,92 +840,73 @@ export function TemplateEditor({
               title={label}
               onClick={() => setViewport(bp)}
               className={cn(
-                'rounded-md px-2.5 py-1 transition-colors',
+                'flex h-[26px] w-8 items-center justify-center rounded-[7px] transition-colors',
                 viewport === bp
-                  ? 'bg-foreground text-background'
+                  ? 'bg-foreground text-ivory'
                   : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Icon className="h-3.5 w-3.5" />
+              <Icon className="h-3.5 w-3.5" strokeWidth={1.6} />
             </button>
           ))}
         </div>
 
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => {
-              setMode((m) => (m === 'edit' ? 'preview' : 'edit'))
-              setSelectedId(null)
-            }}
-            className={cn(
-              'flex items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-[0.78rem] transition-colors',
-              mode === 'preview'
-                ? 'bg-foreground text-background'
-                : 'text-muted-foreground hover:text-foreground',
-            )}
-          >
-            {mode === 'edit' ? (
-              <>
-                <Eye className="h-3.5 w-3.5" /> Aperçu
-              </>
-            ) : (
-              <>
-                <Pencil className="h-3.5 w-3.5" /> Éditer
-              </>
-            )}
-          </button>
+        <button
+          type="button"
+          onClick={() => {
+            setMode((m) => (m === 'edit' ? 'preview' : 'edit'))
+            setSelectedId(null)
+          }}
+          className="flex items-center gap-1.5 rounded-lg border border-foreground/15 px-3 py-[6px] text-[12.5px] text-ink-soft transition-colors hover:border-foreground hover:text-foreground"
+        >
+          {mode === 'edit' ? (
+            <>
+              <Eye className="h-3.5 w-3.5" strokeWidth={1.6} /> Aperçu
+            </>
+          ) : (
+            <>
+              <Pencil className="h-3.5 w-3.5" strokeWidth={1.6} /> Éditer
+            </>
+          )}
+        </button>
 
-          <button
-            type="button"
-            onClick={() => void publish()}
-            disabled={publishing || (!dirty && publishedAt !== null)}
-            className={cn(
-              'flex items-center gap-1.5 rounded-md px-3 py-1 text-[0.78rem] font-medium transition-opacity',
-              dirty || !publishedAt
-                ? 'bg-foreground text-background hover:opacity-90'
-                : 'bg-muted text-muted-foreground',
-            )}
-          >
-            <UploadCloud className="h-3.5 w-3.5" />
-            {publishing ? 'Publication…' : 'Publier'}
-          </button>
-        </div>
+        <button
+          type="button"
+          onClick={() => void publish()}
+          disabled={publishing || (!dirty && publishedAt !== null)}
+          className={cn(
+            'rounded-lg px-4 py-[7px] text-[12.5px] font-medium transition-all',
+            dirty || !publishedAt
+              ? 'bg-blue-deep text-white hover:brightness-105'
+              : 'bg-muted text-muted-foreground',
+          )}
+        >
+          {publishing ? 'Publication…' : 'Publier'}
+        </button>
       </header>
 
       <div className="flex min-h-0 flex-1">
         {/* ── Sections de la page ──────────────────────────────────── */}
         {editing && (
-          <aside className="flex w-60 shrink-0 flex-col border-r border-border">
-            <div className="shrink-0 border-b border-border p-2.5">
-              <button
-                type="button"
-                onClick={() => {
-                  insertIndexRef.current = null
-                  setLibraryOpen(true)
-                }}
-                className="flex w-full items-center justify-center gap-1.5 rounded-md bg-foreground py-2 text-[0.78rem] text-background transition-opacity hover:opacity-90"
-              >
-                <Plus className="h-3.5 w-3.5" />
-                Ajouter une section
-              </button>
-            </div>
-            <div className="min-h-0 flex-1 overflow-y-auto p-1.5">
-              <LayersPanel
-                sections={sections}
-                selectedId={selectedId}
-                onSelect={(id) => {
-                  setSelectedId(id)
-                  stageRef.current
-                    ?.querySelector(`[data-block-id="${id}"]`)
-                    ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
-                }}
-                onChanged={() => router.refresh()}
-                pushHistory={pushHistory}
-                onDelete={deleteWithHistory}
-              />
-            </div>
-          </aside>
+          <SectionRail
+            roots={roots}
+            selectedId={selectedId}
+            onSelect={(id) => {
+              setSelectedId(id)
+              stageRef.current
+                ?.querySelector(`[data-block-id="${id}"]`)
+                ?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+            }}
+            onToggle={(section) => void toggleWithHistory(section)}
+            onDuplicate={(section) => void duplicateWithHistory(section)}
+            onDelete={deleteWithHistory}
+            reorderTo={reorderTo}
+            pushHistory={pushHistory}
+            onAdd={() => {
+              insertIndexRef.current = null
+              setLibraryOpen(true)
+            }}
+          />
         )}
 
         {/* ── La page ──────────────────────────────────────────────── */}
@@ -875,7 +914,7 @@ export function TemplateEditor({
           ref={paneRef}
           onPointerMove={onPaneMove}
           onPointerLeave={() => setHoverId(null)}
-          className="min-h-0 min-w-0 flex-1 overflow-auto bg-[#efece6] py-6"
+          className="min-h-0 min-w-0 flex-1 overflow-auto bg-[#eae6df] p-[22px]"
         >
           <div
             className="relative mx-auto"
@@ -885,11 +924,11 @@ export function TemplateEditor({
               ref={stageRef}
               onClickCapture={onStageClick}
               onDoubleClick={onStageDoubleClick}
-              className="origin-top-left bg-white shadow-[0_1px_8px_rgba(20,20,19,0.08)]"
+              className="origin-top-left rounded-[4px] bg-ivory shadow-[0_2px_14px_rgba(28,32,30,0.09)]"
               style={{ width: vw, transform: `scale(${scale})` }}
             >
               {/* L'identité globale s'applique aussi dans l'éditeur : ce
-                  que l'admin règle dans « Identité du site » se voit ici. */}
+                  que l'admin règle dans « Apparence » se voit ici. */}
               {identityCss(data.settings.identity) && (
                 <style
                   dangerouslySetInnerHTML={{
@@ -898,20 +937,24 @@ export function TemplateEditor({
                 />
               )}
               <MotionProvider>
-                <SectionsView
-                  key={`${viewport}-${mode}`}
-                  sections={sections}
-                  data={data}
-                  editable={editing}
-                  breakpoint={viewport}
-                />
+                {/* Animations coupées : dans l'éditeur, chaque section est
+                    rendue dans son état final, immédiatement visible. */}
+                <AnimProvider enabled={false}>
+                  <SectionsView
+                    key={`${viewport}-${mode}`}
+                    sections={sections}
+                    data={data}
+                    editable={editing}
+                    breakpoint={viewport}
+                  />
+                </AnimProvider>
               </MotionProvider>
             </div>
 
             {/* Cadre de la section sélectionnée */}
             {editing && selectionRect && (
               <div
-                className="pointer-events-none absolute inset-x-0 ring-[1.5px] ring-inset ring-sky-500/70"
+                className="pointer-events-none absolute inset-x-0 ring-[1.5px] ring-inset ring-blue-deep"
                 style={{
                   top: selectionRect.top * scale,
                   height: selectionRect.height * scale,
@@ -925,88 +968,39 @@ export function TemplateEditor({
                 {sectionRects.map((r, i) => {
                   const section = byId.get(r.id)
                   if (!section) return null
-                  const active =
-                    !sectionDrag && (hoverId === r.id || selectedId === r.id)
-                  const dragged = sectionDrag?.id === r.id
+                  const active = hoverId === r.id || selectedId === r.id
 
                   return (
                     <div
                       key={r.id}
-                      className="absolute inset-x-0"
+                      className={cn(
+                        'absolute inset-x-0',
+                        /* Survol : liseré intérieur bleu à 35 % — la
+                           sélection garde son liseré plein. */
+                        hoverId === r.id &&
+                          selectedId !== r.id &&
+                          'ring-[1.5px] ring-inset ring-blue-deep/35',
+                      )}
                       style={{ top: r.top * scale, height: r.height * scale }}
                     >
-                      {dragged && (
-                        <div className="absolute inset-0 bg-sky-500/[0.06] ring-1 ring-inset ring-sky-400/50" />
-                      )}
-
                       {active && (
                         <>
                           {/* Étiquette de la section */}
-                          <div className="absolute left-2 top-2 rounded-[4px] bg-neutral-900/80 px-2 py-0.5 text-[0.65rem] font-medium text-white backdrop-blur-sm">
-                            {String(i + 1).padStart(2, '0')} ·{' '}
+                          <div className="absolute left-2.5 top-2.5 rounded-[5px] bg-[rgba(28,32,30,0.82)] px-2 py-[3px] text-[10px] text-white">
                             {section.name ??
                               getBlock(section.type)?.label ??
                               section.type}
                             {!section.isActive && ' — masquée'}
                           </div>
 
-                          {/* Barre d'actions */}
-                          <div className="pointer-events-auto absolute right-2 top-2 flex items-center gap-0.5 rounded-md border border-border bg-white/95 p-0.5 shadow-sm backdrop-blur-sm">
-                            <button
-                              type="button"
-                              title="Déplacer — glissez verticalement"
-                              onPointerDown={(e) => beginSectionDrag(e, r.id)}
-                              className="cursor-grab rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700 active:cursor-grabbing"
-                            >
-                              <GripVertical className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              title={section.isActive ? 'Masquer' : 'Afficher'}
-                              onClick={() => void toggleWithHistory(section)}
-                              className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
-                            >
-                              {section.isActive ? (
-                                <EyeOff className="h-3.5 w-3.5" />
-                              ) : (
-                                <Eye className="h-3.5 w-3.5" />
-                              )}
-                            </button>
-                            <button
-                              type="button"
-                              title="Dupliquer"
-                              onClick={() => void duplicateWithHistory(section)}
-                              className="rounded p-1.5 text-neutral-400 hover:bg-neutral-100 hover:text-neutral-700"
-                            >
-                              <Copy className="h-3.5 w-3.5" />
-                            </button>
-                            <button
-                              type="button"
-                              title={
-                                armedDelete === r.id
-                                  ? 'Cliquez pour confirmer'
-                                  : 'Supprimer'
-                              }
-                              onClick={() => {
-                                if (armedDelete === r.id) {
-                                  setArmedDelete(null)
-                                  void deleteWithHistory(r.id).then((res) => {
-                                    if (res.ok) router.refresh()
-                                  })
-                                } else {
-                                  setArmedDelete(r.id)
-                                }
-                              }}
-                              className={cn(
-                                'rounded p-1.5 transition-colors',
-                                armedDelete === r.id
-                                  ? 'bg-red-600 text-white'
-                                  : 'text-neutral-400 hover:bg-red-50 hover:text-red-600',
-                              )}
-                            >
-                              <Trash2 className="h-3.5 w-3.5" />
-                            </button>
-                          </div>
+                          {/* Modifier — ouvre le panneau de droite. */}
+                          <button
+                            type="button"
+                            onClick={() => setSelectedId(r.id)}
+                            className="pointer-events-auto absolute right-2 top-2 rounded-[7px] border border-line-strong bg-white px-2.5 py-1 text-[11px] text-foreground shadow-[0_1px_4px_rgba(28,32,30,0.08)] transition-colors hover:border-blue-deep hover:text-blue-deep"
+                          >
+                            Modifier
+                          </button>
 
                           {/* « + » aux deux frontières de la section */}
                           {[i, i + 1].map((index, pos) => (
@@ -1019,13 +1013,13 @@ export function TemplateEditor({
                                 setLibraryOpen(true)
                               }}
                               className={cn(
-                                'pointer-events-auto absolute left-1/2 z-10 flex h-7 w-7 -translate-x-1/2 items-center justify-center rounded-full bg-foreground text-background shadow-md transition-transform hover:scale-110',
+                                'pointer-events-auto absolute left-1/2 z-10 flex h-[26px] w-[26px] -translate-x-1/2 items-center justify-center rounded-full bg-foreground text-ivory shadow-[0_2px_8px_rgba(28,32,30,0.25)] transition-transform hover:scale-110',
                                 pos === 0
                                   ? 'top-0 -translate-y-1/2'
                                   : 'bottom-0 translate-y-1/2',
                               )}
                             >
-                              <Plus className="h-4 w-4" />
+                              <Plus className="h-3.5 w-3.5" strokeWidth={1.8} />
                             </button>
                           ))}
                         </>
@@ -1033,61 +1027,26 @@ export function TemplateEditor({
                     </div>
                   )
                 })}
-
-                {/* Ligne d'insertion pendant le glisser */}
-                {sectionDrag &&
-                  (() => {
-                    const b = sectionDrag.boundary
-                    const last = sectionRects[sectionRects.length - 1]
-                    const y =
-                      b < sectionRects.length
-                        ? (sectionRects[b]?.top ?? 0)
-                        : last
-                          ? last.top + last.height
-                          : 0
-                    return (
-                      <div
-                        className="absolute inset-x-3 h-[3px] rounded-full bg-sky-500 shadow-[0_0_0_3px_rgba(14,165,233,0.2)]"
-                        style={{ top: y * scale - 1.5 }}
-                      />
-                    )
-                  })()}
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Contenu de la section ────────────────────────────────── */}
-        {editing && (
-          <aside className="w-[19.5rem] shrink-0 overflow-y-auto border-l border-border">
-            {selected ? (
-              <SectionInspector
-                key={selected.id}
-                section={selected}
-                library={data.media}
-                onClose={() => setSelectedId(null)}
-                onMutated={() => router.refresh()}
-                pushHistory={pushHistory}
-                onDelete={deleteWithHistory}
-                onDraft={applyDraft}
-                simple
-              />
-            ) : (
-              <div className="p-5 text-[0.78rem] leading-relaxed text-muted-foreground">
-                <p className="mb-2 font-medium text-foreground">
-                  Rien de sélectionné
-                </p>
-                <p>
-                  Cliquez sur une section de la page (ou dans la liste de
-                  gauche) pour modifier son contenu.
-                </p>
-                <p className="mt-3">
-                  « Ajouter une section » ouvre la bibliothèque de modèles :
-                  choisissez un design, remplissez vos informations — la mise
-                  en page est déjà faite.
-                </p>
-              </div>
-            )}
+        {/* ── Contenu de la section — seulement quand elle existe ──── */}
+        {editing && selected && (
+          <aside className="flex w-[300px] shrink-0 flex-col overflow-hidden border-l border-border bg-ivory">
+            <SectionInspector
+              key={selected.id}
+              section={selected}
+              library={data.media}
+              onClose={() => setSelectedId(null)}
+              onMutated={() => router.refresh()}
+              pushHistory={pushHistory}
+              onDelete={deleteWithHistory}
+              onDraft={applyDraft}
+              onSaveStateChange={setSaveState}
+              simple
+            />
           </aside>
         )}
       </div>

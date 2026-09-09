@@ -60,11 +60,11 @@ export function PagesManager({ pages }: { pages: Page[] }) {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-5 p-6">
+    <div className="space-y-5">
       {/* ── Création ─────────────────────────────────────────────── */}
       {creating ? (
         <form
-          className="space-y-3 rounded-lg border border-border p-4"
+          className="space-y-3 rounded-xl border border-border bg-white px-[22px] py-5"
           onSubmit={(e) => {
             e.preventDefault()
             submit()
@@ -105,7 +105,12 @@ export function PagesManager({ pages }: { pages: Page[] }) {
             </div>
           </div>
           <div className="flex items-center gap-2">
-            <Button type="submit" size="sm" disabled={pending || !title || !slug}>
+            <Button
+              type="submit"
+              size="sm"
+              className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+              disabled={pending || !title || !slug}
+            >
               Créer la page
             </Button>
             <Button
@@ -119,20 +124,25 @@ export function PagesManager({ pages }: { pages: Page[] }) {
           </div>
         </form>
       ) : (
-        <Button onClick={() => setCreating(true)}>
-          <Plus />
-          Nouvelle page
-        </Button>
+        <div className="flex justify-end">
+          <Button
+            className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
+            onClick={() => setCreating(true)}
+          >
+            <Plus />
+            Nouvelle page
+          </Button>
+        </div>
       )}
 
       {/* ── Liste ────────────────────────────────────────────────── */}
-      <ul className="divide-y divide-border rounded-lg border border-border">
+      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
         {pages.map((page) => {
           const published = page.status === 'published'
           return (
             <li
               key={page.id}
-              className="group flex items-center gap-3 px-4 py-3"
+              className="group flex items-center gap-3 px-4 py-3 transition-colors duration-150 hover:bg-ivory/50"
             >
               <div className="min-w-0 flex-1">
                 <p className="flex items-center gap-2 text-[0.88rem] text-foreground">

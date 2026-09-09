@@ -2,12 +2,12 @@ import { z } from 'zod'
 
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
+import { Reveal } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
+import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { ImageReveal } from '@/components/motion/ImageReveal'
 import { Prose } from '@/components/site/Prose'
-import { Reveal } from '@/components/motion/Reveal'
 import { cn } from '@/lib/utils'
 
 /**
@@ -33,7 +33,8 @@ export const viergeSchema = z.object({
 function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {
   const media =
     data.imageSide === 'aucune' ? null : ctx.resolveMedia(data.mediaId)
-  const centered = data.align === 'center' && !media
+  const withImage = data.imageSide !== 'aucune'
+  const centered = data.align === 'center' && !withImage
 
   const content = (
     <div
@@ -44,7 +45,9 @@ function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {
     >
       {data.eyebrow && (
         <Reveal delay={0.05}>
-          <Eyebrow>{data.eyebrow}</Eyebrow>
+          <Eyebrow className={cn(centered && 'justify-center')}>
+            {data.eyebrow}
+          </Eyebrow>
         </Reveal>
       )}
       {data.title && (
@@ -73,10 +76,12 @@ function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {
     </div>
   )
 
-  if (!media) {
+  if (!withImage) {
     return (
       <div className="container-editorial">
-        <div className={cn(centered ? 'mx-auto max-w-[44rem]' : 'max-w-[52rem]')}>
+        <div
+          className={cn(centered ? 'mx-auto max-w-[44rem]' : 'max-w-[52rem]')}
+        >
           {content}
         </div>
       </div>
@@ -87,10 +92,10 @@ function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {
     <div className="container-editorial">
       <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
         <div className={cn(data.imageSide === 'droite' && 'lg:order-2')}>
-          <ImageReveal
+          <BlockImage
             media={media}
             sizes="(max-width: 1024px) 100vw, 50vw"
-            className="aspect-4/3 w-full"
+            className="aspect-[4/3] w-full rounded-[28px]"
           />
         </div>
         <div className={cn(data.imageSide === 'droite' && 'lg:order-1')}>

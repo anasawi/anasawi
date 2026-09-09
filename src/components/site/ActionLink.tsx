@@ -4,19 +4,21 @@ import { cn } from '@/lib/utils'
 
 type Variant = 'primary' | 'ghost' | 'outline'
 
+/* Boutons sobres de la planche V8 : pilule, fond qui fonce, flèche qui
+   glisse de 4px — rien d'autre. Pas d'aimantation, pas de libellé qui
+   change. Le rayon vient de `--button-radius` (999px par défaut), que
+   l'identité admin peut resserrer. */
 const base =
-  'group relative inline-flex items-center justify-center gap-3 rounded-[var(--button-radius,2px)] ' +
-  'px-8 py-4.5 text-[0.8rem] font-medium uppercase tracking-[0.14em] ' +
-  'transition-[background-color,color,border-color] duration-500 ease-[var(--ease-out-soft)]'
+  'group relative inline-flex items-center justify-center gap-[11px] rounded-[var(--button-radius,999px)] ' +
+  'px-[34px] py-4 text-[11px] font-semibold uppercase tracking-[0.18em] ' +
+  'transition-[background-color,color,border-color] duration-[350ms] ease-[var(--ease)]'
 
 const variants: Record<Variant, string> = {
-  /* L'aplat bleu se fonce à l'approche — pas de changement d'échelle.
-     Le texte reste anthracite sur le bleu clair (6.6:1) et passe en ivoire
-     sur le bleu profond (5.0:1) : les deux états sont lisibles. */
-  primary: 'bg-blue text-ink hover:bg-blue-deep hover:text-ivory',
+  primary: 'bg-blue-deep text-ivory hover:bg-night',
   outline:
-    'border border-line-strong text-ink hover:border-ink hover:bg-ink hover:text-ivory',
-  ghost: 'text-ink-soft hover:text-ink',
+    'border border-blue-deep bg-transparent text-blue-deep hover:bg-blue-mist',
+  ghost:
+    'border border-blue-deep bg-transparent text-blue-deep hover:bg-blue-mist',
 }
 
 export function ActionLink({
@@ -40,7 +42,7 @@ export function ActionLink({
       {withArrow && (
         <span
           aria-hidden="true"
-          className="inline-block transition-transform duration-500 ease-[var(--ease-out-soft)] group-hover:translate-x-1"
+          className="inline-block transition-transform duration-[350ms] ease-[var(--ease)] group-hover:translate-x-1"
         >
           →
         </span>

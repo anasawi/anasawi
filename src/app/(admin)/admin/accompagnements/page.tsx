@@ -12,14 +12,12 @@ export default async function ServicesAdminPage() {
   ])
 
   return (
-    <>
+    <AdminContent width="wide">
       <PageHeader
         title="Accompagnements"
-        description="Glissez-déposez pour définir l’ordre d’affichage sur le site."
+        description="Ce que vous proposez, dans l’ordre où vos visiteurs le découvrent — glissez une ligne pour la déplacer."
       />
-      <AdminContent>
-        <ServicesManager services={services} library={library} />
-      </AdminContent>
-    </>
+      <ServicesManager services={services} library={library} />
+    </AdminContent>
   )
 }
