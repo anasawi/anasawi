@@ -15,5 +15,9 @@ yarn-error.log*
 .pnpm-debug.log*
 
 .vercel
+.netlify
 next-env.d.ts
 tsconfig.tsbuildinfo
+
+# Médias envoyés depuis le CMS en développement (pilote de stockage local).
+.storage

@@ -39,7 +39,10 @@ async function main() {
 
   const required = ['DATABASE_URL', 'AUTH_SECRET'] as const
   const optional = [
-    ['BLOB_READ_WRITE_TOKEN', 'upload d’images depuis le CMS'],
+    [
+      'MEDIA_STORAGE',
+      'force le pilote de stockage (netlify | local) ; sinon déduit de l’hôte',
+    ],
     ['RESEND_API_KEY', 'notification e-mail du formulaire de contact'],
     ['NEXT_PUBLIC_SITE_URL', 'URL absolues du SEO (défaut : https://anasawi.com)'],
   ] as const

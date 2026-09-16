@@ -2,7 +2,7 @@
 
 Site vitrine et CMS d'**Anne Winzenried**, thérapeute à Cesson-Sévigné.
 
-Next.js 15 · TypeScript · Tailwind v4 · Drizzle · Neon PostgreSQL · Auth.js v5 · Vercel Blob
+Next.js 15 · TypeScript · Tailwind v4 · Drizzle · Neon PostgreSQL · Auth.js v5 · Netlify Blobs
 
 ---
 
@@ -34,7 +34,7 @@ Renseigner `.env.local` :
 |---|---|
 | `DATABASE_URL` | [console.neon.tech](https://console.neon.tech) → connection string **pooled** |
 | `AUTH_SECRET` | `openssl rand -base64 32` |
-| `BLOB_READ_WRITE_TOKEN` | Vercel → Storage → Blob |
+| `MEDIA_STORAGE` | optionnel — `netlify` ou `local`, sinon déduit de l'hôte |
 | `RESEND_API_KEY` | [resend.com](https://resend.com) — optionnel |
 | `NEXT_PUBLIC_SITE_URL` | `https://anasawi.com` |
 
@@ -97,7 +97,7 @@ src/
 │   ├── (site)/        Site public — page d'accueil et pages du CMS
 │   ├── (admin)/admin/ CMS
 │   ├── login/
-│   └── api/           auth · upload (Vercel Blob) · contact
+│   └── api/           auth · upload · media/[key] · contact
 ├── blocks/            ← les types de sections
 ├── components/
 │   ├── site/          chrome public (Header, Footer, Logo…)
@@ -181,12 +181,22 @@ Le tableau de bord signale les réglages manquants qui dégradent le balisage �
 
 ## Déploiement
 
-1. Pousser sur GitHub, importer le dépôt dans Vercel
+L'hébergement est **Netlify** : son offre gratuite autorise explicitement
+l'usage commercial, contrairement au plan Hobby de Vercel.
+
+1. Pousser sur GitHub, importer le dépôt dans Netlify (« Add new project »)
 2. Reporter les variables d'environnement (`DATABASE_URL` en **pooled**)
-3. Créer un store Blob depuis l'onglet Storage — le token s'injecte automatiquement
+3. Rien à faire pour le stockage : Netlify Blobs est provisionné automatiquement
 4. `npm run db:setup` puis `npm run db:seed` contre la base de production
 5. `npm run admin:create` pour le compte d'Anne
-6. Pointer `anasawi.com` sur le projet Vercel
+6. Pointer `anasawi.com` sur le projet Netlify (Domain management)
+
+`main` est la branche de production ; `preprod` est déployée en branche de
+prévisualisation, sur une URL distincte et avec les mêmes variables.
+
+Le build est assuré par l'adaptateur OpenNext, appliqué automatiquement — il
+ne faut pas l'épingler dans `package.json`, Netlify le met à jour à chaque
+build pour suivre les versions de Next.js.
 
 Le cache est invalidé par tag à chaque enregistrement dans le CMS : la modification est visible immédiatement, sans rebuild.
 

@@ -1,6 +1,5 @@
 'use client'
 
-import { upload } from '@vercel/blob/client'
 import { ImagePlus, Loader2, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRef, useState, useTransition } from 'react'
@@ -21,38 +20,93 @@ import { cn } from '@/lib/utils'
 import { registerMedia } from '@/server/actions/media'
 import type { Media } from '@/server/db/schema'
 
+/** Au-delà, un écran ne gagne plus rien : on paie de la bande passante pour rien. */
+const MAX_DIMENSION = 2400
+
+/** Doit rester sous la limite de la route d'envoi (4 Mo). */
+const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
+
+type PreparedImage = {
+  data: Blob
+  mimeType: string
+  width: number
+  height: number
+  blurDataUrl: string | null
+}
+
 /**
- * Lit les dimensions réelles et produit une miniature floutée, côté client.
+ * Redimensionne, recompresse et mesure l'image — entièrement côté navigateur.
  *
- * On évite ainsi `sharp` côté serveur : le navigateur a déjà l'image décodée,
- * un canvas de 16 px suffit à générer le placeholder, et les dimensions
- * stockées éliminent tout décalage de mise en page à l'affichage.
+ * Trois bénéfices d'un seul geste : on évite `sharp` côté serveur (le
+ * navigateur a déjà l'image décodée), on ramène une photo d'appareil photo de
+ * 8 Mo à quelques centaines de kilooctets — ce qui la fait passer sous la
+ * limite de charge utile des fonctions serverless — et on relève les
+ * dimensions réelles, qui suppriment tout décalage de mise en page.
+ *
+ * Le placeholder flouté est produit dans la foulée, sur un canvas de 16 px.
  */
-async function probeImage(
-  file: File,
-): Promise<{ width: number; height: number; blurDataUrl: string | null }> {
-  if (file.type === 'image/svg+xml') {
-    return { width: 0, height: 0, blurDataUrl: null }
+async function prepareImage(file: File): Promise<PreparedImage> {
+  const bitmap = await createImageBitmap(file)
+
+  /* `close()` remet width et height à zéro : on relève les dimensions
+     d'origine tant que le bitmap est vivant. */
+  const sourceWidth = bitmap.width
+  const sourceHeight = bitmap.height
+
+  const scale = Math.min(1, MAX_DIMENSION / Math.max(sourceWidth, sourceHeight))
+  const width = Math.max(1, Math.round(sourceWidth * scale))
+  const height = Math.max(1, Math.round(sourceHeight * scale))
+
+  const canvas = document.createElement('canvas')
+  canvas.width = width
+  canvas.height = height
+  const context = canvas.getContext('2d')
+
+  if (!context) {
+    /* Sans canvas, on renvoie le fichier tel quel : la route refusera s'il
+       dépasse la limite, avec un message clair. */
+    bitmap.close()
+    return {
+      data: file,
+      mimeType: file.type,
+      width: sourceWidth,
+      height: sourceHeight,
+      blurDataUrl: null,
+    }
   }
 
-  const bitmap = await createImageBitmap(file)
-  const { width, height } = bitmap
+  context.drawImage(bitmap, 0, 0, width, height)
+  const encoded = await new Promise<Blob | null>((resolve) =>
+    canvas.toBlob(resolve, 'image/webp', 0.86),
+  )
 
-  const scale = 16 / Math.max(width, height)
-  const canvas = document.createElement('canvas')
-  canvas.width = Math.max(1, Math.round(width * scale))
-  canvas.height = Math.max(1, Math.round(height * scale))
+  const thumb = document.createElement('canvas')
+  const thumbScale = 16 / Math.max(width, height)
+  thumb.width = Math.max(1, Math.round(width * thumbScale))
+  thumb.height = Math.max(1, Math.round(height * thumbScale))
 
-  const context = canvas.getContext('2d')
+  const thumbContext = thumb.getContext('2d')
   let blurDataUrl: string | null = null
-
-  if (context) {
-    context.drawImage(bitmap, 0, 0, canvas.width, canvas.height)
-    blurDataUrl = canvas.toDataURL('image/webp', 0.6)
+  if (thumbContext) {
+    thumbContext.drawImage(bitmap, 0, 0, thumb.width, thumb.height)
+    blurDataUrl = thumb.toDataURL('image/webp', 0.6)
   }
 
   bitmap.close()
-  return { width, height, blurDataUrl }
+
+  /* Si la recompression n'a rien gagné (petite image déjà optimisée), on garde
+     l'original plutôt que de dégrader pour rien. */
+  if (!encoded || encoded.size >= file.size) {
+    return {
+      data: file,
+      mimeType: file.type,
+      width: sourceWidth,
+      height: sourceHeight,
+      blurDataUrl,
+    }
+  }
+
+  return { data: encoded, mimeType: 'image/webp', width, height, blurDataUrl }
 }
 
 type Props = {
@@ -219,23 +273,47 @@ export function UploadField({
 
     start(async () => {
       try {
-        const probe = await probeImage(file)
+        const prepared = await prepareImage(file)
 
-        const blob = await upload(file.name, file, {
-          access: 'public',
-          handleUploadUrl: '/api/upload',
-        })
+        if (prepared.data.size > MAX_UPLOAD_BYTES) {
+          toast.error('Image trop lourde, même après compression.')
+          return
+        }
+
+        const body = new FormData()
+        body.append(
+          'file',
+          new File([prepared.data], file.name, { type: prepared.mimeType }),
+        )
+        body.append('filename', file.name)
+
+        const response = await fetch('/api/upload', { method: 'POST', body })
+        const payload: unknown = await response.json()
+
+        if (!response.ok) {
+          const message =
+            payload &&
+            typeof payload === 'object' &&
+            'error' in payload &&
+            typeof payload.error === 'string'
+              ? payload.error
+              : 'Upload impossible.'
+          toast.error(message)
+          return
+        }
+
+        const stored = payload as { key: string; url: string }
 
         const result = await registerMedia({
-          url: blob.url,
-          pathname: blob.pathname,
+          url: stored.url,
+          pathname: stored.key,
           filename: file.name,
           alt: alt.trim(),
-          width: probe.width,
-          height: probe.height,
-          blurDataUrl: probe.blurDataUrl,
-          mimeType: file.type,
-          size: file.size,
+          width: prepared.width,
+          height: prepared.height,
+          blurDataUrl: prepared.blurDataUrl,
+          mimeType: prepared.mimeType,
+          size: prepared.data.size,
         })
 
         if (!result.ok) {
@@ -294,8 +372,8 @@ export function UploadField({
       </div>
 
       <p className="mt-2.5 text-xs text-muted-foreground">
-        JPEG, PNG, WebP ou AVIF — 12 Mo maximum. Les dimensions sont
-        relevées automatiquement pour éviter tout décalage de mise en page.
+        JPEG, PNG, WebP ou AVIF. L’image est redimensionnée et compressée
+        automatiquement avant l’envoi — inutile de la préparer vous-même.
       </p>
     </div>
   )

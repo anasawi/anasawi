@@ -22,7 +22,9 @@ import type { NextConfig } from 'next'
  *   (Google Maps) sont des iframes — sans cette directive, `default-src`
  *   les aurait signalés à chaque page qui les contient.
  * - `img-src` reprend les `remotePatterns` ci-dessous ; à réduire avec eux
- *   quand les images de substitution auront disparu (lot 11).
+ *   quand les images de substitution auront disparu (lot 11). Les médias
+ *   envoyés depuis le CMS sont servis par `/api/media/…`, donc couverts par
+ *   `'self'` : seul l'historique justifie encore l'hôte Vercel Blob.
  * - En développement, le websocket de rechargement à chaud (`ws://`) sera
  *   signalé par `connect-src` : bruit attendu, absent en production.
  */
@@ -32,7 +34,7 @@ const CONTENT_SECURITY_POLICY_REPORT_ONLY = [
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos",
-  "connect-src 'self' https://*.public.blob.vercel-storage.com",
+  "connect-src 'self'",
   "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com https://www.google.com",
   "frame-ancestors 'self'",
   "object-src 'none'",

@@ -1,0 +1,13 @@
+# Configuration Netlify — volontairement minimale.
+#
+# L'adaptateur OpenNext (@netlify/plugin-nextjs) est appliqué automatiquement :
+# il provisionne les fonctions de rendu, la fonction edge du middleware, le
+# cache de routes et l'optimisation d'images via le CDN d'images. Ne pas
+# l'épingler ici — Netlify le met à jour à chaque build pour suivre Next.js.
+
+[build]
+  command = "npm run build"
+
+[build.environment]
+  # Aligné sur `engines.node` du package.json.
+  NODE_VERSION = "22"
