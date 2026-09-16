@@ -34,7 +34,7 @@ function TemoignageSimple({
         <Reveal>
           <span
             aria-hidden="true"
-            className="mx-auto mb-10 block h-10 w-px bg-line-strong"
+            className="mx-auto mb-8 block h-10 w-px bg-line-strong"
           />
         </Reveal>
 
@@ -109,13 +109,15 @@ function TemoignageGrand({
   if (!data.quote) return null
 
   return (
-    <div className="relative overflow-clip bg-night py-[calc(var(--spacing-section)*1.1)] text-center text-ivory">
-      <SectionIndex index={ctx.index} label="parole" light className="top-7" />
+    /* `bleed` : le fond nuit doit couvrir toute la section, donc le
+       template porte lui-même le padding — même token que le wrapper. */
+    <div className="relative overflow-clip bg-night py-[var(--spacing-section)] text-center text-ivory">
+      <SectionIndex index={ctx.index} label="parole" light />
 
       {/* L'arche en filet qui respire. */}
       <div
         aria-hidden="true"
-        className="amaswi-breathe pointer-events-none absolute left-1/2 top-1/2 aspect-[3/4] w-[min(460px,56vw)] -translate-x-1/2 -translate-y-1/2 rounded-arch border border-ivory/15"
+        className="anasawi-breathe pointer-events-none absolute left-1/2 top-1/2 aspect-[3/4] w-[min(460px,56vw)] -translate-x-1/2 -translate-y-1/2 rounded-arch border border-[rgba(251,248,242,0.16)]"
       />
       {/* Le halo bleu. */}
       <div
@@ -128,9 +130,9 @@ function TemoignageGrand({
           <Aster className="text-[24px] text-blue" />
         </Reveal>
 
-        <blockquote className="mx-auto mt-7 max-w-[62rem]">
+        <blockquote className="mx-auto mt-5 max-w-[62rem]">
           <MaskLines delay={0.12}>
-            <p className="font-serif text-[clamp(2.1rem,4.4vw,4.5rem)] font-light leading-[1.28] [&_em]:text-blue">
+            <p className="font-serif text-[clamp(34px,4.4vw,72px)] font-light leading-[1.28] [&_em]:text-blue">
               <Emphasis text={data.quote} />
             </p>
           </MaskLines>
@@ -138,7 +140,7 @@ function TemoignageGrand({
 
         {data.author && (
           <Reveal delay={0.3}>
-            <figcaption className="mt-10 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/55">
+            <figcaption className="mt-6 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/55">
               {data.author}
             </figcaption>
           </Reveal>
@@ -193,7 +195,7 @@ function TemoignagesMultiples({
 }: BlockProps<z.output<typeof temoignagesMultiplesSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="ils en parlent" className="-top-14" />
+      <SectionIndex index={ctx.index} label="ils en parlent" />
 
       {(data.eyebrow || data.title) && (
         <div className="mx-auto max-w-[44rem] text-center">
@@ -204,7 +206,7 @@ function TemoignagesMultiples({
           )}
           {data.title && (
             <Reveal delay={0.08}>
-              <h2 className="mt-7 text-[length:var(--text-h2)]">
+              <h2 className="mt-5 text-[length:var(--text-h2)]">
                 <Emphasis text={data.title} />
               </h2>
             </Reveal>
@@ -213,14 +215,15 @@ function TemoignagesMultiples({
       )}
 
       {data.items.length > 0 && (
-        <div className="mt-16 grid grid-cols-1 items-start gap-y-12 lg:grid-cols-3 lg:gap-x-10">
+        <div className="mt-10 grid grid-cols-1 items-start gap-10 md:mt-12 md:gap-12 lg:grid-cols-12 lg:gap-5">
           {data.items.map((item, i) => {
-            const central = i % 3 === 1
+            const position = i % 3
+            const central = position === 1
 
             if (central) {
               return (
-                <Reveal key={i} delay={0.12}>
-                  <figure className="rounded-[28px] bg-blue-mist px-8 py-11 text-center lg:-mt-4">
+                <Reveal key={i} delay={0.12} className="lg:col-span-4 lg:col-start-5">
+                  <figure className="rounded-[28px] bg-blue-mist px-6 py-8 text-center sm:px-8 md:py-10 lg:mt-[-14px]">
                     <span
                       aria-hidden="true"
                       className="block font-serif text-[54px] font-light leading-[0.4] text-blue-deep opacity-40"
@@ -228,14 +231,14 @@ function TemoignagesMultiples({
                       “
                     </span>
                     <blockquote>
-                      <p className="mt-5 font-serif text-[clamp(1.25rem,1.9vw,1.7rem)] font-light italic leading-[1.5] text-night">
+                      <p className="mt-4 font-serif text-[clamp(20px,1.9vw,27px)] font-light italic leading-[1.5] text-night">
                         « {item.quote} »
                       </p>
                     </blockquote>
-                    <figcaption className="mt-6">
+                    <figcaption className="mt-5">
                       <span
                         aria-hidden="true"
-                        className="mx-auto mb-4 block h-8 w-px bg-blue-deep/35"
+                        className="mx-auto mb-3 block h-[34px] w-px bg-blue-deep/35"
                       />
                       <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-deep">
                         {[item.name, item.role].filter(Boolean).join(' — ')}
@@ -247,17 +250,25 @@ function TemoignagesMultiples({
             }
 
             return (
-              <Reveal key={i} delay={i % 3 === 0 ? 0 : 0.24}>
-                <figure className="px-2 text-center lg:pt-6">
+              <Reveal
+                key={i}
+                delay={position === 0 ? 0 : 0.24}
+                className={
+                  position === 0
+                    ? 'lg:col-span-3 lg:col-start-2'
+                    : 'lg:col-span-3 lg:col-start-9'
+                }
+              >
+                <figure className="px-2 text-center">
                   <blockquote>
-                    <p className="font-serif text-[clamp(1.1rem,1.7vw,1.5rem)] font-light italic leading-[1.55] text-ink">
+                    <p className="font-serif text-[clamp(18px,1.7vw,24px)] font-light italic leading-[1.55] text-ink">
                       « {item.quote} »
                     </p>
                   </blockquote>
-                  <figcaption className="mt-6">
+                  <figcaption className="mt-5">
                     <span
                       aria-hidden="true"
-                      className="mx-auto mb-4 block h-8 w-px bg-line-strong"
+                      className="mx-auto mb-3 block h-[34px] w-px bg-line-strong"
                     />
                     <span className="block text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
                       {[item.name, item.role].filter(Boolean).join(' — ')}
@@ -298,12 +309,12 @@ export const temoignagesMultiplesBlock: BlockDefinition<
   ],
   defaults: {
     eyebrow: 'Ils en parlent',
-    title: '',
+    title: 'Des mots qui *restent*.',
     items: [
       {
         quote: 'J’ai retrouvé un sol sous mes pieds.',
         name: 'M.',
-        role: 'deux ans',
+        role: 'accompagnée deux ans',
       },
       {
         quote: 'Une écoute qui ne juge jamais, qui n’attend rien.',
@@ -313,7 +324,7 @@ export const temoignagesMultiplesBlock: BlockDefinition<
       {
         quote: 'Mon fils a recommencé à parler.',
         name: 'Une maman',
-        role: '',
+        role: 'suivi d’un adolescent',
       },
     ],
   },

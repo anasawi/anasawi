@@ -5,13 +5,9 @@ import { auth } from '@/lib/auth'
 
 export const runtime = 'nodejs'
 
-const ALLOWED = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/avif',
-  'image/svg+xml',
-]
+/* Pas de SVG : `next/image` refuse d'optimiser un SVG distant sans
+   `dangerouslyAllowSVG`, et un SVG public peut embarquer du script. */
+const ALLOWED = ['image/jpeg', 'image/png', 'image/webp', 'image/avif']
 
 /**
  * Poignée de main pour l'upload direct navigateur → Vercel Blob.
@@ -21,7 +17,15 @@ const ALLOWED = [
  * facturer de la bande passante serverless pour du transfert d'octets.
  */
 export async function POST(request: Request): Promise<NextResponse> {
-  const body = (await request.json()) as HandleUploadBody
+  /* Un corps absent ou mal formé est une erreur du client (400), pas une
+     erreur serveur (500) : la lecture reste hors du `try` principal pour
+     ne pas la confondre avec un refus de jeton. */
+  let body: HandleUploadBody
+  try {
+    body = (await request.json()) as HandleUploadBody
+  } catch {
+    return NextResponse.json({ error: 'Requête invalide.' }, { status: 400 })
+  }
 
   try {
     const result = await handleUpload({

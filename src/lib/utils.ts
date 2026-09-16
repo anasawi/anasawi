@@ -39,6 +39,8 @@ export const RESERVED_SLUGS = new Set([
   'sitemap.xml',
   'robots.txt',
   '_next',
+  /* Page annexe de revue de la bibliothèque (non indexée). */
+  'templates',
 ])
 
 /** Formate un numéro français en E.164 pour les liens tel: et le JSON-LD. */
@@ -71,7 +73,7 @@ export function formatDate(date: Date | string, locale = 'fr-FR'): string {
 }
 
 export const SITE_URL = (
-  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://amaswi.com'
+  process.env.NEXT_PUBLIC_SITE_URL ?? 'https://anasawi.com'
 ).replace(/\/$/, '')
 
 export function absoluteUrl(path = '/'): string {

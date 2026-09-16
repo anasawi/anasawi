@@ -38,7 +38,7 @@ function ImageText({ data, ctx }: BlockProps<ImageTextPayload>) {
 
   return (
     <div className="container-editorial">
-      <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-x-16">
+      <div className="grid grid-cols-1 items-center gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-16">
         <div
           className={cn(
             'lg:col-span-5',
@@ -69,7 +69,7 @@ function ImageText({ data, ctx }: BlockProps<ImageTextPayload>) {
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -79,12 +79,12 @@ function ImageText({ data, ctx }: BlockProps<ImageTextPayload>) {
           )}
           {data.body && (
             <Reveal delay={0.14}>
-              <Prose text={data.body} className="mt-7 max-w-[52ch]" />
+              <Prose text={data.body} className="mt-6 max-w-[52ch]" />
             </Reveal>
           )}
           {data.ctaLabel && data.ctaHref && (
             <Reveal delay={0.2}>
-              <div className="mt-10">
+              <div className="mt-8">
                 <ActionLink href={data.ctaHref} variant="ghost">
                   {data.ctaLabel}
                 </ActionLink>
@@ -120,14 +120,15 @@ export const imageTextBlock: BlockDefinition<typeof imageTextSchema> = {
     field.text('ctaHref', 'CTA — lien'),
   ],
   defaults: {
-    eyebrow: '',
-    title: '',
-    body: '',
+    eyebrow: 'Le cabinet',
+    title: 'Un cabinet qui ressemble à une *maison*.',
+    body:
+      'Le cabinet se trouve au 6 rue Saint-Martin, dans une maison calme du centre de Cesson-Sévigné, à quelques minutes de Rennes. Une pièce lumineuse, deux fauteuils, une fenêtre sur le jardin : rien qui intimide, tout qui apaise.\n\nOn y vient à pied, à vélo ou en voiture, le stationnement est facile. Et si le déplacement est compliqué, les séances peuvent aussi se faire en visio, avec la même attention.',
     mediaId: null,
     imageSide: 'left',
     ratio: 'portrait',
-    ctaLabel: '',
-    ctaHref: '',
+    ctaLabel: 'Découvrir le cabinet',
+    ctaHref: '/le-cabinet',
   },
   Component: ImageText,
 }

@@ -23,7 +23,7 @@ import { cn } from '@/lib/utils'
 /**
  * Bibliothèque étendue de blocs de contenu.
  *
- * Tout ce dont un vrai site a besoin, dans le langage AMASWI (serif
+ * Tout ce dont un vrai site a besoin, dans le langage ANASAWI (serif
  * éditoriale, encres du thème de section, filets fins) — jamais des
  * composants « d'app ». Chaque bloc est `inline` : il se pose sur la
  * grille, se déplace, se redimensionne, se restyle.

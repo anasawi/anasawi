@@ -30,21 +30,21 @@ async function main() {
     .insert(settings)
     .values({
       id: 'singleton',
-      siteName: 'AMASWI',
-      practitionerName: 'Anne Winzeried',
+      siteName: 'ANASAWI',
+      practitionerName: 'Anne Winzenried',
       practitionerTitle: 'Thérapeute',
       tagline:
         'Un espace d’écoute et d’accompagnement thérapeutique à Cesson-Sévigné.',
-      contactEmail: 'annewinzeried@orange.fr',
+      contactEmail: 'annewinzenried@orange.fr',
       contactPhone: '06 70 89 44 97',
       addressStreet: '6 rue Saint-Martin',
       addressPostalCode: '35510',
       addressCity: 'Cesson-Sévigné',
       addressCountry: 'FR',
       defaultSeoTitle:
-        'Anne Winzeried — Thérapeute à Cesson-Sévigné | AMASWI',
+        'Anne Winzenried — Thérapeute à Cesson-Sévigné | ANASAWI',
       defaultSeoDescription:
-        'Anne Winzeried, thérapeute à Cesson-Sévigné (35510). Accompagnement thérapeutique doux et personnalisé : écoute, soutien et travail sur soi.',
+        'Anne Winzenried, thérapeute à Cesson-Sévigné (35510). Accompagnement thérapeutique doux et personnalisé : écoute, soutien et travail sur soi.',
       /* Horaires et informations pratiques laissés vides volontairement :
          ils seront renseignés depuis le CMS, et sont omis du JSON-LD
          tant qu'ils ne sont pas connus. */
@@ -73,13 +73,13 @@ async function main() {
 
   await db.insert(seoMeta).values({
     pageId: home.id,
-    title: 'Anne Winzeried — Thérapeute à Cesson-Sévigné | AMASWI',
+    title: 'Anne Winzenried — Thérapeute à Cesson-Sévigné | ANASAWI',
     description:
-      'Anne Winzeried, thérapeute à Cesson-Sévigné. Un accompagnement doux et personnalisé pour traverser les épreuves de la vie avec clarté et sérénité.',
+      'Anne Winzenried, thérapeute à Cesson-Sévigné. Un accompagnement doux et personnalisé pour traverser les épreuves de la vie avec clarté et sérénité.',
     keywords: [
-      'Anne Winzeried',
-      'Anne Winzeried thérapeute',
-      'AMASWI',
+      'Anne Winzenried',
+      'Anne Winzenried thérapeute',
+      'ANASAWI',
       'thérapeute Cesson-Sévigné',
       'accompagnement thérapeutique Rennes',
     ],

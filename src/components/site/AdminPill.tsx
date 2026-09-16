@@ -14,19 +14,32 @@ export function AdminPill({
   status,
   actionLabel,
   actionHref,
+  actionDisabledHint,
   icon,
   homeHref,
   name,
   className,
+  newTab = false,
+  dotClassName = 'bg-[#12b981]',
 }: {
-  status: string
+  /** Libellé d'état à gauche. Omis dans l'éditeur de page, qui porte
+      déjà son indicateur en haut — un seul état à l'écran. */
+  status?: string
   actionLabel: string
-  actionHref: string
+  /** Sans cible, l'action est inerte (page jamais publiée). */
+  actionHref?: string
+  /** Explication affichée au survol quand l'action est inerte. */
+  actionDisabledHint?: string
   icon: React.ReactNode
   /** Cible du bouton rond de droite. */
   homeHref: string
   name: string
   className?: string
+  /** Ouvre l'action dans un nouvel onglet (« Voir le site » depuis
+      l'éditeur : la version en ligne, sans quitter le brouillon). */
+  newTab?: boolean
+  /** Couleur de la pastille d'état — vert par défaut. */
+  dotClassName?: string
 }) {
   const initial = name.trim().charAt(0).toUpperCase() || 'A'
 
@@ -42,23 +55,42 @@ export function AdminPill({
            deux repères de navigation homonymes se confondent au lecteur
            d'écran. */
         aria-label="Raccourcis d’administration"
-        className="pointer-events-auto flex items-center gap-1.5 rounded-full border border-black/5 bg-white/92 p-1.5 pl-4 shadow-[0_6px_28px_-6px_rgba(28,32,30,0.22),0_2px_8px_-2px_rgba(28,32,30,0.12)] backdrop-blur-xl"
+        className={cn(
+          'pointer-events-auto flex items-center gap-1.5 rounded-full border border-black/5 bg-white/92 p-1.5 shadow-[0_6px_28px_-6px_rgba(28,32,30,0.22),0_2px_8px_-2px_rgba(28,32,30,0.12)] backdrop-blur-xl',
+          status && 'pl-4',
+        )}
       >
-        <span className="flex items-center gap-2 pr-1 text-[0.8rem] text-ink-soft">
-          <span
-            aria-hidden="true"
-            className="h-1.5 w-1.5 rounded-full bg-[#12b981]"
-          />
-          {status}
-        </span>
+        {status && (
+          <span className="flex items-center gap-2 pr-1 text-[0.8rem] text-ink-soft">
+            <span
+              aria-hidden="true"
+              className={cn('h-1.5 w-1.5 rounded-full', dotClassName)}
+            />
+            {status}
+          </span>
+        )}
 
-        <Link
-          href={actionHref}
-          className="flex items-center gap-2 rounded-full bg-ivory-warm px-4 py-2 text-[0.82rem] font-medium text-ink transition-colors duration-300 hover:bg-ivory-deep"
-        >
-          {icon}
-          {actionLabel}
-        </Link>
+        {actionHref ? (
+          <Link
+            href={actionHref}
+            target={newTab ? '_blank' : undefined}
+            rel={newTab ? 'noopener' : undefined}
+            className="flex items-center gap-2 rounded-full bg-ivory-warm px-4 py-2 text-[0.82rem] font-medium text-ink transition-colors duration-300 hover:bg-ivory-deep"
+          >
+            {icon}
+            {actionLabel}
+          </Link>
+        ) : (
+          /* Page jamais publiée : rien à voir en ligne — le bouton le dit
+             au lieu de mener à une page introuvable. */
+          <span
+            title={actionDisabledHint}
+            className="flex cursor-default items-center gap-2 rounded-full bg-ivory-warm/60 px-4 py-2 text-[0.82rem] text-ink-soft/70"
+          >
+            {icon}
+            {actionLabel}
+          </span>
+        )}
 
         <Link
           href={homeHref}

@@ -77,6 +77,17 @@ export async function updateService(
       return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
     }
 
+    /* Même contrôle qu'à la création : sans lui, l'index unique renvoyait
+       une erreur générique au lieu d'un message lisible. */
+    const [existing] = await db
+      .select({ id: services.id })
+      .from(services)
+      .where(eq(services.slug, parsed.data.slug))
+      .limit(1)
+    if (existing && existing.id !== id) {
+      return fail('Ce slug est déjà utilisé.')
+    }
+
     await db
       .update(services)
       .set({ ...parsed.data, updatedAt: new Date() })

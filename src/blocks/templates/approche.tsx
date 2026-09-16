@@ -48,9 +48,9 @@ function ApprocheColonnes({
 }: BlockProps<z.output<typeof approcheColonnesSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="approche" className="-top-14" />
+      <SectionIndex index={ctx.index} label="approche" />
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-5">
           {data.eyebrow && (
             <Reveal>
@@ -58,7 +58,7 @@ function ApprocheColonnes({
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -78,10 +78,10 @@ function ApprocheColonnes({
       </div>
 
       {data.items.length > 0 && (
-        <div className="mt-16 grid grid-cols-1 gap-x-12 gap-y-14 lg:mt-20 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-4 md:mt-12 md:gap-5 lg:grid-cols-3">
           {data.items.map((item, i) => (
             <Reveal key={i} delay={Math.min(0.1 + i * 0.08, 0.45)}>
-              <div className="h-full border-t border-line-strong pt-8">
+              <div className="h-full border-t border-line-strong pt-7">
                 <span className="font-serif text-[1.2rem] font-light italic text-blue-deep">
                   {numberWord(i)}
                 </span>
@@ -128,7 +128,8 @@ export const approcheColonnesBlock: BlockDefinition<
   defaults: {
     eyebrow: 'L’approche',
     title: 'Trois principes, un seul *cap*.',
-    intro: '',
+    intro:
+      'Je ne crois pas aux méthodes toutes faites. Ce qui tient, séance après séance, c’est une alliance : un cadre clair, une écoute sans jugement, et le respect du rythme de chacun. Voici ce qui guide ma pratique.',
     items: [
       {
         title: 'Écouter sans juger',
@@ -168,7 +169,7 @@ function ProcessusVertical({
 }: BlockProps<z.output<typeof processusVerticalSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="le chemin" className="-top-14" />
+      <SectionIndex index={ctx.index} label="le chemin" />
 
       <div className="mx-auto max-w-[44rem] text-center">
         {data.eyebrow && (
@@ -177,7 +178,7 @@ function ProcessusVertical({
           </Reveal>
         )}
         {data.title && (
-          <h2 className="mt-7 text-[length:var(--text-h2)]">
+          <h2 className="mt-5 text-[length:var(--text-h2)]">
             <MaskLines delay={0.08}>
               <span>
                 <Emphasis text={data.title} />
@@ -188,20 +189,20 @@ function ProcessusVertical({
       </div>
 
       {data.steps.length > 0 && (
-        <div className="relative mt-16 lg:mt-24">
+        <div className="relative mt-10 md:mt-12">
           {/* Ligne centrale — invisible en mobile, où la pile suffit. */}
           <div
             aria-hidden="true"
             className="absolute inset-y-0 left-1/2 hidden w-px -translate-x-1/2 bg-line lg:block"
           />
 
-          <div className="space-y-14 lg:space-y-24">
+          <div className="space-y-10 md:space-y-12">
             {data.steps.map((step, i) => {
               const left = i % 2 === 0
 
               return (
                 <Reveal key={i} delay={Math.min(0.1 + i * 0.06, 0.45)}>
-                  <div className="border-l border-line pl-8 lg:grid lg:grid-cols-2 lg:border-l-0 lg:pl-0">
+                  <div className="border-l border-line pl-6 md:pl-8 lg:grid lg:grid-cols-2 lg:border-l-0 lg:pl-0">
                     <div
                       className={
                         left

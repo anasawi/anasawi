@@ -1,17 +1,19 @@
 import type { Metadata } from 'next'
 import { notFound } from 'next/navigation'
+import { z } from 'zod'
 
 import { Footer } from '@/components/site/Footer'
 import { Header } from '@/components/site/Header'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { SectionRenderer } from '@/components/site/SectionRenderer'
 import { auth } from '@/lib/auth'
+import { bookingHref } from '@/lib/settings-helpers'
 import { getNavigationItems, getPageById, getSettings } from '@/server/queries'
 
 export const dynamic = 'force-dynamic'
 
 export const metadata: Metadata = {
-  title: 'Aperçu — AMASWI',
+  title: 'Aperçu — ANASAWI',
   robots: { index: false, follow: false },
 }
 
@@ -33,6 +35,9 @@ export default async function PreviewPage({
   if (!session?.user) notFound()
 
   const { id } = await params
+  /* `pages.id` est une colonne uuid : un identifiant mal formé ferait
+     échouer la requête (500) au lieu d'un 404. */
+  if (!z.string().uuid().safeParse(id).success) notFound()
 
   const [page, settings, navItems] = await Promise.all([
     getPageById(id),
@@ -47,7 +52,7 @@ export default async function PreviewPage({
       <Header
         items={navItems}
         ctaLabel="Rendez-vous"
-        ctaHref={settings.bookingUrl?.trim() || '/#contact'}
+        ctaHref={bookingHref(settings)}
       />
       <main>
         <SectionRenderer sections={page.sections} />

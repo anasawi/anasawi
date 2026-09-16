@@ -1,26 +1,33 @@
 'use server'
 
-import { and, asc, eq, gt, gte, isNull, max, ne, sql } from 'drizzle-orm'
+import { and, asc, eq, gte, isNull, sql } from 'drizzle-orm'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 
 import { fail, guard, ok, type ActionResult } from './types'
 import { getBlock, isBlockType } from '@/blocks/registry'
 import { requireAdmin } from '@/lib/auth'
-import { convertLegacySection } from '@/lib/convert-legacy'
 import {
-  defaultPosition,
   gridPositionSchema,
   parseGridPosition,
   type GridPosition,
 } from '@/lib/grid'
 import { nodeStylesSchema, type NodeStyles } from '@/lib/node-styles'
 import { projectSection } from '@/lib/publish'
-import { sectionSettingsSchema } from '@/lib/section-settings'
-import { getTemplate } from '@/lib/templates'
+import {
+  parseSectionSettings,
+  sectionSettingsSchema,
+} from '@/lib/section-settings'
 import { seoFormSchema, slugSchema } from '@/lib/schemas'
 import { db } from '@/server/db'
-import { pages, savedSections, sections, seoMeta } from '@/server/db/schema'
+import {
+  pages,
+  savedSections,
+  sections,
+  seoMeta,
+  type SavedSection,
+  type Section,
+} from '@/server/db/schema'
 import { tags } from '@/server/queries'
 
 /** Invalide la home, la page concernée et la liste des pages. */
@@ -29,6 +36,16 @@ function revalidatePage(slug: string) {
   revalidateTag(tags.pages)
   revalidatePath('/', 'layout')
 }
+
+/**
+ * Les identifiants viennent du client. Un uuid mal formé provoquerait une
+ * erreur Postgres (`invalid input syntax for type uuid`) attrapée par
+ * `guard` en message générique ; on préfère refuser proprement en amont,
+ * avant toute écriture.
+ */
+const uuidSchema = z.string().uuid()
+const isUuid = (value: unknown): value is string =>
+  uuidSchema.safeParse(value).success
 
 async function slugOf(pageId: string): Promise<string> {
   const [row] = await db
@@ -170,90 +187,6 @@ export async function updateTextField(
 }
 
 /**
- * Déplace ou redimensionne un bloc dans une grille.
- *
- * Action distincte d'`updateSection` : elle est appelée à la fin de chaque
- * geste de souris, et ne doit toucher ni au payload ni aux réglages. La
- * position est en CELLULES (colonne, ligne, étendues), par breakpoint —
- * `gridPositionSchema` borne chaque entier.
- */
-export async function updateGridPlacement(
-  id: string,
-  input: GridPosition,
-): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const parsed = gridPositionSchema.safeParse(input)
-    if (!parsed.success) return fail('Position invalide.')
-
-    const [section] = await db
-      .select({ pageId: sections.pageId, parentId: sections.parentId })
-      .from(sections)
-      .where(eq(sections.id, id))
-      .limit(1)
-
-    if (!section?.parentId) return fail('Bloc introuvable ou hors grille.')
-
-    await db
-      .update(sections)
-      .set({ placement: parsed.data, updatedAt: new Date() })
-      .where(eq(sections.id, id))
-
-    revalidatePage(await slugOf(section.pageId))
-    return ok()
-  })
-}
-
-/**
- * Règle la hauteur d'une grille — son nombre de lignes.
- *
- * Appelée à la fin du geste sur le bord bas d'un canevas. Le payload est
- * refondu puis revalidé par le schéma du bloc : rien d'autre que `rows`
- * ne peut être écrit par ce chemin.
- */
-export async function updateCanvasRows(
-  id: string,
-  rows: number,
-): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const parsedRows = z.number().int().min(8).max(120).safeParse(rows)
-    if (!parsedRows.success) return fail('Nombre de lignes invalide.')
-
-    const [section] = await db
-      .select({
-        pageId: sections.pageId,
-        type: sections.type,
-        payload: sections.payload,
-      })
-      .from(sections)
-      .where(eq(sections.id, id))
-      .limit(1)
-
-    if (!section) return fail('Section introuvable.')
-
-    const block = getBlock(section.type)
-    if (!block?.freeform) return fail('Cette section n’est pas une grille.')
-
-    const merged = block.schema.safeParse({
-      ...((section.payload as Record<string, unknown>) ?? {}),
-      rows: parsedRows.data,
-    })
-    if (!merged.success) return fail('Réglage invalide.')
-
-    await db
-      .update(sections)
-      .set({ payload: merged.data, updatedAt: new Date() })
-      .where(eq(sections.id, id))
-
-    revalidatePage(await slugOf(section.pageId))
-    return ok()
-  })
-}
-
-/**
  * Insère un bloc à une position précise.
  *
  * `parentId` et `columnIndex` placent le bloc dans une colonne ; `position`
@@ -278,6 +211,11 @@ export async function insertSection({
 }): Promise<ActionResult<{ id: string }>> {
   return guard(async () => {
     await requireAdmin()
+
+    if (!isUuid(pageId)) return fail('Page introuvable.')
+    if (parentId !== null && !isUuid(parentId)) {
+      return fail('Section introuvable.')
+    }
 
     const block = isBlockType(type) ? getBlock(type) : null
     if (!block) return fail('Type de bloc inconnu.')
@@ -326,200 +264,6 @@ export async function insertSection({
 
     revalidatePage(await slugOf(pageId))
     return ok({ id: created.id })
-  })
-}
-
-/**
- * Instancie un modèle : l'arbre sérialisé devient de vrais nœuds en base,
- * entièrement modifiables. Chaque payload repasse par le schéma Zod de son
- * type — un modèle mal écrit échoue ici, jamais au rendu.
- */
-export async function instantiateTemplate(
-  pageId: string,
-  templateId: string,
-): Promise<ActionResult<{ id: string }>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const template = getTemplate(templateId)
-    if (!template) return fail('Modèle inconnu.')
-
-    const rootBlock = getBlock(template.root.type)
-    if (!rootBlock) return fail('Type racine inconnu.')
-
-    const rootPayload = rootBlock.schema.safeParse(template.root.payload)
-    if (!rootPayload.success) return fail('Modèle invalide (racine).')
-
-    const [{ value: currentMax } = { value: null }] = await db
-      .select({ value: max(sections.sortOrder) })
-      .from(sections)
-      .where(and(eq(sections.pageId, pageId), isNull(sections.parentId)))
-
-    const [root] = await db
-      .insert(sections)
-      .values({
-        pageId,
-        type: template.root.type,
-        name: template.root.name ?? template.label,
-        sortOrder: (currentMax ?? -1) + 1,
-        backgroundColor: template.backgroundColor,
-        payload: rootPayload.data,
-        styles: template.root.styles ?? null,
-      })
-      .returning({ id: sections.id })
-
-    if (!root) return fail('Création impossible.')
-
-    const children = template.root.children ?? []
-    if (children.length > 0) {
-      const rows = []
-      for (const [index, child] of children.entries()) {
-        const block = getBlock(child.type)
-        if (!block) return fail(`Type inconnu dans le modèle : ${child.type}.`)
-        const parsed = block.schema.safeParse(child.payload)
-        if (!parsed.success) {
-          return fail(`Modèle invalide (${child.type}).`)
-        }
-        rows.push({
-          pageId,
-          parentId: root.id,
-          columnIndex: 0,
-          sortOrder: index,
-          type: child.type,
-          name: child.name ?? null,
-          payload: parsed.data,
-          styles: child.styles ?? null,
-          placement: child.placement ?? null,
-        })
-      }
-      await db.insert(sections).values(rows)
-    }
-
-    revalidatePage(await slugOf(pageId))
-    return ok({ id: root.id })
-  })
-}
-
-/** Ajout en fin de page. */
-export async function createSection(
-  pageId: string,
-  type: string,
-): Promise<ActionResult<{ id: string }>> {
-  return guard(async () => {
-    /* L'authentification passe avant la moindre requête : cette action est
-       un endpoint POST appelable sans session, et un SELECT déclenché avant
-       la garde serait une lecture accessible à n'importe qui. */
-    await requireAdmin()
-
-    const [{ value: currentMax } = { value: null }] = await db
-      .select({ value: max(sections.sortOrder) })
-      .from(sections)
-      .where(and(eq(sections.pageId, pageId), isNull(sections.parentId)))
-
-    return insertSection({ pageId, type, position: (currentMax ?? -1) + 1 })
-  })
-}
-
-/**
- * Déplace un bloc existant vers une nouvelle position, éventuellement dans
- * une autre colonne ou hors de toute colonne.
- */
-export async function moveSection({
-  id,
-  position,
-  parentId = null,
-  columnIndex = 0,
-}: {
-  id: string
-  position: number
-  parentId?: string | null
-  columnIndex?: number
-}): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const [section] = await db
-      .select()
-      .from(sections)
-      .where(eq(sections.id, id))
-      .limit(1)
-
-    if (!section) return fail('Bloc introuvable.')
-    if (parentId === id) return fail('Un bloc ne peut pas se contenir lui-même.')
-
-    const block = getBlock(section.type)
-    if (!block) return fail('Type de bloc inconnu.')
-
-    const invalid = await validateParent({
-      block,
-      parentId,
-      pageId: section.pageId,
-    })
-    if (invalid) return fail(invalid)
-
-    /* On referme d'abord le trou laissé à l'ancienne position, puis on ouvre
-       la place à la nouvelle. Fait dans cet ordre, le cas « même colonne,
-       rang plus bas » reste juste sans calcul d'index particulier. */
-    const oldScope = section.parentId
-      ? and(
-          eq(sections.parentId, section.parentId),
-          eq(sections.columnIndex, section.columnIndex),
-        )
-      : and(eq(sections.pageId, section.pageId), isNull(sections.parentId))
-
-    await db
-      .update(sections)
-      .set({ sortOrder: sql`${sections.sortOrder} - 1` })
-      .where(and(oldScope, gt(sections.sortOrder, section.sortOrder)))
-
-    const newScope = parentId
-      ? and(
-          eq(sections.parentId, parentId),
-          eq(sections.columnIndex, columnIndex),
-        )
-      : and(eq(sections.pageId, section.pageId), isNull(sections.parentId))
-
-    await db
-      .update(sections)
-      .set({ sortOrder: sql`${sections.sortOrder} + 1` })
-      .where(
-        and(newScope, gte(sections.sortOrder, position), ne(sections.id, id)),
-      )
-
-    /* Entrée dans une grille : un bloc sans placement en cellules recevrait
-       le flux par défaut — on lui donne une position de départ visible en
-       haut à gauche (l'ancien format en pourcentages est converti). */
-    let placementPatch: Record<string, unknown> = {}
-    if (parentId) {
-      const [parent] = await db
-        .select({ type: sections.type })
-        .from(sections)
-        .where(eq(sections.id, parentId))
-        .limit(1)
-      if (parent && getBlock(parent.type)?.freeform) {
-        placementPatch = {
-          placement:
-            parseGridPosition(section.placement) ?? defaultPosition(section.type),
-        }
-      }
-    }
-
-    await db
-      .update(sections)
-      .set({
-        parentId,
-        columnIndex,
-        sortOrder: position,
-        ...placementPatch,
-        ...(parentId
-          ? { anchor: null, navLabel: null, showInNav: false }
-          : {}),
-        updatedAt: new Date(),
-      })
-      .where(eq(sections.id, id))
-
-    revalidatePage(await slugOf(section.pageId))
-    return ok()
   })
 }
 
@@ -695,6 +439,22 @@ export async function duplicateSection(
 
     if (!source) return fail('Section introuvable.')
 
+    /* La copie prend la place juste après l'original : les frères situés
+       à partir de ce rang sont décalés d'un cran, comme à l'insertion. Sans
+       cela, deux lignes partageaient le même rang et l'ordre affiché
+       dépendait de la date de création. */
+    const siblingScope = source.parentId
+      ? and(
+          eq(sections.parentId, source.parentId),
+          eq(sections.columnIndex, source.columnIndex),
+        )
+      : and(eq(sections.pageId, source.pageId), isNull(sections.parentId))
+
+    await db
+      .update(sections)
+      .set({ sortOrder: sql`${sections.sortOrder} + 1` })
+      .where(and(siblingScope, gte(sections.sortOrder, source.sortOrder + 1)))
+
     const [created] = await db
       .insert(sections)
       .values({
@@ -709,10 +469,13 @@ export async function duplicateSection(
         navLabel: null,
         showInNav: false,
         sortOrder: source.sortOrder + 1,
-        isActive: false,
+        /* Même visibilité que l'original : rien n'est en ligne avant
+           « Publier », inutile de cacher la copie par défaut. */
+        isActive: source.isActive,
         backgroundColor: source.backgroundColor,
         payload: source.payload,
         styles: source.styles,
+        settings: source.settings,
         placement: source.placement,
       })
       .returning({ id: sections.id })
@@ -721,82 +484,6 @@ export async function duplicateSection(
 
     revalidatePage(await slugOf(source.pageId))
     return ok({ id: created.id })
-  })
-}
-
-/**
- * Convertit une section héritée en canevas d'éléments libres.
- *
- * Le §12 du cahier des charges : la composition figée devient un canevas
- * dont chaque morceau — titre, image, texte, bouton — est un bloc
- * indépendant, déplaçable et redimensionnable. La section garde son
- * identifiant, son ancre, son entrée de menu et son fond.
- *
- * L'annulation passe par l'instantané pris côté client avant l'appel.
- */
-export async function convertToCanvas(
-  id: string,
-): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const [section] = await db
-      .select()
-      .from(sections)
-      .where(eq(sections.id, id))
-      .limit(1)
-
-    if (!section) return fail('Section introuvable.')
-    if (section.parentId) return fail('Seule une section entière se convertit.')
-
-    const conversion = convertLegacySection(section.type, section.payload)
-    if (!conversion) {
-      return fail(
-        'Cette section est connectée à des données (accompagnements, FAQ, contact) et ne se décompose pas.',
-      )
-    }
-
-    /* Chaque enfant repasse par le schéma Zod de son type : une conversion
-       mal écrite échoue ici, jamais au rendu. */
-    const rows = []
-    for (const [index, child] of conversion.children.entries()) {
-      const block = getBlock(child.type)
-      const parsed = block?.schema.safeParse(child.payload)
-      if (!block || !parsed?.success) {
-        return fail(`Conversion invalide (${child.type}).`)
-      }
-      rows.push({
-        pageId: section.pageId,
-        parentId: section.id,
-        columnIndex: 0,
-        sortOrder: index,
-        type: child.type,
-        name: child.name ?? null,
-        payload: parsed.data,
-        placement: child.placement,
-      })
-    }
-
-    /* Les enfants déjà présents (déposés dans les zones avant/après) sont
-       conservés et décalés après les blocs issus de la conversion. */
-    await db
-      .update(sections)
-      .set({ sortOrder: sql`${sections.sortOrder} + ${rows.length}` })
-      .where(eq(sections.parentId, section.id))
-
-    await db
-      .update(sections)
-      .set({
-        type: 'canvas',
-        payload: { height: 'moyen', rows: conversion.rows },
-        updatedAt: new Date(),
-      })
-      .where(eq(sections.id, section.id))
-
-    if (rows.length > 0) await db.insert(sections).values(rows)
-
-    revalidatePage(await slugOf(section.pageId))
-    return ok()
   })
 }
 
@@ -1026,7 +713,7 @@ export async function unpublishPage(id: string): Promise<ActionResult<void>> {
 export async function saveSectionAsTemplate(
   sectionId: string,
   name: string,
-): Promise<ActionResult<{ id: string }>> {
+): Promise<ActionResult<SavedSection>> {
   return guard(async () => {
     await requireAdmin()
 
@@ -1052,10 +739,12 @@ export async function saveSectionAsTemplate(
         payload: section.payload,
         settings: section.settings,
       })
-      .returning({ id: savedSections.id })
+      .returning()
 
     if (!created) return fail('Enregistrement impossible.')
-    return ok({ id: created.id })
+    /* La ligne complète est renvoyée : l'éditeur l'ajoute à « Mes
+       sections » sans recharger la page. */
+    return ok(created)
   })
 }
 
@@ -1081,6 +770,9 @@ export async function insertSavedSection({
 }): Promise<ActionResult<{ id: string }>> {
   return guard(async () => {
     await requireAdmin()
+
+    if (!isUuid(pageId)) return fail('Page introuvable.')
+    if (!isUuid(savedId)) return fail('Modèle introuvable.')
 
     const [saved] = await db
       .select()
@@ -1142,6 +834,17 @@ export async function publishPage(pageId: string): Promise<ActionResult<void>> {
   return guard(async () => {
     await requireAdmin()
 
+    if (!isUuid(pageId)) return fail('Page introuvable.')
+
+    /* Sans ce contrôle, un identifiant arbitraire renvoyait `ok` sans
+       rien écrire — l'éditeur affichait « Publié » à tort. */
+    const [page] = await db
+      .select({ slug: pages.slug })
+      .from(pages)
+      .where(eq(pages.id, pageId))
+      .limit(1)
+    if (!page) return fail('Page introuvable.')
+
     const rows = await db
       .select()
       .from(sections)
@@ -1158,7 +861,7 @@ export async function publishPage(pageId: string): Promise<ActionResult<void>> {
       })
       .where(eq(pages.id, pageId))
 
-    revalidatePage(await slugOf(pageId))
+    revalidatePage(page.slug)
     return ok()
   })
 }
@@ -1183,16 +886,112 @@ const snapshotRowSchema = z.object({
   payload: z.unknown(),
   styles: z.unknown().nullable(),
   placement: z.unknown().nullable(),
+  /* Absent des instantanés pris avant l'arrivée des réglages de section :
+     optionnel, et revalidé ligne par ligne ci-dessous. */
+  settings: z.unknown().nullable().optional(),
 })
+
+type ValidatedSnapshotRow = Omit<
+  z.infer<typeof snapshotRowSchema>,
+  'payload' | 'styles' | 'placement' | 'settings'
+> & {
+  payload: unknown
+  styles: NodeStyles | null
+  placement: GridPosition | null
+  settings: unknown
+}
+
+/**
+ * Revalide intégralement des lignes d'instantané (payload par le schéma
+ * de leur type, styles, placement, réglages). Un instantané forgé côté
+ * client — ou un instantané publié antérieur à une évolution des blocs —
+ * ne peut rien écrire que les formulaires n'auraient pas accepté.
+ */
+function validateSnapshotRows(
+  input: unknown,
+):
+  | { ok: true; rows: ValidatedSnapshotRow[]; pageId: string | null }
+  | { ok: false; error: string } {
+  const parsed = z.array(snapshotRowSchema).max(500).safeParse(input)
+  if (!parsed.success) return { ok: false, error: 'Instantané invalide.' }
+  const rows = parsed.data
+
+  const pageId = rows[0]?.pageId ?? null
+  if (pageId !== null && rows.some((row) => row.pageId !== pageId)) {
+    return { ok: false, error: 'Instantané incohérent.' }
+  }
+
+  const validated: ValidatedSnapshotRow[] = []
+  for (const row of rows) {
+    const block = getBlock(row.type)
+    if (!block) return { ok: false, error: `Type inconnu : ${row.type}.` }
+
+    const payload = block.schema.safeParse(row.payload)
+    if (!payload.success) {
+      return { ok: false, error: 'Contenu invalide dans l’instantané.' }
+    }
+
+    let styles: NodeStyles | null = null
+    if (row.styles !== null) {
+      const parsedStyles = nodeStylesSchema.safeParse(row.styles)
+      if (!parsedStyles.success) return { ok: false, error: 'Styles invalides.' }
+      styles = parsedStyles.data
+    }
+
+    let placement: GridPosition | null = null
+    if (row.placement !== null) {
+      /* Accepte le format en cellules ET l'ancien format en pourcentages
+         (converti) : un instantané pris avant la migration reste
+         restaurable. */
+      placement = parseGridPosition(row.placement)
+      if (!placement) return { ok: false, error: 'Position invalide.' }
+    }
+
+    const settings =
+      row.settings === null || row.settings === undefined
+        ? null
+        : parseSectionSettings(row.settings)
+
+    validated.push({
+      id: row.id,
+      pageId: row.pageId,
+      parentId: row.parentId,
+      columnIndex: row.columnIndex,
+      sortOrder: row.sortOrder,
+      type: row.type,
+      name: row.name,
+      anchor: row.anchor,
+      navLabel: row.navLabel,
+      showInNav: row.showInNav,
+      isActive: row.isActive,
+      backgroundColor: row.backgroundColor,
+      payload: payload.data,
+      styles,
+      placement,
+      settings,
+    })
+  }
+
+  return { ok: true, rows: validated, pageId }
+}
+
+/** Insère des lignes validées, parents d'abord (clé étrangère
+    auto-référente : un enfant ne peut précéder son parent). */
+async function insertSnapshotRows(rows: ValidatedSnapshotRow[]) {
+  const ids = new Set(rows.map((row) => row.id))
+  const roots = rows.filter((row) => !row.parentId || !ids.has(row.parentId))
+  const children = rows.filter(
+    (row) => row.parentId && ids.has(row.parentId),
+  )
+  if (roots.length > 0) await db.insert(sections).values(roots)
+  if (children.length > 0) await db.insert(sections).values(children)
+}
 
 /**
  * Restaure un sous-arbre supprimé — le ⌘Z d'une suppression.
  *
  * Les lignes sont réinsérées avec leurs identifiants D'ORIGINE : les autres
- * entrées d'historique qui les référencent restent valides. Chaque ligne est
- * revalidée intégralement (payload par le schéma de son type, styles,
- * placement) : un instantané forgé côté client ne peut rien écrire que les
- * formulaires n'auraient pas accepté.
+ * entrées d'historique qui les référencent restent valides.
  */
 export async function restoreSections(
   input: unknown,
@@ -1200,58 +999,70 @@ export async function restoreSections(
   return guard(async () => {
     await requireAdmin()
 
-    const parsed = z.array(snapshotRowSchema).min(1).max(200).safeParse(input)
-    if (!parsed.success) return fail('Instantané invalide.')
-    const rows = parsed.data
-
-    const pageId = rows[0]?.pageId
-    if (!pageId || rows.some((row) => row.pageId !== pageId)) {
-      return fail('Instantané incohérent.')
+    const validated = validateSnapshotRows(input)
+    if (!validated.ok) return fail(validated.error)
+    if (validated.rows.length === 0 || !validated.pageId) {
+      return fail('Instantané vide.')
     }
 
-    const validated = []
-    for (const row of rows) {
-      const block = getBlock(row.type)
-      if (!block) return fail(`Type inconnu : ${row.type}.`)
+    await insertSnapshotRows(validated.rows)
 
-      const payload = block.schema.safeParse(row.payload)
-      if (!payload.success) return fail('Contenu invalide dans l’instantané.')
-
-      let styles: NodeStyles | null = null
-      if (row.styles !== null) {
-        const parsedStyles = nodeStylesSchema.safeParse(row.styles)
-        if (!parsedStyles.success) return fail('Styles invalides.')
-        styles = parsedStyles.data
-      }
-
-      let placement: GridPosition | null = null
-      if (row.placement !== null) {
-        /* Accepte le format en cellules ET l'ancien format en pourcentages
-           (converti) : un instantané pris avant la migration reste
-           restaurable. */
-        placement = parseGridPosition(row.placement)
-        if (!placement) return fail('Position invalide.')
-      }
-
-      validated.push({ ...row, payload: payload.data, styles, placement })
-    }
-
-    /* Les parents d'abord : une ligne dont le parent fait partie de
-       l'instantané doit être insérée après lui (contrainte de clé
-       étrangère auto-référente). */
-    const ids = new Set(validated.map((row) => row.id))
-    const roots = validated.filter(
-      (row) => !row.parentId || !ids.has(row.parentId),
-    )
-    const children = validated.filter(
-      (row) => row.parentId && ids.has(row.parentId),
-    )
-
-    if (roots.length > 0) await db.insert(sections).values(roots)
-    if (children.length > 0) await db.insert(sections).values(children)
-
-    revalidatePage(await slugOf(pageId))
+    revalidatePage(await slugOf(validated.pageId))
     return ok()
+  })
+}
+
+/**
+ * Abandonne le brouillon : les sections vivantes de la page sont remplacées
+ * par celles de la version en ligne (`published_snapshot`).
+ *
+ * Refusé si la page n'a jamais été publiée — il n'y aurait rien vers quoi
+ * revenir. Les sections restaurées gardent leurs identifiants publiés ;
+ * l'historique ⌘Z de l'éditeur est vidé côté client, puisqu'il pointait
+ * vers un état qui n'existe plus. Les lignes réinsérées sont relues en
+ * base et renvoyées telles quelles : l'éditeur remplace son état local
+ * sans attendre un rechargement.
+ */
+export async function discardDraft(
+  pageId: string,
+): Promise<ActionResult<{ sections: Section[] }>> {
+  return guard(async () => {
+    await requireAdmin()
+
+    const [page] = await db
+      .select({
+        slug: pages.slug,
+        publishedAt: pages.publishedAt,
+        publishedSnapshot: pages.publishedSnapshot,
+      })
+      .from(pages)
+      .where(eq(pages.id, pageId))
+      .limit(1)
+
+    if (!page) return fail('Page introuvable.')
+    if (!page.publishedAt || !Array.isArray(page.publishedSnapshot)) {
+      return fail('Cette page n’a jamais été publiée : rien vers quoi revenir.')
+    }
+
+    const validated = validateSnapshotRows(page.publishedSnapshot)
+    if (!validated.ok) return fail(validated.error)
+    if (validated.pageId !== null && validated.pageId !== pageId) {
+      return fail('La version en ligne ne correspond pas à cette page.')
+    }
+
+    /* Validation faite AVANT toute écriture : si l'instantané est
+       inexploitable, le brouillon reste intact. */
+    await db.delete(sections).where(eq(sections.pageId, pageId))
+    await insertSnapshotRows(validated.rows)
+
+    const restored = await db
+      .select()
+      .from(sections)
+      .where(eq(sections.pageId, pageId))
+      .orderBy(asc(sections.sortOrder), asc(sections.createdAt))
+
+    revalidatePage(page.slug)
+    return ok({ sections: restored })
   })
 }
 
@@ -1263,7 +1074,9 @@ export async function reorderSections(
   return guard(async () => {
     await requireAdmin()
 
+    if (!isUuid(pageId)) return fail('Page introuvable.')
     if (orderedIds.length === 0) return ok()
+    if (!orderedIds.every(isUuid)) return fail('Section introuvable.')
 
     const cases = orderedIds
       .map((id, index) => sql`when ${sections.id} = ${id} then ${index}`)
@@ -1289,6 +1102,8 @@ export async function updateSeo(
 ): Promise<ActionResult<void>> {
   return guard(async () => {
     await requireAdmin()
+
+    if (!isUuid(pageId)) return fail('Page introuvable.')
 
     const parsed = seoFormSchema.safeParse(input)
     if (!parsed.success) {

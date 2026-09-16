@@ -171,7 +171,7 @@ export default async function DashboardPage() {
             aide Google à bien présenter votre site.
           </p>
           <Link
-            href="/admin/parametres"
+            href="/admin/reglages#coordonnees"
             className="mt-2.5 inline-block text-[12.5px] font-medium text-[#6b551f] underline underline-offset-2"
           >
             Compléter mes informations

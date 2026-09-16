@@ -32,11 +32,13 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
   const first = ctx.index === 0
 
   return (
-    <div className="relative grid min-h-[92svh] grid-cols-1 items-center gap-y-4 lg:min-h-[100svh] lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
+    /* `bleed` : hero en première position — padding haut `hero-top`
+       (laisse passer la capsule de navigation), bas = section. */
+    <div className="relative grid min-h-[92svh] grid-cols-1 items-center gap-y-10 pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] md:gap-y-12 lg:min-h-[100svh] lg:grid-cols-[minmax(0,1.15fr)_minmax(0,1fr)]">
       <SectionIndex index={ctx.index} label="ouverture" />
 
       {/* ── Colonne éditoriale ─────────────────────────────────── */}
-      <div className="order-2 flex flex-col justify-center px-[var(--spacing-gutter)] pb-24 pt-10 lg:order-1 lg:py-40">
+      <div className="order-2 flex flex-col justify-center px-[var(--spacing-gutter)] lg:order-1">
         <div className="max-w-[46rem]">
           {data.eyebrow && (
             <Reveal delay={0.05}>
@@ -46,7 +48,7 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
 
           {/* H1 unique du site — jamais rendu vide. */}
           {lines.length > 0 && (
-            <h1 className="mt-9 font-serif text-[clamp(2.7rem,5.4vw,5.8rem)] font-light leading-[1.05] text-ink">
+            <h1 className="mt-5 font-serif text-[clamp(2.7rem,5.4vw,5.8rem)] font-light leading-[1.05] text-ink">
               <MaskLines delay={0.15} lineClassName="lg:whitespace-nowrap">
                 {lines.map((line, i) => (
                   <span key={i}>
@@ -59,7 +61,7 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
 
           {data.intro && (
             <Reveal delay={0.42}>
-              <p className="mt-9 max-w-[34rem] text-[length:var(--text-lead)] leading-[1.8] text-ink-soft">
+              <p className="mt-6 max-w-[34rem] text-[length:var(--text-lead)] leading-[1.8] text-ink-soft">
                 {data.intro}
               </p>
             </Reveal>
@@ -67,9 +69,13 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
 
           {(data.primaryLabel || data.secondaryLabel) && (
             <Reveal delay={0.54}>
-              <div className="mt-12 flex flex-wrap items-center gap-3.5">
+              <div className="mt-8 flex flex-wrap items-center gap-3 md:gap-3.5">
                 {data.primaryLabel && (
-                  <ActionLink href={data.primaryHref} variant="primary">
+                  <ActionLink
+                    href={data.primaryHref}
+                    variant="primary"
+                    className="max-sm:w-full"
+                  >
                     {data.primaryLabel}
                   </ActionLink>
                 )}
@@ -78,6 +84,7 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
                     href={data.secondaryHref}
                     variant="ghost"
                     withArrow={false}
+                    className="max-sm:w-full"
                   >
                     {data.secondaryLabel}
                   </ActionLink>
@@ -90,12 +97,12 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
         {/* Filet vertical descendant — le trait du logo. */}
         <div
           aria-hidden="true"
-          className="mt-16 hidden h-20 w-px bg-line-strong lg:block"
+          className="mt-12 hidden h-20 w-px bg-line-strong lg:block"
         />
       </div>
 
       {/* ── L'arche photographique ─────────────────────────────── */}
-      <div className="order-1 flex items-center justify-center px-[var(--spacing-gutter)] pt-32 lg:order-2 lg:py-24 lg:pr-[var(--spacing-gutter)]">
+      <div className="order-1 flex items-center justify-center px-[var(--spacing-gutter)] lg:order-2">
         <BlockImage
           media={image}
           instant={first}
@@ -143,11 +150,12 @@ export const heroBlock: BlockDefinition<typeof heroSchema> = {
       { text: 'espace *intérieur*' },
       { text: 'où respirer.' },
     ],
-    intro: '',
+    intro:
+      'Anne Winzenried vous reçoit à Cesson-Sévigné, dans un cabinet calme où l’on prend le temps. Un lieu pour déposer ce qui pèse, comprendre ce qui se joue et retrouver, pas à pas, un peu de souffle.',
     primaryLabel: 'Prendre rendez-vous',
     primaryHref: '#contact',
-    secondaryLabel: 'En savoir plus',
-    secondaryHref: '#a-propos',
+    secondaryLabel: 'Découvrir l’approche',
+    secondaryHref: '/approche',
     mediaId: null,
   },
   Component: Hero,

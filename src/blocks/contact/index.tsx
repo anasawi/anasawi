@@ -9,6 +9,7 @@ import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
 import { SectionIndex } from '@/components/site/ornaments'
+import { addressLines as settingsAddressLines } from '@/lib/settings-helpers'
 import { toE164 } from '@/lib/utils'
 import type { OpeningHour } from '@/server/db/schema'
 
@@ -31,16 +32,13 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
   const s = ctx.settings
   const hours = (s.openingHours as OpeningHour[]) ?? []
 
-  const addressLines = [
-    s.addressStreet,
-    [s.addressPostalCode, s.addressCity].filter(Boolean).join(' '),
-  ].filter((line): line is string => Boolean(line && line.trim()))
+  const addressLines = settingsAddressLines(s)
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="contact" className="-top-14" />
+      <SectionIndex index={ctx.index} label="contact" />
 
-      <div className="grid grid-cols-1 gap-20 lg:grid-cols-12 lg:gap-x-24">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-24">
         {/* ── Coordonnées ─────────────────────────────────────── */}
         <div className="lg:col-span-5">
           {data.eyebrow && (
@@ -50,7 +48,7 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
           )}
 
           {data.title && (
-            <h2 className="mt-7 max-w-[14ch] text-[length:var(--text-h2)]">
+            <h2 className="mt-5 max-w-[14ch] text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -61,12 +59,12 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
 
           {data.intro && (
             <Reveal delay={0.14}>
-              <Prose text={data.intro} className="mt-7 max-w-[42ch]" />
+              <Prose text={data.intro} className="mt-6 max-w-[42ch]" />
             </Reveal>
           )}
 
           <Reveal delay={0.2}>
-            <dl className="mt-12 border-t border-line-strong">
+            <dl className="mt-10 border-t border-line-strong md:mt-12">
               {s.contactPhone && (
                 <Row label="Téléphone">
                   <a
@@ -120,14 +118,14 @@ function Contact({ data, ctx }: BlockProps<ContactSectionPayload>) {
             <Reveal delay={0.26}>
               <Prose
                 text={s.practicalInfo}
-                className="mt-9 max-w-[44ch] text-[0.88rem]"
+                className="mt-6 max-w-[44ch] text-[0.88rem]"
               />
             </Reveal>
           )}
 
           {s.bookingUrl && data.bookingLabel && (
             <Reveal delay={0.3}>
-              <div className="mt-10">
+              <div className="mt-8">
                 <ActionLink href={s.bookingUrl} variant="primary" external>
                   {data.bookingLabel}
                 </ActionLink>
@@ -157,7 +155,9 @@ function Row({
   children: React.ReactNode
 }) {
   return (
-    <div className="grid grid-cols-[8.5rem_1fr] gap-4 border-b border-line py-6">
+    /* Mobile : label au-dessus de la valeur (8.5rem de colonne label ne
+       laisseraient que ~150px au contenu à 360px). */
+    <div className="grid grid-cols-1 gap-2 border-b border-line py-6 sm:grid-cols-[8.5rem_1fr] sm:gap-4 md:py-7">
       <dt className="text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
         {label}
       </dt>
@@ -183,8 +183,9 @@ export const contactBlock: BlockDefinition<typeof contactSectionSchema> = {
   ],
   defaults: {
     eyebrow: 'Contact',
-    title: '',
-    intro: '',
+    title: 'Faire le *premier* pas.',
+    intro:
+      'Un appel, un message, un formulaire : choisissez ce qui vous est le plus simple. Je vous réponds personnellement sous 48 h pour convenir d’un premier rendez-vous au cabinet, à Cesson-Sévigné.',
     showForm: true,
     bookingLabel: 'Prendre rendez-vous',
   },

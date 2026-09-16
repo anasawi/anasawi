@@ -20,8 +20,10 @@ function collectMediaIds(payload: unknown, found: Set<string> = new Set()) {
 
   if (payload && typeof payload === 'object') {
     for (const [key, value] of Object.entries(payload)) {
+      /* `mediaId`, `ogMediaId`, `secondMediaId`… — tout champ image se
+         termine par « MediaId » ou est exactement `mediaId`. */
       if (
-        (key === 'mediaId' || key === 'ogMediaId') &&
+        (key === 'mediaId' || key.endsWith('MediaId')) &&
         typeof value === 'string'
       ) {
         found.add(value)

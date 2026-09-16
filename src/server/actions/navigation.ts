@@ -37,7 +37,18 @@ export async function updateNavigation(
     await requireAdmin()
 
     const parsed = z.array(navItemSchema).max(12).safeParse(input)
-    if (!parsed.success) return fail('Menu invalide.')
+    if (!parsed.success) {
+      /* Erreurs par champ, clés `<index>.<champ>` (« 2.href ») : l'éditeur
+         les affiche sous l'entrée concernée. `flatten()` ne garderait que
+         l'index. Une erreur sur le tableau lui-même (trop d'entrées) va
+         sous la clé `_`. */
+      const fieldErrors: Record<string, string[]> = {}
+      for (const issue of parsed.error.issues) {
+        const key = issue.path.length > 0 ? issue.path.join('.') : '_'
+        ;(fieldErrors[key] ??= []).push(issue.message)
+      }
+      return fail('Menu invalide.', fieldErrors)
+    }
 
     await db
       .update(settings)

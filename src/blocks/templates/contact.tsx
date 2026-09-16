@@ -7,6 +7,11 @@ import { ActionLink } from '@/components/site/ActionLink'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Aster, SectionIndex } from '@/components/site/ornaments'
+import {
+  addressLines,
+  bookingHref as sharedBookingHref,
+  directContactHref,
+} from '@/lib/settings-helpers'
 import { toE164 } from '@/lib/utils'
 import type { OpeningHour, Settings } from '@/server/db/schema'
 
@@ -15,17 +20,10 @@ import type { OpeningHour, Settings } from '@/server/db/schema'
  * (`ctx.settings`) : les modifier là les met à jour partout.
  */
 
-function addressLines(s: Settings): string[] {
-  return [
-    s.addressStreet,
-    [s.addressPostalCode, s.addressCity].filter(Boolean).join(' '),
-  ].filter((line): line is string => Boolean(line && line.trim()))
-}
-
+/** URL de rendez-vous, sinon téléphone, sinon e-mail — jamais une ancre :
+    dans un bloc Contact, le bouton doit mener à un contact direct. */
 function bookingHref(s: Settings): string {
-  if (s.bookingUrl?.trim()) return s.bookingUrl.trim()
-  if (s.contactPhone) return `tel:${toE164(s.contactPhone)}`
-  return `mailto:${s.contactEmail ?? ''}`
+  return sharedBookingHref(s, directContactHref(s))
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -59,7 +57,7 @@ function ContactMinimal({
           content: (
             <a
               href={`mailto:${s.contactEmail}`}
-              className="font-serif text-[17px] font-light transition-colors duration-300 hover:text-ivory/80"
+              className="font-serif text-[18px] font-light transition-colors duration-300 hover:text-ivory/80"
             >
               {s.contactEmail}
             </a>
@@ -72,7 +70,7 @@ function ContactMinimal({
           content: (
             <a
               href={`tel:${toE164(s.contactPhone)}`}
-              className="font-serif text-[17px] font-light transition-colors duration-300 hover:text-ivory/80"
+              className="font-serif text-[18px] font-light transition-colors duration-300 hover:text-ivory/80"
             >
               {s.contactPhone}
             </a>
@@ -120,10 +118,15 @@ function ContactMinimal({
   ].filter((c): c is NonNullable<typeof c> => c !== null)
 
   return (
-    <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="contact" className="-top-14" />
+    /* `bleed` — la proposition K compose avec le token de section :
+       marge externe ½ section haut/bas, arche pleine largeur (gouttière),
+       padding interne 1 section en haut, ½ section en bas. */
+    <div className="relative py-[calc(var(--spacing-section)*0.5)]">
+      <SectionIndex index={ctx.index} label="contact" />
 
-      <div className="relative overflow-clip rounded-t-[min(240px,26vw)] rounded-b-[28px] bg-blue-deep px-6 pb-14 pt-[clamp(4.5rem,12vh,8.5rem)] text-center text-ivory md:rounded-t-[min(240px,19vw)]">
+      {/* La grande arche — `margin: 0 var(--gutter)`, pleine largeur (K).
+          Mobile : rayon d'arche réduit (min(120px,22vw)). */}
+      <div className="relative mx-[var(--spacing-gutter)] overflow-clip rounded-t-[min(120px,22vw)] rounded-b-[28px] bg-blue-deep px-6 pb-[calc(var(--spacing-section)*0.5)] pt-[var(--spacing-section)] text-center text-ivory sm:px-8 md:rounded-t-[min(240px,19vw)] md:px-12">
         {/* Halo clair qui descend du sommet de l'arche. */}
         <div
           aria-hidden="true"
@@ -137,14 +140,14 @@ function ContactMinimal({
 
           {data.eyebrow && (
             <Reveal delay={0.08}>
-              <p className="mt-4 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/55">
+              <p className="mt-5 text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/55">
                 {data.eyebrow}
               </p>
             </Reveal>
           )}
 
           {data.title && (
-            <h2 className="mx-auto mt-5 max-w-[16ch] font-serif text-[clamp(2.5rem,7vw,7rem)] font-light leading-[1.06]">
+            <h2 className="mx-auto mt-5 max-w-[16ch] font-serif text-[clamp(38px,11vw,112px)] font-light leading-[1.06] md:text-[clamp(46px,7vw,112px)]">
               <MaskLines delay={0.12}>
                 <span className="[&_em]:text-blue-mist">
                   <Emphasis text={data.title} />
@@ -155,12 +158,13 @@ function ContactMinimal({
 
           {data.showBooking && data.bookingLabel && (
             <Reveal delay={0.28}>
-              <div className="mt-10 flex justify-center">
+              <div className="mt-8 flex justify-center">
                 <ActionLink
                   href={bookingHref(s)}
                   variant="primary"
                   external={Boolean(s.bookingUrl?.trim())}
-                  className="bg-ivory text-night hover:bg-cream"
+                  className="bg-ivory text-night"
+                  ink="bg-blue-mist"
                 >
                   {data.bookingLabel}
                 </ActionLink>
@@ -170,13 +174,13 @@ function ContactMinimal({
 
           {columns.length > 0 && (
             <Reveal delay={0.38}>
-              <div className="mx-auto mt-[7vh] flex max-w-[64rem] flex-wrap justify-between gap-x-10 gap-y-8 border-t border-ivory/20 px-2 pt-7 text-left">
+              <div className="mt-10 flex flex-col gap-4 border-t border-[rgba(251,248,242,0.22)] pt-7 text-left md:mx-[var(--spacing-gutter)] md:mt-12 md:flex-row md:flex-wrap md:justify-between md:gap-5">
                 {columns.map((col) => (
-                  <div key={col.label}>
+                  <div key={col.label} className="min-w-0">
                     <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/55">
                       {col.label}
                     </p>
-                    <div className="mt-2">{col.content}</div>
+                    <div className="mt-1.5 break-words">{col.content}</div>
                   </div>
                 ))}
               </div>
@@ -197,6 +201,8 @@ export const contactMinimalBlock: BlockDefinition<typeof contactMinimalSchema> =
     schema: contactMinimalSchema,
     suggestedAnchor: 'contact',
     navigable: true,
+    /* La proposition K impose son propre rythme vertical (sp × .5). */
+    bleed: true,
     fields: [
       field.text('eyebrow', 'Petit label au-dessus du titre'),
       field.text('title', 'Titre', {
@@ -212,11 +218,11 @@ export const contactMinimalBlock: BlockDefinition<typeof contactMinimalSchema> =
       field.text('bookingLabel', 'Libellé du bouton'),
     ],
     defaults: {
-      eyebrow: '',
+      eyebrow: 'Prendre contact',
       title: 'On *commence* quand vous voulez.',
-      text: 'Sous 48 h, en toute confidentialité.',
+      text: 'Je vous réponds sous 48 h, en toute confidentialité — puis nous convenons d’un premier rendez-vous, au cabinet ou en visio.',
       showAddress: true,
-      showHours: false,
+      showHours: true,
       showBooking: true,
       bookingLabel: 'Prendre rendez-vous',
     },
@@ -258,9 +264,9 @@ function ContactCarte({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="contact" className="-top-14" />
+      <SectionIndex index={ctx.index} label="contact" />
 
-      <div className="grid grid-cols-1 gap-16 lg:grid-cols-[1.4fr_1fr] lg:gap-24">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-[1.4fr_1fr] lg:gap-24">
         <div className="min-w-0">
           {data.eyebrow && (
             <Reveal>
@@ -269,7 +275,7 @@ function ContactCarte({
           )}
 
           {data.title && (
-            <h2 className="mt-7 max-w-[20ch] text-[length:var(--text-h2)]">
+            <h2 className="mt-5 max-w-[20ch] text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -286,7 +292,7 @@ function ContactCarte({
             </Reveal>
           )}
 
-          <div className="mt-12 space-y-7">
+          <div className="mt-10 space-y-8 md:mt-12">
             {s.contactEmail && (
               <Reveal delay={0.2}>
                 <div>
@@ -317,13 +323,13 @@ function ContactCarte({
           <Reveal delay={0.34}>
             <span
               aria-hidden="true"
-              className="mt-14 hidden h-14 w-px bg-line-strong lg:block"
+              className="mt-12 hidden h-14 w-px bg-line-strong lg:block"
             />
           </Reveal>
         </div>
 
         <Reveal delay={0.22} className="lg:pt-20">
-          <aside className="rounded-[28px] bg-cream px-8 py-2">
+          <aside className="rounded-[28px] bg-cream px-6 py-2 sm:px-8">
             {address.length > 0 && (
               <div className="border-b border-line py-6">
                 <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-deep">
@@ -387,6 +393,7 @@ function ContactCarte({
                   href={bookingHref(s)}
                   variant="primary"
                   external={Boolean(s.bookingUrl?.trim())}
+                  className="max-sm:w-full"
                 >
                   {data.bookingLabel}
                 </ActionLink>
@@ -443,7 +450,7 @@ function AppelDoux({ data }: BlockProps<z.output<typeof appelDouxSchema>>) {
         <Reveal>
           <span
             aria-hidden="true"
-            className="mx-auto mb-10 block h-14 w-px bg-line-strong"
+            className="mx-auto mb-8 block h-14 w-px bg-line-strong"
           />
         </Reveal>
 
@@ -457,7 +464,7 @@ function AppelDoux({ data }: BlockProps<z.output<typeof appelDouxSchema>>) {
 
         {data.text && (
           <Reveal delay={0.16}>
-            <p className="mx-auto mt-5 max-w-[46ch] text-[14px] leading-[1.85] text-ink-soft">
+            <p className="mx-auto mt-6 max-w-[46ch] text-[14px] leading-[1.85] text-ink-soft">
               {data.text}
             </p>
           </Reveal>
@@ -465,7 +472,7 @@ function AppelDoux({ data }: BlockProps<z.output<typeof appelDouxSchema>>) {
 
         {data.label && (
           <Reveal delay={0.24}>
-            <div className="mt-9 flex justify-center">
+            <div className="mt-8 flex justify-center">
               <ActionLink href={data.href} variant="primary">
                 {data.label}
               </ActionLink>

@@ -153,7 +153,7 @@ export const sections = pgTable(
     /**
      * Apparence de l'élément — schéma commun à tous les types, avec
      * surcharges par breakpoint : `{ base, tablet?, mobile? }`.
-     * Nul = les défauts élégants du type (tokens AMASWI).
+     * Nul = les défauts élégants du type (tokens ANASAWI).
      */
     styles: jsonb('styles'),
 
@@ -265,7 +265,7 @@ export const faqItems = pgTable(
 export const settings = pgTable('settings', {
   id: text('id').primaryKey().default('singleton'),
 
-  siteName: text('site_name').notNull().default('AMASWI'),
+  siteName: text('site_name').notNull().default('ANASAWI'),
   practitionerName: text('practitioner_name').notNull().default(''),
   practitionerTitle: text('practitioner_title'),
   tagline: text('tagline'),

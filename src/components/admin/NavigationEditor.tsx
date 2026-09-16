@@ -29,8 +29,17 @@ export function NavigationEditor({
   const router = useRouter()
   const [items, setItems] = useState<Item[]>(initial)
   const [pending, start] = useTransition()
+  /** Erreurs de validation renvoyées par l'action, clés `<index>.<champ>`
+      (« 2.href ») — affichées sous l'entrée concernée en plus du toast.
+      Effacées dès que la liste change. */
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const errorOf = (index: number, field: keyof Item) =>
+    fieldErrors[`${index}.${field}`]?.[0]
 
   const move = (index: number, delta: -1 | 1) => {
+    /* Les erreurs sont indexées par position : toute réorganisation les
+       rend caduques. */
+    setFieldErrors({})
     setItems((prev) => {
       const next = [...prev]
       const target = index + delta
@@ -43,10 +52,12 @@ export function NavigationEditor({
     })
   }
 
-  const update = (index: number, patch: Partial<Item>) =>
+  const update = (index: number, patch: Partial<Item>) => {
+    setFieldErrors({})
     setItems((prev) =>
       prev.map((item, i) => (i === index ? { ...item, ...patch } : item)),
     )
+  }
 
   const remaining = suggestions.filter(
     (s) => !items.some((item) => item.href === s.href),
@@ -83,24 +94,41 @@ export function NavigationEditor({
                 <ArrowDown className="h-3 w-3" />
               </button>
             </div>
-            <Input
-              value={item.label}
-              placeholder="Libellé"
-              onChange={(e) => update(i, { label: e.target.value })}
-              className="h-8 w-36 shrink-0 text-[0.8rem]"
-            />
-            <Input
-              value={item.href}
-              placeholder="/approche, contact ou https://…"
-              onChange={(e) => update(i, { href: e.target.value })}
-              className="h-8 flex-1 font-mono text-[0.74rem]"
-            />
+            <div className="w-36 shrink-0">
+              <Input
+                value={item.label}
+                placeholder="Libellé"
+                aria-invalid={errorOf(i, 'label') ? true : undefined}
+                onChange={(e) => update(i, { label: e.target.value })}
+                className="h-8 text-[0.8rem]"
+              />
+              {errorOf(i, 'label') && (
+                <p role="alert" className="mt-1 text-xs text-destructive">
+                  {errorOf(i, 'label')}
+                </p>
+              )}
+            </div>
+            <div className="min-w-0 flex-1">
+              <Input
+                value={item.href}
+                placeholder="/approche, contact ou https://…"
+                aria-invalid={errorOf(i, 'href') ? true : undefined}
+                onChange={(e) => update(i, { href: e.target.value })}
+                className="h-8 font-mono text-[0.74rem]"
+              />
+              {errorOf(i, 'href') && (
+                <p role="alert" className="mt-1 text-xs text-destructive">
+                  {errorOf(i, 'href')}
+                </p>
+              )}
+            </div>
             <button
               type="button"
               aria-label="Retirer"
-              onClick={() =>
+              onClick={() => {
+                setFieldErrors({})
                 setItems((prev) => prev.filter((_, idx) => idx !== i))
-              }
+              }}
               className="shrink-0 rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600"
             >
               <Trash2 className="h-3.5 w-3.5" />
@@ -153,9 +181,11 @@ export function NavigationEditor({
             start(async () => {
               const result = await updateNavigation(items)
               if (result.ok) {
+                setFieldErrors({})
                 toast.success('Menu enregistré — le site est à jour.')
                 router.refresh()
               } else {
+                setFieldErrors(result.fieldErrors ?? {})
                 toast.error(result.error)
               }
             })

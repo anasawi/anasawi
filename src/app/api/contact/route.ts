@@ -39,13 +39,23 @@ export async function POST(request: Request) {
 
   const { name, email, phone, message } = parsed.data
 
-  await db.insert(contactMessages).values({
-    name,
-    email,
-    phone: phone || null,
-    message,
-    ipHash,
-  })
+  /* Panne de base : réponse JSON formée comme les autres, plutôt qu'un 500
+     brut que le formulaire ne sait pas lire. */
+  try {
+    await db.insert(contactMessages).values({
+      name,
+      email,
+      phone: phone || null,
+      message,
+      ipHash,
+    })
+  } catch (error) {
+    console.error('[contact] enregistrement impossible', error)
+    return NextResponse.json(
+      { error: 'Envoi impossible pour le moment. Réessayez dans quelques minutes.' },
+      { status: 500 },
+    )
+  }
 
   /* La notification est accessoire : si Resend échoue, le message est déjà
      en base et consultable dans le CMS. On ne fait pas échouer la requête. */

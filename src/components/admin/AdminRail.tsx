@@ -5,7 +5,6 @@ import {
   Image as ImageIcon,
   LayoutDashboard,
   LogOut,
-  Palette,
   Settings,
 } from 'lucide-react'
 import Link from 'next/link'
@@ -17,7 +16,7 @@ import { cn } from '@/lib/utils'
 import { signOutAction } from '@/server/actions/auth'
 
 /**
- * Rail de navigation de l'administration — 5 entrées, rien d'autre.
+ * Rail de navigation de l'administration — 4 entrées, rien d'autre.
  *
  * Fidèle à la maquette validée : 64 px de large, boutons 42×42 avec
  * tooltip en pastille sombre à droite, entrée active sur fond blanc avec
@@ -46,25 +45,22 @@ const ENTRIES: RailEntry[] = [
       p.startsWith('/admin/accueil') || p.startsWith('/admin/pages'),
   },
   {
-    href: '/admin/identite',
-    label: 'Apparence',
-    icon: Palette,
-    isActive: (p) => p.startsWith('/admin/identite'),
-  },
-  {
     href: '/admin/medias',
     label: 'Médias',
     icon: ImageIcon,
     isActive: (p) => p.startsWith('/admin/medias'),
   },
   {
+    /* L'apparence n'a plus d'écran à elle : la palette et les formes sont
+       deux sections de la page Réglages. */
     href: '/admin/reglages',
-    label: 'Paramètres',
+    label: 'Réglages',
     icon: Settings,
     isActive: (p) =>
       [
         '/admin/reglages',
         '/admin/parametres',
+        '/admin/identite',
         '/admin/navigation',
         '/admin/seo',
         '/admin/messages',

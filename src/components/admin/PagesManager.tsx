@@ -41,7 +41,8 @@ export function PagesManager({ pages }: { pages: Page[] }) {
   const [title, setTitle] = useState('')
   const [slug, setSlug] = useState('')
   const [slugTouched, setSlugTouched] = useState(false)
-  const [armedDelete, setArmedDelete] = useState<string | null>(null)
+  /** Page dont la suppression attend confirmation, dans sa ligne. */
+  const [confirmDelete, setConfirmDelete] = useState<string | null>(null)
 
   const submit = () => {
     start(async () => {
@@ -91,7 +92,7 @@ export function PagesManager({ pages }: { pages: Page[] }) {
             </Label>
             <div className="flex items-center gap-1.5">
               <span className="text-[0.8rem] text-muted-foreground">
-                amaswi.com/
+                anasawi.com/
               </span>
               <Input
                 id="new-slug"
@@ -136,7 +137,23 @@ export function PagesManager({ pages }: { pages: Page[] }) {
       )}
 
       {/* ── Liste ────────────────────────────────────────────────── */}
-      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
+      {pages.length === 0 && (
+        /* Cas rare (l'accueil est amorcé par `db:seed`), mais une liste
+           vide sans un mot ressemble à une panne. */
+        <div className="rounded-xl border border-border bg-white px-6 py-14 text-center">
+          <p className="text-[13px] text-muted-foreground">
+            Aucune page pour l’instant — créez la première avec « Nouvelle
+            page », ou lancez <code>npm run db:seed</code> pour amorcer
+            l’accueil.
+          </p>
+        </div>
+      )}
+      <ul
+        className={cn(
+          'divide-y divide-border overflow-hidden rounded-xl border border-border bg-white',
+          pages.length === 0 && 'hidden',
+        )}
+      >
         {pages.map((page) => {
           const published = page.status === 'published'
           return (
@@ -214,51 +231,72 @@ export function PagesManager({ pages }: { pages: Page[] }) {
                     <EyeOff className="h-3.5 w-3.5" />
                   </button>
                 )}
-                {!page.isHome && (
+                {!page.isHome && confirmDelete !== page.id && (
                   <button
                     type="button"
-                    title={
-                      armedDelete === page.id
-                        ? 'Cliquez pour confirmer la suppression'
-                        : 'Supprimer'
-                    }
+                    title="Supprimer"
+                    aria-label="Supprimer"
                     disabled={pending}
-                    onClick={() => {
-                      if (armedDelete === page.id) {
-                        setArmedDelete(null)
-                        start(async () => {
-                          const result = await deletePage(page.id)
-                          if (result.ok) {
-                            toast.success('Page supprimée.')
-                            router.refresh()
-                          } else toast.error(result.error)
-                        })
-                      } else {
-                        setArmedDelete(page.id)
-                        setTimeout(() => setArmedDelete(null), 2500)
-                      }
-                    }}
-                    className={cn(
-                      'rounded p-1.5 transition-colors',
-                      armedDelete === page.id
-                        ? 'bg-red-600 text-white'
-                        : 'text-muted-foreground hover:bg-red-50 hover:text-red-600',
-                    )}
+                    onClick={() => setConfirmDelete(page.id)}
+                    className="rounded p-1.5 text-muted-foreground transition-colors hover:bg-red-50 hover:text-red-600"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
                   </button>
                 )}
               </div>
 
-              <Link
-                href={
-                  page.isHome ? '/admin/accueil' : `/admin/pages/${page.id}`
-                }
-                className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-[0.75rem] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-              >
-                <Pencil className="h-3 w-3" />
-                Modifier
-              </Link>
+              {/* Confirmation en clair, dans la ligne : pas de corbeille
+                  « armée » qui semble ne rien faire au premier clic. */}
+              {confirmDelete === page.id ? (
+                <div
+                  role="alertdialog"
+                  aria-label="Confirmer la suppression de la page"
+                  className="flex shrink-0 items-center gap-1.5 text-[0.75rem] text-foreground"
+                >
+                  <span>Supprimer cette page et son contenu ?</span>
+                  <button
+                    type="button"
+                    autoFocus
+                    disabled={pending}
+                    onClick={() => {
+                      setConfirmDelete(null)
+                      start(async () => {
+                        const result = await deletePage(page.id)
+                        if (result.ok) {
+                          toast.success('Page supprimée.')
+                          router.refresh()
+                        } else toast.error(result.error)
+                      })
+                    }}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setConfirmDelete(null)
+                    }}
+                    className="rounded-md bg-red-600 px-2 py-1 text-[0.72rem] font-medium text-white transition-colors hover:bg-red-700"
+                  >
+                    Supprimer
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setConfirmDelete(null)}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape') setConfirmDelete(null)
+                    }}
+                    className="rounded-md border border-border bg-white px-2 py-1 text-[0.72rem] text-muted-foreground transition-colors hover:text-foreground"
+                  >
+                    Annuler
+                  </button>
+                </div>
+              ) : (
+                <Link
+                  href={
+                    page.isHome ? '/admin/accueil' : `/admin/pages/${page.id}`
+                  }
+                  className="flex shrink-0 items-center gap-1.5 rounded-md border border-border px-2.5 py-1 text-[0.75rem] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
+                >
+                  <Pencil className="h-3 w-3" />
+                  Modifier
+                </Link>
+              )}
             </li>
           )
         })}

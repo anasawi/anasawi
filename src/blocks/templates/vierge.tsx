@@ -52,21 +52,21 @@ function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {
       )}
       {data.title && (
         <Reveal delay={0.12}>
-          <h2 className="mt-6 max-w-[30ch] text-[length:var(--text-h2)] leading-[1.15]">
+          <h2 className="mt-5 max-w-[30ch] text-[length:var(--text-h2)] leading-[1.15]">
             <Emphasis text={data.title} />
           </h2>
         </Reveal>
       )}
       {data.body && (
         <Reveal delay={0.2}>
-          <div className={cn('mt-7 max-w-[38rem]', centered && 'mx-auto')}>
+          <div className={cn('mt-6 max-w-[38rem]', centered && 'mx-auto')}>
             <Prose text={data.body} size="base" />
           </div>
         </Reveal>
       )}
       {data.buttonLabel && (
         <Reveal delay={0.3}>
-          <div className="mt-10">
+          <div className="mt-8">
             <ActionLink href={data.buttonHref} variant="primary">
               {data.buttonLabel}
             </ActionLink>
@@ -90,7 +90,7 @@ function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {
 
   return (
     <div className="container-editorial">
-      <div className="grid grid-cols-1 items-center gap-12 lg:grid-cols-2 lg:gap-20">
+      <div className="grid grid-cols-1 items-center gap-10 md:gap-12 lg:grid-cols-2 lg:gap-20">
         <div className={cn(data.imageSide === 'droite' && 'lg:order-2')}>
           <BlockImage
             media={media}
@@ -133,13 +133,13 @@ export const viergeBlock: BlockDefinition<typeof viergeSchema> = {
     field.text('buttonHref', 'Bouton — lien'),
   ],
   defaults: {
-    eyebrow: '',
-    title: 'Un titre à écrire',
-    body: 'Le texte de cette section, à remplacer par le vôtre.',
+    eyebrow: 'Prendre rendez-vous',
+    title: 'Retrouver son *souffle*, à son rythme.',
+    body: 'Un premier échange suffit souvent à savoir si l’on se sent à sa place. Vous m’écrivez ou m’appelez, je vous réponds sous 48 h, et nous convenons ensemble d’un premier rendez-vous — au cabinet, à Cesson-Sévigné, ou en visio.\n\nLes séances durent 50 minutes. Il n’y a rien à préparer : venir, c’est déjà commencer.',
     mediaId: null,
-    imageSide: 'aucune',
+    imageSide: 'droite',
     align: 'left',
-    buttonLabel: '',
+    buttonLabel: 'Prendre contact',
     buttonHref: '#contact',
   },
   Component: Vierge,

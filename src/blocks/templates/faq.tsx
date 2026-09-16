@@ -28,9 +28,9 @@ function FaqEditoriale({
 }: BlockProps<z.output<typeof faqEditorialeSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="questions" className="-top-14" />
+      <SectionIndex index={ctx.index} label="questions" />
 
-      <div className="mx-auto max-w-[46rem]">
+      <div className="mx-auto max-w-[840px]">
         <div className="text-center">
           {data.eyebrow && (
             <Reveal>
@@ -39,7 +39,7 @@ function FaqEditoriale({
           )}
           {data.title && (
             <Reveal delay={0.08}>
-              <h2 className="mt-7 text-[length:var(--text-h2)]">
+              <h2 className="mt-5 text-[length:var(--text-h2)]">
                 <Emphasis text={data.title} />
               </h2>
             </Reveal>
@@ -54,12 +54,14 @@ function FaqEditoriale({
         </div>
 
         {ctx.faqItems.length > 0 && (
-          <div className="mt-14">
+          <div className="mt-10 md:mt-12">
             {ctx.faqItems.map((item, i) => (
               <Reveal key={item.id} delay={Math.min(0.08 + i * 0.05, 0.35)}>
-                <details className="group border-b border-line transition-colors duration-500 open:rounded-t-[18px] open:bg-gradient-to-b open:from-sand open:to-transparent">
-                  <summary className="flex cursor-pointer list-none items-baseline justify-between gap-6 px-2 py-7 text-left [&::-webkit-details-marker]:hidden">
-                    <span className="font-serif text-[clamp(1.2rem,1.7vw,1.6rem)] font-light leading-[1.35] text-ink transition-colors duration-500 group-hover:text-blue-deep group-open:italic group-open:text-blue-deep">
+                {/* Aucun aplat à l'ouverture : la question passe en bleu
+                    italique, le filet suffit à marquer la ligne active. */}
+                <details className="group border-b border-line">
+                  <summary className="flex cursor-pointer list-none items-baseline justify-between gap-4 px-1.5 py-6 text-left sm:gap-5 md:py-7 [&::-webkit-details-marker]:hidden">
+                    <span className="font-serif text-[clamp(19px,1.7vw,26px)] font-light leading-[1.35] text-ink transition-colors duration-500 group-hover:text-blue-deep group-open:italic group-open:text-blue-deep">
                       {item.question}
                     </span>
                     <span
@@ -75,7 +77,7 @@ function FaqEditoriale({
                       －
                     </span>
                   </summary>
-                  <p className="max-w-[56ch] px-2 pb-8 text-[14px] leading-[1.85] text-ink-soft">
+                  <p className="max-w-[56ch] px-1.5 pb-7 text-[14px] leading-[1.85] text-ink-soft">
                     {item.answer}
                   </p>
                 </details>
@@ -107,7 +109,7 @@ export const faqEditorialeBlock: BlockDefinition<typeof faqEditorialeSchema> =
     ],
     defaults: {
       eyebrow: 'Questions fréquentes',
-      title: '',
+      title: 'Ce que l’on me *demande* souvent.',
       intro:
         'Les réponses aux questions qui reviennent le plus souvent avant une première séance. Pour tout le reste, écrivez-moi.',
     },

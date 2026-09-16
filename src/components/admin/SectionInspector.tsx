@@ -1,6 +1,6 @@
 'use client'
 
-import { Bookmark, Check, ChevronDown, Wand2, X } from 'lucide-react'
+import { Bookmark, Check, ChevronDown, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -10,7 +10,6 @@ import { ColorPicker } from './ColorPicker'
 import { StylePanel, type StyleBreakpoint } from './StylePanel'
 import type { FieldDescriptor } from '@/blocks/field'
 import { getBlock } from '@/blocks/registry'
-import { CONVERTIBLE_TYPES } from '@/lib/convert-legacy'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,7 +27,16 @@ import {
 } from '@/server/actions/pages'
 import type { HistoryEntry } from './history'
 import type { ActionResult } from '@/server/actions/types'
-import type { Media, Section } from '@/server/db/schema'
+import type { Media, SavedSection, Section } from '@/server/db/schema'
+
+/** File d'actions : chaque écriture y passe, et un rejet (réseau) en
+    ressort comme un résultat en échec. */
+type RunAction = <T extends ActionResult<unknown>>(
+  fn: () => Promise<T>,
+) => Promise<T>
+
+/** Sans file d'actions fournie, l'action part directement. */
+const runDirectly: RunAction = (fn) => fn()
 
 /** Brouillon complet du panneau — la forme que reçoit le constructeur à
     chaque frappe pour mettre le canvas à jour immédiatement. */
@@ -100,8 +108,6 @@ type SectionInspectorProps = {
   /** Suppression avec instantané — non utilisée ici : la suppression vit
       dans la liste des sections, à gauche. Conservée pour compatibilité. */
   onDelete?: (id: string) => Promise<ActionResult<unknown>>
-  /** Conversion d'une section héritée en éléments libres, annulable. */
-  onConvert?: (id: string) => Promise<ActionResult<unknown>>
   /** Application immédiate du brouillon sur le canvas, à chaque frappe. */
   onDraft?: (id: string, draft: SectionDraft) => void
   /** Remonte l'état d'écriture — l'indicateur « Enregistré » du haut. */
@@ -109,6 +115,25 @@ type SectionInspectorProps = {
   /** Mode CMS à modèles : pas de réglages de style avancés — l'apparence
       est l'affaire du modèle. Seule la couleur de fond reste réglable. */
   simple?: boolean
+  /** File d'actions du constructeur : chaque écriture y passe pour ne
+      jamais partir pendant qu'une autre est en vol. */
+  runAction?: RunAction
+  /** Réglages (animation, bord, décor) appliqués au canvas sans
+      rechargement — l'équivalent d'`onDraft` pour `settings`. */
+  onSettings?: (id: string, settings: SectionSettings) => void
+  /** Un modèle personnel vient d'être créé — le constructeur l'ajoute à
+      « Mes sections » sans recharger la page. */
+  onSaved?: (saved: SavedSection) => void
+  /** Groupes dépliés à l'ouverture (tous repliés par défaut). */
+  initialOpen?: Partial<{
+    content: boolean
+    button: boolean
+    style: boolean
+    advanced: boolean
+  }>
+  /** Le constructeur y trouve de quoi écrire le reliquat de frappe
+      AVANT une publication — sans attendre la fin du délai d'accalmie. */
+  flushRef?: { current: (() => Promise<void>) | null }
 }
 
 export function SectionInspector({
@@ -118,13 +143,18 @@ export function SectionInspector({
   onMutated,
   pushHistory,
   styleBreakpoint = 'base',
-  onConvert,
   onDraft,
   onSaveStateChange,
   simple = false,
+  runAction,
+  onSettings,
+  onSaved,
+  initialOpen,
+  flushRef,
 }: SectionInspectorProps) {
   const router = useRouter()
   const block = getBlock(section.type)
+  const run: RunAction = runAction ?? runDirectly
 
   const [payload, setPayload] = useState<Record<string, unknown>>(
     (section.payload as Record<string, unknown>) ?? {},
@@ -154,21 +184,38 @@ export function SectionInspector({
     button: false,
     style: false,
     advanced: false,
+    ...initialOpen,
   })
   const toggle = (key: keyof typeof open) =>
     setOpen((o) => ({ ...o, [key]: !o[key] }))
+
+  /* Le constructeur redemande « Contenu » (double-clic sur une section
+     déjà sélectionnée) : on l'ouvre sans remonter le panneau. */
+  const wantContent = initialOpen?.content ?? false
+  useEffect(() => {
+    if (wantContent) setOpen((o) => (o.content ? o : { ...o, content: true }))
+  }, [wantContent])
 
   /* L'indicateur du haut suit l'état d'écriture du panneau. */
   useEffect(() => {
     onSaveStateChange?.(saveState)
   }, [saveState, onSaveStateChange])
 
+  /* Réglages : appliqués au canvas tout de suite, écrits via la file ;
+     en cas d'échec, l'état précédent revient et l'erreur s'affiche. */
   const writeAnim = (patch: Partial<SectionSettings>) => {
+    const prev = anim
     const next = { ...anim, ...patch }
     setAnim(next)
-    void updateSectionSettings(section.id, next).then((r) => {
-      if (!r.ok) toast.error(r.error)
-      else onMutated?.()
+    onSettings?.(section.id, next)
+    void run(() => updateSectionSettings(section.id, next)).then((r) => {
+      if (!r.ok) {
+        setAnim(prev)
+        onSettings?.(section.id, prev)
+        toast.error(r.error)
+      } else {
+        onMutated?.()
+      }
     })
   }
 
@@ -192,7 +239,6 @@ export function SectionInspector({
   })
   const latest = useRef({ payload, meta, styles })
   const dirty = useRef(false)
-  const firstRender = useRef(true)
 
   const saveNow = useCallback(async () => {
     if (!dirty.current) return
@@ -211,11 +257,11 @@ export function SectionInspector({
     const nextPayload = draft.payload
     const nextStyles = draft.styles
 
-    const result = await updateSection(
-      section.id,
-      nextMeta,
-      nextPayload,
-      nextStyles,
+    /* Par la file du constructeur : l'écriture attend qu'une éventuelle
+       action en vol (suppression, déplacement…) soit terminée, et
+       inversement — plus de requête annulée en cours de route. */
+    const result = await run(() =>
+      updateSection(section.id, nextMeta, nextPayload, nextStyles),
     )
 
     if (!result.ok) {
@@ -232,11 +278,15 @@ export function SectionInspector({
       label: 'Modification',
       undo: async () =>
         (
-          await updateSection(section.id, prevMeta, prevPayload, prevStyles)
+          await run(() =>
+            updateSection(section.id, prevMeta, prevPayload, prevStyles),
+          )
         ).ok,
       redo: async () =>
         (
-          await updateSection(section.id, nextMeta, nextPayload, nextStyles)
+          await run(() =>
+            updateSection(section.id, nextMeta, nextPayload, nextStyles),
+          )
         ).ok,
     })
 
@@ -245,17 +295,25 @@ export function SectionInspector({
     /* Pas de `router.refresh()` ici : le canvas est déjà à jour via le
        brouillon, et un rechargement pourrait écraser une frappe plus
        récente le temps de l'aller-retour serveur. */
-  }, [pushHistory, section.id])
+  }, [pushHistory, run, section.id])
 
   /* Chaque changement : rendu immédiat sur le canvas, puis écriture après
      600 ms d'accalmie — une rafale de frappe = un enregistrement, une
      entrée d'historique. */
   useEffect(() => {
-    latest.current = { payload, meta, styles }
-    if (firstRender.current) {
-      firstRender.current = false
+    /* Rien n'a changé (montage, ou double exécution des effets en mode
+       strict) : ni brouillon ni écriture. Un drapeau « premier rendu »
+       était consommé par la première exécution, et la seconde marquait
+       le panneau sale — ouvrir une section suffisait à l'enregistrer. */
+    const seen = latest.current
+    if (
+      seen.payload === payload &&
+      seen.meta === meta &&
+      seen.styles === styles
+    ) {
       return
     }
+    latest.current = { payload, meta, styles }
     dirty.current = true
     setSaveState('dirty')
     onDraft?.(section.id, {
@@ -271,8 +329,10 @@ export function SectionInspector({
     })
     const timer = setTimeout(() => void saveNow(), 600)
     return () => clearTimeout(timer)
-    // eslint-disable-next-line react-hooks/exhaustive-deps -- déclenché par
-    // les seules données du brouillon.
+    /* Déclenché par les seules données du brouillon : `onDraft`, `saveNow`
+       et `section.id` sont stables ou lus à l'exécution — les ajouter
+       ferait repartir un enregistrement à chaque rendu du parent. */
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [payload, meta, styles])
 
   /* Fermer le panneau ou changer de bloc n'avale jamais une frappe : le
@@ -283,6 +343,15 @@ export function SectionInspector({
     },
     [saveNow],
   )
+
+  /* Le constructeur peut forcer l'écriture du reliquat (avant Publier). */
+  useEffect(() => {
+    if (!flushRef) return
+    flushRef.current = saveNow
+    return () => {
+      if (flushRef.current === saveNow) flushRef.current = null
+    }
+  }, [flushRef, saveNow])
 
   if (!block) {
     return (
@@ -368,31 +437,6 @@ export function SectionInspector({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-1.5">
-        {/* Section héritée : proposer la décomposition en éléments libres —
-            c'est la porte d'entrée vers le placement à la souris. */}
-        {isRoot && onConvert && CONVERTIBLE_TYPES.has(section.type) && (
-          <div className="mb-2 mt-3 rounded-[6px] border border-[#c9d8e0] bg-blue-mist/50 p-3">
-            <p className="text-[0.74rem] leading-[1.55] text-blue-ink">
-              Cette section est une composition toute faite. Convertissez-la
-              pour déplacer et redimensionner librement chacun de ses
-              éléments — annulable avec ⌘Z.
-            </p>
-            <Button
-              size="sm"
-              disabled={pending}
-              className="mt-2.5 w-full"
-              onClick={() =>
-                start(async () => {
-                  await onConvert(section.id)
-                })
-              }
-            >
-              <Wand2 />
-              Convertir en éléments libres
-            </Button>
-          </div>
-        )}
-
         {/* ── Contenu ─────────────────────────────────────────────── */}
         {contentFields.length > 0 && (
           <Group
@@ -523,6 +567,96 @@ export function SectionInspector({
                       )}
                     </div>
                   </div>
+
+                  {/* Bord bas : le fond de cette section se déverse en
+                      ondulant dans la suivante. */}
+                  <div>
+                    <p className="mb-[5px] text-[11.5px] text-ink-soft">
+                      Bord du bas
+                    </p>
+                    <select
+                      value={anim.edge}
+                      onChange={(e) =>
+                        writeAnim({
+                          edge: e.target.value as SectionSettings['edge'],
+                        })
+                      }
+                      className="h-[34px] w-full rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
+                    >
+                      <option value="aucun">Droit</option>
+                      <option value="vague">Vague</option>
+                      <option value="courbe">Courbe douce</option>
+                      <option value="arche">Arche</option>
+                      <option value="ondulation">Ondulations</option>
+                      <option value="oblique">Oblique</option>
+                    </select>
+                    <p className="mt-1.5 text-[11px] leading-[1.5] text-stone">
+                      Visible si la section suivante a un fond différent.
+                    </p>
+                  </div>
+
+                  {/* Décor au trait — un motif calme posé sur la section. */}
+                  <div>
+                    <p className="mb-[5px] text-[11.5px] text-ink-soft">
+                      Décor
+                    </p>
+                    <div className="grid grid-cols-2 gap-2">
+                      <select
+                        value={anim.ornament}
+                        onChange={(e) =>
+                          writeAnim({
+                            ornament: e.target
+                              .value as SectionSettings['ornament'],
+                          })
+                        }
+                        className="col-span-2 h-[34px] rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
+                      >
+                        <option value="aucun">Aucun</option>
+                        <option value="ondes">Ondes</option>
+                        <option value="cercles">Cercles concentriques</option>
+                        <option value="arche">Arche</option>
+                        <option value="soleil">Soleil levant</option>
+                        <option value="spirale">Spirale</option>
+                        <option value="horizon">Horizon</option>
+                      </select>
+
+                      {anim.ornament !== 'aucun' && (
+                        <>
+                          <select
+                            value={anim.ornamentPosition}
+                            onChange={(e) =>
+                              writeAnim({
+                                ornamentPosition: e.target
+                                  .value as SectionSettings['ornamentPosition'],
+                              })
+                            }
+                            className="h-[34px] rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
+                          >
+                            <option value="haut-gauche">En haut à gauche</option>
+                            <option value="haut-droite">En haut à droite</option>
+                            <option value="bas-gauche">En bas à gauche</option>
+                            <option value="bas-droite">En bas à droite</option>
+                            <option value="centre">Au centre</option>
+                          </select>
+
+                          <select
+                            value={anim.ornamentSize}
+                            onChange={(e) =>
+                              writeAnim({
+                                ornamentSize: e.target
+                                  .value as SectionSettings['ornamentSize'],
+                              })
+                            }
+                            className="h-[34px] rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
+                          >
+                            <option value="petit">Petit</option>
+                            <option value="moyen">Moyen</option>
+                            <option value="grand">Grand</option>
+                          </select>
+                        </>
+                      )}
+                    </div>
+                  </div>
                 </>
               )}
 
@@ -622,16 +756,19 @@ export function SectionInspector({
                       const name = modelName.trim()
                       if (!name) return
                       start(async () => {
-                        const result = await saveSectionAsTemplate(
-                          section.id,
-                          name,
+                        const result = await run(() =>
+                          saveSectionAsTemplate(section.id, name),
                         )
                         if (result.ok) {
                           toast.success(
                             `« ${name} » ajouté à Mes sections — retrouvez-le dans la bibliothèque.`,
                           )
                           setModelName(null)
-                          router.refresh()
+                          /* Le constructeur à modèles reçoit la ligne et
+                             met sa bibliothèque à jour lui-même ; sans
+                             lui, on recharge. */
+                          if (onSaved) onSaved(result.data)
+                          else router.refresh()
                         } else {
                           toast.error(result.error)
                         }

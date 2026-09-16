@@ -23,6 +23,7 @@ const EXPECTED_TABLES = [
   'faq_items',
   'settings',
   'contact_messages',
+  'saved_sections',
 ] as const
 
 type Check = { label: string; ok: boolean; detail: string; fix?: string }
@@ -40,7 +41,7 @@ async function main() {
   const optional = [
     ['BLOB_READ_WRITE_TOKEN', 'upload d’images depuis le CMS'],
     ['RESEND_API_KEY', 'notification e-mail du formulaire de contact'],
-    ['NEXT_PUBLIC_SITE_URL', 'URL absolues du SEO (défaut : https://amaswi.com)'],
+    ['NEXT_PUBLIC_SITE_URL', 'URL absolues du SEO (défaut : https://anasawi.com)'],
   ] as const
 
   for (const key of required) {
@@ -103,7 +104,7 @@ async function main() {
     missing.length === 0
       ? `${EXPECTED_TABLES.length} tables présentes`
       : `manquantes : ${missing.join(', ')}`,
-    'npm run db:push',
+    'npm run db:migrate',
   )
 
   if (missing.length > 0) {

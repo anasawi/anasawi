@@ -72,6 +72,11 @@ export function toRoman(value: number): string {
 /**
  * Index de section en serif italique, posé en haut à droite de la section.
  * `index` vient de `ctx.index` (position de la section dans la page).
+ *
+ * Position unique, partout : 28px du haut de la SECTION, une gouttière du
+ * bord droit (`section-index`, globals.css). La racine du template doit
+ * être `relative` ; SectionsView fournit `--section-index-top` pour
+ * compenser le padding du wrapper — aucun template n'a à passer de `top-…`.
  */
 export function SectionIndex({
   index,
@@ -89,7 +94,9 @@ export function SectionIndex({
     <span
       aria-hidden="true"
       className={cn(
-        'pointer-events-none absolute right-[var(--spacing-gutter)] top-7 font-serif text-[13px] italic',
+        /* Masqué sous `md` : à 360px il chevaucherait le label supérieur
+           ou la capsule de navigation. */
+        'section-index pointer-events-none hidden font-serif text-[13px] italic md:inline',
         light ? 'text-ivory/40' : 'text-stone',
         className,
       )}

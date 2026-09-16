@@ -27,11 +27,13 @@ function Cta({ data }: BlockProps<CtaPayload>) {
 
   return (
     <div className="container-editorial">
+      {/* Bandeau : padding interne = section-tight, gouttière interne
+          24/32/48px — la section elle-même est en `section-tight`. */}
       <div
         className={
           dark
-            ? 'rounded-[28px] bg-night px-8 py-24 text-center text-ivory md:px-20 md:py-28'
-            : 'rounded-[28px] bg-blue-mist px-8 py-24 text-center text-blue-ink md:px-20 md:py-28'
+            ? 'rounded-[28px] bg-night px-6 py-[var(--spacing-section-tight)] text-center text-ivory sm:px-8 md:px-12'
+            : 'rounded-[28px] bg-blue-mist px-6 py-[var(--spacing-section-tight)] text-center text-blue-ink sm:px-8 md:px-12'
         }
       >
         <div className="mx-auto max-w-[38rem]">
@@ -46,8 +48,8 @@ function Cta({ data }: BlockProps<CtaPayload>) {
             <h2
               className={
                 dark
-                  ? 'mt-6 font-serif text-[clamp(1.9rem,3.6vw,3.2rem)] font-light leading-[1.14] [&_em]:text-blue'
-                  : 'mt-6 font-serif text-[clamp(1.9rem,3.6vw,3.2rem)] font-light leading-[1.14] [&_em]:text-blue-deep'
+                  ? 'mt-5 font-serif text-[clamp(1.9rem,3.6vw,3.2rem)] font-light leading-[1.14] [&_em]:text-blue'
+                  : 'mt-5 font-serif text-[clamp(1.9rem,3.6vw,3.2rem)] font-light leading-[1.14] [&_em]:text-blue-deep'
               }
             >
               <MaskLines delay={0.1}>
@@ -76,7 +78,7 @@ function Cta({ data }: BlockProps<CtaPayload>) {
 
           {data.label && (
             <Reveal delay={0.28}>
-              <div className="mt-10 flex justify-center">
+              <div className="mt-8 flex justify-center">
                 <ActionLink
                   href={data.href}
                   variant="primary"
@@ -119,8 +121,8 @@ export const ctaBlock: BlockDefinition<typeof ctaSchema> = {
     ]),
   ],
   defaults: {
-    lines: [],
-    text: '',
+    lines: [{ text: 'Retrouver' }, { text: 'son *souffle*.' }],
+    text: 'Le premier pas est souvent le plus difficile. Un appel ou un message suffit : je vous réponds sous 48 h et nous convenons ensemble d’un premier rendez-vous.',
     label: 'Prendre rendez-vous',
     href: '#contact',
     tone: 'mist',

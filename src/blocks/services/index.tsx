@@ -29,13 +29,9 @@ function Services({ data, ctx }: BlockProps<ServicesPayload>) {
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex
-        index={ctx.index}
-        label="accompagnements"
-        className="-top-14"
-      />
+      <SectionIndex index={ctx.index} label="accompagnements" />
 
-      <div className="grid grid-cols-1 gap-10 lg:grid-cols-12">
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
         <div className="lg:col-span-4">
           {data.eyebrow && (
             <Reveal>
@@ -43,7 +39,7 @@ function Services({ data, ctx }: BlockProps<ServicesPayload>) {
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -66,8 +62,8 @@ function Services({ data, ctx }: BlockProps<ServicesPayload>) {
         <div
           className={
             data.layout === 'grid'
-              ? 'mt-20 grid grid-cols-1 gap-x-12 gap-y-20 sm:grid-cols-2 lg:grid-cols-3'
-              : 'mt-20 border-t border-line-strong'
+              ? 'mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-12 md:gap-5 lg:grid-cols-3'
+              : 'mt-10 border-t border-line-strong md:mt-12'
           }
         >
           {items.map((service, i) => {
@@ -81,7 +77,7 @@ function Services({ data, ctx }: BlockProps<ServicesPayload>) {
                     <BlockImage
                       media={image}
                       sizes="(max-width: 640px) 88vw, (max-width: 1024px) 44vw, 30vw"
-                      className="mb-7 aspect-[4/3.4] w-full rounded-[28px]"
+                      className="mb-6 aspect-[4/3.4] w-full rounded-[28px]"
                       placeholder={i % 3}
                     />
                     <span className="font-serif text-[0.95rem] font-light italic text-blue-deep">
@@ -101,7 +97,7 @@ function Services({ data, ctx }: BlockProps<ServicesPayload>) {
             /* Disposition en lignes : filets fins, pas de cartes. */
             return (
               <Reveal key={service.id} delay={Math.min(i * 0.06, 0.3)}>
-                <article className="group grid grid-cols-1 items-start gap-6 border-b border-line py-12 lg:grid-cols-12 lg:gap-12">
+                <article className="group grid grid-cols-1 items-start gap-4 border-b border-line py-7 md:gap-5 md:py-9 lg:grid-cols-12 lg:gap-12">
                   <span className="font-serif text-[0.95rem] font-light italic text-blue-deep lg:col-span-1">
                     {number}
                   </span>
@@ -161,8 +157,9 @@ export const servicesBlock: BlockDefinition<typeof servicesSchema> = {
   ],
   defaults: {
     eyebrow: 'Accompagnements',
-    title: '',
-    intro: '',
+    title: 'Des chemins *à votre* mesure.',
+    intro:
+      'Chaque parcours est différent. Selon ce que vous traversez, nous choisissons ensemble la forme d’accompagnement la plus juste : individuelle, en couple ou en famille, en séances de 50 minutes au cabinet. La première rencontre sert à faire connaissance et à poser le cadre, sans engagement.',
     layout: 'rows',
   },
   Component: Services,

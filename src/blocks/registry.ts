@@ -78,6 +78,7 @@ import {
 import { ctaImageBlock, ctaImmersifBlock } from './templates/cta'
 import {
   imagePleineBlock,
+  lieuArchesBlock,
   manifesteBlock,
   texteCentreBlock,
 } from './templates/editorial'
@@ -170,6 +171,7 @@ export const blockRegistry = {
   imageText: imageTextBlock,
   bandeauRespirer: bandeauRespirerBlock,
   imagePleine: imagePleineBlock,
+  lieuArches: lieuArchesBlock,
   galerieArches: galerieArchesBlock,
   gallery: galleryBlock,
   imageLegende: imageLegendeBlock,
@@ -241,7 +243,7 @@ export type BlockOption = {
   inline: boolean
 }
 
-/** Liste destinée à la palette du constructeur. */
+/** Fiche de chaque bloc — base de la bibliothèque de templates. */
 export const blockOptions: BlockOption[] = blockTypes.map((type) => {
   const block = blockRegistry[type]
   return {
@@ -255,14 +257,6 @@ export const blockOptions: BlockOption[] = blockTypes.map((type) => {
     inline: block.inline ?? false,
   }
 })
-
-/** Palette groupée par famille, dans l'ordre d'affichage voulu. */
-export const blockGroups = (
-  ['Contenu', 'Mise en page', 'Sections'] as const
-).map((group) => ({
-  group,
-  options: blockOptions.filter((option) => option.group === group),
-}))
 
 /* ════════════════════════════════════════════════════════════════════
    Bibliothèque de templates de sections.
@@ -338,6 +332,7 @@ const CATEGORY_OF: Partial<Record<BlockType, TemplateCategory>> = {
   imageText: 'Contenu',
   bandeauRespirer: 'Contenu',
   imagePleine: 'Contenu',
+  lieuArches: 'Contenu',
   galerieArches: 'Contenu',
   gallery: 'Contenu',
   imageLegende: 'Contenu',
@@ -365,7 +360,3 @@ export const templateLibrary = TEMPLATE_CATEGORIES.map((category) => ({
     .filter((option) => CATEGORY_OF[option.type] === category)
     .map((option): TemplateOption => ({ ...option, category })),
 })).filter((group) => group.options.length > 0)
-
-export function isTemplateType(type: string): boolean {
-  return isBlockType(type) && CATEGORY_OF[type] !== undefined
-}

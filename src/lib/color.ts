@@ -8,10 +8,6 @@
 
 const HEX = /^#([0-9a-f]{3}|[0-9a-f]{6})$/i
 
-export function isHexColor(value: string): boolean {
-  return HEX.test(value.trim())
-}
-
 /** Normalise `#abc` en `#aabbcc`, minuscules. */
 export function normalizeHex(value: string): string {
   const raw = value.trim().toLowerCase()
@@ -62,7 +58,7 @@ export function contrastRatio(a: string, b: string): number {
 }
 
 /** Mélange linéaire de deux couleurs. `amount` = part de `from`. */
-function mix(from: string, to: string, amount: number): string {
+export function mix(from: string, to: string, amount: number): string {
   const a = hexToRgb(from)
   const b = hexToRgb(to)
   return toHex({
@@ -137,65 +133,14 @@ export function sectionTheme(backgroundInput: string): SectionTheme {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   Palette proposée dans le CMS
+   Nuancier proposé dans le CMS
 
-   Aucune teinte inventée : ce sont les quatre familles de la charte —
-   ivoire, bleu, gris chaud, anthracite — déclinées en valeurs plus claires
-   et plus soutenues. Un nuancier générique donnerait plus de choix, mais
-   permettrait de composer une page qui n'appartient plus au site.
-
-   Les valeurs marquées « charte » sont exactement les tokens de
-   `globals.css` ; les autres sont des paliers de la même teinte.
+   Le nuancier lui-même est dérivé de la palette enregistrée dans les
+   réglages (`paletteSwatchGroups`, `lib/palette.ts`) ; seule la forme
+   d'un groupe est définie ici.
    ══════════════════════════════════════════════════════════════════════ */
 
 export type SwatchGroup = {
   label: string
   swatches: readonly { hex: string; name: string }[]
 }
-
-export const SECTION_SWATCH_GROUPS: readonly SwatchGroup[] = [
-  {
-    label: 'Ivoire',
-    swatches: [
-      { hex: '#fbf8f2', name: 'Ivoire — charte' },
-      { hex: '#f8f4ea', name: 'Crème — charte' },
-      { hex: '#f4eee3', name: 'Sable — charte' },
-      { hex: '#eae2d2', name: 'Ivoire profond' },
-    ],
-  },
-  {
-    label: 'Bleu',
-    swatches: [
-      { hex: '#eaf1f4', name: 'Bleu brume — charte' },
-      { hex: '#d9e6ec', name: 'Bleu brume soutenu' },
-      { hex: '#b9d0dc', name: 'Bleu clair' },
-      { hex: '#7ba3b6', name: 'Bleu accent — charte' },
-      { hex: '#46728a', name: 'Bleu profond — charte' },
-      { hex: '#2f5a70', name: 'Bleu encre — charte' },
-    ],
-  },
-  {
-    label: 'Gris chaud',
-    swatches: [
-      { hex: '#f1efec', name: 'Gris très clair' },
-      { hex: '#e2ddd6', name: 'Gris clair' },
-      { hex: '#c2bcb4', name: 'Gris moyen' },
-      { hex: '#98988e', name: 'Gris chaud — charte' },
-    ],
-  },
-  {
-    label: 'Encre',
-    swatches: [
-      { hex: '#565c56', name: 'Encre douce — charte' },
-      { hex: '#2e424f', name: 'Nuit — charte' },
-      { hex: '#2b2f2c', name: 'Encre — charte' },
-    ],
-  },
-]
-
-/** Liste à plat — pour retrouver le nom d'une couleur enregistrée. */
-export const SECTION_SWATCHES = SECTION_SWATCH_GROUPS.flatMap(
-  (group) => group.swatches,
-)
-
-export const DEFAULT_SECTION_COLOR = '#fbf8f2'

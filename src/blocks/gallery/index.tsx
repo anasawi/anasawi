@@ -32,17 +32,17 @@ function Gallery({ data, ctx }: BlockProps<GalleryPayload>) {
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="en images" className="-top-14" />
+      <SectionIndex index={ctx.index} label="en images" />
 
       {(data.eyebrow || data.title) && (
-        <div className="mb-16 max-w-[34rem]">
+        <div className="mb-10 max-w-[34rem] md:mb-12">
           {data.eyebrow && (
             <Reveal>
               <Eyebrow>{data.eyebrow}</Eyebrow>
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-6 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -53,7 +53,7 @@ function Gallery({ data, ctx }: BlockProps<GalleryPayload>) {
         </div>
       )}
 
-      <div className="grid grid-cols-1 gap-x-8 gap-y-14 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:gap-5 lg:grid-cols-3">
         {(images.length > 0 ? images : [null, null, null]).map((image, i) => {
           const shape = SHAPES[i % SHAPES.length] ?? SHAPES[0]
 
@@ -67,7 +67,7 @@ function Gallery({ data, ctx }: BlockProps<GalleryPayload>) {
                   placeholder={i % 3}
                 />
                 {image?.caption && (
-                  <figcaption className="mt-4 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                  <figcaption className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
                     {image.caption}
                   </figcaption>
                 )}
@@ -92,6 +92,10 @@ export const galleryBlock: BlockDefinition<typeof gallerySchema> = {
       help: 'La légende de chaque image vient de la bibliothèque de médias.',
     }),
   ],
-  defaults: { eyebrow: '', title: '', mediaIds: [] },
+  defaults: {
+    eyebrow: 'En images',
+    title: 'Un lieu pour *respirer*.',
+    mediaIds: [],
+  },
   Component: Gallery,
 }

@@ -15,8 +15,12 @@ export const contactSchema = z.object({
   consent: z.literal(true, {
     errorMap: () => ({ message: 'Merci d’accepter le traitement de vos données.' }),
   }),
-  /** Champ piège — toujours vide pour un humain. */
-  website: z.string().max(0).optional().or(z.literal('')),
+  /** Champ piège — toujours vide pour un humain. Volontairement sans
+      contrainte de longueur : un robot qui le remplit doit PASSER la
+      validation pour atteindre la branche « répondre 200 sans enregistrer »
+      de la route (`/api/contact`). Une erreur 400 lui apprendrait à vider
+      le champ. */
+  website: z.string().optional(),
 })
 
 export type ContactInput = z.infer<typeof contactSchema>

@@ -20,9 +20,9 @@ export type FaqPayload = z.output<typeof faqSchema>
 function Faq({ data, ctx }: BlockProps<FaqPayload>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="questions" className="-top-14" />
+      <SectionIndex index={ctx.index} label="questions" />
 
-      <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-x-24">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-24">
         <div className="lg:col-span-4">
           {data.eyebrow && (
             <Reveal>
@@ -30,7 +30,7 @@ function Faq({ data, ctx }: BlockProps<FaqPayload>) {
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 max-w-[12ch] text-[length:var(--text-h2)]">
+            <h2 className="mt-5 max-w-[12ch] text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -40,7 +40,7 @@ function Faq({ data, ctx }: BlockProps<FaqPayload>) {
           )}
           {data.intro && (
             <Reveal delay={0.14}>
-              <Prose text={data.intro} className="mt-7 max-w-[38ch]" />
+              <Prose text={data.intro} className="mt-6 max-w-[38ch]" />
             </Reveal>
           )}
         </div>
@@ -68,6 +68,11 @@ export const faqBlock: BlockDefinition<typeof faqSchema> = {
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Introduction'),
   ],
-  defaults: { eyebrow: 'Questions fréquentes', title: '', intro: '' },
+  defaults: {
+    eyebrow: 'Questions fréquentes',
+    title: 'Vos questions, *avant* de venir.',
+    intro:
+      'Tarifs, durée, remboursement, première séance : voici les réponses aux questions qui reviennent le plus. Si la vôtre n’y figure pas, écrivez-moi, je vous réponds sous 48 h.',
+  },
   Component: Faq,
 }

@@ -42,7 +42,9 @@ function CtaImage({ data, ctx }: BlockProps<z.output<typeof ctaImageSchema>>) {
           className="aspect-[4/3] w-full lg:aspect-auto lg:h-full"
         />
 
-        <div className="flex flex-col justify-center bg-blue-mist px-8 py-16 md:px-14 md:py-20">
+        {/* Panneau : padding interne = section-tight (même échelle que
+            les respirations courtes), gouttière interne 24/32/48px. */}
+        <div className="flex flex-col justify-center bg-blue-mist px-6 py-[var(--spacing-section-tight)] sm:px-8 md:px-12">
           {data.eyebrow && (
             <Reveal delay={0.1}>
               <p className="flex items-baseline gap-2.5 font-sans text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-ink/80">
@@ -53,7 +55,7 @@ function CtaImage({ data, ctx }: BlockProps<z.output<typeof ctaImageSchema>>) {
           )}
 
           {data.title && (
-            <h2 className="mt-6 max-w-[18ch] font-serif text-[clamp(1.7rem,2.8vw,2.6rem)] font-light leading-[1.15] text-blue-ink">
+            <h2 className="mt-5 max-w-[18ch] font-serif text-[clamp(1.7rem,2.8vw,2.6rem)] font-light leading-[1.15] text-blue-ink">
               <MaskLines delay={0.16}>
                 <span>
                   <Emphasis text={data.title} />
@@ -72,7 +74,7 @@ function CtaImage({ data, ctx }: BlockProps<z.output<typeof ctaImageSchema>>) {
 
           {data.label && (
             <Reveal delay={0.3}>
-              <div className="mt-10">
+              <div className="mt-8">
                 <ActionLink href={data.href} variant="primary">
                   {data.label}
                 </ActionLink>
@@ -131,7 +133,7 @@ function CtaImmersif({
 
   return (
     <div className="container-editorial">
-      <div className="relative flex min-h-[58svh] items-center justify-center overflow-hidden rounded-t-[min(240px,26vw)] rounded-b-[28px] px-8 py-24 md:rounded-t-[min(240px,19vw)]">
+      <div className="relative flex min-h-[58svh] items-center justify-center overflow-hidden rounded-t-[min(240px,26vw)] rounded-b-[28px] px-6 py-[var(--spacing-section-tight)] sm:px-8 md:rounded-t-[min(240px,19vw)]">
         <BlockImage
           media={image}
           instant
@@ -149,7 +151,7 @@ function CtaImmersif({
           </Reveal>
 
           {lines.length > 0 && (
-            <h2 className="mt-6 font-serif text-[clamp(1.9rem,3.8vw,3.6rem)] font-light leading-[1.15] text-ivory">
+            <h2 className="mt-5 font-serif text-[clamp(1.9rem,3.8vw,3.6rem)] font-light leading-[1.15] text-ivory">
               <MaskLines delay={0.12}>
                 {lines.map((line, i) => (
                   <span key={i}>
@@ -162,11 +164,12 @@ function CtaImmersif({
 
           {data.label && (
             <Reveal delay={0.3}>
-              <div className="mt-10 flex justify-center">
+              <div className="mt-8 flex justify-center">
                 <ActionLink
                   href={data.href}
                   variant="primary"
-                  className="bg-ivory text-night hover:bg-cream"
+                  className="bg-ivory text-night"
+                  ink="bg-blue-mist"
                 >
                   {data.label}
                 </ActionLink>

@@ -1,5 +1,6 @@
 import { and, asc, desc, eq, inArray } from 'drizzle-orm'
 import { unstable_cache } from 'next/cache'
+import { cache } from 'react'
 
 import { sectionsFromSnapshot } from '@/lib/publish'
 import { db } from '../db'
@@ -68,9 +69,21 @@ function cached<A extends unknown[], R>(
   }) as (...args: A) => Promise<R>
 }
 
+/*
+ * Déduplication par requête (`cache()` de React), EN PLUS de `cached()`.
+ *
+ * Une même requête appelle `getSettings()` depuis le layout, la page,
+ * `generateMetadata` et le moteur de rendu : en production `unstable_cache`
+ * absorbe ces appels, mais en développement `cached()` renvoie la fonction
+ * nue — autant d'allers-retours Neon. `cache()` mémorise le résultat pour
+ * la durée d'un rendu serveur, puis l'oublie : aucune incidence sur
+ * l'invalidation par tags. Les fonctions concernées sont sans argument (la
+ * clé de `cache()` est l'identité des arguments — ici toujours vide).
+ */
+
 const FALLBACK_SETTINGS: Settings = {
   id: 'singleton',
-  siteName: 'AMASWI',
+  siteName: 'ANASAWI',
   practitionerName: '',
   practitionerTitle: null,
   tagline: null,
@@ -99,32 +112,36 @@ const FALLBACK_SETTINGS: Settings = {
    Réglages
    ════════════════════════════════════════════════════════════════════ */
 
-export const getSettings = cached(
-  async (): Promise<Settings> => {
-    const [row] = await db.select().from(settings).limit(1)
-    return row ?? FALLBACK_SETTINGS
-  },
-  ['settings'],
-  [tags.settings],
+export const getSettings = cache(
+  cached(
+    async (): Promise<Settings> => {
+      const [row] = await db.select().from(settings).limit(1)
+      return row ?? FALLBACK_SETTINGS
+    },
+    ['settings'],
+    [tags.settings],
+  ),
 )
 
 /* ════════════════════════════════════════════════════════════════════
    Accompagnements
    ════════════════════════════════════════════════════════════════════ */
 
-export const getActiveServices = cached(
-  async (): Promise<ServiceWithMedia[]> => {
-    const rows = await db
-      .select({ service: services, media })
-      .from(services)
-      .leftJoin(media, eq(services.mediaId, media.id))
-      .where(eq(services.isActive, true))
-      .orderBy(asc(services.sortOrder), asc(services.createdAt))
+export const getActiveServices = cache(
+  cached(
+    async (): Promise<ServiceWithMedia[]> => {
+      const rows = await db
+        .select({ service: services, media })
+        .from(services)
+        .leftJoin(media, eq(services.mediaId, media.id))
+        .where(eq(services.isActive, true))
+        .orderBy(asc(services.sortOrder), asc(services.createdAt))
 
-    return rows.map((r) => ({ ...r.service, media: r.media }))
-  },
-  ['services-active'],
-  [tags.services],
+      return rows.map((r) => ({ ...r.service, media: r.media }))
+    },
+    ['services-active'],
+    [tags.services],
+  ),
 )
 
 export async function getAllServices(): Promise<ServiceWithMedia[]> {
@@ -141,15 +158,17 @@ export async function getAllServices(): Promise<ServiceWithMedia[]> {
    FAQ
    ════════════════════════════════════════════════════════════════════ */
 
-export const getActiveFaq = cached(
-  async (): Promise<FaqItem[]> =>
-    db
-      .select()
-      .from(faqItems)
-      .where(eq(faqItems.isActive, true))
-      .orderBy(asc(faqItems.sortOrder), asc(faqItems.createdAt)),
-  ['faq-active'],
-  [tags.faq],
+export const getActiveFaq = cache(
+  cached(
+    async (): Promise<FaqItem[]> =>
+      db
+        .select()
+        .from(faqItems)
+        .where(eq(faqItems.isActive, true))
+        .orderBy(asc(faqItems.sortOrder), asc(faqItems.createdAt)),
+    ['faq-active'],
+    [tags.faq],
+  ),
 )
 
 export async function getAllFaq(): Promise<FaqItem[]> {
@@ -234,10 +253,12 @@ async function loadPage(
   return { ...page, sections: pageSections, seo: seoRows[0] ?? null }
 }
 
-export const getPublishedHome = cached(
-  () => loadPage(eq(pages.isHome, true), true),
-  ['page-home'],
-  [tags.page('home'), tags.pages],
+export const getPublishedHome = cache(
+  cached(
+    () => loadPage(eq(pages.isHome, true), true),
+    ['page-home'],
+    [tags.page('home'), tags.pages],
+  ),
 )
 
 /** Lecture admin — brouillons inclus, jamais cachée. */
@@ -261,6 +282,23 @@ export function getPublishedPageBySlug(slug: string) {
   return loadPage(eq(pages.slug, slug), true)
 }
 
+/**
+ * Identité minimale d'une page par son slug — brouillons inclus, jamais
+ * cachée. Sert à la redirection « Modifier » de la barre d'administration :
+ * on n'a besoin ni des sections ni du SEO, seulement de savoir où envoyer
+ * l'admin.
+ */
+export async function getPageRefBySlug(
+  slug: string,
+): Promise<{ id: string; isHome: boolean } | null> {
+  const [row] = await db
+    .select({ id: pages.id, isHome: pages.isHome })
+    .from(pages)
+    .where(eq(pages.slug, slug))
+    .limit(1)
+  return row ?? null
+}
+
 /** Toutes les pages, pour le gestionnaire — accueil en tête. */
 export async function getAdminPages(): Promise<Page[]> {
   return db
@@ -273,9 +311,10 @@ export async function getAdminPages(): Promise<Page[]> {
 /**
  * URL à déclarer dans le sitemap.
  *
- * Le site est une single page : seule l'accueil est servie. Filtrer sur
- * `isHome` évite de déclarer à Google des URL héritées de l'ancien système
- * multi-pages, que le site renvoie désormais en 404.
+ * Toutes les pages publiées (`status = 'published'`) : l'accueil et les
+ * pages secondaires servies par `(site)/[slug]`. `isHome` est renvoyé pour
+ * que le sitemap adresse l'accueil à `/` plutôt qu'à `/<slug>` ; une page
+ * en brouillon ou dépubliée n'y figure pas.
  */
 export const getPublishedPagesForSitemap = cached(
   async () =>
@@ -299,52 +338,57 @@ export const getPublishedPagesForSitemap = cached(
  * `https://…`). À défaut, dérivation historique : les sections de
  * l'accueil marquées « visible dans la navigation ».
  */
-export const getNavigationItems = cached(
-  async (): Promise<{ label: string; anchor: string }[]> => {
-    const [row] = await db
-      .select({ navigation: settings.navigation })
-      .from(settings)
-      .limit(1)
+export const getNavigationItems = cache(
+  cached(
+    async (): Promise<{ label: string; anchor: string }[]> => {
+      const [row] = await db
+        .select({ navigation: settings.navigation })
+        .from(settings)
+        .limit(1)
 
-    if (Array.isArray(row?.navigation) && row.navigation.length > 0) {
-      return (row.navigation as { label?: unknown; href?: unknown }[])
-        .filter(
-          (item) =>
-            typeof item.label === 'string' && typeof item.href === 'string',
+      if (Array.isArray(row?.navigation) && row.navigation.length > 0) {
+        return (row.navigation as { label?: unknown; href?: unknown }[])
+          .filter(
+            (item) =>
+              typeof item.label === 'string' && typeof item.href === 'string',
+          )
+          .map((item) => ({
+            label: item.label as string,
+            anchor: item.href as string,
+          }))
+      }
+
+      const [home] = await db
+        .select({ id: pages.id })
+        .from(pages)
+        .where(and(eq(pages.isHome, true), eq(pages.status, 'published')))
+        .limit(1)
+
+      if (!home) return []
+
+      const rows = await db
+        .select({
+          navLabel: sections.navLabel,
+          anchor: sections.anchor,
+        })
+        .from(sections)
+        .where(
+          and(
+            eq(sections.pageId, home.id),
+            eq(sections.showInNav, true),
+            eq(sections.isActive, true),
+          ),
         )
-        .map((item) => ({
-          label: item.label as string,
-          anchor: item.href as string,
+        .orderBy(asc(sections.sortOrder))
+
+      return rows
+        .filter((r) => r.navLabel && r.anchor)
+        .map((r) => ({
+          label: r.navLabel as string,
+          anchor: r.anchor as string,
         }))
-    }
-
-    const [home] = await db
-      .select({ id: pages.id })
-      .from(pages)
-      .where(and(eq(pages.isHome, true), eq(pages.status, 'published')))
-      .limit(1)
-
-    if (!home) return []
-
-    const rows = await db
-      .select({
-        navLabel: sections.navLabel,
-        anchor: sections.anchor,
-      })
-      .from(sections)
-      .where(
-        and(
-          eq(sections.pageId, home.id),
-          eq(sections.showInNav, true),
-          eq(sections.isActive, true),
-        ),
-      )
-      .orderBy(asc(sections.sortOrder))
-
-    return rows
-      .filter((r) => r.navLabel && r.anchor)
-      .map((r) => ({ label: r.navLabel as string, anchor: r.anchor as string }))
-  },
-  ['navigation'],
-  [tags.pages],
+    },
+    ['navigation'],
+    [tags.pages],
+  ),
 )

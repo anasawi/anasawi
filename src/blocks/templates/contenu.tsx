@@ -7,6 +7,7 @@ import { Marquee, Reveal } from '@/components/site/anim'
 import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
+import { GalleryRail } from '@/components/site/GalleryRail'
 import { Aster, Dots, SectionIndex } from '@/components/site/ornaments'
 import { cn } from '@/lib/utils'
 
@@ -70,15 +71,15 @@ function BandeauRespirer({
   const tone = BANDEAU_TONES[data.tone]
 
   return (
-    <div className={cn('py-7', tone.wrap)}>
+    <div className={cn('py-[var(--spacing-band)]', tone.wrap)}>
       <Marquee duration={data.speed === 'lent' ? 56 : 38}>
         {words.map((word, i) => (
           <span
             key={i}
-            className="flex items-center font-serif text-[clamp(1.6rem,3vw,2.9rem)] font-light italic leading-none"
+            className="flex items-center font-serif text-[clamp(22px,3vw,46px)] font-light italic leading-none"
           >
-            <span className="px-[1.25vw]">{word}</span>
-            <Aster className={cn('text-[0.55em] not-italic', tone.aster)} />
+            <span className="px-[max(10px,1.25vw)]">{word}</span>
+            <Aster className={cn('text-[20px] not-italic', tone.aster)} />
           </span>
         ))}
       </Marquee>
@@ -113,7 +114,7 @@ export const bandeauRespirerBlock: BlockDefinition<
     ]),
   ],
   defaults: {
-    words: 'respirer, déposer, traverser, s’apaiser',
+    words: 'respirer, déposer, traverser, s’apaiser, retrouver son souffle',
     tone: 'sable',
     speed: 'normal',
   },
@@ -163,8 +164,8 @@ function GalerieArches({
     .filter((m): m is NonNullable<typeof m> => m !== null)
 
   return (
-    <div className="relative py-[calc(var(--spacing-section)*0.7)]">
-      <SectionIndex index={ctx.index} label="en images" className="top-7" />
+    <div className="relative">
+      <SectionIndex index={ctx.index} label="en images" />
 
       {data.eyebrow && (
         <Reveal className="container-editorial">
@@ -172,12 +173,12 @@ function GalerieArches({
         </Reveal>
       )}
 
-      <div className="mt-8 flex snap-x snap-mandatory items-end gap-6 overflow-x-auto px-[var(--spacing-gutter)] pb-4 [scrollbar-width:thin]">
+      <GalleryRail className="mt-10 pb-4 md:mt-12">
         {(images.length > 0 ? images : [null, null, null, null]).map(
           (image, i) => {
             const shape = RAIL[i % RAIL.length] ?? RAIL[0]
             return (
-              <figure key={image ? `${image.id}-${i}` : i} className="shrink-0 snap-start">
+              <figure key={image ? `${image.id}-${i}` : i} className="shrink-0">
                 <BlockImage
                   media={image}
                   sizes="(max-width: 640px) 74vw, (max-width: 1024px) 42vw, 30vw"
@@ -186,7 +187,7 @@ function GalerieArches({
                   delay={Math.min(i * 0.08, 0.3)}
                 />
                 {image?.caption && (
-                  <figcaption className="mt-4 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                  <figcaption className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
                     {image.caption}
                   </figcaption>
                 )}
@@ -194,7 +195,7 @@ function GalerieArches({
             )
           },
         )}
-      </div>
+      </GalleryRail>
     </div>
   )
 }
@@ -206,7 +207,7 @@ export const galerieArchesBlock: BlockDefinition<typeof galerieArchesSchema> =
       'Un rail horizontal d’arches sœurs, formats alternés, légendes en méta.',
     group: 'Sections',
     schema: galerieArchesSchema,
-    bleed: true,
+    /* Section standard : seul le rail déborde horizontalement. */
     suggestedAnchor: 'le-cabinet',
     fields: [
       field.text('eyebrow', 'Label supérieur'),
@@ -250,7 +251,7 @@ function ImageLegende({
         />
         {data.caption && (
           <Reveal delay={0.15}>
-            <figcaption className="mt-5 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+            <figcaption className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
               {data.caption}
             </figcaption>
           </Reveal>
@@ -297,9 +298,9 @@ function TexteDeuxColonnes({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="pour aller plus loin" className="-top-14" />
+      <SectionIndex index={ctx.index} label="pour aller plus loin" />
 
-      <div className="grid grid-cols-1 gap-14 lg:grid-cols-12 lg:gap-x-24">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-24">
         <div className="lg:col-span-4">
           {data.eyebrow && (
             <Reveal>
@@ -308,7 +309,7 @@ function TexteDeuxColonnes({
           )}
           {data.title && (
             <Reveal delay={0.08}>
-              <h2 className="mt-7 max-w-[14ch] text-[length:var(--text-h2)]">
+              <h2 className="mt-5 max-w-[14ch] text-[length:var(--text-h2)]">
                 <Emphasis text={data.title} />
               </h2>
             </Reveal>
@@ -380,7 +381,7 @@ function ListeAtouts({
 }: BlockProps<z.output<typeof listeAtoutsSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="ce qui compte" className="-top-14" />
+      <SectionIndex index={ctx.index} label="ce qui compte" />
 
       {(data.eyebrow || data.title) && (
         <div className="mx-auto max-w-[42rem] text-center">
@@ -391,7 +392,7 @@ function ListeAtouts({
           )}
           {data.title && (
             <Reveal delay={0.08}>
-              <h2 className="mt-7 text-[length:var(--text-h2)]">
+              <h2 className="mt-5 text-[length:var(--text-h2)]">
                 <Emphasis text={data.title} />
               </h2>
             </Reveal>
@@ -400,7 +401,7 @@ function ListeAtouts({
       )}
 
       {data.items.length > 0 && (
-        <div className="mt-16 grid grid-cols-1 gap-x-14 gap-y-12 sm:grid-cols-2">
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-12 md:gap-5">
           {data.items.map((item, i) => (
             <Reveal key={i} delay={Math.min(0.08 + i * 0.06, 0.4)}>
               <div className="flex items-start gap-5 border-t border-line pt-7">
@@ -515,7 +516,7 @@ function VideoArche({ data }: BlockProps<z.output<typeof videoArcheSchema>>) {
         </Reveal>
         {data.caption && (
           <Reveal delay={0.12}>
-            <figcaption className="mt-5 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+            <figcaption className="mt-3 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
               {data.caption}
             </figcaption>
           </Reveal>
@@ -538,7 +539,11 @@ export const videoArcheBlock: BlockDefinition<typeof videoArcheSchema> = {
     field.text('title', 'Titre (accessibilité)'),
     field.text('caption', 'Légende', { full: true }),
   ],
-  defaults: { url: '', title: '', caption: '' },
+  defaults: {
+    url: 'https://vimeo.com/76979871',
+    title: 'Le cabinet, en mouvement — quelques instants filmés',
+    caption: 'Le cabinet, en mouvement',
+  },
   Component: VideoArche,
 }
 
@@ -556,7 +561,7 @@ function SeparateurAsterisque({
   data,
 }: BlockProps<z.output<typeof separateurAsterisqueSchema>>) {
   return (
-    <div className="flex justify-center py-14">
+    <div className="flex justify-center py-[var(--spacing-band)]">
       <Reveal>
         {data.variant === 'points' && <Dots />}
         {data.variant === 'asterisque' && (
@@ -608,14 +613,14 @@ function CitationSoulignee({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="parole" className="-top-14" />
+      <SectionIndex index={ctx.index} label="parole" />
 
       <figure className="mx-auto max-w-[54rem] text-center">
         <Reveal>
           <Aster className="text-[24px] text-blue-deep" />
         </Reveal>
 
-        <blockquote className="mt-7">
+        <blockquote className="mt-5">
           <Reveal delay={0.1}>
             <p className="font-serif text-[clamp(1.8rem,3.4vw,3.2rem)] font-light leading-[1.35] text-ink">
               <Underlined text={data.quote} />
@@ -625,7 +630,7 @@ function CitationSoulignee({
 
         {data.attribution && (
           <Reveal delay={0.22}>
-            <figcaption className="mt-9 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+            <figcaption className="mt-6 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
               {data.attribution}
             </figcaption>
           </Reveal>
@@ -651,7 +656,7 @@ export const citationSouligneeBlock: BlockDefinition<
   ],
   defaults: {
     quote: 'Le courage, c’est de demander *de l’aide*.',
-    attribution: 'Une patiente, accompagnée deux ans',
+    attribution: 'Anne Winzenried — Carnet du cabinet',
   },
   Component: CitationSoulignee,
 }

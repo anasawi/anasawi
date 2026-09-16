@@ -3,7 +3,7 @@
 @custom-variant dark (&:is(.dark *));
 
 /* ══════════════════════════════════════════════════════════════════════
-   AMASWI — Design tokens (ADN « sanctuaire », planche V8)
+   ANASAWI — Design tokens (ADN « sanctuaire », planche V8)
    Ivoire sable, bleu brume, encre végétale. Arches, serif italique,
    astérisque ✳. Filets fins, ombres rares et très douces.
    ══════════════════════════════════════════════════════════════════════ */
@@ -53,11 +53,25 @@
   --text-h3: clamp(1.2rem, 1.6vw, 1.55rem);
   --text-lead: clamp(1.05rem, 1.2vw, 1.22rem);
 
-  /* ── Respiration — valeurs calibrées de la maquette ──────────────
-     `section-lg` sert aux respirations (citation, CTA) qui ont besoin
-     de plus de vide autour qu'un bloc de contenu. */
+  /* ── Respiration — UN SEUL système d'espacement ───────────────────
+     Toute section de contenu standard reçoit `--spacing-section` en haut
+     ET en bas ; c'est le wrapper `<section>` de SectionsView qui le pose
+     (jamais le template). Seules exceptions, toutes dérivées du même
+     token pour suivre la surcharge d'identité (`identityCss`) :
+       · `section-tight` — respirations courtes (médaillon, appel doux,
+         CTA de fin de page, pied de page) ;
+       · `band`          — bandeaux qui défilent et séparateurs ;
+       · `hero-top`      — padding haut du hero en première position,
+         qui doit laisser passer la capsule de navigation (7rem mini).
+     Le contact K (grande arche) compose : marge externe ½ section,
+     padding interne 1 section en haut, ½ section en bas. */
   --spacing-section: clamp(100px, 17vh, 190px);
-  --spacing-section-lg: clamp(120px, 21vh, 230px);
+  --spacing-section-tight: calc(var(--spacing-section) * 0.6);
+  --spacing-band: clamp(24px, 3vh, 32px);
+  --spacing-hero-top: max(calc(var(--spacing-section) * 0.7), 7rem);
+
+  /* Gouttière horizontale — la seule, partout (container-editorial,
+     rangées pleine largeur, bandeaux, header/footer). */
   --spacing-gutter: clamp(24px, 6vw, 100px);
 
   /* ── Arche signature — pilule en haut, presque droite en bas ────── */
@@ -177,6 +191,11 @@
     color: var(--color-ink);
     font-family: var(--font-sans);
     font-size: 15px;
+    /* Filet de sécurité : titres décalés du hero, bandeaux, chiffres
+       débordants — rien ne doit ouvrir un défilement horizontal.
+       `clip` (et non `hidden`) ne crée pas de conteneur de défilement :
+       les `position: sticky` et le défilement inertiel restent intacts. */
+    overflow-x: clip;
     font-synthesis-weight: none;
     text-rendering: optimizeLegibility;
     -webkit-font-smoothing: antialiased;
@@ -210,10 +229,10 @@
   /* Curseur personnalisé — la classe est posée par <CustomCursor> quand
      le pointeur est fin et que le mouvement n'est pas réduit. */
   @media (hover: hover) and (pointer: fine) {
-    html.amaswi-cursor body,
-    html.amaswi-cursor a,
-    html.amaswi-cursor button,
-    html.amaswi-cursor [data-cursor] {
+    html.anasawi-cursor body,
+    html.anasawi-cursor a,
+    html.anasawi-cursor button,
+    html.anasawi-cursor [data-cursor] {
       cursor: none;
     }
   }
@@ -224,11 +243,23 @@
    Utilitaires de composition
    ══════════════════════════════════════════════════════════════════════ */
 
+/* La grille de la maquette : pleine largeur, `padding: 0 var(--gutter)`.
+   Aucun max-width — le contrat V8 laisse le contenu suivre l'écran.
+   C'est LA classe de largeur : aucun template ne pose de `px-…` à lui. */
 @utility container-editorial {
   width: 100%;
-  max-width: 1560px;
-  margin-inline: auto;
   padding-inline: var(--spacing-gutter);
+}
+
+/* Index de section (« iv — approche ») : toujours à 28px du haut de la
+   SECTION et à une gouttière du bord droit. Les templates standard sont
+   rendus DANS le padding du wrapper : SectionsView leur passe
+   `--section-index-top` pour remonter l'index du padding. Les blocs
+   `bleed` (qui portent eux-mêmes leur padding) gardent le défaut. */
+@utility section-index {
+  position: absolute;
+  right: var(--spacing-gutter);
+  top: var(--section-index-top, 1.75rem);
 }
 
 @utility label-eyebrow {
@@ -256,6 +287,27 @@
   }
 }
 
+/* Inversion — pour tout texte qui chevauche une image ou un aplat.
+   `difference` renvoie |fond − source| : en blanc, le texte ressort donc
+   presque noir sur l'ivoire et presque blanc sur une photo sombre. Il
+   reste lisible partout, sans halo ni ombre portée, et le passage d'un
+   fond à l'autre se fait au pixel près. */
+@utility text-invert {
+  color: #fff;
+  mix-blend-mode: difference;
+}
+
+/* Rail sans barre de défilement — le mouvement vient du scroll de la page,
+   la barre native n'aurait rien à piloter et casserait la composition. */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
 /* Masque de révélation par ligne — utilisé par MaskLines / SplitChars */
 @utility line-mask {
   display: block;
@@ -271,13 +323,13 @@
    via le bloc global ci-dessous.
    ══════════════════════════════════════════════════════════════════════ */
 
-@keyframes amaswi-spin {
+@keyframes anasawi-spin {
   to {
     transform: rotate(360deg);
   }
 }
 
-@keyframes amaswi-marquee {
+@keyframes anasawi-marquee {
   from {
     transform: translateX(0);
   }
@@ -286,7 +338,7 @@
   }
 }
 
-@keyframes amaswi-breathe {
+@keyframes anasawi-breathe {
   0%,
   100% {
     transform: scale(1);
@@ -298,16 +350,16 @@
   }
 }
 
-.amaswi-spin {
-  animation: amaswi-spin 26s linear infinite;
+.anasawi-spin {
+  animation: anasawi-spin 26s linear infinite;
 }
 
-.amaswi-marquee {
-  animation: amaswi-marquee 38s linear infinite;
+.anasawi-marquee {
+  animation: anasawi-marquee 38s linear infinite;
 }
 
-.amaswi-breathe {
-  animation: amaswi-breathe 9s ease-in-out infinite;
+.anasawi-breathe {
+  animation: anasawi-breathe 9s ease-in-out infinite;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

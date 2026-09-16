@@ -1,6 +1,6 @@
-# AMASWI
+# ANASAWI
 
-Site vitrine et CMS d'**Anne Winzeried**, thérapeute à Cesson-Sévigné.
+Site vitrine et CMS d'**Anne Winzenried**, thérapeute à Cesson-Sévigné.
 
 Next.js 15 · TypeScript · Tailwind v4 · Drizzle · Neon PostgreSQL · Auth.js v5 · Vercel Blob
 
@@ -36,12 +36,12 @@ Renseigner `.env.local` :
 | `AUTH_SECRET` | `openssl rand -base64 32` |
 | `BLOB_READ_WRITE_TOKEN` | Vercel → Storage → Blob |
 | `RESEND_API_KEY` | [resend.com](https://resend.com) — optionnel |
-| `NEXT_PUBLIC_SITE_URL` | `https://amaswi.com` |
+| `NEXT_PUBLIC_SITE_URL` | `https://anasawi.com` |
 
 Puis :
 
 ```bash
-npm run db:setup      # génère le SQL depuis le schéma, puis l'applique
+npm run db:setup      # applique les migrations versionnées dans drizzle/
 npm run db:seed       # structure du site + coordonnées réelles
 npm run admin:create  # compte administrateur (mot de passe saisi à la main)
 npm run doctor        # vérifie que tout est en place
@@ -68,12 +68,20 @@ npm run dev
 > doute, écrire la migration à la main dans `drizzle/` et l'ajouter à
 > `drizzle/meta/_journal.json` (voir `0001_section_background_color.sql`).
 >
-> ⚠️ `0001` a été écrite à la main, sans son `drizzle/meta/0001_snapshot.json`.
+> ⚠️ Les migrations `0001` à `0006` ont été écrites à la main, sans leur
+> `drizzle/meta/000N_snapshot.json` (seul `0000_snapshot.json` existe).
 > Sans conséquence pour `db:migrate` ni pour le build, mais le prochain
 > `db:generate` diffèrera contre le snapshot `0000` et proposera de recréer
-> `background_color`. Le jour où ça arrive : supprimer le fichier généré et
-> écrire la migration à la main, ou resynchroniser une bonne fois avec
-> `npx drizzle-kit push` (interactif, à lancer seul).
+> toutes les colonnes ajoutées depuis (`background_color`, `parent_id`,
+> `placement`, `styles`, `settings`, `published_snapshot`, la table
+> `saved_sections`…). Le jour où ça arrive : supprimer le fichier généré et
+> écrire la migration à la main, ou resynchroniser une bonne fois (snapshots
+> réécrits, ou nouvelle baseline) — sur une base de préproduction d'abord.
+>
+> ⚠️ La colonne `pages.puck_data` (ajoutée par `0005_puck_editor.sql`) est
+> **orpheline** : elle n'apparaît pas dans `schema.ts` et n'est lue par aucun
+> code. Elle reste en base tant qu'une migration `DROP COLUMN` explicite n'a
+> pas été écrite ; `db:generate` la signalera comme colonne à supprimer.
 
 Le site tourne sur `localhost:3000`, l'administration sur `/admin`.
 
@@ -163,7 +171,7 @@ Puis l'ajouter au registre. Le formulaire d'édition est généré à partir de 
 
 - `generateMetadata` par page, lue depuis `seo_meta` avec repli sur les Réglages
 - `sitemap.xml` et `robots.txt` générés depuis la base — une page publiée y apparaît au prochain revalidate, sans redéploiement
-- Graphe Schema.org unique : `Person` (Anne Winzeried), `HealthAndBeautyBusiness` (AMASWI), `WebSite`, `WebPage`, `FAQPage`
+- Graphe Schema.org unique : `Person` (Anne Winzenried), `HealthAndBeautyBusiness` (ANASAWI), `WebSite`, `WebPage`, `FAQPage`
 - `/admin/seo` : title et description avec compteurs, slug, canonical, image OG, index/follow, aperçu du snippet Google
 - `/admin`, `/login` et `/api` en `noindex`
 
@@ -178,7 +186,7 @@ Le tableau de bord signale les réglages manquants qui dégradent le balisage �
 3. Créer un store Blob depuis l'onglet Storage — le token s'injecte automatiquement
 4. `npm run db:setup` puis `npm run db:seed` contre la base de production
 5. `npm run admin:create` pour le compte d'Anne
-6. Pointer `amaswi.com` sur le projet Vercel
+6. Pointer `anasawi.com` sur le projet Vercel
 
 Le cache est invalidé par tag à chaque enregistrement dans le CMS : la modification est visible immédiatement, sans rebuild.
 
@@ -191,13 +199,17 @@ Le cache est invalidé par tag à chaque enregistrement dans le CMS : la modific
 | `npm run dev` | développement |
 | `npm run doctor` | diagnostic : env, connexion, tables, contenu, admin |
 | `npm run build` | build de production |
-| `npm run typecheck` | `tsc --noEmit` |
-| `npm run db:setup` | génère puis applique les migrations |
-| `npm run db:generate` | génère le SQL depuis le schéma (hors ligne) |
+| `npm run lint` | ESLint (flat config `eslint.config.mjs`, règles `next/core-web-vitals` + `next/typescript`) |
+| `npm run typecheck` | `tsc --noEmit` — inclut aussi `next.config.ts` et `drizzle.config.ts` |
+| `npm run db:setup` | applique les migrations (alias de `db:migrate`) |
+| `npm run db:generate` | génère le SQL depuis le schéma (hors ligne, interactif — voir l'avertissement plus haut) |
 | `npm run db:migrate` | applique les migrations (driver HTTP) |
 | `npm run db:studio` | explorateur de base Drizzle |
-| `npm run db:seed` | amorce la base |
+| `npm run db:seed` | amorce la base (structure + coordonnées) |
+| `npm run db:seed-site` | remplit tout le site (accueil, pages secondaires, médias Unsplash, réglages, accompagnements, FAQ) — remplace les sections existantes, ne publie rien |
+| `npm run db:seed-home` | ancienne amorce de l'accueil seul, remplacée par `db:seed-site` (conservée pour référence) |
 | `npm run db:seed-images` | images de substitution (Picsum, noir et blanc) |
+| `npm run db:rename-brand` | remplace l'ancien nom de marque dans les contenus en base |
 | `npm run admin:create` | crée un administrateur |
 
 ---

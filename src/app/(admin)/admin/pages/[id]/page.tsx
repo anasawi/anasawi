@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
+import { z } from 'zod'
 
 import { TemplateEditor } from '@/components/admin/TemplateEditor'
+import { auth } from '@/lib/auth'
 import {
   getAdminPages,
   getAllFaq,
@@ -23,8 +25,11 @@ export default async function PageBuilderPage({
   params: Promise<{ id: string }>
 }) {
   const { id } = await params
+  /* `pages.id` est une colonne uuid : un identifiant mal formé ferait
+     échouer la requête (500) au lieu d'un 404. */
+  if (!z.string().uuid().safeParse(id).success) notFound()
 
-  const [page, media, services, faqItems, settings, saved, allPages] =
+  const [page, media, services, faqItems, settings, saved, allPages, session] =
     await Promise.all([
       getPageById(id),
       getAllMedia(),
@@ -33,14 +38,19 @@ export default async function PageBuilderPage({
       getSettings(),
       getSavedSections(),
       getAdminPages(),
+      auth(),
     ])
 
   if (!page) notFound()
 
   return (
     <TemplateEditor
+      key={page.id}
       pageId={page.id}
       pageTitle={page.title}
+      pageSlug={page.slug}
+      isHome={page.isHome}
+      userName={session?.user?.name ?? session?.user?.email ?? 'Admin'}
       publishedSnapshot={page.publishedSnapshot}
       publishedAt={page.publishedAt}
       initialSections={page.sections}

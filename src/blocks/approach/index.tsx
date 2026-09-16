@@ -31,9 +31,9 @@ function Approach({ data, ctx }: BlockProps<ApproachPayload>) {
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="approche" className="-top-14" />
+      <SectionIndex index={ctx.index} label="approche" />
 
-      <div className="grid grid-cols-1 gap-20 lg:grid-cols-12 lg:gap-x-20">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-20">
         <div className="lg:col-span-5 lg:col-start-2">
           {data.eyebrow && (
             <Reveal>
@@ -42,7 +42,7 @@ function Approach({ data, ctx }: BlockProps<ApproachPayload>) {
           )}
 
           {data.title && (
-            <h2 className="mt-7 max-w-[16ch] text-[length:var(--text-h2)]">
+            <h2 className="mt-5 max-w-[16ch] text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -56,16 +56,16 @@ function Approach({ data, ctx }: BlockProps<ApproachPayload>) {
               <Prose
                 text={data.body}
                 size="lead"
-                className="mt-8 max-w-[48ch]"
+                className="mt-6 max-w-[48ch]"
               />
             </Reveal>
           )}
 
           {data.steps.length > 0 && (
-            <ol className="mt-14">
+            <ol className="mt-10 md:mt-12">
               {data.steps.map((step, i) => (
                 <Reveal key={i} delay={0.16 + i * 0.07}>
-                  <li className="grid grid-cols-[auto_1fr] gap-7 border-t border-line py-7">
+                  <li className="grid grid-cols-[auto_1fr] gap-5 border-t border-line py-6 sm:gap-7 md:py-7">
                     <span className="font-serif text-[0.95rem] font-light italic text-blue-deep">
                       {String(i + 1).padStart(2, '0')}
                     </span>
@@ -120,10 +120,28 @@ export const approachBlock: BlockDefinition<typeof approachSchema> = {
   ],
   defaults: {
     eyebrow: 'Approche',
-    title: '',
-    body: '',
+    title: 'On ne répare pas les gens. On les *écoute*.',
+    body:
+      'Mon approche est intégrative : elle emprunte à plusieurs courants sans s’enfermer dans aucun. Ce qui compte, c’est ce qui vous aide, vous, ici et maintenant.\n\nLes séances durent 50 minutes. Elles s’organisent autour d’un fil simple : comprendre ce qui se répète, nommer ce qui n’a jamais été dit, puis expérimenter d’autres manières d’être en relation avec soi et avec les autres.',
     mediaId: null,
-    steps: [],
+    steps: [
+      {
+        label: 'Première rencontre',
+        text: 'Un premier échange pour poser ce qui vous amène, entendre votre demande et vérifier que le cadre vous convient. Rien n’est décidé à l’avance.',
+      },
+      {
+        label: 'Comprendre',
+        text: 'Nous prenons le temps d’explorer votre histoire, vos liens, ce qui se rejoue. Les prises de conscience arrivent souvent là où on ne les attendait pas.',
+      },
+      {
+        label: 'Expérimenter',
+        text: 'Entre les séances, de petits pas concrets : une parole posée, une limite tenue, un geste nouveau. Le changement se vit avant de se comprendre.',
+      },
+      {
+        label: 'Consolider',
+        text: 'Quand l’équilibre revient, nous espaçons les rendez-vous. Vous repartez avec vos propres repères, et la porte reste ouverte.',
+      },
+    ],
   },
   Component: Approach,
 }

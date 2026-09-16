@@ -39,37 +39,37 @@ type Placeholder = {
 
 const PLACEHOLDERS = {
   hero: {
-    key: 'amaswi-hero',
+    key: 'anasawi-hero',
     alt: 'Image de substitution — à remplacer par la photographie du hero',
     width: 1400,
     height: 1750,
   },
   portrait: {
-    key: 'amaswi-portrait',
-    alt: 'Image de substitution — à remplacer par le portrait d’Anne Winzeried',
+    key: 'anasawi-portrait',
+    alt: 'Image de substitution — à remplacer par le portrait d’Anne Winzenried',
     width: 1200,
     height: 1500,
   },
   approach: {
-    key: 'amaswi-approche',
+    key: 'anasawi-approche',
     alt: 'Image de substitution — à remplacer par le visuel de la section Approche',
     width: 1200,
     height: 1600,
   },
   service1: {
-    key: 'amaswi-accompagnement-1',
+    key: 'anasawi-accompagnement-1',
     alt: 'Image de substitution — premier accompagnement',
     width: 1200,
     height: 900,
   },
   service2: {
-    key: 'amaswi-accompagnement-2',
+    key: 'anasawi-accompagnement-2',
     alt: 'Image de substitution — deuxième accompagnement',
     width: 1200,
     height: 900,
   },
   service3: {
-    key: 'amaswi-accompagnement-3',
+    key: 'anasawi-accompagnement-3',
     alt: 'Image de substitution — troisième accompagnement',
     width: 1200,
     height: 900,

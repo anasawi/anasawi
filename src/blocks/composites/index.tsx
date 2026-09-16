@@ -12,7 +12,7 @@ import { Reveal } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
 
 /**
- * Composants composés — l'équivalent shadcn, traduit dans la charte AMASWI.
+ * Composants composés — l'équivalent shadcn, traduit dans la charte ANASAWI.
  *
  * Accordéon, onglets, tableau, avatar, encart, carte tarif, galerie, barre
  * de progression : tout ce qui fait un site complet, posable sur la grille
@@ -227,7 +227,7 @@ export const avatarBlock: BlockDefinition<typeof avatarSchema> = {
       { value: 'grand', label: 'Grande' },
     ]),
   ],
-  defaults: { mediaId: null, name: 'Anne Winzeried', role: 'Thérapeute', size: 'moyen' },
+  defaults: { mediaId: null, name: 'Anne Winzenried', role: 'Thérapeute', size: 'moyen' },
   Component: Avatar,
 }
 

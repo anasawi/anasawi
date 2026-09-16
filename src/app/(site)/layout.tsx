@@ -7,6 +7,7 @@ import { Preloader } from '@/components/site/Preloader'
 import { SmoothScroll } from '@/components/site/SmoothScroll'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { identityCss } from '@/lib/identity'
+import { bookingHref } from '@/lib/settings-helpers'
 import { getNavigationItems, getSettings } from '@/server/queries'
 
 /**
@@ -31,21 +32,27 @@ export default async function SiteLayout({
     getNavigationItems(),
   ])
 
-  const ctaHref = settings.bookingUrl?.trim() || '/#contact'
+  const ctaHref = bookingHref(settings)
+
+  /* Identité globale : les surcharges de variables CSS choisies dans
+     l'admin — vide si le site suit la charte telle quelle. */
+  const identityStyles = identityCss(settings.identity)
 
   return (
     <MotionProvider>
-      {/* Identité globale : les surcharges de variables CSS choisies dans
-          l'admin — vide si le site suit la charte telle quelle. */}
-      {identityCss(settings.identity) && (
-        <style
-          dangerouslySetInnerHTML={{ __html: identityCss(settings.identity) }}
-        />
+      {identityStyles && (
+        <style dangerouslySetInnerHTML={{ __html: identityStyles }} />
       )}
       <Preloader />
       <Grain />
       <CustomCursor />
-      <Header items={navItems} ctaLabel="Rendez-vous" ctaHref={ctaHref} />
+      <Header
+        items={navItems}
+        ctaLabel="Rendez-vous"
+        ctaHref={ctaHref}
+        phone={settings.contactPhone}
+        email={settings.contactEmail}
+      />
       <SmoothScroll>
         <main id="contenu">{children}</main>
         <Footer settings={settings} items={navItems} />

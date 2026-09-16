@@ -38,7 +38,7 @@ function ChiffresClefs({
 }: BlockProps<z.output<typeof chiffresClefsSchema>>) {
   return (
     <div className="container-editorial relative text-center">
-      <SectionIndex index={ctx.index} label="en chiffres" className="-top-14" />
+      <SectionIndex index={ctx.index} label="en chiffres" />
 
       {data.eyebrow && (
         <Reveal>
@@ -47,21 +47,21 @@ function ChiffresClefs({
       )}
       {data.title && (
         <Reveal delay={0.08}>
-          <h2 className="mx-auto mt-7 max-w-[26ch] text-[length:var(--text-h2)]">
+          <h2 className="mx-auto mt-5 max-w-[26ch] text-[length:var(--text-h2)]">
             <Emphasis text={data.title} />
           </h2>
         </Reveal>
       )}
 
       {data.items.length > 0 && (
-        <div className="mx-auto mt-14 flex max-w-[64rem] flex-col items-stretch justify-center gap-y-10 sm:flex-row">
+        <div className="mx-auto mt-10 flex max-w-[64rem] flex-col items-stretch justify-center gap-y-4 md:mt-12 md:gap-y-5 sm:flex-row">
           {data.items.map((item, i) => (
             <Reveal
               key={i}
               delay={Math.min(0.1 + i * 0.08, 0.4)}
-              className={`flex-1 px-6 ${
+              className={`flex-1 px-4 sm:px-6 ${
                 i > 0
-                  ? 'border-t border-line pt-10 sm:border-l sm:border-t-0 sm:pt-0'
+                  ? 'border-t border-line pt-7 sm:border-l sm:border-t-0 sm:pt-0'
                   : ''
               }`}
             >
@@ -104,11 +104,12 @@ export const chiffresClefsBlock: BlockDefinition<typeof chiffresClefsSchema> = {
   ],
   defaults: {
     eyebrow: 'En quelques chiffres',
-    title: '',
+    title: 'Une pratique qui s’est *posée* avec le temps.',
     items: [
-      { value: 15, suffix: '', label: 'ans de pratique' },
+      { value: 15, suffix: ' ans', label: 'd’expérience' },
       { value: 400, suffix: '+', label: 'personnes accompagnées' },
       { value: 48, suffix: ' h', label: 'de délai de réponse' },
+      { value: 50, suffix: ' min', label: 'par séance' },
     ],
   },
   Component: ChiffresClefs,
@@ -134,7 +135,7 @@ function Engagements({
 }: BlockProps<z.output<typeof engagementsSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="engagements" className="-top-14" />
+      <SectionIndex index={ctx.index} label="engagements" />
 
       <div className="mx-auto max-w-[44rem]">
         <div className="text-center">
@@ -145,7 +146,7 @@ function Engagements({
           )}
           {data.title && (
             <Reveal delay={0.08}>
-              <h2 className="mt-7 text-[length:var(--text-h2)]">
+              <h2 className="mt-5 text-[length:var(--text-h2)]">
                 <Emphasis text={data.title} />
               </h2>
             </Reveal>
@@ -153,10 +154,10 @@ function Engagements({
         </div>
 
         {data.items.length > 0 && (
-          <ul className="mt-14 border-t border-line-strong">
+          <ul className="mt-10 border-t border-line-strong md:mt-12">
             {data.items.map((item, i) => (
               <Reveal key={i} delay={Math.min(0.08 + i * 0.06, 0.35)}>
-                <li className="flex items-start gap-6 border-b border-line py-8">
+                <li className="flex items-start gap-4 border-b border-line py-6 sm:gap-6 md:py-7">
                   <Aster className="mt-1 shrink-0 text-[18px] text-blue-deep" />
                   <div>
                     {item.title && (
@@ -212,6 +213,14 @@ export const engagementsBlock: BlockDefinition<typeof engagementsSchema> = {
         title: 'Un cadre révisable',
         text: 'Rythme, format, objectifs : tout se décide ensemble, et se réajuste dès que nécessaire.',
       },
+      {
+        title: 'Une pratique supervisée',
+        text: 'Je fais relire ma pratique régulièrement par des pairs, dans le respect du code de déontologie. C’est une garantie pour vous, et une exigence pour moi.',
+      },
+      {
+        title: 'Aucune promesse de résultat',
+        text: 'Je ne vends ni méthode miracle ni transformation en trois séances. Je vous propose un lieu, un rythme et une présence — le reste se construit ensemble.',
+      },
     ],
   },
   Component: Engagements,
@@ -249,7 +258,7 @@ function LogosPresse({
       )}
 
       {logos.length > 0 && (
-        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-14 gap-y-8">
+        <div className="mt-10 flex flex-wrap items-center justify-center gap-x-8 gap-y-4 sm:gap-x-12 md:mt-12 md:gap-y-5">
           {logos.map((logo, i) => (
             <Reveal key={`${logo.id}-${i}`} delay={Math.min(i * 0.06, 0.3)}>
               <Image

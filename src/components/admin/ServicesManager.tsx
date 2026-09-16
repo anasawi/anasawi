@@ -164,6 +164,10 @@ export function ServicesManager({
         </div>
       ) : (
         <DndContext
+          /* Identifiant fixe : sans lui, dnd-kit génère un compteur différent
+             côté serveur et côté client (`DndDescribedBy-N`) — erreur
+             d'hydratation React à chaque ouverture de l'écran. */
+          id="services-sortable"
           sensors={sensors}
           collisionDetection={closestCenter}
           modifiers={[restrictToVerticalAxis]}

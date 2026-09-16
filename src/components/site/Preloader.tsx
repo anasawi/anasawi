@@ -4,28 +4,52 @@ import { useEffect, useState } from 'react'
 
 import { cn } from '@/lib/utils'
 
-/** Clé de session : le préchargeur ne joue qu'une fois par visite. */
-const SESSION_KEY = 'amaswi-loaded'
-
 /** Événement écouté par le Header pour déclencher son entrée. */
-export const PRELOADER_DONE_EVENT = 'amaswi:ready'
+export const PRELOADER_DONE_EVENT = 'anasawi:ready'
 
-function alreadyLoaded(): boolean {
-  try {
-    return window.sessionStorage.getItem(SESSION_KEY) === '1'
-  } catch {
-    return false
+/**
+ * Vrai si l'on arrive de l'administration.
+ *
+ * Deux chemins possibles, tous deux synchrones : l'entrée de navigation
+ * (l'URL sur laquelle CE document a été chargé — elle reste `/admin`
+ * quand on passe à l'aperçu par une transition client, puisqu'aucun
+ * nouveau document n'est créé) et, en repli, le référent (rechargement
+ * complet depuis l'admin).
+ */
+function comesFromAdmin(): boolean {
+  const isAdminPath = (href: string) => {
+    try {
+      const url = new URL(href, window.location.origin)
+      return (
+        url.origin === window.location.origin &&
+        /^\/(admin|login)(\/|$|\?)/.test(url.pathname)
+      )
+    } catch {
+      return false
+    }
   }
+
+  const [entry] = performance.getEntriesByType('navigation')
+  if (entry instanceof PerformanceNavigationTiming && isAdminPath(entry.name)) {
+    return true
+  }
+
+  return document.referrer ? isAdminPath(document.referrer) : false
 }
 
 /**
- * Rideau ivoire plein écran : le wordmark AMASWI se lève depuis un masque,
+ * Rideau ivoire plein écran : le wordmark ANASAWI se lève depuis un masque,
  * l'astérisque ✳ tourne en bas, puis tout le rideau monte (~1.1s) et se
- * retire du DOM. Une fois par session ; jamais sous prefers-reduced-motion.
+ * retire du DOM. Joue à chaque chargement complet de page — comme la
+ * maquette validée ; jamais sous prefers-reduced-motion.
+ *
+ * Exception : quand on vient de l'administration. Anne fait l'aller-retour
+ * éditeur ↔ aperçu des dizaines de fois par séance ; lui imposer les deux
+ * secondes du rideau à chaque fois transformerait une signature en attente.
+ * Le visiteur, lui, ne voit jamais l'admin : pour lui, rien ne change.
  *
  * Le rendu serveur affiche le rideau couvrant — c'est lui qui masque la
- * page pendant l'hydratation du premier chargement. Sur les chargements
- * suivants de la session, l'effet le retire au premier commit.
+ * page pendant l'hydratation du premier chargement.
  */
 export function Preloader() {
   const [phase, setPhase] = useState<'covering' | 'lifting' | 'done'>(
@@ -38,7 +62,7 @@ export function Preloader() {
       '(prefers-reduced-motion: reduce)',
     ).matches
 
-    if (reduced || alreadyLoaded()) {
+    if (reduced || comesFromAdmin()) {
       setPhase('done')
       window.dispatchEvent(new Event(PRELOADER_DONE_EVENT))
       return
@@ -49,11 +73,6 @@ export function Preloader() {
 
     const lift = window.setTimeout(() => {
       setPhase('lifting')
-      try {
-        window.sessionStorage.setItem(SESSION_KEY, '1')
-      } catch {
-        /* Stockage indisponible : le rideau rejouera, sans conséquence. */
-      }
       window.dispatchEvent(new Event(PRELOADER_DONE_EVENT))
     }, 1150)
 
@@ -71,7 +90,7 @@ export function Preloader() {
   return (
     <div
       aria-hidden="true"
-      data-amaswi-preloader=""
+      data-anasawi-preloader=""
       className={cn(
         'fixed inset-0 z-[200] grid place-items-center bg-ivory',
         'transition-transform duration-1000 ease-[cubic-bezier(.76,0,.24,1)]',
@@ -86,11 +105,11 @@ export function Preloader() {
             revealed ? 'translate-y-0' : 'translate-y-[110%]',
           )}
         >
-          AMASWI
+          ANASAWI
         </span>
       </div>
       <span className="absolute bottom-9 left-1/2 -translate-x-1/2">
-        <span className="block animate-[amaswi-spin_3.5s_linear_infinite] font-serif text-[18px] text-blue-deep">
+        <span className="block animate-[anasawi-spin_3.5s_linear_infinite] font-serif text-[18px] text-blue-deep">
           ✳
         </span>
       </span>

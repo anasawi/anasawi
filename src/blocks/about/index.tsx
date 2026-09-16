@@ -27,9 +27,9 @@ function About({ data, ctx }: BlockProps<AboutPayload>) {
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="à propos" className="-top-14" />
+      <SectionIndex index={ctx.index} label="à propos" />
 
-      <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-x-24">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-24">
         {/* Arche portrait — colonnes 1-5, légèrement remontée. */}
         <div className="lg:col-span-5 lg:-mt-16">
           <BlockImage
@@ -49,7 +49,7 @@ function About({ data, ctx }: BlockProps<AboutPayload>) {
           )}
 
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -60,7 +60,7 @@ function About({ data, ctx }: BlockProps<AboutPayload>) {
 
           {data.intro && (
             <Reveal delay={0.14}>
-              <p className="mt-7 max-w-[50ch] text-[length:var(--text-lead)] leading-[1.7] text-ink">
+              <p className="mt-6 max-w-[50ch] text-[length:var(--text-lead)] leading-[1.7] text-ink">
                 {data.intro}
               </p>
             </Reveal>
@@ -73,10 +73,10 @@ function About({ data, ctx }: BlockProps<AboutPayload>) {
           )}
 
           {data.values.length > 0 && (
-            <dl className="mt-14 grid grid-cols-1 gap-px border-t border-line-strong sm:grid-cols-2">
+            <dl className="mt-10 grid grid-cols-1 gap-px border-t border-line-strong sm:grid-cols-2 md:mt-12">
               {data.values.map((value, i) => (
                 <Reveal key={i} delay={0.24 + i * 0.06}>
-                  <div className="border-b border-line py-7 pr-10">
+                  <div className="border-b border-line py-6 sm:pr-10 md:py-7">
                     <dt className="font-serif text-[1.05rem] font-light text-ink">
                       {value.label}
                     </dt>
@@ -116,11 +116,30 @@ export const aboutBlock: BlockDefinition<typeof aboutSchema> = {
   ],
   defaults: {
     eyebrow: 'À propos',
-    title: '',
-    intro: '',
-    body: '',
+    title: 'Une écoute *sans* jugement.',
+    intro:
+      'Je suis Anne Winzenried, thérapeute installée à Cesson-Sévigné depuis quinze ans. J’accompagne des adultes, des couples et des adolescents dans les moments où la vie demande d’être regardée autrement.',
+    body:
+      'Formée à l’écoute active et à la thérapie brève, j’ai d’abord travaillé en institution avant d’ouvrir mon cabinet. Plus de quatre cents personnes m’ont fait confiance depuis, chacune avec son histoire, son rythme, ses silences.\n\nJe ne crois pas aux méthodes qui s’appliquent à tout le monde. Je crois à la relation qui se construit séance après séance, à la parole qui se délie quand elle se sent accueillie, et au temps qu’il faut pour que quelque chose bouge vraiment.\n\nCe que je vous propose, c’est un espace où vous n’avez rien à prouver. Vous arrivez comme vous êtes ; nous avançons ensemble.',
     mediaId: null,
-    values: [],
+    values: [
+      {
+        label: 'Écoute',
+        text: 'Chaque séance commence par ce que vous avez à dire, sans grille ni questionnaire. C’est votre parole qui donne la direction.',
+      },
+      {
+        label: 'Confidentialité',
+        text: 'Ce qui se dit au cabinet reste au cabinet. Le secret professionnel n’est pas une formalité, c’est la condition même de la confiance.',
+      },
+      {
+        label: 'Rythme',
+        text: 'Une séance par semaine, tous les quinze jours ou selon vos besoins : le rythme se décide ensemble et peut évoluer.',
+      },
+      {
+        label: 'Autonomie',
+        text: 'L’objectif n’est pas de vous garder, mais de vous aider à repartir avec vos propres ressources, plus solides qu’avant.',
+      },
+    ],
   },
   Component: About,
 }

@@ -1,6 +1,12 @@
 'use client'
 
-import { useMemo, useState } from 'react'
+import {
+  useEffect,
+  useLayoutEffect,
+  useMemo,
+  useRef,
+  useState,
+} from 'react'
 import { Bookmark, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
@@ -55,12 +61,23 @@ export function TemplateLibrary({
 }) {
   const [busy, setBusy] = useState<string | null>(null)
   const [query, setQuery] = useState('')
+  /** Modèle personnel dont la suppression attend confirmation. */
+  const [confirmSavedId, setConfirmSavedId] = useState<string | null>(null)
   const [active, setActive] = useState<string>(
     templateLibrary[0]?.category ?? '',
   )
 
   const searching = query.trim().length > 0
   const q = query.trim().toLowerCase()
+
+  /* Dernier modèle personnel supprimé : l'onglet « Mes sections »
+     disparaît, on revient à la première catégorie plutôt que sur une
+     grille vide. */
+  useEffect(() => {
+    if (active === MINE && saved.length === 0) {
+      setActive(templateLibrary[0]?.category ?? '')
+    }
+  }, [active, saved.length])
 
   const results = useMemo(() => {
     if (!searching) return null
@@ -78,7 +95,14 @@ export function TemplateLibrary({
 
   const currentGroup = templateLibrary.find((g) => g.category === active)
 
+  /* Miroir synchrone de `busy` : deux clics dans le même tour de boucle
+     (double-clic sur une carte) n'ajoutaient DEUX sections, le rendu
+     n'ayant pas encore désactivé les cartes. */
+  const busyRef = useRef(false)
+
   const pick = async (fn: () => Promise<void>, key: string) => {
+    if (busyRef.current) return
+    busyRef.current = true
     setBusy(key)
     try {
       await fn()
@@ -87,6 +111,7 @@ export function TemplateLibrary({
     } catch {
       toast.error('Impossible d’ajouter cette section.')
     } finally {
+      busyRef.current = false
       setBusy(null)
     }
   }
@@ -141,25 +166,57 @@ export function TemplateLibrary({
           {getBlock(model.type)?.label ?? model.type}
         </p>
       </button>
-      <button
-        type="button"
-        title="Supprimer ce modèle"
-        onClick={(e) => {
-          e.stopPropagation()
-          void onDeleteSaved(model.id).then(() =>
-            toast.success('Modèle supprimé.'),
-          )
-        }}
-        className="absolute right-2 top-2 hidden rounded-md bg-white/90 p-1.5 text-neutral-400 shadow-sm transition-colors hover:text-red-600 group-hover:block"
-      >
-        <Trash2 className="h-3.5 w-3.5" />
-      </button>
+      {confirmSavedId === model.id ? (
+        /* Confirmation en place : pas de corbeille qui efface d'un clic. */
+        <div
+          role="alertdialog"
+          aria-label="Confirmer la suppression du modèle"
+          className="absolute inset-x-2 top-2 flex items-center gap-1.5 rounded-md bg-white/95 px-2 py-1.5 text-[0.72rem] text-foreground shadow-sm"
+        >
+          <span className="mr-auto">Supprimer ce modèle ?</span>
+          <button
+            type="button"
+            autoFocus
+            onClick={() => {
+              setConfirmSavedId(null)
+              /* Le constructeur retire le modèle tout de suite et signale
+                 lui-même le résultat (succès ou erreur). */
+              void onDeleteSaved(model.id)
+            }}
+            className="rounded-[5px] bg-red-600 px-2 py-[2px] text-[0.7rem] font-medium text-white hover:bg-red-700"
+          >
+            Supprimer
+          </button>
+          <button
+            type="button"
+            onClick={() => setConfirmSavedId(null)}
+            className="rounded-[5px] border border-line-strong px-2 py-[2px] text-[0.7rem] text-ink-soft hover:text-foreground"
+          >
+            Annuler
+          </button>
+        </div>
+      ) : (
+        <button
+          type="button"
+          title="Supprimer ce modèle"
+          aria-label="Supprimer ce modèle"
+          onClick={(e) => {
+            e.stopPropagation()
+            setConfirmSavedId(model.id)
+          }}
+          className="absolute right-2 top-2 hidden rounded-md bg-white/90 p-1.5 text-neutral-400 shadow-sm transition-colors hover:text-red-600 focus-visible:block group-hover:block"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      )}
     </div>
   )
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="flex h-[82vh] max-w-5xl flex-col gap-0 overflow-hidden p-0">
+      {/* Large et haute : on choisit un modèle à ce qu'on voit, pas à son
+          nom — les aperçus ont besoin de place. */}
+      <DialogContent className="flex h-[90vh] w-[94vw] max-w-[1480px] flex-col gap-0 overflow-hidden p-0">
         <DialogHeader className="shrink-0 space-y-0 border-b border-border px-5 py-3">
           <div className="flex items-center justify-between gap-6 pr-8">
             <DialogTitle className="shrink-0 font-serif text-[1.05rem] font-normal">
@@ -168,9 +225,11 @@ export function TemplateLibrary({
             <div className="relative w-64">
               <Search className="pointer-events-none absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
               <input
+                autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
                 placeholder="Rechercher un modèle…"
+                aria-label="Rechercher un modèle"
                 className="h-8 w-full rounded-md border border-border bg-transparent pl-8 pr-3 text-[0.8rem] outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40"
               />
             </div>
@@ -234,21 +293,30 @@ export function TemplateLibrary({
           <div className="min-h-0 flex-1 overflow-y-auto p-4">
             {searching && results ? (
               results.options.length + results.mine.length === 0 ? (
-                <p className="py-16 text-center text-[0.82rem] text-muted-foreground">
-                  Aucun modèle ne correspond à « {query.trim()} ».
-                </p>
+                <div className="py-16 text-center">
+                  <p className="text-[0.82rem] text-muted-foreground">
+                    Aucun modèle ne correspond à « {query.trim()} ».
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setQuery('')}
+                    className="mt-3 rounded-lg border border-line-strong px-3 py-1.5 text-[0.78rem] text-ink-soft transition-colors hover:border-blue-deep hover:text-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50"
+                  >
+                    Effacer la recherche
+                  </button>
+                </div>
               ) : (
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                   {results.mine.map(savedCard)}
                   {results.options.map(templateCard)}
                 </div>
               )
             ) : active === MINE ? (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 {saved.map(savedCard)}
               </div>
             ) : (
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
                 {currentGroup?.options.map(templateCard)}
               </div>
             )}
@@ -261,8 +329,10 @@ export function TemplateLibrary({
 
 /* ── Preview : le vrai composant, à l'échelle ───────────────────────── */
 
+/** Largeur de rendu simulée — un écran d'ordinateur. */
 const PREVIEW_WIDTH = 1280
-const PREVIEW_SCALE = 0.175
+/** Au-delà, une section très haute (galerie, FAQ) écraserait la grille. */
+const PREVIEW_MAX_HEIGHT = 340
 
 /** Contenus d'exemple : les défauts du template, avec des images de la
     bibliothèque glissées dans chaque emplacement média vide. */
@@ -324,15 +394,53 @@ export function TemplatePreview({
     [type, data.media, payloadOverride, backgroundColor],
   )
 
+  /* L'aperçu épouse la largeur de sa carte : l'échelle se déduit de la
+     mesure, au lieu d'un facteur figé qui laissait un vide à droite et
+     rendait les modèles minuscules. La hauteur suit celle du contenu. */
+  const frameRef = useRef<HTMLDivElement>(null)
+  const innerRef = useRef<HTMLDivElement>(null)
+  const [box, setBox] = useState({ scale: 0.3, height: 180, clipped: false })
+
+  useLayoutEffect(() => {
+    const frame = frameRef.current
+    const inner = innerRef.current
+    if (!frame || !inner) return
+
+    const measure = () => {
+      const width = frame.clientWidth
+      if (width === 0) return
+      const scale = width / PREVIEW_WIDTH
+      const full = inner.scrollHeight * scale
+      setBox({
+        scale,
+        height: Math.max(120, Math.min(Math.round(full), PREVIEW_MAX_HEIGHT)),
+        clipped: full > PREVIEW_MAX_HEIGHT + 1,
+      })
+    }
+
+    measure()
+    /* Seule la carte (`frame`) est observée : sa largeur donne l'échelle.
+       `inner` est lu dans le callback (scrollHeight) mais n'est pas observé —
+       son échelle est justement modifiée par la mesure, l'observer aurait
+       pu boucler (« ResizeObserver loop completed… »). Le changement de
+       hauteur de la carte déclenche naturellement une seconde passe. */
+    const observer = new ResizeObserver(measure)
+    observer.observe(frame)
+    return () => observer.disconnect()
+  }, [section])
+
   return (
     <div
-      className="pointer-events-none h-40 overflow-hidden rounded-md border border-border bg-white"
+      ref={frameRef}
+      className="pointer-events-none relative overflow-hidden rounded-md border border-border bg-white"
+      style={{ height: box.height }}
       aria-hidden="true"
     >
       <div
+        ref={innerRef}
         style={{
           width: PREVIEW_WIDTH,
-          transform: `scale(${PREVIEW_SCALE})`,
+          transform: `scale(${box.scale})`,
           transformOrigin: 'top left',
         }}
       >
@@ -348,6 +456,12 @@ export function TemplatePreview({
           </AnimProvider>
         </MotionProvider>
       </div>
+
+      {/* Section plus haute que le cadre : un fondu dit que ça continue,
+          plutôt qu'une coupe nette qui ressemble à un défaut. */}
+      {box.clipped && (
+        <div className="absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-white to-transparent" />
+      )}
     </div>
   )
 }

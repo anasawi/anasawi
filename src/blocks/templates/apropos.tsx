@@ -3,7 +3,6 @@ import { z } from 'zod'
 import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
 import { CircleText, Counter, MaskLines, Reveal } from '@/components/site/anim'
-import { ActionLink } from '@/components/site/ActionLink'
 import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
@@ -48,9 +47,9 @@ function AproposPortrait({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="à propos" className="-top-14" />
+      <SectionIndex index={ctx.index} label="à propos" />
 
-      <div className="grid grid-cols-1 items-center gap-16 lg:grid-cols-12 lg:gap-x-12">
+      <div className="grid grid-cols-1 items-center gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-5">
         {/* Arche portrait + badge du nom. */}
         <div className="relative mx-auto w-full max-w-[24rem] lg:col-span-4 lg:col-start-2 lg:mx-0">
           <BlockImage
@@ -61,14 +60,14 @@ function AproposPortrait({
           />
           {data.signature && (
             <Reveal delay={0.3}>
-              <span className="absolute -right-4 bottom-9 z-[3] rounded-full border border-line-strong bg-ivory px-6 py-3 font-serif text-[17px] font-light italic text-blue-deep shadow-[0_14px_40px_rgba(43,47,44,0.08)] lg:-right-7">
+              <span className="absolute -right-4 bottom-9 z-[3] rounded-full border border-line-strong bg-ivory px-6 py-3 font-serif text-[17px] font-light italic text-blue-deep shadow-[0_14px_40px_rgba(43,47,44,0.08)] lg:right-[-26px]">
                 {data.signature}
               </span>
             </Reveal>
           )}
         </div>
 
-        <div className="lg:col-span-6 lg:col-start-7">
+        <div className="lg:col-span-5 lg:col-start-7">
           {data.eyebrow && (
             <Reveal>
               <Eyebrow>{data.eyebrow}</Eyebrow>
@@ -76,7 +75,7 @@ function AproposPortrait({
           )}
 
           {data.title && (
-            <h2 className="mt-6 max-w-[24ch] font-serif text-[clamp(1.75rem,2.8vw,2.9rem)] font-light leading-[1.3] text-ink">
+            <h2 className="mt-5 max-w-[24ch] font-serif text-[clamp(28px,2.8vw,46px)] font-light leading-[1.3] text-ink">
               <MaskLines delay={0.1}>
                 <span>
                   <Emphasis text={data.title} />
@@ -87,7 +86,7 @@ function AproposPortrait({
 
           {data.intro && (
             <Reveal delay={0.16}>
-              <p className="mt-7 max-w-[50ch] text-[length:var(--text-lead)] leading-[1.7] text-ink">
+              <p className="mt-6 max-w-[50ch] text-[length:var(--text-lead)] leading-[1.7] text-ink">
                 {data.intro}
               </p>
             </Reveal>
@@ -101,7 +100,7 @@ function AproposPortrait({
 
           {data.stats.length > 0 && (
             <Reveal delay={0.28}>
-              <div className="mt-11 flex flex-wrap gap-x-12 gap-y-8">
+              <div className="mt-8 flex flex-wrap gap-x-8 gap-y-4 sm:gap-x-12 md:gap-y-5">
                 {data.stats.map((stat, i) => (
                   <div key={i}>
                     <span className="font-serif text-[2.5rem] font-light italic leading-none text-blue-deep">
@@ -119,14 +118,14 @@ function AproposPortrait({
 
           {data.linkLabel && (
             <Reveal delay={0.36}>
-              <p className="mt-10">
-                <ActionLink
+              {/* Le lien méta souligné de bleu — proposition D. */}
+              <p className="mt-8">
+                <a
                   href={data.linkHref}
-                  variant="ghost"
-                  className="border-0 px-0 py-0 hover:bg-transparent"
+                  className="inline-block border-b border-blue pb-1.5 text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-deep transition-colors duration-300 hover:text-night"
                 >
-                  {data.linkLabel}
-                </ActionLink>
+                  {data.linkLabel} →
+                </a>
               </p>
             </Reveal>
           )}
@@ -154,7 +153,7 @@ export const aproposPortraitBlock: BlockDefinition<
     field.textarea('intro', 'Accroche'),
     field.richtext('body', 'Présentation'),
     field.text('signature', 'Badge sur le portrait', {
-      placeholder: 'Anne Winzeried',
+      placeholder: 'Anne Winzenried',
     }),
     field.media('mediaId', 'Portrait'),
     field.list(
@@ -174,17 +173,18 @@ export const aproposPortraitBlock: BlockDefinition<
     eyebrow: 'Qui je suis',
     title:
       'Quinze ans à accueillir ce qui vient — les silences comme les débordements — *sans jamais juger*.',
-    intro: '',
-    body: '',
-    signature: 'Anne Winzeried',
+    intro:
+      'Je suis Anne Winzenried, thérapeute à Cesson-Sévigné. Depuis quinze ans, j’accompagne des adultes, des adolescents et des parents qui traversent une période où quelque chose ne tient plus tout à fait.',
+    body: 'Formée à l’écoute thérapeutique et supervisée régulièrement, je travaille sans méthode toute faite : chaque personne arrive avec son histoire, son rythme, et c’est de là que nous partons.\n\nLe cabinet est un lieu simple, calme, où l’on peut déposer ce qui pèse — le deuil, l’anxiété, l’épuisement, une séparation — sans avoir à se justifier. On ne répare pas les gens ici. On les écoute, et quelque chose se remet en mouvement.',
+    signature: 'Anne Winzenried',
     mediaId: null,
     stats: [
-      { value: 15, suffix: '', label: 'ans de pratique' },
-      { value: 400, suffix: '+', label: 'personnes' },
-      { value: 48, suffix: ' h', label: 'de réponse' },
+      { value: 15, suffix: ' ans', label: 'de pratique' },
+      { value: 400, suffix: '+', label: 'personnes accompagnées' },
+      { value: 48, suffix: ' h', label: 'pour vous répondre' },
     ],
-    linkLabel: 'Mon parcours',
-    linkHref: '#parcours',
+    linkLabel: 'Découvrir mon parcours',
+    linkHref: '/a-propos',
   },
   Component: AproposPortrait,
 }
@@ -213,9 +213,9 @@ function AproposAsymetrique({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="à propos" className="-top-14" />
+      <SectionIndex index={ctx.index} label="à propos" />
 
-      <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-x-12">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-12">
         {/* Arche descendue — le titre la surplombe. */}
         <div className="relative order-2 lg:order-1 lg:col-span-5 lg:mt-24">
           <BlockImage
@@ -251,7 +251,7 @@ function AproposAsymetrique({
           )}
 
           {data.title && (
-            <h2 className="mt-7 max-w-[22ch] text-[length:var(--text-h2)]">
+            <h2 className="mt-5 max-w-[22ch] text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -261,7 +261,7 @@ function AproposAsymetrique({
           )}
 
           {(data.body || data.secondBody) && (
-            <div className="mt-12 grid grid-cols-1 gap-10 sm:grid-cols-2">
+            <div className="mt-10 grid grid-cols-1 gap-10 sm:grid-cols-2 md:mt-12">
               {data.body && (
                 <Reveal delay={0.16}>
                   <Prose text={data.body} />
@@ -306,9 +306,9 @@ export const aproposAsymetriqueBlock: BlockDefinition<
     title: 'Un accompagnement construit sur la *confiance*.',
     statValue: '15 ans',
     statLabel: 'd’accompagnement',
-    body: 'Chaque personne arrive avec une histoire singulière. Mon rôle est de l’accueillir telle qu’elle est, sans grille imposée, et de cheminer à ses côtés.',
+    body: 'Chaque personne arrive avec une histoire singulière. Mon rôle est de l’accueillir telle qu’elle est, sans grille imposée, et de cheminer à ses côtés le temps qu’il faut.\n\nJe reçois des adultes, des adolescents et des parents, au cabinet de Cesson-Sévigné ou en visio. Quinze ans de pratique et une supervision régulière m’ont appris une chose simple : l’écoute précède toujours le conseil.',
     secondBody:
-      'Les séances alternent parole, silence et respiration. C’est souvent dans ces respirations que quelque chose se dénoue.',
+      'Les séances alternent parole, silence et respiration. C’est souvent dans ces respirations que quelque chose se dénoue — une phrase que l’on n’avait jamais dite, une émotion enfin nommée.\n\nLe cadre est clair, confidentiel et chaleureux. On y avance sans urgence, avec la certitude d’être entendu·e, et la liberté de s’arrêter quand on se sent prêt·e.',
     mediaId: null,
   },
   Component: AproposAsymetrique,
@@ -338,9 +338,9 @@ function AproposParcours({
 }: BlockProps<z.output<typeof aproposParcoursSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="parcours" className="-top-14" />
+      <SectionIndex index={ctx.index} label="parcours" />
 
-      <div className="grid grid-cols-1 gap-16 lg:grid-cols-12 lg:gap-x-24">
+      <div className="grid grid-cols-1 gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-24">
         <div className="lg:sticky lg:top-32 lg:col-span-4 lg:self-start">
           {data.eyebrow && (
             <Reveal>
@@ -348,7 +348,7 @@ function AproposParcours({
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 max-w-[14ch] text-[length:var(--text-h2)]">
+            <h2 className="mt-5 max-w-[14ch] text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -358,7 +358,7 @@ function AproposParcours({
           )}
           {data.intro && (
             <Reveal delay={0.14}>
-              <Prose text={data.intro} className="mt-7 max-w-[38ch]" />
+              <Prose text={data.intro} className="mt-6 max-w-[38ch]" />
             </Reveal>
           )}
         </div>
@@ -372,8 +372,8 @@ function AproposParcours({
             return (
               <Reveal key={i} delay={Math.min(0.1 + i * 0.06, 0.5)}>
                 <div
-                  className={`relative border-l border-line pl-10 ${
-                    last ? 'pb-2' : 'pb-16'
+                  className={`relative border-l border-line pl-7 md:pl-10 ${
+                    last ? 'pb-0' : 'pb-10 md:pb-12'
                   } ${offset}`}
                 >
                   <span
@@ -434,22 +434,27 @@ export const aproposParcoursBlock: BlockDefinition<
     eyebrow: 'Parcours',
     title: 'Le chemin qui m’a menée *ici*.',
     intro:
-      'Des formations exigeantes, des rencontres décisives — chacune a affiné ma manière d’accompagner.',
+      'Des formations exigeantes, des rencontres décisives — chacune a affiné ma manière d’accompagner.\n\nCe parcours n’est pas une ligne droite : il ressemble aux chemins que l’on emprunte ensemble en séance, avec ses détours et ses éclaircies.',
     steps: [
       {
-        year: '2012',
-        title: 'Formation initiale',
-        text: 'Diplôme en psychologie clinique, puis spécialisation dans l’accompagnement des transitions de vie.',
+        year: 'Les débuts',
+        title: 'Formée à l’écoute thérapeutique',
+        text: 'Plusieurs années de formation à la relation d’aide et à l’écoute, puis les premiers accompagnements, auprès d’adultes traversant deuils et séparations.',
       },
       {
-        year: '2016',
-        title: 'Approches psychocorporelles',
-        text: 'Certification en pratiques de pleine conscience et travail sur la respiration.',
+        year: 'Au fil des années',
+        title: 'Le corps entre dans la séance',
+        text: 'Respiration, sensations, posture : je me forme aux approches qui relient le corps et la parole, pour accueillir ce que les mots ne disent pas encore.',
       },
       {
-        year: '2019',
+        year: 'Rue Saint-Martin',
         title: 'Ouverture du cabinet',
-        text: 'Installation rue Saint-Martin, dans un lieu pensé comme un refuge : lumière douce, silence, confidentialité.',
+        text: 'Installation à Cesson-Sévigné, dans un lieu pensé comme un refuge : lumière douce, silence, confidentialité. Un cabinet qui ressemble à une maison.',
+      },
+      {
+        year: 'Aujourd’hui',
+        title: 'Quinze ans de pratique',
+        text: 'Plus de quatre cents personnes accompagnées, une supervision régulière, et la même conviction : on ne répare pas les gens, on les écoute.',
       },
     ],
   },
@@ -476,23 +481,32 @@ function AproposMedaillon({
 }: BlockProps<z.output<typeof aproposMedaillonSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="en chiffres" className="-top-14" />
+      <SectionIndex index={ctx.index} label="en chiffres" />
 
-      <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-x-10">
+      <div className="grid grid-cols-1 items-center gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-5">
         <Reveal className="lg:col-span-4 lg:col-start-2 lg:justify-self-center">
-          <div className="relative mx-auto grid aspect-square w-[min(270px,64vw)] place-items-center rounded-full border border-line-strong">
-            <span className="font-serif text-[clamp(5.25rem,9.5vw,9.25rem)] font-light italic leading-none text-blue-deep">
-              <Counter value={data.value} />
-            </span>
-            {data.unit && (
-              <span className="absolute bottom-[17%] text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
-                {data.unit}
+          <div className="relative mx-auto grid aspect-square w-[min(270px,64vw)] place-items-center rounded-full border border-line-strong lg:w-[min(270px,27vw)]">
+            {/* Chiffre et légende empilés : les chiffres elzéviriens de
+                Cormorant descendent sous la ligne de base (le 5, le 4…),
+                donc une légende positionnée en absolu finit par les
+                toucher. Le flux garantit l'écart à toutes les tailles. */}
+            <div className="flex flex-col items-center">
+              {/* pb = la place du jambage du 5 italique, qui descend
+                  sous la ligne de base d'environ un quart de cadratin. */}
+              <span className="pb-[0.24em] font-serif text-[clamp(4.75rem,8.5vw,8.25rem)] font-light italic leading-[0.9] text-blue-deep">
+                <Counter value={data.value} />
               </span>
-            )}
+              {data.unit && (
+                <span className="mt-1 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+                  {data.unit}
+                </span>
+              )}
+            </div>
             {data.ring && (
               <CircleText
                 text={data.ring}
-                duration={40}
+                radius={56}
+                textClassName="fill-stone text-[6.5px] tracking-[0.42em]"
                 className="absolute -inset-[9%] h-auto w-[118%]"
               />
             )}
@@ -509,7 +523,7 @@ function AproposMedaillon({
           )}
           {data.text && (
             <Reveal delay={0.2}>
-              <p className="mx-auto mt-5 max-w-[44ch] text-[14px] leading-[1.85] text-ink-soft lg:mx-0">
+              <p className="mx-auto mt-6 max-w-[44ch] text-[14px] leading-[1.85] text-ink-soft lg:mx-0">
                 {data.text}
               </p>
             </Reveal>
@@ -545,8 +559,8 @@ export const aproposMedaillonBlock: BlockDefinition<
     value: 15,
     unit: 'années',
     ring: 'quinze années d’écoute · quinze années de présence · ',
-    title: 'années à accompagner ce qui *déborde*.',
-    text: 'Deuils, séparations, épuisements, transitions — et tout ce qui n’a pas encore de nom.',
+    title: 'Quinze années à accompagner ce qui *déborde*.',
+    text: 'Deuils, séparations, épuisements, transitions — et tout ce qui n’a pas encore de nom. Plus de quatre cents personnes reçues au cabinet de Cesson-Sévigné ou en visio, chacune à son rythme, sans jamais la réduire à ce qui l’a amenée.',
   },
   Component: AproposMedaillon,
 }
@@ -583,7 +597,7 @@ function AproposCitation({
         </Reveal>
 
         {data.quote && (
-          <blockquote className="mt-10">
+          <blockquote className="mt-8">
             <Reveal delay={0.12}>
               <p className="font-serif text-[clamp(1.6rem,3vw,2.7rem)] font-light leading-[1.4] text-ink">
                 <Emphasis text={data.quote} />
@@ -594,7 +608,7 @@ function AproposCitation({
 
         {(data.name || data.role) && (
           <Reveal delay={0.24}>
-            <figcaption className="mt-9">
+            <figcaption className="mt-8">
               <span
                 aria-hidden="true"
                 className="mx-auto mb-5 block h-9 w-px bg-line-strong"
@@ -636,7 +650,7 @@ export const aproposCitationBlock: BlockDefinition<
   defaults: {
     quote:
       'Je ne crois pas aux méthodes toutes faites. Je crois aux personnes, à leur rythme, et à ce qui se répare quand on *écoute vraiment*.',
-    name: 'Anne Winzeried',
+    name: 'Anne Winzenried',
     role: 'Thérapeute — Cesson-Sévigné',
     mediaId: null,
   },

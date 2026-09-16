@@ -36,6 +36,10 @@ export function SeoEditor({
   const [robotsIndex, setRobotsIndex] = useState(seo?.robotsIndex ?? true)
   const [robotsFollow, setRobotsFollow] = useState(seo?.robotsFollow ?? true)
   const [pending, start] = useTransition()
+  /** Erreurs de validation par champ (renvoyées par l'action), affichées
+      sous le champ concerné en plus du toast. */
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
+  const errorOf = (key: string) => fieldErrors[key]?.[0]
 
   const url = absoluteUrl(page.isHome ? '/' : `/${page.slug}`)
   const previewTitle = title || `${page.title} — ${siteName}`
@@ -53,10 +57,12 @@ export function SeoEditor({
       })
 
       if (!result.ok) {
+        setFieldErrors(result.fieldErrors ?? {})
         toast.error(result.error)
         return
       }
 
+      setFieldErrors({})
       toast.success('Référencement enregistré.')
       router.refresh()
     })
@@ -96,8 +102,10 @@ export function SeoEditor({
             id="seo-title"
             value={title}
             placeholder={`${page.title} — ${siteName}`}
+            aria-invalid={errorOf('title') ? true : undefined}
             onChange={(e) => setTitle(e.target.value)}
           />
+          <FieldError message={errorOf('title')} />
         </div>
 
         <div>
@@ -109,8 +117,10 @@ export function SeoEditor({
             id="seo-description"
             rows={3}
             value={description}
+            aria-invalid={errorOf('description') ? true : undefined}
             onChange={(e) => setDescription(e.target.value)}
           />
+          <FieldError message={errorOf('description')} />
         </div>
       </Card>
 
@@ -157,8 +167,10 @@ export function SeoEditor({
             id="seo-canonical"
             value={canonical}
             placeholder={url}
+            aria-invalid={errorOf('canonical') ? true : undefined}
             onChange={(e) => setCanonical(e.target.value)}
           />
+          <FieldError message={errorOf('canonical')} />
           <p className="mt-1.5 text-xs text-muted-foreground">
             À laisser vide dans la plupart des cas ({url}). Utile seulement si
             ce contenu existe déjà à une autre adresse.
@@ -191,6 +203,16 @@ function Card({
       </h4>
       <div className="mt-4 space-y-5">{children}</div>
     </section>
+  )
+}
+
+/** Message d'erreur sous un champ — rien si le champ est valide. */
+function FieldError({ message }: { message?: string }) {
+  if (!message) return null
+  return (
+    <p role="alert" className="mt-1.5 text-xs text-destructive">
+      {message}
+    </p>
   )
 }
 

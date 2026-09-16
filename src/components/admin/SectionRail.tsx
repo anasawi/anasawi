@@ -1,15 +1,10 @@
 'use client'
 
-import { Copy, Eye, EyeOff, Plus, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { Copy, Eye, EyeOff, Plus, Trash2, X } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
-import { toast } from 'sonner'
 
 import { getBlock } from '@/blocks/registry'
 import { cn } from '@/lib/utils'
-import { renameSection } from '@/server/actions/pages'
-import type { HistoryEntry } from './history'
-import type { ActionResult } from '@/server/actions/types'
 import type { Section } from '@/server/db/schema'
 
 /**
@@ -19,6 +14,9 @@ import type { Section } from '@/server/db/schema'
  * active sur fond blanc avec une barre bleue à gauche, actions discrètes
  * au survol. Le glisser vertical réordonne via le `reorderTo` partagé du
  * constructeur ; le double-clic renomme en place.
+ *
+ * Aucune action serveur ici : chaque geste remonte au constructeur, qui
+ * met son état à jour tout de suite et écrit en base via sa file.
  */
 
 function labelOf(section: Section): string {
@@ -28,30 +26,45 @@ function labelOf(section: Section): string {
 export function SectionRail({
   roots,
   selectedId,
+  highlightId,
+  confirmId,
+  onConfirmChange,
   onSelect,
   onToggle,
   onDuplicate,
   onDelete,
+  onRename,
   reorderTo,
-  pushHistory,
   onAdd,
+  floating = false,
+  onCollapse,
 }: {
   /** Sections racine, dans l'ordre de la page. */
   roots: Section[]
   selectedId: string | null
+  /** Ligne mise en évidence brièvement (section tout juste ajoutée). */
+  highlightId: string | null
+  /** Ligne dont la suppression attend confirmation — état porté par le
+      constructeur, pour que la touche Suppr l'ouvre aussi. */
+  confirmId: string | null
+  onConfirmChange: (id: string | null) => void
   onSelect: (id: string) => void
   onToggle: (section: Section) => void
   onDuplicate: (section: Section) => void
-  /** Suppression avec instantané (⌘Z), fournie par le constructeur. */
-  onDelete: (id: string) => Promise<ActionResult<unknown>>
+  /** Suppression optimiste avec instantané (⌘Z), fournie par le
+      constructeur — la confirmation vit ici, dans la ligne. */
+  onDelete: (id: string) => Promise<unknown>
+  /** Renommage optimiste, fourni par le constructeur. */
+  onRename: (section: Section, value: string) => void
   /** Réordonnancement partagé avec le canvas : (id, from, boundary). */
   reorderTo: (id: string, from: number, boundary: number) => Promise<void>
-  pushHistory: (entry: HistoryEntry) => void
-  /** Ouvre la bibliothèque, insertion en fin de page. */
+  /** Ouvre la bibliothèque : insertion après la sélection, sinon en fin. */
   onAdd: () => void
+  /** Fenêtre étroite : la liste flotte au-dessus du canvas et se referme
+      d'un clic sur la croix. */
+  floating?: boolean
+  onCollapse?: () => void
 }) {
-  const router = useRouter()
-
   /* ── Renommage en place ─────────────────────────────────────────── */
 
   const [renamingId, setRenamingId] = useState<string | null>(null)
@@ -59,30 +72,21 @@ export function SectionRail({
 
   const commitRename = (section: Section, value: string) => {
     setRenamingId(null)
-    const prev = section.name ?? ''
-    if (value.trim() === prev) return
-    void renameSection(section.id, value).then((result) => {
-      if (!result.ok) {
-        toast.error(result.error)
-        return
-      }
-      pushHistory({
-        label: 'Renommage',
-        undo: async () => (await renameSection(section.id, prev)).ok,
-        redo: async () => (await renameSection(section.id, value)).ok,
-      })
-      router.refresh()
-    })
+    if (value.trim() === (section.name ?? '')) return
+    onRename(section, value)
   }
 
-  /* ── Corbeille en deux temps — armée 2,5 s puis désarmée ────────── */
+  /* ── Suppression : confirmation inline, lisible ─────────────────── */
 
-  const [armed, setArmed] = useState<string | null>(null)
+  const setConfirmId = onConfirmChange
+
+  /* La ligne disparue (supprimée, ou annulée par ⌘Z) n'a plus rien à
+     confirmer. */
   useEffect(() => {
-    if (!armed) return
-    const timer = setTimeout(() => setArmed(null), 2500)
-    return () => clearTimeout(timer)
-  }, [armed])
+    if (confirmId && !roots.some((r) => r.id === confirmId)) {
+      onConfirmChange(null)
+    }
+  }, [confirmId, onConfirmChange, roots])
 
   /* ── Glisser vertical par pointeur ──────────────────────────────── */
 
@@ -98,6 +102,16 @@ export function SectionRail({
     listTop: number
     rows: { top: number; height: number }[]
   } | null>(null)
+
+  /* La ligne mise en évidence (ou à confirmer) est amenée dans la zone
+     visible du rail. */
+  useEffect(() => {
+    const id = highlightId ?? confirmId
+    if (!id) return
+    rowRefs.current
+      .get(id)
+      ?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
+  }, [highlightId, confirmId])
 
   const beginDrag = (e: React.PointerEvent, id: string, from: number) => {
     if (e.button !== 0) return
@@ -153,17 +167,37 @@ export function SectionRail({
   })()
 
   return (
-    <aside className="flex w-[236px] shrink-0 flex-col border-r border-border bg-ivory">
+    <aside
+      className={cn(
+        'flex w-[236px] shrink-0 flex-col border-r border-border bg-ivory',
+        floating && 'shadow-[8px_0_28px_rgba(28,32,30,0.14)]',
+      )}
+    >
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-4">
-        <h3 className="px-2 pb-2.5 text-[11px] font-medium uppercase tracking-[0.1em] text-stone">
-          Sections de la page
-        </h3>
+        <div className="flex items-center justify-between px-2 pb-2.5">
+          <h3 className="text-[11px] font-medium uppercase tracking-[0.1em] text-stone">
+            Sections de la page
+          </h3>
+          {floating && onCollapse && (
+            <button
+              type="button"
+              onClick={onCollapse}
+              aria-label="Replier la liste"
+              title="Replier la liste"
+              className="-mr-1 rounded-md p-1 text-stone transition-colors hover:bg-white hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50"
+            >
+              <X className="h-[13px] w-[13px]" strokeWidth={1.7} />
+            </button>
+          )}
+        </div>
 
         <ul ref={listRef} className="relative flex flex-col gap-[3px]">
           {roots.map((section, index) => {
             const active = section.id === selectedId
             const renaming = renamingId === section.id
+            const confirming = confirmId === section.id
             const dragged = drag?.id === section.id
+            const highlighted = highlightId === section.id
 
             return (
               <li
@@ -173,11 +207,12 @@ export function SectionRail({
                   else rowRefs.current.delete(section.id)
                 }}
                 className={cn(
-                  'group relative flex select-none items-center gap-[9px] rounded-[9px] px-2.5 py-[9px] text-[13px] transition-colors',
+                  'group relative flex select-none flex-col rounded-[9px] text-[13px] transition-colors duration-300',
                   active
                     ? 'bg-white text-foreground shadow-[0_1px_2px_rgba(28,32,30,0.06)]'
                     : 'text-ink-soft hover:bg-white/95',
-                  !section.isActive && 'opacity-45',
+                  highlighted && 'bg-blue-mist',
+                  !section.isActive && !confirming && 'opacity-45',
                   dragged && 'z-10 shadow-[0_4px_14px_rgba(28,32,30,0.12)]',
                 )}
                 style={
@@ -186,10 +221,10 @@ export function SectionRail({
                     : undefined
                 }
                 onClick={() => {
-                  if (!renaming) onSelect(section.id)
+                  if (!renaming && !confirming) onSelect(section.id)
                 }}
                 onDoubleClick={() => {
-                  if (renaming) return
+                  if (renaming || confirming) return
                   setRenamingId(section.id)
                   setDraft(section.name ?? '')
                 }}
@@ -201,98 +236,124 @@ export function SectionRail({
                   />
                 )}
 
-                <span
-                  aria-hidden="true"
-                  onPointerDown={(e) => beginDrag(e, section.id, index)}
-                  className="shrink-0 cursor-grab text-[11px] leading-none tracking-[1px] text-transparent group-hover:text-stone active:cursor-grabbing"
-                >
-                  ⋮⋮
-                </span>
-
-                {renaming ? (
-                  <input
-                    autoFocus
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onBlur={() => commitRename(section, draft)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter') commitRename(section, draft)
-                      if (e.key === 'Escape') setRenamingId(null)
-                    }}
-                    onClick={(e) => e.stopPropagation()}
-                    className="min-w-0 flex-1 rounded-[4px] border border-blue-deep/50 bg-white px-1 py-0.5 text-[12.5px] outline-none"
-                  />
-                ) : (
-                  <span className="min-w-0 flex-1 truncate">
-                    {labelOf(section)}
-                    {!section.isActive && (
-                      <span className="ml-1.5 text-[10px] text-stone">
-                        masquée
-                      </span>
-                    )}
+                <div className="flex items-center gap-[9px] px-2.5 py-[9px]">
+                  <span
+                    aria-hidden="true"
+                    onPointerDown={(e) => beginDrag(e, section.id, index)}
+                    className="shrink-0 cursor-grab text-[11px] leading-none tracking-[1px] text-transparent group-hover:text-stone active:cursor-grabbing"
+                  >
+                    ⋮⋮
                   </span>
-                )}
 
-                {/* Actions — visibles au survol seulement. */}
-                {!renaming && (
-                  <span className="ml-auto hidden shrink-0 items-center gap-0.5 group-hover:flex">
-                    <button
-                      type="button"
-                      title={section.isActive ? 'Masquer' : 'Afficher'}
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onToggle(section)
+                  {renaming ? (
+                    <input
+                      autoFocus
+                      value={draft}
+                      onChange={(e) => setDraft(e.target.value)}
+                      onBlur={() => commitRename(section, draft)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Enter') commitRename(section, draft)
+                        if (e.key === 'Escape') setRenamingId(null)
                       }}
-                      className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-blue-mist hover:text-blue-deep"
-                    >
-                      {section.isActive ? (
-                        <Eye className="h-[13px] w-[13px]" strokeWidth={1.7} />
-                      ) : (
-                        <EyeOff
+                      onClick={(e) => e.stopPropagation()}
+                      className="min-w-0 flex-1 rounded-[4px] border border-blue-deep/50 bg-white px-1 py-0.5 text-[12.5px] outline-none"
+                    />
+                  ) : (
+                    <span className="min-w-0 flex-1 truncate">
+                      {labelOf(section)}
+                      {!section.isActive && (
+                        <span className="ml-1.5 text-[10px] text-stone">
+                          masquée
+                        </span>
+                      )}
+                    </span>
+                  )}
+
+                  {/* Actions — visibles au survol seulement. */}
+                  {!renaming && !confirming && (
+                    <span className="ml-auto hidden shrink-0 items-center gap-0.5 group-hover:flex group-focus-within:flex">
+                      <button
+                        type="button"
+                        title={section.isActive ? 'Masquer' : 'Afficher'}
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onToggle(section)
+                        }}
+                        className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-blue-mist hover:text-blue-deep"
+                      >
+                        {section.isActive ? (
+                          <Eye
+                            className="h-[13px] w-[13px]"
+                            strokeWidth={1.7}
+                          />
+                        ) : (
+                          <EyeOff
+                            className="h-[13px] w-[13px]"
+                            strokeWidth={1.7}
+                          />
+                        )}
+                      </button>
+                      <button
+                        type="button"
+                        title="Dupliquer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          onDuplicate(section)
+                        }}
+                        className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-blue-mist hover:text-blue-deep"
+                      >
+                        <Copy className="h-[13px] w-[13px]" strokeWidth={1.7} />
+                      </button>
+                      <button
+                        type="button"
+                        title="Supprimer"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          setConfirmId(section.id)
+                        }}
+                        className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-red-50 hover:text-red-600"
+                      >
+                        <Trash2
                           className="h-[13px] w-[13px]"
                           strokeWidth={1.7}
                         />
-                      )}
+                      </button>
+                    </span>
+                  )}
+                </div>
+
+                {/* Confirmation en clair, dans la ligne : pas de corbeille
+                    « armée » qui semble ne rien faire au premier clic. */}
+                {confirming && (
+                  <div
+                    role="alertdialog"
+                    aria-label="Confirmer la suppression"
+                    onClick={(e) => e.stopPropagation()}
+                    className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-2.5 pb-2 pt-1.5 text-[11.5px] text-foreground"
+                  >
+                    <span className="mr-auto">Supprimer cette section ?</span>
+                    <button
+                      type="button"
+                      autoFocus
+                      onClick={() => {
+                        setConfirmId(null)
+                        void onDelete(section.id)
+                      }}
+                      className="rounded-[6px] bg-red-600 px-2 py-[3px] text-[11px] font-medium text-white transition-colors hover:bg-red-700"
+                    >
+                      Supprimer
                     </button>
                     <button
                       type="button"
-                      title="Dupliquer"
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        onDuplicate(section)
+                      onClick={() => setConfirmId(null)}
+                      onKeyDown={(e) => {
+                        if (e.key === 'Escape') setConfirmId(null)
                       }}
-                      className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-blue-mist hover:text-blue-deep"
+                      className="rounded-[6px] border border-line-strong bg-white px-2 py-[3px] text-[11px] text-ink-soft transition-colors hover:text-foreground"
                     >
-                      <Copy className="h-[13px] w-[13px]" strokeWidth={1.7} />
+                      Annuler
                     </button>
-                    <button
-                      type="button"
-                      title={
-                        armed === section.id
-                          ? 'Cliquez pour confirmer'
-                          : 'Supprimer'
-                      }
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        if (armed === section.id) {
-                          setArmed(null)
-                          void onDelete(section.id).then((result) => {
-                            if (result.ok) router.refresh()
-                          })
-                        } else {
-                          setArmed(section.id)
-                        }
-                      }}
-                      className={cn(
-                        'flex h-[22px] w-[22px] items-center justify-center rounded-md transition-colors',
-                        armed === section.id
-                          ? 'bg-red-600 text-white'
-                          : 'text-stone hover:bg-red-50 hover:text-red-600',
-                      )}
-                    >
-                      <Trash2 className="h-[13px] w-[13px]" strokeWidth={1.7} />
-                    </button>
-                  </span>
+                  </div>
                 )}
               </li>
             )
@@ -311,7 +372,7 @@ export function SectionRail({
         <button
           type="button"
           onClick={onAdd}
-          className="mt-2.5 flex w-full items-center justify-center gap-[7px] rounded-[9px] border border-dashed border-line-strong p-2.5 text-[12.5px] text-ink-soft transition-colors hover:border-blue-deep hover:bg-[#f2f6f8] hover:text-blue-deep"
+          className="mt-2.5 flex w-full items-center justify-center gap-[7px] rounded-[9px] border border-dashed border-line-strong p-2.5 text-[12.5px] text-ink-soft transition-colors hover:border-blue-deep hover:bg-[#f2f6f8] hover:text-blue-deep focus-visible:border-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/40"
         >
           <Plus className="h-[13px] w-[13px]" strokeWidth={1.7} />
           Ajouter une section

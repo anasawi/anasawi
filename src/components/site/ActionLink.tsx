@@ -1,24 +1,31 @@
 import Link from 'next/link'
 
+import { LiquidFill } from '@/components/site/LiquidFill'
 import { cn } from '@/lib/utils'
 
 type Variant = 'primary' | 'ghost' | 'outline'
 
-/* Boutons sobres de la planche V8 : pilule, fond qui fonce, flèche qui
-   glisse de 4px — rien d'autre. Pas d'aimantation, pas de libellé qui
-   change. Le rayon vient de `--button-radius` (999px par défaut), que
-   l'identité admin peut resserrer. */
+/* Boutons sobres de la planche V8 : pilule, flèche qui glisse de 4px, et
+   au survol un remplissage liquide — l'encre naît sous la souris, la suit
+   dans le bouton, se résorbe à la sortie. Le bouton ne bouge pas. Le
+   rayon vient de `--button-radius` (999px par défaut), que l'identité
+   admin peut resserrer. */
 const base =
-  'group relative inline-flex items-center justify-center gap-[11px] rounded-[var(--button-radius,999px)] ' +
+  'group relative inline-flex items-center justify-center gap-[11px] overflow-hidden rounded-[var(--button-radius,999px)] ' +
   'px-[34px] py-4 text-[11px] font-semibold uppercase tracking-[0.18em] ' +
-  'transition-[background-color,color,border-color] duration-[350ms] ease-[var(--ease)]'
+  'transition-[color,border-color] duration-[350ms] ease-[var(--ease)]'
 
 const variants: Record<Variant, string> = {
-  primary: 'bg-blue-deep text-ivory hover:bg-night',
-  outline:
-    'border border-blue-deep bg-transparent text-blue-deep hover:bg-blue-mist',
-  ghost:
-    'border border-blue-deep bg-transparent text-blue-deep hover:bg-blue-mist',
+  primary: 'bg-blue-deep text-ivory',
+  outline: 'border border-blue-deep bg-transparent text-blue-deep',
+  ghost: 'border border-blue-deep bg-transparent text-blue-deep',
+}
+
+/* Couleur de l'encre selon la variante. */
+const inks: Record<Variant, string> = {
+  primary: 'bg-night',
+  outline: 'bg-blue-mist',
+  ghost: 'bg-blue-mist',
 }
 
 export function ActionLink({
@@ -28,6 +35,7 @@ export function ActionLink({
   className,
   withArrow = true,
   external = false,
+  ink,
 }: {
   href: string
   children: React.ReactNode
@@ -35,14 +43,18 @@ export function ActionLink({
   className?: string
   withArrow?: boolean
   external?: boolean
+  /** Classe de couleur de l'encre, pour un bouton dont le fond est
+      personnalisé (ex. bouton ivoire sur l'arche bleue → `bg-blue-mist`). */
+  ink?: string
 }) {
   const content = (
     <>
-      <span>{children}</span>
+      <LiquidFill className={ink ?? inks[variant]} />
+      <span className="relative z-[1]">{children}</span>
       {withArrow && (
         <span
           aria-hidden="true"
-          className="inline-block transition-transform duration-[350ms] ease-[var(--ease)] group-hover:translate-x-1"
+          className="relative z-[1] inline-block transition-transform duration-[350ms] ease-[var(--ease)] group-hover:translate-x-1"
         >
           →
         </span>

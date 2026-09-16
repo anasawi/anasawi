@@ -2,6 +2,7 @@
 
 import { RotateCcw } from 'lucide-react'
 
+import { usePalette } from './PaletteProvider'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -12,8 +13,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { SECTION_SWATCHES } from '@/lib/color'
 import type { NodeStyles, StyleProps } from '@/lib/node-styles'
+import { shade } from '@/lib/palette'
 import { cn } from '@/lib/utils'
 
 /** Types SANS texte propre : le groupe Typographie n'y aurait aucun effet. */
@@ -471,7 +472,20 @@ function ColorRow({
   value: string | undefined
   onChange: (value: string | undefined) => void
 }) {
-  const chartSwatches = SECTION_SWATCHES.slice(0, 8)
+  /* Huit pastilles, prises dans la palette du site : deux fonds, deux
+     paliers d'accent clair, deux d'accent profond, deux d'encre. Elles
+     suivent donc les réglages, jamais une liste figée. */
+  const { palette } = usePalette()
+  const chartSwatches: { hex: string; name: string }[] = [
+    { hex: palette.surface, name: 'Fond principal' },
+    { hex: palette.surfaceAlt, name: 'Fond alterné' },
+    { hex: shade(palette.accentSoft, 'lightest'), name: 'Accent clair — voile' },
+    { hex: palette.accentSoft, name: 'Accent clair' },
+    { hex: palette.accent, name: 'Accent profond' },
+    { hex: shade(palette.accent, 'deep'), name: 'Accent profond — profond' },
+    { hex: shade(palette.ink, 'lightest'), name: 'Encre — très clair' },
+    { hex: palette.ink, name: 'Encre' },
+  ]
 
   return (
     <div className="flex flex-wrap items-center gap-1">
@@ -491,7 +505,7 @@ function ColorRow({
 
       {chartSwatches.map((swatch) => (
         <button
-          key={swatch.hex}
+          key={swatch.name}
           type="button"
           title={swatch.name}
           aria-label={swatch.name}

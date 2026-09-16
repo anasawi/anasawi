@@ -36,7 +36,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
                 aria-expanded={isOpen}
                 aria-controls={panelId}
                 onClick={() => setOpenId(isOpen ? null : item.id)}
-                className="group flex w-full items-start justify-between gap-10 py-8 text-left transition-colors duration-500 hover:text-blue-deep"
+                className="group flex w-full items-start justify-between gap-6 py-6 text-left transition-colors duration-500 hover:text-blue-deep sm:gap-10 sm:py-8"
               >
                 <span className="font-serif text-[1.1rem] leading-[1.4] text-ink transition-colors duration-500 group-hover:text-blue-deep md:text-[1.25rem]">
                   {item.question}
@@ -71,7 +71,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
                   transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
-                  <p className="max-w-[62ch] pb-8 pr-10 text-[0.95rem] leading-[1.8] text-ink-soft">
+                  <p className="max-w-[62ch] pb-6 pr-6 text-[0.95rem] leading-[1.8] text-ink-soft sm:pb-8 sm:pr-10">
                     {item.answer}
                   </p>
                 </m.div>

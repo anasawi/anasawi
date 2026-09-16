@@ -53,8 +53,8 @@ function ServicesListe({
   const items = ctx.services
 
   return (
-    <div className="relative py-[var(--spacing-section)]">
-      <SectionIndex index={ctx.index} label="accompagnements" className="top-7" />
+    <div className="relative">
+      <SectionIndex index={ctx.index} label="accompagnements" />
 
       <div className="container-editorial text-center">
         {data.eyebrow && (
@@ -63,7 +63,7 @@ function ServicesListe({
           </Reveal>
         )}
         {data.title && (
-          <h2 className="mx-auto mt-7 max-w-[26ch] text-[length:var(--text-h2)]">
+          <h2 className="mx-auto mt-5 max-w-[26ch] text-[length:var(--text-h2)]">
             <MaskLines delay={0.08}>
               <span>
                 <Emphasis text={data.title} />
@@ -81,23 +81,27 @@ function ServicesListe({
       </div>
 
       {items.length > 0 && (
-        <div className="mt-14">
+        <div className="mt-10 md:mt-12">
           {items.map((service, i) => (
             <Reveal key={service.id} delay={Math.min(i * 0.07, 0.35)}>
+              {/* Mobile : empilement numéro / titre / description / flèche,
+                  description toujours visible (le survol n'existe pas au
+                  doigt — Tailwind v4 réserve `hover:` aux pointeurs qui
+                  survolent). */}
               <article
-                className={`group grid grid-cols-1 gap-y-2 border-t border-line px-[var(--spacing-gutter)] py-9 transition-[background-color,color,border-radius] duration-500 ease-[var(--ease)] hover:rounded-[28px] hover:bg-night hover:text-ivory lg:grid-cols-12 lg:items-baseline lg:gap-x-5 lg:py-[5vh] ${
+                className={`group grid grid-cols-1 gap-y-2 border-t border-line px-[var(--spacing-gutter)] py-7 transition-[background-color,color,border-radius] duration-[450ms] ease-[var(--ease)] hover:rounded-[28px] hover:bg-night hover:text-ivory md:py-9 lg:grid-cols-12 lg:items-baseline lg:gap-x-5 ${
                   i === items.length - 1 ? 'border-b' : ''
                 }`}
               >
-                <span className="font-serif text-[15px] font-light italic text-blue-deep transition-colors duration-500 group-hover:text-blue lg:col-span-1">
+                <span className="font-serif text-[15px] font-light italic text-blue-deep transition-colors duration-[450ms] group-hover:text-blue lg:col-span-1">
                   {numberWord(i)}
                 </span>
 
-                <h3 className="font-serif text-[clamp(1.9rem,3.8vw,3.9rem)] font-light leading-[1.05] transition-transform duration-500 ease-[var(--ease)] group-hover:translate-x-4 group-hover:italic lg:col-span-7">
+                <h3 className="font-serif text-[clamp(28px,3.8vw,62px)] font-light leading-none transition-transform duration-[450ms] ease-[var(--ease)] group-hover:translate-x-4 group-hover:italic lg:col-span-7">
                   {service.title}
                 </h3>
 
-                <p className="max-w-[40ch] text-[12.5px] leading-[1.75] text-stone transition-[opacity,transform,color] duration-500 group-hover:text-ivory/75 lg:col-span-3 lg:translate-y-1.5 lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100">
+                <p className="mt-1 max-w-[40ch] text-[13px] leading-[1.75] text-stone transition-[opacity,transform,color] duration-[450ms] group-hover:text-ivory/75 lg:mt-0 lg:col-span-3 lg:translate-y-1.5 lg:text-[12.5px] lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100">
                   {service.excerpt}
                   {service.duration ? (
                     <span className="mt-2 block text-[10.5px] font-semibold uppercase tracking-[0.2em] opacity-80">
@@ -108,7 +112,7 @@ function ServicesListe({
 
                 <span
                   aria-hidden="true"
-                  className="hidden text-right font-serif text-[22px] opacity-35 transition-[opacity,transform,color] duration-500 ease-[var(--ease)] group-hover:translate-x-1.5 group-hover:text-blue group-hover:opacity-100 lg:col-span-1 lg:block"
+                  className="mt-1 block text-left font-serif text-[22px] opacity-35 transition-[opacity,transform,color] duration-[450ms] ease-[var(--ease)] group-hover:translate-x-[5px] group-hover:text-blue group-hover:opacity-100 lg:mt-0 lg:col-span-1 lg:text-right"
                 >
                   →
                 </span>
@@ -130,16 +134,18 @@ export const servicesListeBlock: BlockDefinition<typeof servicesListeSchema> =
     schema: servicesListeSchema,
     suggestedAnchor: 'accompagnements',
     navigable: true,
-    bleed: true,
+    /* Section standard : le wrapper porte le padding. Seules les rangées
+       débordent horizontalement (elles posent leur propre gouttière). */
     fields: [
       field.text('eyebrow', 'Label supérieur'),
       field.text('title', 'Titre', { full: true }),
       field.textarea('intro', 'Introduction'),
     ],
     defaults: {
-      eyebrow: 'Trois manières de commencer',
-      title: '',
-      intro: '',
+      eyebrow: 'Accompagnements',
+      title: 'Trois manières de *commencer*.',
+      intro:
+        'Thérapie individuelle, accompagnement des adolescents, soutien à la parentalité : chaque cadre a son rythme et sa durée. Au cabinet de Cesson-Sévigné ou en visio, le premier pas est toujours le même — un échange, sans engagement.',
     },
     Component: ServicesListe,
   }
@@ -165,7 +171,7 @@ function ServicesNumerotes({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="accompagnements" className="-top-14" />
+      <SectionIndex index={ctx.index} label="accompagnements" />
 
       <div className="max-w-[46rem]">
         {data.eyebrow && (
@@ -174,7 +180,7 @@ function ServicesNumerotes({
           </Reveal>
         )}
         {data.title && (
-          <h2 className="mt-7 text-[length:var(--text-h2)]">
+          <h2 className="mt-5 text-[length:var(--text-h2)]">
             <MaskLines delay={0.08}>
               <span>
                 <Emphasis text={data.title} />
@@ -190,13 +196,13 @@ function ServicesNumerotes({
       </div>
 
       {items.length > 0 && (
-        <div className="mt-16 grid grid-cols-1 gap-y-14 lg:mt-20 lg:grid-cols-3 lg:gap-y-0">
+        <div className="mt-10 grid grid-cols-1 gap-4 md:mt-12 md:gap-5 lg:grid-cols-3 lg:gap-y-0">
           {items.map((service, i) => (
             <Reveal key={service.id} delay={Math.min(0.05 + i * 0.09, 0.4)}>
               <article
                 className={`h-full ${
                   i > 0
-                    ? 'border-t border-line pt-12 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0'
+                    ? 'border-t border-line pt-7 lg:border-l lg:border-t-0 lg:pl-12 lg:pt-0'
                     : ''
                 }`}
               >
@@ -222,7 +228,8 @@ function ServicesNumerotes({
                   <ActionLink
                     href="#contact"
                     variant="ghost"
-                    className="mt-7 border-0 px-0 py-0 hover:bg-transparent"
+                    className="mt-8 border-0 px-0 py-0"
+                    ink="bg-transparent"
                   >
                     {data.linkLabel}
                   </ActionLink>
@@ -255,7 +262,8 @@ export const servicesNumerotesBlock: BlockDefinition<
   defaults: {
     eyebrow: 'Accompagnements',
     title: 'Trois manières de *cheminer*.',
-    intro: '',
+    intro:
+      'Selon ce que vous traversez — une anxiété qui s’installe, un deuil, un épuisement, une adolescence qui bouscule toute la famille — le cadre s’adapte. Les séances durent 50 minutes pour les adultes, 45 minutes pour les adolescents, et se tiennent au cabinet ou en visio.',
     linkLabel: 'En savoir plus',
   },
   Component: ServicesNumerotes,
@@ -281,7 +289,7 @@ function ServicesImmersifs({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="accompagnements" className="-top-14" />
+      <SectionIndex index={ctx.index} label="accompagnements" />
 
       {(data.eyebrow || data.title) && (
         <div className="mx-auto max-w-[46rem] text-center">
@@ -291,7 +299,7 @@ function ServicesImmersifs({
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -303,14 +311,14 @@ function ServicesImmersifs({
       )}
 
       {items.length > 0 && (
-        <div className="mt-20 space-y-24 lg:space-y-32">
+        <div className="mt-10 space-y-10 md:mt-12 md:space-y-12">
           {items.map((service, i) => {
             const even = i % 2 === 0
 
             return (
               <article
                 key={service.id}
-                className="grid grid-cols-1 items-center gap-12 lg:grid-cols-12 lg:gap-x-12"
+                className="grid grid-cols-1 items-center gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-12"
               >
                 <div
                   className={
@@ -353,7 +361,8 @@ function ServicesImmersifs({
                       <ActionLink
                         href="#contact"
                         variant="ghost"
-                        className="mt-7 border-0 px-0 py-0 hover:bg-transparent"
+                        className="mt-8 border-0 px-0 py-0"
+                        ink="bg-transparent"
                       >
                         {data.linkLabel}
                       </ActionLink>
@@ -412,7 +421,7 @@ function ServicesArches({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="accompagnements" className="-top-14" />
+      <SectionIndex index={ctx.index} label="accompagnements" />
 
       {(data.eyebrow || data.title) && (
         <div className="mx-auto max-w-[46rem] text-center">
@@ -422,7 +431,7 @@ function ServicesArches({
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -434,7 +443,7 @@ function ServicesArches({
       )}
 
       {items.length > 0 && (
-        <div className="mt-16 grid grid-cols-1 gap-x-10 gap-y-16 sm:grid-cols-2 lg:mt-20 lg:grid-cols-3">
+        <div className="mt-10 grid grid-cols-1 gap-4 sm:grid-cols-2 md:mt-12 md:gap-5 lg:grid-cols-3">
           {items.map((service, i) => (
             <Reveal
               key={service.id}
@@ -449,7 +458,7 @@ function ServicesArches({
                   placeholder={i % 3}
                   delay={0.1}
                 />
-                <h3 className="mt-7 text-[length:var(--text-h3)]">
+                <h3 className="mt-6 text-[length:var(--text-h3)]">
                   {service.title}
                 </h3>
                 <p className="mx-auto mt-3 max-w-[40ch] text-[0.9rem] leading-[1.78] text-ink-soft">
@@ -468,7 +477,7 @@ function ServicesArches({
 
       {data.linkLabel && (
         <Reveal delay={0.3}>
-          <div className="mt-16 flex justify-center">
+          <div className="mt-10 flex justify-center md:mt-12">
             <ActionLink href="#contact" variant="primary">
               {data.linkLabel}
             </ActionLink>
@@ -526,9 +535,9 @@ function ServicesDetail({
 
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="à la une" className="-top-14" />
+      <SectionIndex index={ctx.index} label="à la une" />
 
-      <div className="grid grid-cols-1 items-center gap-14 lg:grid-cols-12 lg:gap-x-16">
+      <div className="grid grid-cols-1 items-center gap-10 md:gap-12 lg:grid-cols-12 lg:gap-x-16">
         <div className="lg:col-span-5 lg:col-start-2">
           <BlockImage
             media={service.media}
@@ -544,7 +553,7 @@ function ServicesDetail({
             </Reveal>
           )}
 
-          <h2 className="mt-6 text-[length:var(--text-h2)]">
+          <h2 className="mt-5 text-[length:var(--text-h2)]">
             <MaskLines delay={0.08}>
               <span>{service.title}</span>
             </MaskLines>
@@ -562,14 +571,14 @@ function ServicesDetail({
             <Reveal delay={0.2}>
               <Prose
                 text={service.body || data.extra}
-                className="mt-5 max-w-[52ch]"
+                className="mt-6 max-w-[52ch]"
               />
             </Reveal>
           )}
 
           {service.duration && (
             <Reveal delay={0.26}>
-              <p className="mt-7 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+              <p className="mt-6 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
                 {service.duration}
               </p>
             </Reveal>
@@ -577,7 +586,7 @@ function ServicesDetail({
 
           {data.linkLabel && (
             <Reveal delay={0.32}>
-              <div className="mt-9">
+              <div className="mt-8">
                 <ActionLink href={data.linkHref} variant="primary">
                   {data.linkLabel}
                 </ActionLink>
@@ -612,7 +621,8 @@ export const servicesDetailBlock: BlockDefinition<typeof servicesDetailSchema> =
     defaults: {
       eyebrow: 'À la une',
       position: 1,
-      extra: '',
+      extra:
+        'Un espace pour vous, à votre rythme. On y dépose ce qui pèse — l’anxiété, la fatigue, un deuil, une séparation, ou simplement le sentiment de ne plus se reconnaître — et on cherche ensemble ce qui peut se remettre en mouvement.\n\nLes séances durent 50 minutes, au cabinet de Cesson-Sévigné ou en visio. La fréquence se décide ensemble, souvent une fois par semaine ou tous les quinze jours, et se réajuste à mesure que les choses évoluent.',
       linkLabel: 'Prendre rendez-vous',
       linkHref: '#contact',
     },
@@ -647,7 +657,7 @@ function TarifsSobre({
 }: BlockProps<z.output<typeof tarifsSobreSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="tarifs" className="-top-14" />
+      <SectionIndex index={ctx.index} label="tarifs" />
 
       <div className="mx-auto max-w-[44rem]">
         <div className="text-center">
@@ -657,7 +667,7 @@ function TarifsSobre({
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -668,10 +678,10 @@ function TarifsSobre({
         </div>
 
         {data.items.length > 0 && (
-          <div className="mt-14 border-t border-line-strong">
+          <div className="mt-10 border-t border-line-strong md:mt-12">
             {data.items.map((item, i) => (
               <Reveal key={i} delay={Math.min(0.08 + i * 0.06, 0.35)}>
-                <div className="flex items-baseline justify-between gap-8 border-b border-line py-7">
+                <div className="flex items-baseline justify-between gap-5 border-b border-line py-6 sm:gap-8 md:py-7">
                   <div className="min-w-0">
                     <p className="font-serif text-[clamp(1.15rem,1.7vw,1.5rem)] font-light text-ink">
                       {item.label}
@@ -734,13 +744,18 @@ export const tarifsSobreBlock: BlockDefinition<typeof tarifsSobreSchema> = {
     title: 'Des séances au *juste* prix.',
     items: [
       {
-        label: 'Séance individuelle',
-        detail: 'Au cabinet ou en visio · 1 h',
+        label: 'Séance individuelle adulte',
+        detail: 'Au cabinet ou en visio · 50 min',
         price: '60 €',
       },
       {
         label: 'Séance adolescent',
-        detail: 'Un cadre adapté · 45 min',
+        detail: 'Un cadre adapté, avec ou sans les parents · 45 min',
+        price: '50 €',
+      },
+      {
+        label: 'Tarif étudiant et réduit',
+        detail: 'Sur simple demande, sans justificatif · 50 min',
         price: '50 €',
       },
       {
@@ -749,7 +764,7 @@ export const tarifsSobreBlock: BlockDefinition<typeof tarifsSobreSchema> = {
         price: 'Offert',
       },
     ],
-    note: 'Certaines mutuelles prennent en charge une partie des séances — n’hésitez pas à leur poser la question.',
+    note: 'Règlement par chèque, espèces ou virement à la fin de chaque séance. Toute séance annulée moins de 48 h à l’avance est due. Certaines mutuelles prennent en charge une partie des séances — n’hésitez pas à leur poser la question.',
   },
   Component: TarifsSobre,
 }
@@ -774,7 +789,7 @@ function SeanceDeroule({
 }: BlockProps<z.output<typeof seanceDerouleSchema>>) {
   return (
     <div className="container-editorial relative">
-      <SectionIndex index={ctx.index} label="le déroulé" className="-top-14" />
+      <SectionIndex index={ctx.index} label="le déroulé" />
 
       <div className="mx-auto max-w-[40rem]">
         <div className="text-center">
@@ -784,7 +799,7 @@ function SeanceDeroule({
             </Reveal>
           )}
           {data.title && (
-            <h2 className="mt-7 text-[length:var(--text-h2)]">
+            <h2 className="mt-5 text-[length:var(--text-h2)]">
               <MaskLines delay={0.08}>
                 <span>
                   <Emphasis text={data.title} />
@@ -795,14 +810,14 @@ function SeanceDeroule({
         </div>
 
         {data.steps.length > 0 && (
-          <ol className="mt-14">
+          <ol className="mt-10 md:mt-12">
             {data.steps.map((step, i) => {
               const last = i === data.steps.length - 1
               return (
                 <Reveal key={i} delay={Math.min(0.08 + i * 0.07, 0.4)}>
                   <li
-                    className={`relative border-l border-line pl-10 ${
-                      last ? 'pb-0' : 'pb-12'
+                    className={`relative border-l border-line pl-7 md:pl-10 ${
+                      last ? 'pb-0' : 'pb-10 md:pb-12'
                     }`}
                   >
                     <span

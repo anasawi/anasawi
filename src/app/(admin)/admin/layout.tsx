@@ -2,12 +2,15 @@ import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
 import { Toaster } from 'sonner'
 
-import { AdminPill, EyeIcon } from '@/components/site/AdminPill'
 import { AdminRail } from '@/components/admin/AdminRail'
+import { AdminShellPill } from '@/components/admin/AdminShellPill'
+import { PaletteProvider } from '@/components/admin/PaletteProvider'
 import { auth } from '@/lib/auth'
+import { paletteFromIdentity } from '@/lib/palette'
+import { getSettings } from '@/server/queries'
 
 export const metadata: Metadata = {
-  title: 'Administration — AMASWI',
+  title: 'Administration — ANASAWI',
   robots: { index: false, follow: false },
 }
 
@@ -26,27 +29,27 @@ export default async function AdminLayout({
 
   const userName = session.user.name ?? session.user.email ?? 'Admin'
 
+  /* La palette du site est chargée ici, une fois : tous les sélecteurs de
+     couleur du CMS — inspecteur de section, éditeur de page, réglages — y
+     puisent leurs nuances au lieu d'une liste figée dans le code. */
+  const settings = await getSettings()
+
   return (
-    <div className="admin-shell flex h-svh overflow-hidden bg-background text-foreground antialiased">
-      <AdminRail userName={userName} />
+    <PaletteProvider palette={paletteFromIdentity(settings.identity)}>
+      <div className="admin-shell flex h-svh overflow-hidden bg-background text-foreground antialiased">
+        <AdminRail userName={userName} />
 
-      <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
-        {children}
+        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+          {children}
+        </div>
+
+        {/* Ici la session est déjà connue côté serveur : la pastille est rendue
+            directement, sans l'aller-retour nécessaire sur le site public.
+            L'éditeur de page affiche la sienne (état de publication). */}
+        <AdminShellPill userName={userName} />
+
+        <Toaster position="bottom-right" richColors closeButton />
       </div>
-
-      {/* Ici la session est déjà connue côté serveur : la pastille est rendue
-          directement, sans l'aller-retour nécessaire sur le site public. */}
-      <AdminPill
-        status="Édition"
-        actionLabel="Voir le site"
-        actionHref="/"
-        icon={<EyeIcon />}
-        homeHref="/admin"
-        name={userName}
-        className="bottom-6"
-      />
-
-      <Toaster position="bottom-right" richColors closeButton />
-    </div>
+    </PaletteProvider>
   )
 }

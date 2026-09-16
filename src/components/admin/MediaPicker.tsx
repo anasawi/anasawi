@@ -264,7 +264,7 @@ export function UploadField({
             id="upload-file"
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif,image/svg+xml"
+            accept="image/jpeg,image/png,image/webp,image/avif"
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="cursor-pointer text-xs file:mr-3 file:cursor-pointer"
           />
@@ -294,7 +294,7 @@ export function UploadField({
       </div>
 
       <p className="mt-2.5 text-xs text-muted-foreground">
-        JPEG, PNG, WebP, AVIF ou SVG — 12 Mo maximum. Les dimensions sont
+        JPEG, PNG, WebP ou AVIF — 12 Mo maximum. Les dimensions sont
         relevées automatiquement pour éviter tout décalage de mise en page.
       </p>
     </div>

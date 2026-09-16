@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 
 type Entry = { count: number; resetAt: number }
 
@@ -35,10 +35,21 @@ export function rateLimit(
   return { allowed: entry.count <= limit, remaining: Math.max(0, limit - entry.count) }
 }
 
+/**
+ * Sel de l'empreinte d'IP : `AUTH_SECRET`, ou à défaut une valeur aléatoire
+ * fixe pour la durée du processus. Un hachage NON salé d'une IPv4 se
+ * retrouve par table arc-en-ciel en quelques secondes — le repli garantit
+ * qu'il n'en existe jamais, même sur une instance mal configurée
+ * (`doctor` exige `AUTH_SECRET` de toute façon). Le sel de repli changeant à
+ * chaque démarrage, les compteurs ne survivent pas à un redémarrage — ce qui
+ * est déjà le cas du limiteur en mémoire.
+ */
+const IP_SALT: string = process.env.AUTH_SECRET || randomUUID()
+
 /** L'IP n'est jamais stockée en clair — seulement son empreinte. */
 export function hashIp(ip: string): string {
   return createHash('sha256')
-    .update(`${ip}${process.env.AUTH_SECRET ?? ''}`)
+    .update(`${ip}${IP_SALT}`)
     .digest('hex')
     .slice(0, 32)
 }

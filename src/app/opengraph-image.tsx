@@ -2,7 +2,7 @@ import { ImageResponse } from 'next/og'
 
 import { getSettings } from '@/server/queries'
 
-export const alt = 'AMASWI'
+export const alt = 'ANASAWI'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -56,8 +56,12 @@ export default async function Image() {
             {settings.defaultSeoTitle ?? settings.tagline ?? settings.siteName}
           </div>
           {settings.practitionerName && (
+            /* Satori (next/og) exige `display: flex` sur tout <div> qui a
+               plusieurs enfants, et deux expressions JSX adjacentes en font
+               deux : on compose donc une seule chaîne. */
             <div
               style={{
+                display: 'flex',
                 marginTop: 34,
                 fontSize: 25,
                 letterSpacing: 4,
@@ -66,10 +70,9 @@ export default async function Image() {
                 fontFamily: 'sans-serif',
               }}
             >
-              {settings.practitionerName}
               {settings.practitionerTitle
-                ? ` · ${settings.practitionerTitle}`
-                : ''}
+                ? `${settings.practitionerName} · ${settings.practitionerTitle}`
+                : settings.practitionerName}
             </div>
           )}
         </div>

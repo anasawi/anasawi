@@ -74,8 +74,17 @@ export function BlockImage({
   )
 
   if (instant) {
+    /* Même précaution que l'ImageVeil : masque radial + image un poil
+       plus grande que son cadre, sinon un liseré sombre cerne l'arrondi. */
     return (
-      <div className={cn('relative overflow-hidden', className)}>{content}</div>
+      <div
+        className={cn(
+          'relative isolate overflow-hidden [-webkit-mask-image:-webkit-radial-gradient(white,black)]',
+          className,
+        )}
+      >
+        <div className="absolute -inset-px scale-[1.02]">{content}</div>
+      </div>
     )
   }
 

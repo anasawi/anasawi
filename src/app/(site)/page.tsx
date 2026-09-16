@@ -24,7 +24,7 @@ export const revalidate = 3600
 
 export async function generateMetadata(): Promise<Metadata> {
   const [page, settings] = await Promise.all([getPublishedHome(), getSettings()])
-  if (!page) return { title: 'AMASWI' }
+  if (!page) return { title: 'ANASAWI' }
 
   const ogId = page.seo?.ogMediaId ?? settings.defaultOgMediaId
   const [ogImage] = ogId ? await getMediaByIds([ogId]) : []

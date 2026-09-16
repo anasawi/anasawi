@@ -26,7 +26,7 @@ const karla = Karla({
 
 export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
-  title: { default: 'AMASWI', template: '%s' },
+  title: { default: 'ANASAWI', template: '%s' },
   formatDetection: { telephone: false, address: false, email: false },
 }
 

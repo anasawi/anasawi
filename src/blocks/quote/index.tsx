@@ -26,7 +26,7 @@ function Quote({ data }: BlockProps<QuotePayload>) {
         <Reveal>
           <span
             aria-hidden="true"
-            className="mx-auto mb-12 block h-14 w-px bg-line-strong"
+            className="mx-auto mb-8 block h-14 w-px bg-line-strong"
           />
         </Reveal>
 
@@ -42,7 +42,7 @@ function Quote({ data }: BlockProps<QuotePayload>) {
 
         {data.attribution && (
           <Reveal delay={0.3}>
-            <figcaption className="mt-10 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+            <figcaption className="mt-6 text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
               {data.attribution}
             </figcaption>
           </Reveal>
@@ -69,6 +69,12 @@ export const quoteBlock: BlockDefinition<typeof quoteSchema> = {
     ),
     field.text('attribution', 'Attribution', { full: true }),
   ],
-  defaults: { lines: [], attribution: '' },
+  defaults: {
+    lines: [
+      { text: 'On ne répare pas les gens.' },
+      { text: 'On les *écoute*.' },
+    ],
+    attribution: 'Anne Winzenried',
+  },
   Component: Quote,
 }

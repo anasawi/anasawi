@@ -1,20 +1,9 @@
-import { AdminContent } from '@/components/admin/AdminContent'
-import { PageHeader } from '@/components/admin/PageHeader'
-import { SettingsForm } from '@/components/admin/SettingsForm'
-import { getAllMedia, getSettings } from '@/server/queries'
+import { redirect } from 'next/navigation'
 
-export const dynamic = 'force-dynamic'
-
-export default async function SettingsPage() {
-  const [settings, library] = await Promise.all([getSettings(), getAllMedia()])
-
-  return (
-    <AdminContent>
-      <PageHeader
-        title="Coordonnées & horaires"
-        description="Tout ce que vos visiteurs doivent savoir pour vous joindre — et ce que Google affiche de vous."
-      />
-      <SettingsForm settings={settings} library={library} />
-    </AdminContent>
-  )
+/**
+ * Ancienne adresse des coordonnées — tout vit désormais dans `/admin/reglages`.
+ * La redirection garde les signets et les liens internes fonctionnels.
+ */
+export default function SettingsRedirectPage() {
+  redirect('/admin/reglages#coordonnees')
 }

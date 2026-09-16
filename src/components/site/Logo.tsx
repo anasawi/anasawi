@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 /**
- * Monogramme AMASWI — ombelle de pissenlit au trait.
+ * Monogramme ANASAWI — ombelle de pissenlit au trait.
  *
  * Un point central, des tiges de longueurs inégales, quelques akènes en
  * dérive. Le tracé est inline plutôt que dans un fichier .svg importé : il
@@ -78,7 +78,7 @@ export function Logo({
           wordmarkClassName,
         )}
       >
-        AMASWI
+        ANASAWI
       </span>
     </span>
   )
