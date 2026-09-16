@@ -1,4 +1,5 @@
-import 'dotenv/config'
+/* À charger en premier : `./index` lit `process.env` dès son évaluation. */
+import './load-env'
 
 import { eq } from 'drizzle-orm'
 
