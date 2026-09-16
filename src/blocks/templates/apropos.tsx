@@ -184,7 +184,7 @@ export const aproposPortraitBlock: BlockDefinition<
       { value: 48, suffix: ' h', label: 'pour vous répondre' },
     ],
     linkLabel: 'Découvrir mon parcours',
-    linkHref: '/a-propos',
+    linkHref: '#a-propos',
   },
   Component: AproposPortrait,
 }

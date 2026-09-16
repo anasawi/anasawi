@@ -155,7 +155,7 @@ export const heroBlock: BlockDefinition<typeof heroSchema> = {
     primaryLabel: 'Prendre rendez-vous',
     primaryHref: '#contact',
     secondaryLabel: 'Découvrir l’approche',
-    secondaryHref: '/approche',
+    secondaryHref: '#approche',
     mediaId: null,
   },
   Component: Hero,

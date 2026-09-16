@@ -128,7 +128,7 @@ export const imageTextBlock: BlockDefinition<typeof imageTextSchema> = {
     imageSide: 'left',
     ratio: 'portrait',
     ctaLabel: 'Découvrir le cabinet',
-    ctaHref: '/le-cabinet',
+    ctaHref: '#cabinet',
   },
   Component: ImageText,
 }

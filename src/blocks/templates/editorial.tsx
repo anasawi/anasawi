@@ -145,7 +145,7 @@ export const texteCentreBlock: BlockDefinition<typeof texteCentreSchema> = {
       'On ne guérit pas en allant plus vite. On guérit en s’accordant enfin le *temps*.',
     text: 'C’est souvent la première chose que l’on redécouvre ici : le droit de ralentir, d’écouter ce qui se passe en soi, sans obligation de résultat. Les séances durent 50 minutes, au cabinet ou en visio, et l’on avance au rythme qui est le vôtre.',
     label: 'Découvrir l’approche',
-    href: '/approche',
+    href: '#approche',
   },
   Component: TexteCentre,
 }
@@ -360,7 +360,7 @@ export const lieuArchesBlock: BlockDefinition<typeof lieuArchesSchema> = {
     text: 'Pas de blouse blanche, pas de divan intimidant. Un fauteuil, du thé, la lumière du matin et le temps qu’il faut. Le cabinet se trouve 6 rue Saint-Martin à Cesson-Sévigné, à quelques minutes de Rennes, facile d’accès.',
     caption: 'Le cabinet — 6 rue Saint-Martin, Cesson-Sévigné',
     linkLabel: 'Découvrir le lieu',
-    linkHref: '/le-cabinet',
+    linkHref: '#cabinet',
     mediaId: null,
     secondMediaId: null,
   },

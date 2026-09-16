@@ -388,10 +388,12 @@ async function writeSettings(): Promise<void> {
       'Anne Winzenried, thérapeute à Cesson-Sévigné, près de Rennes. Thérapie individuelle, accompagnement des adolescents et du deuil. Au cabinet ou en visio, dans un cadre stable et confidentiel.',
     defaultOgMediaId: img('cabinet-fauteuil'),
     navigation: [
-      { label: 'À propos', href: '/a-propos' },
-      { label: 'Accompagnements', href: '/accompagnements' },
-      { label: 'Approche', href: '/approche' },
-      { label: 'Le cabinet', href: '/le-cabinet' },
+      /* Le site est une page unique : la navigation pointe vers les ancres
+         des sections, pas vers des pages qui n'existent pas. */
+      { label: 'À propos', href: '#a-propos' },
+      { label: 'Accompagnements', href: '#accompagnements' },
+      { label: 'Approche', href: '#approche' },
+      { label: 'Le cabinet', href: '#cabinet' },
     ],
   }
 
@@ -566,7 +568,7 @@ function homePage(): PageSeed {
             { value: 48, suffix: ' h', label: 'pour une première réponse' },
           ],
           linkLabel: 'Mon parcours',
-          linkHref: '/a-propos',
+          linkHref: '#a-propos',
         },
       },
       /* F — Accompagnements : les rangées. */
@@ -613,7 +615,7 @@ function homePage(): PageSeed {
           text: 'Pas de blouse blanche, pas de divan intimidant. Un fauteuil, du thé, et le temps qu’il faut.',
           caption: 'Le cabinet — rue Saint-Martin, Cesson-Sévigné',
           linkLabel: 'Voir le lieu',
-          linkHref: '/le-cabinet',
+          linkHref: '#cabinet',
           mediaId: img('cabinet-salon'),
           secondMediaId: img('cabinet-assise'),
         },
@@ -1232,7 +1234,7 @@ function placePage(): PageSeed {
           title: 'Vous *hésitez* encore ?',
           text: 'Découvrez les trois accompagnements proposés, le déroulé d’une séance et les tarifs.',
           label: 'Voir les accompagnements',
-          href: '/accompagnements',
+          href: '#accompagnements',
         },
       },
     ],
