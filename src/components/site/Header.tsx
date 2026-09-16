@@ -5,7 +5,7 @@ import { m, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import { PRELOADER_DONE_EVENT } from './Preloader'
-import { cn, navHref, toE164 } from '@/lib/utils'
+import { anchorId, cn, navHref, toE164 } from '@/lib/utils'
 
 export type NavItem = { label: string; anchor: string }
 
@@ -112,7 +112,7 @@ export function Header({
       .filter(
         (item) => !item.anchor.startsWith('/') && !item.anchor.startsWith('http'),
       )
-      .map((item) => document.getElementById(item.anchor))
+      .map((item) => document.getElementById(anchorId(item.anchor)))
       .filter((el): el is HTMLElement => el !== null)
 
     if (targets.length === 0) return
@@ -240,7 +240,7 @@ export function Header({
           className="hidden items-center gap-1.5 lg:flex"
         >
           {items.map((item) => {
-            const isActive = activeAnchor === item.anchor
+            const isActive = activeAnchor === anchorId(item.anchor)
             return (
               <a
                 key={item.anchor}
@@ -331,7 +331,7 @@ export function Header({
           >
             <ul className="flex flex-col gap-1">
               {items.map((item, i) => {
-                const isActive = activeAnchor === item.anchor
+                const isActive = activeAnchor === anchorId(item.anchor)
                 const link = (
                   <a
                     href={navHref(item.anchor)}

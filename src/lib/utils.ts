@@ -13,10 +13,26 @@ export function cn(...inputs: ClassValue[]) {
  * (Header) — une fonction exportée d'un module `use client` ne peut pas
  * être appelée depuis un composant serveur.
  */
+/**
+ * Lien de navigation à partir d'une valeur du CMS.
+ *
+ * Les entrées peuvent être écrites de trois façons — `a-propos`, `#a-propos`
+ * ou `/une-page` — selon qu'elles viennent d'un ancien enregistrement, de la
+ * page Navigation ou d'un lien externe. La fonction est idempotente : elle
+ * n'ajoute un `#` que s'il manque, sans quoi on obtient `##a-propos`, qui ne
+ * correspond à aucune ancre.
+ */
 export function navHref(anchor: string): string {
-  return anchor.startsWith('/') || anchor.startsWith('http')
+  return anchor.startsWith('/') ||
+    anchor.startsWith('http') ||
+    anchor.startsWith('#')
     ? anchor
     : `#${anchor}`
+}
+
+/** Identifiant de section correspondant à une entrée de navigation. */
+export function anchorId(anchor: string): string {
+  return anchor.startsWith('#') ? anchor.slice(1) : anchor
 }
 
 export function slugify(input: string): string {
