@@ -22,9 +22,12 @@
   /* ── Encre ────────────────────────────────────────────────────────
      Encre végétale (vert-gris très sombre) plutôt qu'anthracite neutre. */
   --color-ink: #2b2f2c; /* titres, texte fort */
-  --color-ink-soft: #565c56; /* texte courant */
-  --color-soft: #565c56; /* alias maquette */
-  --color-stone: #98988e; /* labels, méta — jamais sous 14px */
+  /* Ces valeurs sont calées sur le contraste, pas sur l'harmonie : elles
+     portent du texte courant. La palette du CMS les recalcule de la même
+     façon (voir `readableTint` dans lib/palette.ts). */
+  --color-ink-soft: #454945; /* texte courant — 9,3:1 sur l'ivoire */
+  --color-soft: #454945; /* alias maquette */
+  --color-stone: #6d716c; /* labels, méta — 5,4:1, jamais sous 14px */
 
   /* ── Fond nuit — sections sombres, citations, contact ───────────── */
   --color-night: #2e424f;
@@ -190,7 +193,10 @@
     background-color: var(--color-ivory);
     color: var(--color-ink);
     font-family: var(--font-sans);
-    font-size: 15px;
+    /* 16px plutôt que 15 : Anne trouvait le texte courant difficile à lire,
+       et la plupart des tailles du site sont relatives à cette base — la
+       remonter ici les entraîne toutes, sans retoucher chaque bloc. */
+    font-size: 16px;
     /* Filet de sécurité : titres décalés du hero, bandeaux, chiffres
        débordants — rien ne doit ouvrir un défilement horizontal.
        `clip` (et non `hidden`) ne crée pas de conteneur de défilement :

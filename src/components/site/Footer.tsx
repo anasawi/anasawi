@@ -67,7 +67,7 @@ export function Footer({
           {addressLine && (
             <div>
               <p className={columnLabel}>Le cabinet</p>
-              <address className="mt-2.5 text-[13px] leading-[1.7] not-italic text-ink-soft">
+              <address className="mt-2.5 text-[14.5px] leading-[1.7] not-italic text-ink-soft">
                 {addressLine}
               </address>
             </div>
@@ -76,7 +76,7 @@ export function Footer({
           {(items.length > 0 || socials.length > 0) && (
             <nav aria-label="Navigation de pied de page">
               <p className={columnLabel}>Parcourir</p>
-              <ul className="mt-2.5 space-y-1.5 text-[13px] leading-[1.7]">
+              <ul className="mt-2.5 space-y-1.5 text-[14.5px] leading-[1.7]">
                 {items.map((item) => (
                   <li key={item.anchor}>
                     <a
@@ -105,7 +105,7 @@ export function Footer({
         </div>
 
         {settings.tagline && (
-          <p className="mx-auto mt-10 max-w-[46ch] font-serif text-[17px] font-light italic text-ink-soft md:mt-12">
+          <p className="mx-auto mt-10 max-w-[46ch] font-serif text-[18px] font-light italic text-ink-soft md:mt-12">
             {settings.tagline}
           </p>
         )}
@@ -115,7 +115,7 @@ export function Footer({
           ANASAWI
         </p>
         {signatureLine && (
-          <p className="mt-3 font-serif text-[16px] font-light italic text-stone">
+          <p className="mt-3 font-serif text-[17px] font-light italic text-stone">
             {signatureLine}
           </p>
         )}

@@ -94,7 +94,7 @@ function TexteCentre({
 
         {data.text && (
           <Reveal delay={0.2}>
-            <p className="mx-auto mt-6 max-w-[52ch] text-[15px] leading-[1.9] text-ink-soft">
+            <p className="mx-auto mt-6 max-w-[52ch] text-[16px] leading-[1.9] text-ink-soft">
               {data.text}
             </p>
           </Reveal>
@@ -300,7 +300,7 @@ function LieuArches({
 
           {data.text && (
             <Reveal delay={0.2}>
-              <p className="mt-6 max-w-[40ch] text-[15px] leading-[1.9] text-ink-soft">
+              <p className="mt-6 max-w-[40ch] text-[16px] leading-[1.9] text-ink-soft">
                 {data.text}
               </p>
             </Reveal>

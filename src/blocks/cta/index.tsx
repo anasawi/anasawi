@@ -67,8 +67,8 @@ function Cta({ data }: BlockProps<CtaPayload>) {
               <p
                 className={
                   dark
-                    ? 'mx-auto mt-6 max-w-[44ch] text-[14px] leading-[1.85] text-ivory/75'
-                    : 'mx-auto mt-6 max-w-[44ch] text-[14px] leading-[1.85] text-blue-ink/80'
+                    ? 'mx-auto mt-6 max-w-[44ch] text-[15px] leading-[1.85] text-ivory/75'
+                    : 'mx-auto mt-6 max-w-[44ch] text-[15px] leading-[1.85] text-blue-ink/80'
                 }
               >
                 {data.text}

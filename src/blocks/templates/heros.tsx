@@ -127,7 +127,7 @@ function HeroPleinEcran({
 
       {data.intro && (
         <Reveal delay={0.5}>
-          <p className="mx-auto mt-10 max-w-[46ch] text-[15px] leading-[1.9] text-ink-soft md:mt-12">
+          <p className="mx-auto mt-10 max-w-[46ch] text-[16px] leading-[1.9] text-ink-soft md:mt-12">
             {data.intro}
           </p>
         </Reveal>
@@ -388,7 +388,7 @@ function HeroMinimal({
 
       {data.intro && (
         <Reveal delay={0.5}>
-          <p className="mx-auto mt-6 max-w-[44ch] text-[15px] leading-[1.9] text-ink-soft">
+          <p className="mx-auto mt-6 max-w-[44ch] text-[16px] leading-[1.9] text-ink-soft">
             {data.intro}
           </p>
         </Reveal>
@@ -497,7 +497,7 @@ function HeroBandeau({
 
         {data.intro && (
           <Reveal delay={0.35}>
-            <p className="mx-auto mt-6 max-w-[46ch] text-[15px] leading-[1.9] text-ink-soft">
+            <p className="mx-auto mt-6 max-w-[46ch] text-[16px] leading-[1.9] text-ink-soft">
               {data.intro}
             </p>
           </Reveal>

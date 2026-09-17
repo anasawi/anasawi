@@ -405,7 +405,7 @@ function ListeAtouts({
           {data.items.map((item, i) => (
             <Reveal key={i} delay={Math.min(0.08 + i * 0.06, 0.4)}>
               <div className="flex items-start gap-5 border-t border-line pt-7">
-                <Aster className="mt-0.5 text-[17px] text-blue-deep" />
+                <Aster className="mt-0.5 text-[18px] text-blue-deep" />
                 <div>
                   {item.title && (
                     <h3 className="font-serif text-[1.15rem] font-light text-ink">

@@ -73,7 +73,7 @@ function ServicesListe({
         )}
         {data.intro && (
           <Reveal delay={0.14}>
-            <p className="mx-auto mt-6 max-w-[52ch] text-[15px] leading-[1.85] text-ink-soft">
+            <p className="mx-auto mt-6 max-w-[52ch] text-[16px] leading-[1.85] text-ink-soft">
               {data.intro}
             </p>
           </Reveal>
@@ -93,7 +93,7 @@ function ServicesListe({
                   i === items.length - 1 ? 'border-b' : ''
                 }`}
               >
-                <span className="font-serif text-[15px] font-light italic text-blue-deep transition-colors duration-[450ms] group-hover:text-blue lg:col-span-1">
+                <span className="font-serif text-[16px] font-light italic text-blue-deep transition-colors duration-[450ms] group-hover:text-blue lg:col-span-1">
                   {numberWord(i)}
                 </span>
 
@@ -101,7 +101,7 @@ function ServicesListe({
                   {service.title}
                 </h3>
 
-                <p className="mt-1 max-w-[40ch] text-[13px] leading-[1.75] text-stone transition-[opacity,transform,color] duration-[450ms] group-hover:text-ivory/75 lg:mt-0 lg:col-span-3 lg:translate-y-1.5 lg:text-[12.5px] lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100">
+                <p className="mt-1 max-w-[40ch] text-[14.5px] leading-[1.75] text-stone transition-[opacity,transform,color] duration-[450ms] group-hover:text-ivory/75 lg:mt-0 lg:col-span-3 lg:translate-y-1.5 lg:text-[14px] lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100">
                   {service.excerpt}
                   {service.duration ? (
                     <span className="mt-2 block text-[10.5px] font-semibold uppercase tracking-[0.2em] opacity-80">

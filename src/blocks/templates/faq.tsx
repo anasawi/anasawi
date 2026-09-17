@@ -46,7 +46,7 @@ function FaqEditoriale({
           )}
           {data.intro && (
             <Reveal delay={0.14}>
-              <p className="mx-auto mt-6 max-w-[52ch] text-[15px] leading-[1.85] text-ink-soft">
+              <p className="mx-auto mt-6 max-w-[52ch] text-[16px] leading-[1.85] text-ink-soft">
                 {data.intro}
               </p>
             </Reveal>
@@ -77,7 +77,7 @@ function FaqEditoriale({
                       －
                     </span>
                   </summary>
-                  <p className="max-w-[56ch] px-1.5 pb-7 text-[14px] leading-[1.85] text-ink-soft">
+                  <p className="max-w-[56ch] px-1.5 pb-7 text-[15px] leading-[1.85] text-ink-soft">
                     {item.answer}
                   </p>
                 </details>

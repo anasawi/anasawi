@@ -86,6 +86,22 @@ export function shade(input: string, key: ShadeKey): string {
   return key === 'deep' ? mix(base, BLACK, deep) : mix(base, BLACK, (1 + deep) / 2)
 }
 
+/**
+ * Teinte de texte lisible : l'encre éclaircie d'une part de blanc.
+ *
+ * Volontairement distincte de `shade()`, dont les cinq paliers servent
+ * l'harmonie de la palette et non la lecture. C'est cette confusion qui avait
+ * laissé les descriptions de cartes à 3,3 de contraste — sous le minimum de
+ * 4,5 exigé pour du texte courant — parce qu'elles empruntaient le palier
+ * « très clair », prévu pour des aplats et des filets.
+ *
+ * `part` est la proportion d'encre conservée : plus elle est haute, plus le
+ * texte est sombre et lisible.
+ */
+function readableTint(ink: string, part: number): string {
+  return mix(normalizeHex(ink), WHITE, part)
+}
+
 export type Shade = { key: ShadeKey; label: string; hex: string }
 
 /** Les cinq paliers d'une couleur, du plus clair au plus profond. */
@@ -263,9 +279,11 @@ export function paletteVars(palette: Palette): Record<string, string> {
 
     /* Encre */
     '--color-ink': palette.ink,
-    '--color-ink-soft': shade(palette.ink, 'light'),
-    '--color-soft': shade(palette.ink, 'light'),
-    '--color-stone': shade(palette.ink, 'lightest'),
+    /* Ces trois-là portent du texte : elles passent par `readableTint`,
+       calé sur le contraste, et non par les paliers de la palette. */
+    '--color-ink-soft': readableTint(palette.ink, 0.88),
+    '--color-soft': readableTint(palette.ink, 0.88),
+    '--color-stone': readableTint(palette.ink, 0.7),
     /* Le fond nuit : l'encre poussée, teintée vers l'accent — c'est ce qui
        lui donne son bleu sans le détacher de la famille de l'encre. */
     '--color-night': mix(palette.accent, shade(palette.ink, 'deep'), 0.37),

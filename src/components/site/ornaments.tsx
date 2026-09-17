@@ -96,7 +96,7 @@ export function SectionIndex({
       className={cn(
         /* Masqué sous `md` : à 360px il chevaucherait le label supérieur
            ou la capsule de navigation. */
-        'section-index pointer-events-none hidden font-serif text-[13px] italic md:inline',
+        'section-index pointer-events-none hidden font-serif text-[14.5px] italic md:inline',
         light ? 'text-ivory/40' : 'text-stone',
         className,
       )}

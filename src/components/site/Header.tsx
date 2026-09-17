@@ -225,11 +225,11 @@ export function Header({
         >
           <span
             aria-hidden="true"
-            className="inline-block font-serif text-[17px] text-blue-deep transition-transform duration-700 ease-[var(--ease)] group-hover:rotate-180"
+            className="inline-block font-serif text-[18px] text-blue-deep transition-transform duration-700 ease-[var(--ease)] group-hover:rotate-180"
           >
             ✳
           </span>
-          <span className="font-serif text-[15.5px] font-light tracking-[0.26em]">
+          <span className="font-serif text-[16.5px] font-light tracking-[0.26em]">
             ANASAWI
           </span>
         </Link>
@@ -398,7 +398,7 @@ export function Header({
                 </span>
                 &nbsp;&nbsp;Contact
               </p>
-              <div className="mt-3 flex flex-col gap-1.5 text-[13px] leading-[1.7] text-ivory/80">
+              <div className="mt-3 flex flex-col gap-1.5 text-[14.5px] leading-[1.7] text-ivory/80">
                 {phone && (
                   <a
                     href={`tel:${toE164(phone)}`}

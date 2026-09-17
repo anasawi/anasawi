@@ -60,7 +60,7 @@ function AproposPortrait({
           />
           {data.signature && (
             <Reveal delay={0.3}>
-              <span className="absolute -right-4 bottom-9 z-[3] rounded-full border border-line-strong bg-ivory px-6 py-3 font-serif text-[17px] font-light italic text-blue-deep shadow-[0_14px_40px_rgba(43,47,44,0.08)] lg:right-[-26px]">
+              <span className="absolute -right-4 bottom-9 z-[3] rounded-full border border-line-strong bg-ivory px-6 py-3 font-serif text-[18px] font-light italic text-blue-deep shadow-[0_14px_40px_rgba(43,47,44,0.08)] lg:right-[-26px]">
                 {data.signature}
               </span>
             </Reveal>
@@ -382,7 +382,7 @@ function AproposParcours({
                   />
 
                   {step.year && (
-                    <p className="font-serif text-[15px] font-light italic text-blue-deep">
+                    <p className="font-serif text-[16px] font-light italic text-blue-deep">
                       {step.year}
                     </p>
                   )}
@@ -523,7 +523,7 @@ function AproposMedaillon({
           )}
           {data.text && (
             <Reveal delay={0.2}>
-              <p className="mx-auto mt-6 max-w-[44ch] text-[14px] leading-[1.85] text-ink-soft lg:mx-0">
+              <p className="mx-auto mt-6 max-w-[44ch] text-[15px] leading-[1.85] text-ink-soft lg:mx-0">
                 {data.text}
               </p>
             </Reveal>

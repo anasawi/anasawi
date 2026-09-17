@@ -81,7 +81,7 @@ function ContactMinimal({
       ? {
           label: 'Le cabinet',
           content: (
-            <address className="text-[13px] not-italic leading-[1.7] text-ivory/85">
+            <address className="text-[14.5px] not-italic leading-[1.7] text-ivory/85">
               {address.map((line) => (
                 <span key={line} className="block">
                   {line}
@@ -95,7 +95,7 @@ function ContactMinimal({
       ? {
           label: 'Horaires',
           content: (
-            <div className="text-[13px] leading-[1.7] text-ivory/85">
+            <div className="text-[14.5px] leading-[1.7] text-ivory/85">
               {hours.map((h, i) => (
                 <span key={i} className="block">
                   {h.day} — {h.hours}
@@ -109,7 +109,7 @@ function ContactMinimal({
       ? {
           label: 'Réponse',
           content: (
-            <p className="max-w-[24ch] text-[13px] leading-[1.7] text-ivory/85">
+            <p className="max-w-[24ch] text-[14.5px] leading-[1.7] text-ivory/85">
               {data.text}
             </p>
           ),
@@ -286,7 +286,7 @@ function ContactCarte({
 
           {data.intro && (
             <Reveal delay={0.14}>
-              <p className="mt-6 max-w-[44ch] text-[15px] leading-[1.85] text-ink-soft">
+              <p className="mt-6 max-w-[44ch] text-[16px] leading-[1.85] text-ink-soft">
                 {data.intro}
               </p>
             </Reveal>
@@ -464,7 +464,7 @@ function AppelDoux({ data }: BlockProps<z.output<typeof appelDouxSchema>>) {
 
         {data.text && (
           <Reveal delay={0.16}>
-            <p className="mx-auto mt-6 max-w-[46ch] text-[14px] leading-[1.85] text-ink-soft">
+            <p className="mx-auto mt-6 max-w-[46ch] text-[15px] leading-[1.85] text-ink-soft">
               {data.text}
             </p>
           </Reveal>
