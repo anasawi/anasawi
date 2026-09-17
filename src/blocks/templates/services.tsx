@@ -8,7 +8,9 @@ import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
+import { ServiceRows } from '@/components/site/ServiceRows'
 import { SectionIndex } from '@/components/site/ornaments'
+import { bookingHref } from '@/lib/settings-helpers'
 
 /*
  * Présenter son offre. Les blocs connectés lisent `ctx.services` (table
@@ -37,13 +39,16 @@ function numberWord(i: number): string {
    Accompagnements — Liste (proposition F de la planche)
    Une rangée par accompagnement : index en toutes lettres, grand titre
    serif qui glisse au survol pendant que la rangée s'inverse vers le
-   fond nuit et que la description se révèle.
+   fond nuit et que la description se révèle. Un clic ouvre la fiche de
+   l'accompagnement (ServicePanel) — sa description longue, son image,
+   sa durée et l'invitation à prendre rendez-vous.
    ════════════════════════════════════════════════════════════════════ */
 
 export const servicesListeSchema = z.object({
   eyebrow: z.string().default(''),
   title: z.string().default(''),
   intro: z.string().default(''),
+  panelCta: z.string().default('Prendre rendez-vous'),
 })
 
 function ServicesListe({
@@ -81,45 +86,12 @@ function ServicesListe({
       </div>
 
       {items.length > 0 && (
-        <div className="mt-10 md:mt-12">
-          {items.map((service, i) => (
-            <Reveal key={service.id} delay={Math.min(i * 0.07, 0.35)}>
-              {/* Mobile : empilement numéro / titre / description / flèche,
-                  description toujours visible (le survol n'existe pas au
-                  doigt — Tailwind v4 réserve `hover:` aux pointeurs qui
-                  survolent). */}
-              <article
-                className={`group grid grid-cols-1 gap-y-2 border-t border-line px-[var(--spacing-gutter)] py-7 transition-[background-color,color,border-radius] duration-[450ms] ease-[var(--ease)] hover:rounded-[28px] hover:bg-night hover:text-ivory md:py-9 lg:grid-cols-12 lg:items-baseline lg:gap-x-5 ${
-                  i === items.length - 1 ? 'border-b' : ''
-                }`}
-              >
-                <span className="font-serif text-[16px] font-light italic text-blue-deep transition-colors duration-[450ms] group-hover:text-blue lg:col-span-1">
-                  {numberWord(i)}
-                </span>
-
-                <h3 className="font-serif text-[clamp(28px,3.8vw,62px)] font-light leading-none transition-transform duration-[450ms] ease-[var(--ease)] group-hover:translate-x-4 group-hover:italic lg:col-span-7">
-                  {service.title}
-                </h3>
-
-                <p className="mt-1 max-w-[40ch] text-[14.5px] leading-[1.75] text-stone transition-[opacity,transform,color] duration-[450ms] group-hover:text-ivory/75 lg:mt-0 lg:col-span-3 lg:translate-y-1.5 lg:text-[14px] lg:opacity-0 lg:group-hover:translate-y-0 lg:group-hover:opacity-100">
-                  {service.excerpt}
-                  {service.duration ? (
-                    <span className="mt-2 block text-[10.5px] font-semibold uppercase tracking-[0.2em] opacity-80">
-                      {service.duration}
-                    </span>
-                  ) : null}
-                </p>
-
-                <span
-                  aria-hidden="true"
-                  className="mt-1 block text-left font-serif text-[22px] opacity-35 transition-[opacity,transform,color] duration-[450ms] ease-[var(--ease)] group-hover:translate-x-[5px] group-hover:text-blue group-hover:opacity-100 lg:mt-0 lg:col-span-1 lg:text-right"
-                >
-                  →
-                </span>
-              </article>
-            </Reveal>
-          ))}
-        </div>
+        <ServiceRows
+          items={items}
+          bookingHref={bookingHref(ctx.settings, '#contact')}
+          ctaLabel={data.panelCta}
+          interactive={!ctx.editable}
+        />
       )}
     </div>
   )
@@ -140,12 +112,16 @@ export const servicesListeBlock: BlockDefinition<typeof servicesListeSchema> =
       field.text('eyebrow', 'Label supérieur'),
       field.text('title', 'Titre', { full: true }),
       field.textarea('intro', 'Introduction'),
+      field.text('panelCta', 'Fiche — bouton', {
+        help: 'Le bouton en bas de la fiche qui s’ouvre au clic sur un accompagnement. Il mène à la prise de rendez-vous des Réglages, ou à la section Contact.',
+      }),
     ],
     defaults: {
       eyebrow: 'Accompagnements',
       title: 'Trois manières de *commencer*.',
       intro:
         'Thérapie individuelle, accompagnement des adolescents, soutien à la parentalité : chaque cadre a son rythme et sa durée. Au cabinet de Cesson-Sévigné ou en visio, le premier pas est toujours le même — un échange, sans engagement.',
+      panelCta: 'Prendre rendez-vous',
     },
     Component: ServicesListe,
   }
