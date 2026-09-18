@@ -99,6 +99,10 @@ export const faqEditorialeBlock: BlockDefinition<typeof faqEditorialeSchema> =
     schema: faqEditorialeSchema,
     suggestedAnchor: 'questions',
     navigable: true,
+    dataSource: {
+      label: 'Les questions et leurs réponses',
+      href: '/admin/faq',
+    },
     fields: [
       field.text('eyebrow', 'Label supérieur'),
       field.text('title', 'Titre', {

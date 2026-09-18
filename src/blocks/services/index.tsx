@@ -146,6 +146,10 @@ export const servicesBlock: BlockDefinition<typeof servicesSchema> = {
   schema: servicesSchema,
   suggestedAnchor: 'accompagnements',
   navigable: true,
+  dataSource: {
+    label: 'Les accompagnements et leurs textes',
+    href: '/admin/accompagnements',
+  },
   fields: [
     field.text('eyebrow', 'Label supérieur'),
     field.text('title', 'Titre', { full: true }),

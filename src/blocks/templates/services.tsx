@@ -35,6 +35,13 @@ function numberWord(i: number): string {
   return NUMBER_WORDS[i] ?? String(i + 1)
 }
 
+/* Ces blocs n'ont pas de champs pour les accompagnements : ils lisent la
+   table du CMS. L'inspecteur l'annonce et renvoie à l'écran dédié. */
+const SERVICES_SOURCE = {
+  label: 'Les accompagnements et leurs textes',
+  href: '/admin/accompagnements',
+} as const
+
 /* ════════════════════════════════════════════════════════════════════
    Accompagnements — Liste (proposition F de la planche)
    Une rangée par accompagnement : index en toutes lettres, grand titre
@@ -106,6 +113,7 @@ export const servicesListeBlock: BlockDefinition<typeof servicesListeSchema> =
     schema: servicesListeSchema,
     suggestedAnchor: 'accompagnements',
     navigable: true,
+    dataSource: SERVICES_SOURCE,
     /* Section standard : le wrapper porte le padding. Seules les rangées
        débordent horizontalement (elles posent leur propre gouttière). */
     fields: [
@@ -229,6 +237,7 @@ export const servicesNumerotesBlock: BlockDefinition<
   schema: servicesNumerotesSchema,
   suggestedAnchor: 'accompagnements',
   navigable: true,
+  dataSource: SERVICES_SOURCE,
   fields: [
     field.text('eyebrow', 'Label supérieur'),
     field.text('title', 'Titre', { full: true }),
@@ -364,6 +373,7 @@ export const servicesImmersifsBlock: BlockDefinition<
   schema: servicesImmersifsSchema,
   suggestedAnchor: 'accompagnements',
   navigable: true,
+  dataSource: SERVICES_SOURCE,
   fields: [
     field.text('eyebrow', 'Label supérieur'),
     field.text('title', 'Titre', { full: true }),
@@ -473,6 +483,7 @@ export const servicesArchesBlock: BlockDefinition<typeof servicesArchesSchema> =
     schema: servicesArchesSchema,
     suggestedAnchor: 'accompagnements',
     navigable: true,
+    dataSource: SERVICES_SOURCE,
     fields: [
       field.text('eyebrow', 'Label supérieur'),
       field.text('title', 'Titre', { full: true }),
@@ -583,6 +594,7 @@ export const servicesDetailBlock: BlockDefinition<typeof servicesDetailSchema> =
     group: 'Sections',
     schema: servicesDetailSchema,
     suggestedAnchor: 'accompagnement',
+    dataSource: SERVICES_SOURCE,
     fields: [
       field.text('eyebrow', 'Label supérieur'),
       field.number('position', 'Numéro de l’accompagnement', {

@@ -188,7 +188,10 @@ export function ServiceHoverPreview({
              les bords — deux bleus qui se chevauchent en haut à droite (le
              recouvrement s'assombrit par multiplication), une sauge en bas à
              gauche. Le texte passe au-dessus. */
-          className="relative isolate flex flex-col overflow-hidden rounded-[18px] border border-white/60 bg-white/[0.82] px-7 pb-6 pt-7 text-ink shadow-[0_32px_80px_-24px_rgba(46,66,79,0.5),0_1px_0_rgba(255,255,255,0.9)_inset] backdrop-blur-[26px] backdrop-saturate-[1.7]"
+          /* Réglage iOS : blanc à 58 % seulement — c'est la transparence qui
+             fait l'effet —, flou fort et saturation poussée pour que ce qui
+             transparaît garde ses couleurs au lieu de virer au gris. */
+          className="relative isolate flex flex-col overflow-hidden rounded-[18px] border border-white/70 bg-white/[0.58] px-7 pb-6 pt-7 text-ink shadow-[0_32px_80px_-24px_rgba(46,66,79,0.5),0_1px_0_rgba(255,255,255,0.95)_inset] backdrop-blur-[36px] backdrop-saturate-[2]"
         >
           <span
             aria-hidden="true"

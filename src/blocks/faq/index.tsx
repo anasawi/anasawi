@@ -63,6 +63,10 @@ export const faqBlock: BlockDefinition<typeof faqSchema> = {
   schema: faqSchema,
   suggestedAnchor: 'faq',
   navigable: true,
+  dataSource: {
+    label: 'Les questions et leurs réponses',
+    href: '/admin/faq',
+  },
   fields: [
     field.text('eyebrow', 'Label supérieur'),
     field.text('title', 'Titre', { full: true }),

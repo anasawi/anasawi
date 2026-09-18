@@ -60,6 +60,20 @@ type BlockMeta = {
   fields: readonly FieldDescriptor[]
   /** Ancre proposée par défaut lors de la création de la section. */
   suggestedAnchor?: string
+  /**
+   * Contenu venu d'un écran du CMS plutôt que du bloc.
+   *
+   * Certains blocs n'affichent pas leur propre texte : ils lisent une liste
+   * partagée (accompagnements, questions fréquentes), pour qu'on la saisisse
+   * une fois et qu'on la réutilise partout. L'inspecteur l'annonce et y
+   * renvoie — sans quoi on cherche en vain les champs correspondants.
+   */
+  dataSource?: {
+    /** Ce que le bloc affiche, à la première personne du CMS. */
+    label: string
+    /** Écran où cela se modifie. */
+    href: string
+  }
   /** Le bloc est-il proposé pour la navigation ? */
   navigable?: boolean
   /**

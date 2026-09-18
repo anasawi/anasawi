@@ -65,6 +65,13 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   poweredByHeader: false,
 
+  /* Un build de validation lancé pendant que `next dev` tourne efface le
+     dossier `.next` que le serveur de dev est en train de servir : page
+     sans styles, logo géant. Les scripts de validation construisent donc
+     dans un dossier à part (`NEXT_DIST_DIR=.next-build`) ; Netlify et le
+     dev gardent `.next`. */
+  distDir: process.env.NEXT_DIST_DIR ?? '.next',
+
   images: {
     formats: ['image/avif', 'image/webp'],
     /* Next ≥ 15.4 exige de déclarer chaque `quality` utilisée par

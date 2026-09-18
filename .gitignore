@@ -1,5 +1,7 @@
 node_modules
 .next
+# Builds de validation, à côté du serveur de dev (voir next.config.ts)
+.next-build
 out
 build
 .DS_Store

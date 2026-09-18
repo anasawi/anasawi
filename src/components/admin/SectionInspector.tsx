@@ -1,6 +1,7 @@
 'use client'
 
 import { Bookmark, Check, ChevronDown, X } from 'lucide-react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
@@ -437,6 +438,20 @@ export function SectionInspector({
       </div>
 
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-1.5">
+        {/* ── Contenu venu d'un autre écran ───────────────────────── */}
+        {block.dataSource && (
+          <p className="mt-2.5 rounded-md border border-border bg-muted/50 px-3 py-2.5 text-[11.5px] leading-[1.6] text-ink-soft">
+            {block.dataSource.label} se modifient dans{' '}
+            <Link
+              href={block.dataSource.href}
+              className="font-medium text-foreground underline underline-offset-2 hover:text-blue-deep"
+            >
+              l’écran dédié
+            </Link>
+            {' '}— on les saisit une fois, ils servent partout.
+          </p>
+        )}
+
         {/* ── Contenu ─────────────────────────────────────────────── */}
         {contentFields.length > 0 && (
           <Group
