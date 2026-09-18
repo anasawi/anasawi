@@ -227,6 +227,15 @@ export const services = pgTable(
     excerpt: text('excerpt').notNull().default(''),
     body: text('body').notNull().default(''),
     duration: text('duration'),
+    /**
+     * Famille d'accompagnements — « Traverser quelque chose », « Passer par
+     * le corps ». Saisie sur chaque accompagnement plutôt que dans une table
+     * dédiée : les familles se forment dans l'ordre de tri, et les réordonner
+     * revient à glisser des lignes, geste qu'Anne connaît déjà.
+     */
+    groupLabel: text('group_label'),
+    /** Mention discrète en regard du titre — « Gestalt-thérapie ». */
+    method: text('method'),
     mediaId: uuid('media_id').references(() => media.id, {
       onDelete: 'set null',
     }),

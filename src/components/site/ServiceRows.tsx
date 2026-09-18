@@ -1,7 +1,7 @@
 'use client'
 
 import { useMotionValue } from 'motion/react'
-import { useCallback, useEffect, useMemo, useState } from 'react'
+import { Fragment, useCallback, useEffect, useMemo, useState } from 'react'
 
 import { Reveal } from '@/components/site/anim'
 import {
@@ -141,9 +141,17 @@ export function ServiceRows({
       >
         {items.map((service, i) => {
           const last = i === items.length - 1
-          const rowClass = `group grid grid-cols-1 gap-y-2 border-t border-line px-[var(--spacing-gutter)] py-7 text-left transition-[background-color,color,border-radius] duration-[450ms] ease-[var(--ease)] hover:rounded-[28px] hover:bg-night hover:text-ivory md:py-9 lg:grid-cols-12 lg:items-baseline lg:gap-x-5 ${
-            last ? 'border-b' : ''
-          }`
+
+          /* Première ligne d'une famille : on annonce l'intitulé. Les
+             familles se forment dans l'ordre de tri — pas de table dédiée,
+             et les réordonner revient à glisser des lignes dans le CMS. */
+          const group = service.groupLabel?.trim() || null
+          const previousGroup = items[i - 1]?.groupLabel?.trim() || null
+          const groupStart = group !== previousGroup ? group : null
+          const rowClass = `group grid grid-cols-1 gap-y-2 border-line px-[var(--spacing-gutter)] py-7 text-left transition-[background-color,color,border-radius] duration-[450ms] ease-[var(--ease)] hover:rounded-[24px] hover:bg-night hover:text-ivory md:py-8 lg:grid-cols-12 lg:items-baseline lg:gap-x-5 ${
+            /* L'intitulé de famille porte déjà le filet du dessus. */
+            groupStart ? '' : 'border-t'
+          } ${last ? 'border-b' : ''}`
 
           const inner = (
             <>
@@ -151,26 +159,38 @@ export function ServiceRows({
                 {numberWord(i)}
               </span>
 
-              <h3 className="font-serif text-[clamp(28px,3.8vw,62px)] font-light leading-none transition-transform duration-[450ms] ease-[var(--ease)] group-hover:translate-x-4 group-hover:italic lg:col-span-7">
+              {/* Plus petit que l'intitulé de famille : la hiérarchie se lit
+                  à la taille, puisqu'il n'y a plus de filet pour la marquer. */}
+              <h3 className="font-serif text-[clamp(23px,2.5vw,35px)] font-light leading-[1.15] transition-transform duration-[450ms] ease-[var(--ease)] group-hover:translate-x-3 group-hover:italic lg:col-span-7">
                 {service.title}
               </h3>
 
-              {/* Mobile : description toujours visible (pas de survol au
-                  doigt). Large : elle se révèle avec la rangée — sauf quand
-                  la carte flottante prend le relais, pour ne pas donner
-                  deux choses à lire en même temps. */}
-              <p
-                className={`mt-1 max-w-[40ch] text-[14.5px] leading-[1.75] text-stone transition-[opacity,transform,color] duration-[450ms] group-hover:text-ivory/75 lg:mt-0 lg:col-span-3 lg:translate-y-1.5 lg:text-[14px] lg:opacity-0 ${
-                  showPreview ? '' : 'lg:group-hover:translate-y-0 lg:group-hover:opacity-100'
-                }`}
-              >
-                {service.excerpt}
-                {service.duration ? (
-                  <span className="mt-2 block text-[10.5px] font-semibold uppercase tracking-[0.2em] opacity-80">
-                    {service.duration}
+              {/* Colonne de droite. Sur large écran avec carte flottante,
+                  seule la mention de méthode subsiste — la carte porte le
+                  texte. Sans carte (tactile, ou aperçu), la description
+                  reprend sa place : au doigt, rien ne survole. */}
+              <div className="lg:col-span-3">
+                {service.method && (
+                  <span className="hidden text-[10px] font-semibold uppercase tracking-[0.18em] text-stone transition-colors duration-[450ms] group-hover:text-ivory/70 lg:block lg:text-right">
+                    {service.method}
                   </span>
-                ) : null}
-              </p>
+                )}
+
+                <p
+                  className={`mt-1 max-w-[40ch] text-[14.5px] leading-[1.75] text-stone transition-[opacity,transform,color] duration-[450ms] group-hover:text-ivory/75 lg:mt-0 lg:translate-y-1.5 lg:text-[14px] lg:opacity-0 ${
+                    showPreview
+                      ? 'lg:hidden'
+                      : 'lg:group-hover:translate-y-0 lg:group-hover:opacity-100'
+                  }`}
+                >
+                  {service.excerpt}
+                  {service.duration ? (
+                    <span className="mt-2 block text-[10.5px] font-semibold uppercase tracking-[0.2em] opacity-80">
+                      {service.duration}
+                    </span>
+                  ) : null}
+                </p>
+              </div>
 
               <span
                 aria-hidden="true"
@@ -182,7 +202,19 @@ export function ServiceRows({
           )
 
           return (
-            <Reveal key={service.id} delay={Math.min(i * 0.07, 0.35)}>
+            <Fragment key={service.id}>
+              {groupStart && (
+                <Reveal delay={Math.min(i * 0.07, 0.35)}>
+                  {/* Ni filet ni fond, et presque la taille des rangées :
+                      ce sont l'italique, le bleu et le centrage qui font
+                      lire un titre, pas une échelle plus grande. */}
+                  <p className="px-[var(--spacing-gutter)] pb-3 pt-6 text-center font-serif text-[clamp(22px,2.4vw,33px)] font-light italic text-blue-deep md:pb-4 md:pt-8">
+                    {groupStart}
+                  </p>
+                </Reveal>
+              )}
+
+            <Reveal delay={Math.min(i * 0.07, 0.35)}>
               {interactive ? (
                 <a
                   href={`?${PARAM}=${encodeURIComponent(service.slug)}`}
@@ -221,6 +253,7 @@ export function ServiceRows({
                 <article className={rowClass}>{inner}</article>
               )}
             </Reveal>
+            </Fragment>
           )
         })}
       </div>

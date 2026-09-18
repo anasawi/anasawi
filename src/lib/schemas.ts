@@ -49,6 +49,10 @@ export const serviceFormSchema = z.object({
   excerpt: z.string().trim().max(600).default(''),
   body: z.string().trim().max(8000).default(''),
   duration: z.string().trim().max(80).nullable().default(null),
+  /* Famille d'accompagnements et mention de méthode : vides par défaut,
+     le regroupement ne s'impose donc jamais. */
+  groupLabel: z.string().trim().max(120).nullable().default(null),
+  method: z.string().trim().max(120).nullable().default(null),
   mediaId: z.string().uuid().nullable().default(null),
   isActive: z.boolean().default(true),
 })

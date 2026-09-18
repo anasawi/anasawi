@@ -56,6 +56,8 @@ type Draft = {
   excerpt: string
   body: string
   duration: string
+  groupLabel: string
+  method: string
   mediaId: string | null
   isActive: boolean
 }
@@ -67,6 +69,8 @@ const emptyDraft: Draft = {
   excerpt: '',
   body: '',
   duration: '',
+  groupLabel: '',
+  method: '',
   mediaId: null,
   isActive: true,
 }
@@ -87,6 +91,12 @@ export function ServicesManager({
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
+
+  /* Familles déjà employées, dans l'ordre d'apparition — proposées à la
+     saisie pour qu'une variante d'orthographe ne crée pas un doublon. */
+  const groupOptions = [
+    ...new Set(items.map((s) => s.groupLabel?.trim()).filter(Boolean)),
+  ] as string[]
 
   function handleDragEnd({ active, over }: DragEndEvent) {
     if (!over || active.id === over.id) return
@@ -117,6 +127,8 @@ export function ServicesManager({
         excerpt: draft.excerpt,
         body: draft.body,
         duration: draft.duration || null,
+        groupLabel: draft.groupLabel.trim() || null,
+        method: draft.method.trim() || null,
         mediaId: draft.mediaId,
         isActive: draft.isActive,
       }
@@ -178,10 +190,18 @@ export function ServicesManager({
             strategy={verticalListSortingStrategy}
           >
             <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
-              {items.map((service) => (
+              {items.map((service, i) => (
                 <ServiceRow
                   key={service.id}
                   service={service}
+                  /* Intitulé de famille rappelé à chaque changement : on voit
+                     les regroupements se former en glissant les lignes. */
+                  groupStart={
+                    (service.groupLabel?.trim() || null) !==
+                    (items[i - 1]?.groupLabel?.trim() || null)
+                      ? service.groupLabel?.trim() || null
+                      : null
+                  }
                   onEdit={() =>
                     setDraft({
                       id: service.id,
@@ -190,6 +210,8 @@ export function ServicesManager({
                       excerpt: service.excerpt,
                       body: service.body,
                       duration: service.duration ?? '',
+                      groupLabel: service.groupLabel ?? '',
+                      method: service.method ?? '',
                       mediaId: service.mediaId,
                       isActive: service.isActive,
                     })
@@ -277,6 +299,48 @@ export function ServicesManager({
                 />
               </div>
 
+              <div>
+                <Label htmlFor="s-group" className="mb-2 block">
+                  Famille
+                </Label>
+                <Input
+                  id="s-group"
+                  list="s-group-options"
+                  value={draft.groupLabel}
+                  placeholder="Traverser quelque chose"
+                  onChange={(e) =>
+                    setDraft({ ...draft, groupLabel: e.target.value })
+                  }
+                />
+                {/* Les familles déjà employées, pour les réutiliser au lieu
+                    de les ressaisir — une faute de frappe créerait un
+                    doublon silencieux. */}
+                <datalist id="s-group-options">
+                  {groupOptions.map((g) => (
+                    <option key={g} value={g} />
+                  ))}
+                </datalist>
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Regroupe les accompagnements sous un intitulé commun.
+                  Laissez vide pour une simple liste.
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="s-method" className="mb-2 block">
+                  Méthode
+                </Label>
+                <Input
+                  id="s-method"
+                  value={draft.method}
+                  placeholder="Gestalt-thérapie"
+                  onChange={(e) => setDraft({ ...draft, method: e.target.value })}
+                />
+                <p className="mt-1.5 text-xs text-muted-foreground">
+                  Mention discrète affichée en regard du titre.
+                </p>
+              </div>
+
               <div className="sm:col-span-2">
                 <Label htmlFor="s-excerpt" className="mb-2 block">
                   Description courte
@@ -352,11 +416,14 @@ export function ServicesManager({
 
 function ServiceRow({
   service,
+  groupStart,
   onEdit,
   onToggle,
   onDeleted,
 }: {
   service: ServiceWithMedia
+  /** Intitulé de la famille, sur la première ligne de celle-ci seulement. */
+  groupStart: string | null
   onEdit: () => void
   onToggle: (checked: boolean) => void
   onDeleted: () => Promise<ActionResult<unknown>>
@@ -365,6 +432,12 @@ function ServiceRow({
     useSortable({ id: service.id })
 
   return (
+    <>
+      {groupStart && (
+        <li className="bg-ivory/60 px-4 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          {groupStart}
+        </li>
+      )}
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
@@ -397,7 +470,14 @@ function ServiceRow({
       </span>
 
       <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{service.title}</p>
+        <p className="flex items-center gap-2 truncate text-sm font-medium">
+          {service.title}
+          {service.method && (
+            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+              {service.method}
+            </span>
+          )}
+        </p>
         <p className="truncate text-xs text-muted-foreground">
           {service.excerpt || `/${service.slug}`}
         </p>
@@ -422,5 +502,6 @@ function ServiceRow({
         <ConfirmDelete label={service.title} onConfirm={onDeleted} />
       </span>
     </li>
+    </>
   )
 }

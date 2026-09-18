@@ -15,7 +15,17 @@ const compat = new FlatCompat({
 const eslintConfig = [
   ...compat.extends('next/core-web-vitals', 'next/typescript'),
   {
-    ignores: ['.next/**', 'node_modules/**', 'drizzle/**', 'next-env.d.ts'],
+    // `.next-build` : sortie des builds de validation, lancés à côté du
+    // serveur de dev (voir `distDir` dans next.config.ts). Sans cette
+    // exclusion, ESLint analyse le code compilé — des milliers d'erreurs.
+    ignores: [
+      '.next/**',
+      '.next-build/**',
+      '.storage/**',
+      'node_modules/**',
+      'drizzle/**',
+      'next-env.d.ts',
+    ],
   },
 ];
 

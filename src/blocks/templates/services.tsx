@@ -126,9 +126,9 @@ export const servicesListeBlock: BlockDefinition<typeof servicesListeSchema> =
     ],
     defaults: {
       eyebrow: 'Accompagnements',
-      title: 'Trois manières de *commencer*.',
+      title: 'Selon ce qui vous *amène*.',
       intro:
-        'Thérapie individuelle, accompagnement des adolescents, soutien à la parentalité : chaque cadre a son rythme et sa durée. Au cabinet de Cesson-Sévigné ou en visio, le premier pas est toujours le même — un échange, sans engagement.',
+        'Cinq accompagnements, rangés par ce qu’ils permettent plutôt que par leur méthode. Au cabinet de Cesson-Sévigné ou en visio.',
       panelCta: 'Prendre rendez-vous',
     },
     Component: ServicesListe,

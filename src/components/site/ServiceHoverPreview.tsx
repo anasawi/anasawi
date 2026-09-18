@@ -139,7 +139,6 @@ export function ServiceHoverPreview({
     return () => observer.disconnect()
     /* Sur `shown`, pas `service` : la carte n'est montée qu'au rendu qui
        suit la mise à jour de `shown`. */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [cardH, shown])
 
   /* Position finale : décalée du curseur, retenue dans la fenêtre. */
@@ -211,7 +210,11 @@ export function ServiceHoverPreview({
             <span aria-hidden="true" className="text-blue-deep">
               ✳
             </span>
-            Accompagnement · {NUMBER_WORDS[shown.index] ?? String(shown.index + 1)}
+            {shown.service.groupLabel?.trim() ||
+              `Accompagnement · ${NUMBER_WORDS[shown.index] ?? String(shown.index + 1)}`}
+            {shown.service.method && (
+              <span className="text-blue-deep">· {shown.service.method}</span>
+            )}
           </p>
 
           <h4 className="mt-3 font-serif text-[30px] font-light leading-[1.08]">

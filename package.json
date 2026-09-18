@@ -18,6 +18,7 @@
     "db:seed-home": "tsx src/server/db/seed-home.ts",
     "db:seed-site": "tsx src/server/db/seed-site.ts",
     "db:rename-brand": "tsx src/server/db/rename-brand.ts",
+    "db:seed-accompagnements": "tsx src/server/db/seed-accompagnements.ts",
     "db:fix-nav": "tsx src/server/db/fix-nav-links.ts",
     "admin:create": "tsx src/server/db/create-admin.ts",
     "doctor": "tsx src/server/db/doctor.ts"
