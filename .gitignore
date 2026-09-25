@@ -33,3 +33,6 @@ playwright-report
 test-results
 blob-report
 .playwright
+
+# Journal des séries de tests lancées depuis le Finder.
+.e2e-logs
