@@ -190,6 +190,23 @@ async function main() {
           bookingLabel: 'Prendre rendez-vous',
         },
       },
+      {
+        /* Les questions fréquentes alimentent aussi le JSON-LD `FAQPage`,
+           donc ce que Google affiche sous le lien du site : sans cette
+           section, rien ne vérifierait qu'une question enregistrée
+           atteint réellement le public. */
+        pageId: accueil.id,
+        type: 'faq',
+        anchor: 'questions',
+        navLabel: 'Questions',
+        showInNav: false,
+        sortOrder: 3,
+        payload: {
+          eyebrow: 'Questions fréquentes',
+          title: 'Ce qu’on demande *souvent*.',
+          intro: '',
+        },
+      },
     ])
     .returning()
 

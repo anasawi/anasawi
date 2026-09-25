@@ -104,16 +104,49 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
         isActive: draft.isActive,
       }
 
-      const result = draft.id
-        ? await updateFaq(draft.id, payload)
-        : await createFaq(payload)
+      /*
+       * L'état local fait foi — comme dans l'écran des accompagnements, et
+       * pour la même raison : un effet qui recopierait les props écraserait
+       * l'ordre obtenu au glisser-déposer. Il faut donc écrire ici ce que
+       * le serveur vient d'enregistrer. Sans cela, `router.refresh()` seul
+       * ne changeait RIEN à l'écran : la question créée n'apparaissait pas,
+       * et la question modifiée gardait son ancien texte. La notification
+       * confirmait pourtant, ce qui est la pire des combinaisons.
+       */
+      if (draft.id) {
+        const result = await updateFaq(draft.id, payload)
+        if (!result.ok) {
+          toast.error(result.error)
+          return
+        }
 
-      if (!result.ok) {
-        toast.error(result.error)
-        return
+        toast.success('Question enregistrée.')
+        setItems((prev) =>
+          prev.map((i) =>
+            i.id === draft.id ? { ...i, ...payload, updatedAt: new Date() } : i,
+          ),
+        )
+      } else {
+        const result = await createFaq(payload)
+        if (!result.ok) {
+          toast.error(result.error)
+          return
+        }
+
+        toast.success('Question enregistrée.')
+        const maintenant = new Date()
+        setItems((prev) => [
+          ...prev,
+          {
+            ...payload,
+            id: result.data.id,
+            sortOrder: prev.length,
+            createdAt: maintenant,
+            updatedAt: maintenant,
+          },
+        ])
       }
 
-      toast.success('Question enregistrée.')
       setDraft(null)
       router.refresh()
     })
@@ -324,10 +357,14 @@ function FaqRow({
         </p>
       </div>
 
+      {/* Chaque commande NOMME sa question. « Modifier » et « Afficher
+          cette question » répétés à l'identique sur dix lignes ne disent
+          rien à qui navigue au lecteur d'écran : il entend dix fois le
+          même libellé sans savoir lequel agit sur quoi. */}
       <Switch
         checked={item.isActive}
         onCheckedChange={onToggle}
-        aria-label="Afficher cette question"
+        aria-label={`Afficher « ${item.question} »`}
       />
 
       <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
@@ -335,7 +372,7 @@ function FaqRow({
           variant="ghost"
           size="icon"
           onClick={onEdit}
-          aria-label="Modifier"
+          aria-label={`Modifier « ${item.question} »`}
         >
           <Pencil />
         </Button>

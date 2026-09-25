@@ -254,9 +254,17 @@ test.describe('Accompagnements — modification et suppression', () => {
     await expect(page.getByText(NOUVEAU.titre)).toHaveCount(1)
 
     await ouvrirAdmin(page, '/admin/accompagnements', 'Accompagnements')
-    await page
-      .getByRole('switch', { name: `Afficher ${NOUVEAU.titre}` })
-      .click()
+    const interrupteur = page.getByRole('switch', {
+      name: `Afficher ${NOUVEAU.titre}`,
+    })
+    await interrupteur.click()
+
+    /*
+     * L'interrupteur ne bascule QU'APRÈS la réponse du serveur : c'est lui,
+     * l'accusé de réception. Recharger sans l'attendre annulait la requête
+     * en vol — et l'échec ressemblait alors à une écriture perdue.
+     */
+    await expect(interrupteur).not.toBeChecked()
 
     await persisteApresRechargement(page, async () => {
       await expect(ligne(page, NOUVEAU.titre)).toHaveCount(1)
