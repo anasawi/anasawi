@@ -170,6 +170,26 @@ async function main() {
           panelCta: 'Prendre rendez-vous',
         },
       },
+      {
+        /* Seul chemin d'ÉCRITURE ouvert au public : le formulaire de
+           contact. Il est donc sur la page de test, sans quoi rien ne
+           couvrirait la validation, l'anti-robot ni la limitation de
+           débit côté navigateur. Hors menu, pour ne pas déplacer les
+           assertions de navigation. */
+        pageId: accueil.id,
+        type: 'contact',
+        anchor: 'contact',
+        navLabel: 'Contact',
+        showInNav: false,
+        sortOrder: 2,
+        payload: {
+          eyebrow: 'Contact',
+          title: 'Écrire un *premier* mot.',
+          intro: 'Un message suffit pour commencer.',
+          showForm: true,
+          bookingLabel: 'Prendre rendez-vous',
+        },
+      },
     ])
     .returning()
 

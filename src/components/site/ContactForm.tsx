@@ -44,11 +44,22 @@ export function ContactForm() {
     setStatus('sending')
 
     try {
-      const response = await fetch('/api/contact', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(parsed.data),
-      })
+      /* Le `fetch` a son propre filet : quand il rejette, c'est le réseau
+         qui manque, et son message est « Failed to fetch » — trois mots
+         d'anglais technique qu'on ne montre à personne. Les messages du
+         serveur, eux, sont écrits pour être lus et passent tels quels. */
+      let response: Response
+      try {
+        response = await fetch('/api/contact', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(parsed.data),
+        })
+      } catch {
+        throw new Error(
+          'Connexion impossible. Vérifiez votre réseau, puis réessayez.',
+        )
+      }
 
       if (!response.ok) {
         const body = (await response.json().catch(() => null)) as {
@@ -99,17 +110,45 @@ export function ContactForm() {
         <input id="website" name="website" type="text" tabIndex={-1} autoComplete="off" />
       </div>
 
+      {/* `aria-invalid` et `aria-describedby` : sans eux, le paragraphe
+          d'erreur existe, porte un identifiant… et n'est rattaché à aucun
+          champ. Une personne au lecteur d'écran entend « Adresse e-mail
+          invalide » sans savoir lequel des quatre champs est en cause. */}
       <Field id="name" label="Nom" error={errors.name}>
-        <input id="name" name="name" type="text" autoComplete="name" className={fieldClass} placeholder="Votre nom" />
+        <input
+          id="name"
+          name="name"
+          type="text"
+          autoComplete="name"
+          className={fieldClass}
+          placeholder="Votre nom"
+          {...etatChamp('name', errors.name)}
+        />
       </Field>
 
       <div className="grid gap-9 sm:grid-cols-2">
         <Field id="email" label="E-mail" error={errors.email}>
-          <input id="email" name="email" type="email" autoComplete="email" className={fieldClass} placeholder="vous@exemple.fr" />
+          <input
+            id="email"
+            name="email"
+            type="email"
+            autoComplete="email"
+            className={fieldClass}
+            placeholder="vous@exemple.fr"
+            {...etatChamp('email', errors.email)}
+          />
         </Field>
 
         <Field id="phone" label="Téléphone" hint="facultatif" error={errors.phone}>
-          <input id="phone" name="phone" type="tel" autoComplete="tel" className={fieldClass} placeholder="06 00 00 00 00" />
+          <input
+            id="phone"
+            name="phone"
+            type="tel"
+            autoComplete="tel"
+            className={fieldClass}
+            placeholder="06 00 00 00 00"
+            {...etatChamp('phone', errors.phone)}
+          />
         </Field>
       </div>
 
@@ -120,6 +159,7 @@ export function ContactForm() {
           rows={5}
           className={cn(fieldClass, 'resize-y')}
           placeholder="Quelques mots sur ce qui vous amène."
+          {...etatChamp('message', errors.message)}
         />
       </Field>
 
@@ -130,6 +170,7 @@ export function ContactForm() {
             name="consent"
             type="checkbox"
             className="mt-1 h-4 w-4 shrink-0 accent-[#5D8AA0]"
+            {...etatChamp('consent', errors.consent)}
           />
           <span className="text-[0.82rem] leading-[1.65] text-ink-soft">
             J’accepte que mes informations soient utilisées pour répondre à ma
@@ -157,6 +198,13 @@ export function ContactForm() {
       </button>
     </form>
   )
+}
+
+/** Attributs qui relient un champ à son message d'erreur. */
+function etatChamp(id: string, erreur: string | undefined) {
+  return erreur
+    ? { 'aria-invalid': true as const, 'aria-describedby': `${id}-error` }
+    : {}
 }
 
 function Field({

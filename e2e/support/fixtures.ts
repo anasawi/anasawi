@@ -114,3 +114,16 @@ export const MESSAGES = {
 
 /** Seuil de la limitation de débit à la connexion (8 par quart d'heure). */
 export const LIMITE_CONNEXION = 8
+
+/** Seuil du formulaire de contact (5 envois par heure et par adresse IP). */
+export const LIMITE_CONTACT = 5
+
+/** Un message valide — chaque champ au-dessus de son minimum. */
+export const MESSAGE_VALIDE = {
+  name: 'Camille Durand',
+  email: 'camille.durand@exemple.fr',
+  phone: '06 12 34 56 78',
+  message:
+    'Bonjour, je souhaiterais convenir d’un premier rendez-vous. Quelles sont vos disponibilités ?',
+  consent: true,
+} as const

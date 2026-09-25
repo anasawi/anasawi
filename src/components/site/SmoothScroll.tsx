@@ -1,165 +1,131 @@
 'use client'
 
-import { useEffect, useRef, useState } from 'react'
-
-import { cn } from '@/lib/utils'
+import { useEffect } from 'react'
 
 /**
- * Défilement inertiel façon maquette : le contenu vit dans un wrapper
- * `position:fixed` translaté à chaque frame vers -scrollY avec un lerp
- * de .085, pendant que le body garde la hauteur réelle du contenu.
+ * Défilement inertiel — sans jamais sortir le contenu du flux.
  *
- * Le scroll natif de la fenêtre reste LA source de vérité : on ne fait
- * que lire `window.scrollY`. La molette, le clavier et la restauration de
- * position fonctionnent donc sans code.
+ * LA PREMIÈRE VERSION PLAÇAIT LE CONTENU DANS UN WRAPPER `position:fixed`
+ * translaté à chaque frame. L'effet était juste, et le reste cassé : pour
+ * le navigateur, un élément qui vit dans un conteneur fixe n'est jamais
+ * « hors de l'écran », donc il ne défile jamais vers lui. Conséquences,
+ * toutes silencieuses :
  *
- * LES ANCRES, ELLES, DEMANDENT DU CODE — et leur absence a fait un dégât
- * silencieux. Le wrapper étant `position:fixed`, il ne défile pas avec la
- * page : pour le navigateur, une cible qui vit dedans est déjà « en
- * place », et un clic sur `#accompagnements` ne déplace rien. Tous les
- * liens internes du site étaient donc morts — le menu, le lien d'évitement
- * « Aller au contenu », les boutons du hero, le pied de page — sans le
- * moindre message d'erreur : la page ne bougeait pas, voilà tout.
+ *   — les ancres (`#accompagnements`, « Aller au contenu », les boutons du
+ *     hero, le pied de page) ne déplaçaient rien ;
+ *   — la tabulation vers un champ situé plus bas ne l'amenait pas à
+ *     l'écran : on tapait dans un champ qu'on ne voyait pas ;
+ *   — la recherche dans la page (⌘F) ne défilait pas jusqu'au résultat ;
+ *   — `scrollIntoView()` n'avait aucun effet, où qu'il soit appelé.
  *
- * On recalcule donc la position de la cible dans le référentiel du
- * document (sa position à l'écran PLUS la translation courante du
- * wrapper), on respecte son `scroll-margin-top`, et on laisse le lerp
- * faire l'inertie.
+ * La page défile donc RÉELLEMENT, comme partout ailleurs : on se contente
+ * d'interposer une inertie entre la molette et le défilement. `scrollY`
+ * reste la seule vérité, le document garde sa hauteur naturelle, et tout
+ * ce que le navigateur sait faire nativement continue de le faire.
  *
- * Désactivé sous prefers-reduced-motion et sur pointeur tactile — le
- * flux normal reprend (le wrapper redevient un simple div) et les ancres
- * natives refonctionnent seules.
+ * Désactivé sous prefers-reduced-motion et sur pointeur tactile : le
+ * défilement d'un doigt a déjà sa propre inertie, celle du système.
  */
+
+/** Part du chemin restant parcourue à chaque frame — la douceur. */
+const LISSAGE = 0.11
+
+/** En deçà, on colle à la cible : inutile d'animer un dixième de pixel. */
+const SEUIL = 0.5
+
 export function SmoothScroll({ children }: { children: React.ReactNode }) {
-  const wrapRef = useRef<HTMLDivElement>(null)
-  const [active, setActive] = useState(false)
-
   useEffect(() => {
-    const reduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
+    const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
     const coarse = window.matchMedia('(pointer: coarse)').matches
-    const wrap = wrapRef.current
-    if (reduced || coarse || !wrap) return
+    if (reduced || coarse) return
 
-    setActive(true)
+    const maximum = () =>
+      Math.max(0, document.documentElement.scrollHeight - window.innerHeight)
 
-    /* Le lissage natif (html { scroll-behavior:smooth }) s'additionnerait
-       au lerp : on rend le scroll fenêtre instantané, le lerp fait le
-       reste. Les ancres gardent leur inertie — celle du lerp. */
-    const previousBehavior = document.documentElement.style.scrollBehavior
-    document.documentElement.style.scrollBehavior = 'auto'
-
-    let current = window.scrollY
-
-    const setHeight = () => {
-      document.body.style.height = `${wrap.scrollHeight}px`
-    }
-    setHeight()
-
-    /* Les images qui chargent, les accordéons qui s'ouvrent : la hauteur
-       du body suit le contenu, pas l'inverse. */
-    const observer = new ResizeObserver(setHeight)
-    observer.observe(wrap)
-
+    let cible = window.scrollY
+    let courant = cible
+    /* Position posée par NOUS au dernier rendu : elle permet de
+       reconnaître un défilement venu d'ailleurs — ancre, tabulation,
+       ⌘F, barre de défilement — et de s'y ranger au lieu de lutter. */
+    let derniereEcrite = cible
+    let anime = false
     let frame = 0
-    const loop = () => {
-      const target = window.scrollY
-      current += (target - current) * 0.085
-      if (Math.abs(target - current) < 0.05) current = target
-      wrap.style.transform = `translate3d(0, ${-current}px, 0)`
-      frame = requestAnimationFrame(loop)
-    }
-    frame = requestAnimationFrame(loop)
 
-    /* ── Ancres ──────────────────────────────────────────────────────
-       `rect.top` est mesuré sur un wrapper déjà translaté de `-current` :
-       la position de la cible DANS LE DOCUMENT vaut donc `rect.top +
-       current`. On retire ensuite son `scroll-margin-top` (les sections
-       portent `scroll-mt-24`, pour ne pas passer sous la capsule de
-       navigation), et on borne au défilement disponible. */
-    const allerA = (id: string): boolean => {
-      if (!id) return false
-      const cible = document.getElementById(id)
-      if (!cible) return false
-
-      const marge =
-        Number.parseFloat(getComputedStyle(cible).scrollMarginTop) || 0
-      const maximum = Math.max(0, document.body.scrollHeight - window.innerHeight)
-      const y = Math.min(
-        Math.max(0, cible.getBoundingClientRect().top + current - marge),
-        maximum,
-      )
-
-      window.scrollTo({ top: y, behavior: 'auto' })
-
-      /* En annulant la navigation de fragment, on annule aussi le
-         déplacement de focus qu'elle opérait : on le refait à la main.
-         Sur une cible non focalisable — une `<section>` ordinaire —
-         `focus()` ne fait rien, ce qui est le comportement attendu ;
-         sur le `<main tabindex="-1">` du lien d'évitement, il rend au
-         clavier la place qu'il devait prendre. */
-      cible.focus({ preventScroll: true })
-      return true
+    /* `behavior: 'instant'` explicitement : la feuille de style pose
+       `scroll-behavior: smooth` sur `html` — ce qui est très bien pour une
+       ancre, et catastrophique ici, où le navigateur animerait chacun de
+       nos pas déjà animés. On ne touche pas au réglage global : les ancres
+       gardent leur glissé natif. */
+    const poser = (y: number) => {
+      window.scrollTo({ top: y, behavior: 'instant' })
+      derniereEcrite = window.scrollY
     }
 
-    const onClick = (event: MouseEvent) => {
-      /* On ne détourne que le clic gauche simple : un clic milieu, un
-         ⌘/Ctrl-clic ou un clic droit ouvrent un onglet, et c'est très
-         bien ainsi. */
-      if (event.defaultPrevented || event.button !== 0) return
-      if (event.metaKey || event.ctrlKey || event.shiftKey || event.altKey) return
+    const boucle = () => {
+      const reste = cible - courant
 
-      const lien = (event.target as Element | null)?.closest?.('a[href]')
-      if (!(lien instanceof HTMLAnchorElement)) return
-      if (lien.target && lien.target !== '_self') return
+      if (Math.abs(reste) < SEUIL) {
+        courant = cible
+        poser(courant)
+        anime = false
+        return
+      }
 
-      const href = lien.getAttribute('href') ?? ''
-      /* Ancre de la page courante uniquement : « #contact », ou
-         « /#contact » alors qu'on est déjà à la racine. */
-      const id = href.startsWith('#')
-        ? href.slice(1)
-        : href.startsWith(`${window.location.pathname}#`)
-          ? href.slice(href.indexOf('#') + 1)
-          : ''
+      courant += reste * LISSAGE
+      poser(courant)
+      frame = requestAnimationFrame(boucle)
+    }
 
-      if (!allerA(decodeURIComponent(id))) return
+    const lancer = () => {
+      if (anime) return
+      anime = true
+      frame = requestAnimationFrame(boucle)
+    }
+
+    const onWheel = (event: WheelEvent) => {
+      /* Zoom du navigateur, défilement d'une zone interne (un menu, une
+         carte) : ce n'est pas à nous. */
+      if (event.ctrlKey || event.metaKey || event.defaultPrevented) return
+
+      const delta =
+        event.deltaMode === 1
+          ? event.deltaY * 16 /* lignes */
+          : event.deltaMode === 2
+            ? event.deltaY * window.innerHeight /* pages */
+            : event.deltaY
 
       event.preventDefault()
-      /* L'URL suit, sans second saut : `replaceState` n'émet pas de
-         navigation de fragment. */
-      history.replaceState(null, '', `#${id}`)
+      cible = Math.min(Math.max(0, cible + delta), maximum())
+      lancer()
     }
 
-    /* Arrivée sur la page avec un fragment : le navigateur a déjà
-       renoncé à défiler, on rattrape une fois la mise en page posée. */
-    const auChargement = () => {
-      const id = window.location.hash.slice(1)
-      if (id) requestAnimationFrame(() => allerA(decodeURIComponent(id)))
+    /* Défilement provoqué par autre chose que la molette : on adopte sa
+       position au lieu de la reprendre de force à la frame suivante. */
+    const onScroll = () => {
+      if (Math.abs(window.scrollY - derniereEcrite) < 1) return
+      cible = window.scrollY
+      courant = window.scrollY
+      derniereEcrite = window.scrollY
     }
-    auChargement()
 
-    document.addEventListener('click', onClick)
-    window.addEventListener('hashchange', auChargement)
+    /* Une fenêtre redimensionnée peut rendre la cible hors bornes. */
+    const onResize = () => {
+      cible = Math.min(cible, maximum())
+    }
+
+    window.addEventListener('wheel', onWheel, { passive: false })
+    window.addEventListener('scroll', onScroll, { passive: true })
+    window.addEventListener('resize', onResize)
 
     return () => {
       cancelAnimationFrame(frame)
-      observer.disconnect()
-      document.removeEventListener('click', onClick)
-      window.removeEventListener('hashchange', auChargement)
-      document.body.style.height = ''
-      document.documentElement.style.scrollBehavior = previousBehavior
-      wrap.style.transform = ''
-      setActive(false)
+      window.removeEventListener('wheel', onWheel)
+      window.removeEventListener('scroll', onScroll)
+      window.removeEventListener('resize', onResize)
     }
   }, [])
 
-  return (
-    <div
-      ref={wrapRef}
-      className={cn(active && 'fixed left-0 top-0 w-full will-change-transform')}
-    >
-      {children}
-    </div>
-  )
+  /* Le wrapper ne porte plus ni position ni transformation : il groupe,
+     rien de plus. Il reste pour ne pas changer la structure du document. */
+  return <div>{children}</div>
 }

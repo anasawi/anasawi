@@ -64,11 +64,21 @@ test.describe('Accueil', () => {
     await page.goto('/')
 
     /* Ces valeurs alimentent aussi le JSON-LD : une coordonnée fausse sur la
-       page est une coordonnée fausse pour Google. */
-    await expect(page.getByRole('link', { name: REGLAGES.email })).toBeVisible()
-    await expect(
-      page.getByRole('link', { name: REGLAGES.telephone }),
-    ).toBeVisible()
+       page est une coordonnée fausse pour Google.
+       Elles paraissent DEUX fois — section contact et pied de page — et
+       c'est voulu : on vérifie donc les deux, plutôt que de prendre la
+       première venue. */
+    for (const zone of [
+      page.getByRole('region', { name: 'Contact' }),
+      page.getByRole('contentinfo'),
+    ]) {
+      await expect(
+        zone.getByRole('link', { name: REGLAGES.email }),
+      ).toBeVisible()
+      await expect(
+        zone.getByRole('link', { name: REGLAGES.telephone }),
+      ).toBeVisible()
+    }
     await expect(page.getByText(REGLAGES.rue, { exact: false }).first())
       .toBeVisible()
   })
@@ -76,13 +86,22 @@ test.describe('Accueil', () => {
   test('les liens de contact portent les bons protocoles', async ({ page }) => {
     await page.goto('/')
 
-    const mail = page.getByRole('link', { name: REGLAGES.email }).first()
-    await expect(mail).toHaveAttribute('href', `mailto:${REGLAGES.email}`)
+    /* Chaque occurrence, pas seulement la première : un lien correct dans
+       le pied de page ne rachète pas un lien fautif dans la section
+       contact. */
+    for (const mail of await page
+      .getByRole('link', { name: REGLAGES.email })
+      .all()) {
+      await expect(mail).toHaveAttribute('href', `mailto:${REGLAGES.email}`)
+    }
 
     /* Le téléphone doit être au format E.164, sinon l'appel échoue depuis
        un mobile étranger. */
-    const tel = page.getByRole('link', { name: REGLAGES.telephone }).first()
-    await expect(tel).toHaveAttribute('href', /^tel:\+33/)
+    for (const tel of await page
+      .getByRole('link', { name: REGLAGES.telephone })
+      .all()) {
+      await expect(tel).toHaveAttribute('href', /^tel:\+33/)
+    }
   })
 })
 
