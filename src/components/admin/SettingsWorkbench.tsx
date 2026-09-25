@@ -442,7 +442,7 @@ export function SettingsWorkbench({
               <Card
                 id="seo"
                 title="Référencement"
-                note="Ce que Google affiche quand une page ne définit pas son propre titre ou sa propre description."
+                note="Ce que Google affiche. Le titre sert à la page d’accueil ; la description, à toute page qui ne définit pas la sienne."
               >
                 <Field
                   label="Titre pour Google"

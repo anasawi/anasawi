@@ -17,6 +17,7 @@ import {
   contactMessages,
   faqItems,
   media,
+  serviceGroups,
   services,
   settings,
 } from '@/server/db/schema'
@@ -26,6 +27,10 @@ function refreshSite(tag: string) {
   revalidateTag(tag)
   revalidatePath('/', 'layout')
 }
+
+/** Garde contre un identifiant fabriqué : Postgres refuserait en 500. */
+const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+const isUuid = (value: string) => UUID.test(value)
 
 /* ════════════════════════════════════════════════════════════════════
    Accompagnements
@@ -136,6 +141,146 @@ export async function reorderServices(
     await db
       .update(services)
       .set({ sortOrder: sql`case ${cases} else ${services.sortOrder} end` })
+
+    refreshSite(tags.services)
+    return ok()
+  })
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Familles d'accompagnements
+   ════════════════════════════════════════════════════════════════════ */
+
+const groupLabelSchema = z
+  .string()
+  .trim()
+  .min(1, 'Le titre est requis.')
+  .max(120)
+
+export async function createServiceGroup(
+  label: string,
+): Promise<ActionResult<{ id: string }>> {
+  return guard(async () => {
+    await requireAdmin()
+
+    const parsed = groupLabelSchema.safeParse(label)
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? 'Titre invalide.')
+
+    /* La nouvelle famille se pose en fin de liste : on ne déplace jamais
+       l'existant sans qu'on l'ait demandé. */
+    const [{ value: currentMax } = { value: null }] = await db
+      .select({ value: max(serviceGroups.sortOrder) })
+      .from(serviceGroups)
+
+    const [created] = await db
+      .insert(serviceGroups)
+      .values({ label: parsed.data, sortOrder: (currentMax ?? -1) + 1 })
+      .returning({ id: serviceGroups.id })
+
+    if (!created) return fail('Création impossible.')
+
+    refreshSite(tags.services)
+    return ok(created)
+  })
+}
+
+export async function renameServiceGroup(
+  id: string,
+  label: string,
+): Promise<ActionResult<void>> {
+  return guard(async () => {
+    await requireAdmin()
+    if (!isUuid(id)) return fail('Famille introuvable.')
+
+    const parsed = groupLabelSchema.safeParse(label)
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? 'Titre invalide.')
+
+    const [updated] = await db
+      .update(serviceGroups)
+      .set({ label: parsed.data })
+      .where(eq(serviceGroups.id, id))
+      .returning({ id: serviceGroups.id })
+
+    if (!updated) return fail('Famille introuvable.')
+
+    refreshSite(tags.services)
+    return ok()
+  })
+}
+
+/**
+ * Supprime une famille — jamais ses accompagnements.
+ *
+ * La clé étrangère est en `set null` : les accompagnements qu'elle coiffait
+ * se retrouvent simplement sans famille, à leur place. Retirer un titre ne
+ * doit pas faire disparaître du contenu.
+ */
+export async function deleteServiceGroup(
+  id: string,
+): Promise<ActionResult<void>> {
+  return guard(async () => {
+    await requireAdmin()
+    if (!isUuid(id)) return fail('Famille introuvable.')
+
+    await db.delete(serviceGroups).where(eq(serviceGroups.id, id))
+
+    refreshSite(tags.services)
+    return ok()
+  })
+}
+
+export async function reorderServiceGroups(
+  orderedIds: string[],
+): Promise<ActionResult<void>> {
+  return guard(async () => {
+    await requireAdmin()
+    if (orderedIds.length === 0) return ok()
+    if (!orderedIds.every(isUuid)) return fail('Famille introuvable.')
+
+    const cases = orderedIds
+      .map((id, index) => sql`when ${serviceGroups.id} = ${id} then ${index}`)
+      .reduce((acc, part) => sql`${acc} ${part}`)
+
+    await db
+      .update(serviceGroups)
+      .set({ sortOrder: sql`case ${cases} else ${serviceGroups.sortOrder} end` })
+
+    refreshSite(tags.services)
+    return ok()
+  })
+}
+
+/**
+ * Enregistre le plan complet après un glisser-déposer.
+ *
+ * On écrit l'ensemble plutôt que le seul élément déplacé : l'appelant connaît
+ * l'état final voulu, et une écriture globale ne peut pas laisser deux
+ * accompagnements au même rang dans la même famille.
+ */
+export async function arrangeServices(
+  plan: { groupId: string | null; serviceIds: string[] }[],
+): Promise<ActionResult<void>> {
+  return guard(async () => {
+    await requireAdmin()
+
+    for (const [groupIndex, bloc] of plan.entries()) {
+      if (bloc.groupId !== null && !isUuid(bloc.groupId)) {
+        return fail('Famille introuvable.')
+      }
+      if (!bloc.serviceIds.every(isUuid)) return fail('Accompagnement introuvable.')
+
+      for (const [index, serviceId] of bloc.serviceIds.entries()) {
+        await db
+          .update(services)
+          .set({
+            groupId: bloc.groupId,
+            /* Le rang reste global : il départage aussi les accompagnements
+               sans famille, qui ferment la liste. */
+            sortOrder: groupIndex * 1000 + index,
+          })
+          .where(eq(services.id, serviceId))
+      }
+    }
 
     refreshSite(tags.services)
     return ok()

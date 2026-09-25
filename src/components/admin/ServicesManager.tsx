@@ -1,15 +1,21 @@
 'use client'
 
 import {
-  closestCenter,
+  closestCorners,
+  defaultDropAnimationSideEffects,
   DndContext,
+  DragOverlay,
   KeyboardSensor,
   PointerSensor,
+  useDroppable,
   useSensor,
   useSensors,
   type DragEndEvent,
+  type DraggableAttributes,
+  type DragStartEvent,
+  type DropAnimation,
 } from '@dnd-kit/core'
-import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
+import type { SyntheticListenerMap } from '@dnd-kit/core/dist/hooks/utilities'
 import {
   arrayMove,
   SortableContext,
@@ -18,10 +24,10 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { GripVertical, Pencil, Plus } from 'lucide-react'
+import { Check, GripVertical, Pencil, Plus, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { ConfirmDelete } from './ConfirmDelete'
@@ -40,14 +46,48 @@ import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { cn, slugify } from '@/lib/utils'
 import {
+  arrangeServices,
   createService,
+  createServiceGroup,
   deleteService,
-  reorderServices,
+  deleteServiceGroup,
+  renameServiceGroup,
+  reorderServiceGroups,
   toggleService,
   updateService,
 } from '@/server/actions/content'
 import type { ActionResult } from '@/server/actions/types'
-import type { Media, ServiceWithMedia } from '@/server/db/schema'
+import type {
+  Media,
+  ServiceGroup,
+  ServiceWithMedia,
+} from '@/server/db/schema'
+
+/*
+ * Écran « Accompagnements ».
+ *
+ * La liste se lit comme le site : des familles titrées, et en dernier les
+ * accompagnements présentés seuls. Tout se manipule directement — on glisse
+ * une ligne d'une famille à l'autre, on renomme un titre en cliquant dessus,
+ * on en ajoute ou on en retire.
+ *
+ * Un point de vocabulaire : supprimer un titre ne supprime jamais ce qu'il
+ * coiffait. Les accompagnements redescendent simplement parmi ceux qui n'ont
+ * pas de famille. C'est ce que la clé étrangère `set null` garantit en base.
+ */
+
+/** Conteneur des accompagnements sans famille — jamais un identifiant réel. */
+const SANS_FAMILLE = 'sans-famille'
+
+/* Le calque retrouve sa place d'arrivée en s'estompant : sans cela, il
+   disparaîtrait net et l'œil perdrait le fil du déplacement. */
+const dropAnimation: DropAnimation = {
+  duration: 220,
+  easing: 'cubic-bezier(0.22, 1, 0.36, 1)',
+  sideEffects: defaultDropAnimationSideEffects({
+    styles: { active: { opacity: '0.4' } },
+  }),
+}
 
 type Draft = {
   id: string | null
@@ -56,7 +96,6 @@ type Draft = {
   excerpt: string
   body: string
   duration: string
-  groupLabel: string
   method: string
   mediaId: string | null
   isActive: boolean
@@ -69,7 +108,6 @@ const emptyDraft: Draft = {
   excerpt: '',
   body: '',
   duration: '',
-  groupLabel: '',
   method: '',
   mediaId: null,
   isActive: true,
@@ -77,43 +115,204 @@ const emptyDraft: Draft = {
 
 export function ServicesManager({
   services: initial,
+  groups: initialGroups,
   library,
 }: {
   services: ServiceWithMedia[]
+  groups: ServiceGroup[]
   library: Media[]
 }) {
   const router = useRouter()
   const [items, setItems] = useState(initial)
+  const [groups, setGroups] = useState(initialGroups)
   const [draft, setDraft] = useState<Draft | null>(null)
+  const [dragged, setDragged] = useState<string | null>(null)
   const [pending, start] = useTransition()
+
+  /* Pas d'effet qui recopie les props dans l'état : l'écriture serveur
+     revalide la route, les props reviennent, et l'effet écraserait alors le
+     résultat optimiste par une version parfois plus ancienne — le
+     déplacement semblait « ne pas s'enregistrer ». L'état local fait foi
+     jusqu'au prochain rendu complet ; en cas d'échec, on restaure. */
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
   )
 
-  /* Familles déjà employées, dans l'ordre d'apparition — proposées à la
-     saisie pour qu'une variante d'orthographe ne crée pas un doublon. */
-  const groupOptions = [
-    ...new Set(items.map((s) => s.groupLabel?.trim()).filter(Boolean)),
-  ] as string[]
+  /* Le plan d'affichage : une entrée par famille, puis les orphelins. */
+  const blocs = useMemo(() => {
+    const parFamille = new Map<string, ServiceWithMedia[]>()
+    for (const g of groups) parFamille.set(g.id, [])
+    const orphelins: ServiceWithMedia[] = []
 
-  function handleDragEnd({ active, over }: DragEndEvent) {
-    if (!over || active.id === over.id) return
+    for (const s of items) {
+      const cible = s.groupId ? parFamille.get(s.groupId) : undefined
+      if (cible) cible.push(s)
+      else orphelins.push(s)
+    }
 
-    const oldIndex = items.findIndex((s) => s.id === active.id)
-    const newIndex = items.findIndex((s) => s.id === over.id)
-    if (oldIndex < 0 || newIndex < 0) return
+    return { parFamille, orphelins }
+  }, [items, groups])
 
-    const next = arrayMove(items, oldIndex, newIndex)
-    setItems(next)
+  /** Vrai si l'identifiant désigne une famille et non un accompagnement. */
+  const estFamille = (id: string) => groups.some((g) => g.id === id)
 
+  /* Conteneur d'origine, retenu au départ du glisser. Indispensable : le
+     survol déplace déjà l'élément pour que l'aperçu soit fidèle, si bien
+     qu'au relâché la comparaison « d'où vient-il / où va-t-il » porterait
+     sur deux fois la même valeur — et l'on conclurait à tort qu'il n'a pas
+     bougé. */
+  const origine = useRef<string | null>(null)
+
+  /** Identifiant du conteneur qui accueille un élément ou survolé. */
+  function conteneurDe(id: string): string {
+    if (id === SANS_FAMILLE || estFamille(id)) return id
+    const service = items.find((s) => s.id === id)
+    return service?.groupId ?? SANS_FAMILLE
+  }
+
+  /*
+   * Rien n'est déplacé pendant le survol.
+   *
+   * Changer le conteneur d'un élément en cours de glisser fait avorter
+   * dnd-kit : ni `onDragEnd` ni `onDragCancel` n'était alors émis, et le
+   * déplacement restait à l'écran sans jamais être enregistré. Tout se
+   * décide au relâché ; l'utilisateur ne perd rien, le calque suit son
+   * pointeur et le bloc visé s'éclaire.
+   */
+
+  /**
+   * Écrit le plan complet — une entrée par famille, puis les orphelins.
+   *
+   * L'ensemble plutôt que le seul élément déplacé : l'appelant connaît
+   * l'état final voulu, et une écriture globale ne peut pas laisser deux
+   * accompagnements au même rang.
+   */
+  function persister(liste: ServiceWithMedia[], avant: ServiceWithMedia[]) {
+    setItems(liste)
     start(async () => {
-      const result = await reorderServices(next.map((s) => s.id))
-      if (!result.ok) {
-        setItems(items)
+      const plan = [
+        ...groups.map((g) => ({
+          groupId: g.id,
+          serviceIds: liste.filter((s) => s.groupId === g.id).map((s) => s.id),
+        })),
+        {
+          groupId: null,
+          serviceIds: liste.filter((s) => !s.groupId).map((s) => s.id),
+        },
+      ]
+
+      const result = await arrangeServices(plan)
+      if (result.ok) toast.success('Ordre enregistré.')
+      else {
+        setItems(avant)
         toast.error(result.error)
       }
+    })
+  }
+
+  function handleDragCancel() {
+    setDragged(null)
+    origine.current = null
+  }
+
+  function handleDragEnd({ active, over }: DragEndEvent) {
+    setDragged(null)
+
+    /* ── Déplacement d'une famille entière ─────────────────────────── */
+    if (estFamille(String(active.id))) {
+      origine.current = null
+      if (!over) return
+      const cible = conteneurDe(String(over.id))
+      const from = groups.findIndex((g) => g.id === active.id)
+      const to = groups.findIndex((g) => g.id === cible)
+      if (from < 0 || to < 0 || from === to) return
+
+      const suivant = arrayMove(groups, from, to)
+      const avant = groups
+      setGroups(suivant)
+
+      start(async () => {
+        const result = await reorderServiceGroups(suivant.map((g) => g.id))
+        if (result.ok) toast.success('Ordre des titres enregistré.')
+        else {
+          setGroups(avant)
+          toast.error(result.error)
+        }
+      })
+      return
+    }
+
+    origine.current = null
+    if (!over || active.id === over.id) return
+
+    const actifId = String(active.id)
+    const surId = String(over.id)
+    const cible = conteneurDe(surId)
+    const depart = conteneurDe(actifId)
+
+    const from = items.findIndex((s) => s.id === actifId)
+    const element = items[from]
+    if (from < 0 || !element) return
+
+    /* Retiré puis réinséré : devant l'accompagnement survolé, ou en fin de
+       bloc quand c'est le bloc lui-même qui est visé (zone vide). */
+    const sans = items.filter((s) => s.id !== actifId)
+    const deplace: ServiceWithMedia = {
+      ...element,
+      groupId: cible === SANS_FAMILLE ? null : cible,
+      group: groups.find((g) => g.id === cible) ?? null,
+    }
+
+    let index = sans.findIndex((s) => s.id === surId)
+    if (index < 0) {
+      const dernier = sans.reduce(
+        (acc, s, i) => (conteneurDe(s.id) === cible ? i : acc),
+        -1,
+      )
+      index = dernier + 1
+    }
+
+    const prochain = [...sans.slice(0, index), deplace, ...sans.slice(index)]
+    if (depart === cible && from === index) return
+
+    persister(prochain, items)
+  }
+
+  function ajouterFamille() {
+    start(async () => {
+      const result = await createServiceGroup('Nouveau titre')
+      if (!result.ok) {
+        toast.error(result.error)
+        return
+      }
+      router.refresh()
+    })
+  }
+
+  function renommerFamille(id: string, label: string) {
+    const avant = groups
+    setGroups((prev) => prev.map((g) => (g.id === id ? { ...g, label } : g)))
+
+    start(async () => {
+      const result = await renameServiceGroup(id, label)
+      if (!result.ok) {
+        setGroups(avant)
+        toast.error(result.error)
+      }
+    })
+  }
+
+  function supprimerFamille(id: string) {
+    start(async () => {
+      const result = await deleteServiceGroup(id)
+      if (!result.ok) {
+        toast.error(result.error)
+        return
+      }
+      toast.success('Titre retiré — les accompagnements sont conservés.')
+      router.refresh()
     })
   }
 
@@ -121,14 +320,15 @@ export function ServicesManager({
     if (!draft) return
 
     start(async () => {
+      const existant = draft.id ? items.find((s) => s.id === draft.id) : null
       const payload = {
         title: draft.title,
         slug: draft.slug || slugify(draft.title),
         excerpt: draft.excerpt,
         body: draft.body,
         duration: draft.duration || null,
-        groupLabel: draft.groupLabel.trim() || null,
         method: draft.method.trim() || null,
+        groupId: existant?.groupId ?? null,
         mediaId: draft.mediaId,
         isActive: draft.isActive,
       }
@@ -148,9 +348,50 @@ export function ServicesManager({
     })
   }
 
+  const ouvrirDraft = (service: ServiceWithMedia) =>
+    setDraft({
+      id: service.id,
+      title: service.title,
+      slug: service.slug,
+      excerpt: service.excerpt,
+      body: service.body,
+      duration: service.duration ?? '',
+      method: service.method ?? '',
+      mediaId: service.mediaId,
+      isActive: service.isActive,
+    })
+
+  const basculer = (service: ServiceWithMedia, checked: boolean) =>
+    start(async () => {
+      const result = await toggleService(service.id, checked)
+      if (result.ok) {
+        setItems((prev) =>
+          prev.map((s) => (s.id === service.id ? { ...s, isActive: checked } : s)),
+        )
+      } else toast.error(result.error)
+    })
+
+  const supprimer = async (service: ServiceWithMedia) => {
+    const result = await deleteService(service.id)
+    if (result.ok) setItems((prev) => prev.filter((s) => s.id !== service.id))
+    return result
+  }
+
+  const vide = items.length === 0 && groups.length === 0
+
+  /* Ce que le calque doit représenter pendant le glisser. */
+  const draggedGroup = dragged ? (groups.find((g) => g.id === dragged) ?? null) : null
+  const draggedService = dragged
+    ? (items.find((s) => s.id === dragged) ?? null)
+    : null
+
   return (
     <>
-      <div className="mb-4 flex justify-end">
+      <div className="mb-4 flex justify-end gap-2">
+        <Button variant="outline" onClick={ajouterFamille} disabled={pending}>
+          <Plus />
+          Ajouter un titre
+        </Button>
         <Button
           className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
           onClick={() => setDraft(emptyDraft)}
@@ -160,7 +401,7 @@ export function ServicesManager({
         </Button>
       </div>
 
-      {items.length === 0 ? (
+      {vide ? (
         <div className="rounded-xl border border-border bg-white px-6 py-14 text-center">
           <p className="text-[13px] text-muted-foreground">
             Aucun accompagnement pour l’instant — créez le premier pour le
@@ -181,64 +422,83 @@ export function ServicesManager({
              d'hydratation React à chaque ouverture de l'écran. */
           id="services-sortable"
           sensors={sensors}
-          collisionDetection={closestCenter}
-          modifiers={[restrictToVerticalAxis]}
+          /* `closestCorners` plutôt que `closestCenter` : avec plusieurs
+             conteneurs, c'est lui qui vise juste près des bordures. */
+          collisionDetection={closestCorners}
+          onDragStart={({ active }: DragStartEvent) => {
+            origine.current = conteneurDe(String(active.id))
+            setDragged(String(active.id))
+          }}
           onDragEnd={handleDragEnd}
+          onDragCancel={handleDragCancel}
         >
-          <SortableContext
-            items={items.map((s) => s.id)}
-            strategy={verticalListSortingStrategy}
-          >
-            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
-              {items.map((service, i) => (
-                <ServiceRow
-                  key={service.id}
-                  service={service}
-                  /* Intitulé de famille rappelé à chaque changement : on voit
-                     les regroupements se former en glissant les lignes. */
-                  groupStart={
-                    (service.groupLabel?.trim() || null) !==
-                    (items[i - 1]?.groupLabel?.trim() || null)
-                      ? service.groupLabel?.trim() || null
-                      : null
-                  }
-                  onEdit={() =>
-                    setDraft({
-                      id: service.id,
-                      title: service.title,
-                      slug: service.slug,
-                      excerpt: service.excerpt,
-                      body: service.body,
-                      duration: service.duration ?? '',
-                      groupLabel: service.groupLabel ?? '',
-                      method: service.method ?? '',
-                      mediaId: service.mediaId,
-                      isActive: service.isActive,
-                    })
-                  }
-                  onToggle={(checked) =>
-                    start(async () => {
-                      const result = await toggleService(service.id, checked)
-                      if (result.ok) {
-                        setItems((prev) =>
-                          prev.map((s) =>
-                            s.id === service.id ? { ...s, isActive: checked } : s,
-                          ),
-                        )
-                      } else toast.error(result.error)
-                    })
-                  }
-                  onDeleted={async () => {
-                    const result = await deleteService(service.id)
-                    if (result.ok) {
-                      setItems((prev) => prev.filter((s) => s.id !== service.id))
-                    }
-                    return result
-                  }}
+          <div className="space-y-4">
+            {/* Deux niveaux de tri imbriqués : les familles entre elles, et
+                les accompagnements dans chacune. dnd-kit distingue les deux
+                par l'identifiant saisi au départ du glisser. */}
+            <SortableContext
+              items={groups.map((g) => g.id)}
+              strategy={verticalListSortingStrategy}
+            >
+              {groups.map((group) => (
+                <Famille
+                  key={group.id}
+                  group={group}
+                  services={blocs.parFamille.get(group.id) ?? []}
+                  dragged={dragged}
+                  onRename={(label) => renommerFamille(group.id, label)}
+                  onDelete={() => supprimerFamille(group.id)}
+                  onEdit={ouvrirDraft}
+                  onToggle={basculer}
+                  onDeleted={supprimer}
                 />
               ))}
-            </ul>
-          </SortableContext>
+            </SortableContext>
+
+            <Famille
+              group={null}
+              services={blocs.orphelins}
+              dragged={dragged}
+              onEdit={ouvrirDraft}
+              onToggle={basculer}
+              onDeleted={supprimer}
+            />
+          </div>
+
+          {/* Calque de glisser : une copie qui suit le pointeur au pixel.
+              Sans lui, avec deux niveaux de tri imbriqués, les mesures se
+              chassent et l'élément paraît sauter d'une position à l'autre. */}
+          <DragOverlay dropAnimation={dropAnimation}>
+            {draggedGroup ? (
+              <div className="w-full overflow-hidden rounded-xl border border-blue-deep/50 bg-white shadow-xl">
+                <p className="border-b border-border bg-ivory/60 px-4 py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+                  {draggedGroup.label}
+                </p>
+                <p className="px-4 py-3 text-[12.5px] text-muted-foreground">
+                  {(blocs.parFamille.get(draggedGroup.id) ?? []).length}{' '}
+                  accompagnement(s)
+                </p>
+              </div>
+            ) : draggedService ? (
+              <div className="flex items-center gap-3 rounded-lg border border-blue-deep/50 bg-white px-4 py-3 shadow-xl">
+                <GripVertical className="h-4 w-4 text-muted-foreground/50" />
+                <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded bg-muted">
+                  {draggedService.media && (
+                    <Image
+                      src={draggedService.media.url}
+                      alt={draggedService.media.alt}
+                      fill
+                      sizes="44px"
+                      className="object-cover"
+                    />
+                  )}
+                </span>
+                <span className="text-sm font-medium">
+                  {draggedService.title}
+                </span>
+              </div>
+            ) : null}
+          </DragOverlay>
         </DndContext>
       )}
 
@@ -299,34 +559,7 @@ export function ServicesManager({
                 />
               </div>
 
-              <div>
-                <Label htmlFor="s-group" className="mb-2 block">
-                  Famille
-                </Label>
-                <Input
-                  id="s-group"
-                  list="s-group-options"
-                  value={draft.groupLabel}
-                  placeholder="Traverser quelque chose"
-                  onChange={(e) =>
-                    setDraft({ ...draft, groupLabel: e.target.value })
-                  }
-                />
-                {/* Les familles déjà employées, pour les réutiliser au lieu
-                    de les ressaisir — une faute de frappe créerait un
-                    doublon silencieux. */}
-                <datalist id="s-group-options">
-                  {groupOptions.map((g) => (
-                    <option key={g} value={g} />
-                  ))}
-                </datalist>
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Regroupe les accompagnements sous un intitulé commun.
-                  Laissez vide pour une simple liste.
-                </p>
-              </div>
-
-              <div>
+              <div className="sm:col-span-2">
                 <Label htmlFor="s-method" className="mb-2 block">
                   Méthode
                 </Label>
@@ -337,7 +570,8 @@ export function ServicesManager({
                   onChange={(e) => setDraft({ ...draft, method: e.target.value })}
                 />
                 <p className="mt-1.5 text-xs text-muted-foreground">
-                  Mention discrète affichée en regard du titre.
+                  Mention discrète affichée en regard du titre. Le regroupement
+                  sous un intitulé se fait en glissant la ligne dans la liste.
                 </p>
               </div>
 
@@ -414,16 +648,208 @@ export function ServicesManager({
   )
 }
 
+/* ── Une famille, ou le bloc des accompagnements sans famille ────────── */
+
+function Famille({
+  group,
+  services,
+  dragged,
+  onRename,
+  onDelete,
+  onEdit,
+  onToggle,
+  onDeleted,
+}: {
+  /** `null` pour le bloc des accompagnements présentés seuls. */
+  group: ServiceGroup | null
+  services: ServiceWithMedia[]
+  dragged: string | null
+  onRename?: (label: string) => void
+  onDelete?: () => void
+  onEdit: (service: ServiceWithMedia) => void
+  onToggle: (service: ServiceWithMedia, checked: boolean) => void
+  onDeleted: (service: ServiceWithMedia) => Promise<ActionResult<unknown>>
+}) {
+  /* Une famille est triable — elle se déplace en bloc ; le tiroir « sans
+     titre » reste fixe en fin de liste, il n'a pas de position à défendre. */
+  const sortable = useSortable({ id: group?.id ?? SANS_FAMILLE })
+  const droppable = useDroppable({ id: SANS_FAMILLE })
+
+  const setNodeRef = group ? sortable.setNodeRef : droppable.setNodeRef
+  const isOver = group ? sortable.isOver : droppable.isOver
+
+  /* Le bloc sans famille ne s'affiche que s'il contient quelque chose — ou
+     pendant un glisser, pour qu'on puisse y déposer. */
+  if (!group && services.length === 0 && !dragged) return null
+
+  return (
+    <section
+      ref={setNodeRef}
+      style={
+        group
+          ? {
+              transform: CSS.Transform.toString(sortable.transform),
+              transition: sortable.transition,
+            }
+          : undefined
+      }
+      className={cn(
+        'overflow-hidden rounded-xl border bg-white transition-colors',
+        isOver ? 'border-blue-deep/60 bg-blue-mist/30' : 'border-border',
+        /* C'est le calque qu'on suit : l'original marque la place. */
+        group && sortable.isDragging && 'opacity-35',
+      )}
+    >
+      {group ? (
+        <TitreFamille
+          label={group.label}
+          dragAttributes={sortable.attributes}
+          dragListeners={sortable.listeners}
+          onRename={onRename}
+          onDelete={onDelete}
+        />
+      ) : (
+        <p className="border-b border-border bg-muted/40 px-4 py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+          Sans titre — présentés seuls
+        </p>
+      )}
+
+      <SortableContext
+        items={services.map((s) => s.id)}
+        strategy={verticalListSortingStrategy}
+      >
+        {services.length === 0 ? (
+          <p className="px-4 py-6 text-center text-[12.5px] text-muted-foreground">
+            Glissez un accompagnement ici.
+          </p>
+        ) : (
+          <ul className="divide-y divide-border">
+            {services.map((service) => (
+              <ServiceRow
+                key={service.id}
+                service={service}
+                onEdit={() => onEdit(service)}
+                onToggle={(checked) => onToggle(service, checked)}
+                onDeleted={() => onDeleted(service)}
+              />
+            ))}
+          </ul>
+        )}
+      </SortableContext>
+    </section>
+  )
+}
+
+/** Intitulé modifiable au clic, et poignée pour déplacer la famille entière. */
+function TitreFamille({
+  label,
+  dragAttributes,
+  dragListeners,
+  onRename,
+  onDelete,
+}: {
+  label: string
+  dragAttributes?: DraggableAttributes
+  dragListeners?: SyntheticListenerMap
+  onRename?: (label: string) => void
+  onDelete?: () => void
+}) {
+  const [editing, setEditing] = useState(false)
+  const [value, setValue] = useState(label)
+  const inputRef = useRef<HTMLInputElement>(null)
+
+  useEffect(() => setValue(label), [label])
+  useEffect(() => {
+    if (editing) inputRef.current?.select()
+  }, [editing])
+
+  function valider() {
+    const propre = value.trim()
+    if (propre && propre !== label) onRename?.(propre)
+    else setValue(label)
+    setEditing(false)
+  }
+
+  return (
+    <div className="group/titre flex items-center gap-2 border-b border-border bg-ivory/60 px-4 py-2.5">
+      {!editing && (
+        <button
+          type="button"
+          {...dragAttributes}
+          {...dragListeners}
+          aria-label={`Déplacer le bloc ${label}`}
+          className="-ml-1 cursor-grab touch-none text-muted-foreground/50 opacity-0 transition-opacity active:cursor-grabbing group-focus-within/titre:opacity-100 group-hover/titre:opacity-100"
+        >
+          <GripVertical className="h-4 w-4" />
+        </button>
+      )}
+
+      {editing ? (
+        <>
+          <Input
+            ref={inputRef}
+            value={value}
+            onChange={(e) => setValue(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') valider()
+              if (e.key === 'Escape') {
+                setValue(label)
+                setEditing(false)
+              }
+            }}
+            className="h-8 max-w-sm text-[13px]"
+          />
+          <Button variant="ghost" size="icon" onClick={valider} aria-label="Valider">
+            <Check className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={() => {
+              setValue(label)
+              setEditing(false)
+            }}
+            aria-label="Annuler"
+          >
+            <X className="h-4 w-4" />
+          </Button>
+        </>
+      ) : (
+        <>
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            className="group flex min-w-0 flex-1 items-center gap-2 text-left"
+          >
+            <span className="truncate text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              {label}
+            </span>
+            <Pencil className="h-3 w-3 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100" />
+          </button>
+
+          {onDelete && (
+            <ConfirmDelete
+              label={label}
+              description="Le titre disparaît, les accompagnements restent : ils rejoignent la liste sans titre, à leur place."
+              onConfirm={async () => {
+                onDelete()
+                return { ok: true, data: undefined }
+              }}
+            />
+          )}
+        </>
+      )}
+    </div>
+  )
+}
+
 function ServiceRow({
   service,
-  groupStart,
   onEdit,
   onToggle,
   onDeleted,
 }: {
   service: ServiceWithMedia
-  /** Intitulé de la famille, sur la première ligne de celle-ci seulement. */
-  groupStart: string | null
   onEdit: () => void
   onToggle: (checked: boolean) => void
   onDeleted: () => Promise<ActionResult<unknown>>
@@ -432,18 +858,13 @@ function ServiceRow({
     useSortable({ id: service.id })
 
   return (
-    <>
-      {groupStart && (
-        <li className="bg-ivory/60 px-4 py-1.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
-          {groupStart}
-        </li>
-      )}
     <li
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
         'group flex items-center gap-3 bg-white px-4 py-3 transition-colors duration-150 hover:bg-ivory/50',
-        isDragging && 'relative z-10 rounded-lg border border-border shadow-sm',
+        /* C'est le calque qu'on suit : l'original marque la place. */
+        isDragging && 'opacity-35',
         !service.isActive && 'opacity-60',
       )}
     >
@@ -502,6 +923,5 @@ function ServiceRow({
         <ConfirmDelete label={service.title} onConfirm={onDeleted} />
       </span>
     </li>
-    </>
   )
 }

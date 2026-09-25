@@ -27,7 +27,16 @@ import type { NextConfig } from 'next'
  *   `'self'` : seul l'historique justifie encore l'hôte Vercel Blob.
  * - En développement, le websocket de rechargement à chaud (`ws://`) sera
  *   signalé par `connect-src` : bruit attendu, absent en production.
+ *
+ * `report-to` N'EST PAS DÉCORATIF. Sans lui, Chrome refuse purement et
+ * simplement d'appliquer une politique en mode rapport : « the policy will
+ * have no effect ». L'en-tête était donc là depuis le début sans rien
+ * observer du tout — une sécurité de façade. Le groupe est déclaré par
+ * l'en-tête `Reporting-Endpoints` ci-dessous et reçu par
+ * `/api/csp-report`, couvert par `connect-src 'self'`.
  */
+const CSP_REPORT_GROUP = 'csp'
+const CSP_REPORT_PATH = '/api/csp-report'
 const CONTENT_SECURITY_POLICY_REPORT_ONLY = [
   "default-src 'self'",
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
@@ -40,9 +49,17 @@ const CONTENT_SECURITY_POLICY_REPORT_ONLY = [
   "object-src 'none'",
   "base-uri 'self'",
   "form-action 'self'",
+  `report-to ${CSP_REPORT_GROUP}`,
+  /* Directive dépréciée, gardée pour Firefox et Safari qui ne lisent pas
+     encore `report-to` : les deux cohabitent sans conflit. */
+  `report-uri ${CSP_REPORT_PATH}`,
 ].join('; ')
 
 const securityHeaders = [
+  {
+    key: 'Reporting-Endpoints',
+    value: `${CSP_REPORT_GROUP}="${CSP_REPORT_PATH}"`,
+  },
   {
     key: 'Content-Security-Policy-Report-Only',
     value: CONTENT_SECURITY_POLICY_REPORT_ONLY,

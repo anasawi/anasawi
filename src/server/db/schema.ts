@@ -218,6 +218,26 @@ export const seoMeta = pgTable(
    Accompagnements
    ════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Familles d'accompagnements — « Traverser quelque chose », « Passer par le
+ * corps ».
+ *
+ * Une table plutôt qu'un texte recopié sur chaque accompagnement : c'est ce
+ * qui permet de renommer une famille d'un seul geste, d'en créer une vide
+ * pour y glisser des lignes ensuite, et de la déplacer sans toucher à ses
+ * membres.
+ */
+export const serviceGroups = pgTable(
+  'service_groups',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    label: text('label').notNull(),
+    sortOrder: integer('sort_order').notNull().default(0),
+    ...timestamps,
+  },
+  (t) => [index('service_groups_order_idx').on(t.sortOrder)],
+)
+
 export const services = pgTable(
   'services',
   {
@@ -228,12 +248,13 @@ export const services = pgTable(
     body: text('body').notNull().default(''),
     duration: text('duration'),
     /**
-     * Famille d'accompagnements — « Traverser quelque chose », « Passer par
-     * le corps ». Saisie sur chaque accompagnement plutôt que dans une table
-     * dédiée : les familles se forment dans l'ordre de tri, et les réordonner
-     * revient à glisser des lignes, geste qu'Anne connaît déjà.
+     * Famille d'appartenance, ou nul pour un accompagnement présenté seul.
+     * `set null` à la suppression : retirer un titre ne doit jamais emporter
+     * les accompagnements qu'il coiffait.
      */
-    groupLabel: text('group_label'),
+    groupId: uuid('group_id').references(() => serviceGroups.id, {
+      onDelete: 'set null',
+    }),
     /** Mention discrète en regard du titre — « Gestalt-thérapie ». */
     method: text('method'),
     mediaId: uuid('media_id').references(() => media.id, {
@@ -246,6 +267,7 @@ export const services = pgTable(
   (t) => [
     uniqueIndex('services_slug_idx').on(t.slug),
     index('services_order_idx').on(t.sortOrder),
+    index('services_group_idx').on(t.groupId),
   ],
 )
 
@@ -391,6 +413,13 @@ export type FaqItem = typeof faqItems.$inferSelect
 export type Settings = typeof settings.$inferSelect
 export type ContactMessage = typeof contactMessages.$inferSelect
 
-export type ServiceWithMedia = Service & { media: Media | null }
+export type ServiceGroup = typeof serviceGroups.$inferSelect
+
+/** Un accompagnement tel que le site et le CMS le manipulent. */
+export type ServiceWithMedia = Service & {
+  media: Media | null
+  /** Famille d'appartenance, résolue — nulle si l'accompagnement est seul. */
+  group: ServiceGroup | null
+}
 export type OpeningHour = { day: string; hours: string }
 export type SocialLink = { label: string; url: string }

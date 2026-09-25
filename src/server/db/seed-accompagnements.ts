@@ -3,7 +3,7 @@ import './load-env'
 import { eq, max } from 'drizzle-orm'
 
 import { db } from './index'
-import { services } from './schema'
+import { serviceGroups, services } from './schema'
 
 /**
  * Installe les cinq accompagnements, rangés en trois familles.
@@ -39,8 +39,18 @@ const FAMILLES = {
   metier: 'Avancer dans son métier',
 } as const
 
-/** Retirés de l'affichage, jamais supprimés : leurs textes restent en base. */
-const A_MASQUER = ['adolescents', 'accompagnement-du-deuil']
+/**
+ * Retirés de l'affichage, jamais supprimés : leurs textes restent en base.
+ *
+ * Le titre attendu est rappelé ici parce qu'il a été trouvé faux en base —
+ * `adolescents` portait « Thérapie de couple », `accompagnement-du-deuil`
+ * portait « Superviseur ». L'origine du dégât n'a pas pu être établie ; le
+ * script le répare plutôt que de le laisser courir.
+ */
+const A_MASQUER = [
+  { slug: 'adolescents', title: 'Adolescents' },
+  { slug: 'accompagnement-du-deuil', title: 'Accompagnement du deuil' },
+]
 
 const ENTREES: Entree[] = [
   {
@@ -95,6 +105,40 @@ const ENTREES: Entree[] = [
   },
 ]
 
+/** Retrouve une famille par son intitulé, ou la crée à la suite. */
+async function familleDe(
+  label: string,
+  cache: Map<string, string>,
+): Promise<string> {
+  const connue = cache.get(label)
+  if (connue) return connue
+
+  const [existante] = await db
+    .select({ id: serviceGroups.id })
+    .from(serviceGroups)
+    .where(eq(serviceGroups.label, label))
+    .limit(1)
+
+  if (existante) {
+    cache.set(label, existante.id)
+    return existante.id
+  }
+
+  const [{ value: currentMax } = { value: null }] = await db
+    .select({ value: max(serviceGroups.sortOrder) })
+    .from(serviceGroups)
+
+  const [creee] = await db
+    .insert(serviceGroups)
+    .values({ label, sortOrder: (currentMax ?? -1) + 1 })
+    .returning({ id: serviceGroups.id })
+
+  if (!creee) throw new Error(`Famille « ${label} » non créée.`)
+  cache.set(label, creee.id)
+  console.log(`  famille  ${label}`)
+  return creee.id
+}
+
 async function main() {
   console.log('Installation des accompagnements…\n')
 
@@ -102,11 +146,13 @@ async function main() {
     .select({ value: max(services.sortOrder) })
     .from(services)
 
+  const familles = new Map<string, string>()
   let rang = 0
   let crees = 0
   let majs = 0
 
   for (const entree of ENTREES) {
+    const groupId = await familleDe(entree.groupLabel, familles)
     const [existant] = await db
       .select({ id: services.id })
       .from(services)
@@ -118,7 +164,7 @@ async function main() {
       await db
         .update(services)
         .set({
-          groupLabel: entree.groupLabel,
+          groupId,
           method: entree.method,
           sortOrder: rang,
           isActive: true,
@@ -133,7 +179,7 @@ async function main() {
         excerpt: entree.excerpt,
         body: entree.body,
         duration: entree.duration,
-        groupLabel: entree.groupLabel,
+        groupId,
         method: entree.method,
         sortOrder: rang,
         isActive: true,
@@ -148,7 +194,8 @@ async function main() {
   /* Retrait de l'affichage, pas de la base : les textes restent, et un
      interrupteur dans /admin/accompagnements suffit à les rétablir. */
   let masques = 0
-  for (const slug of A_MASQUER) {
+  let reparations = 0
+  for (const { slug, title } of A_MASQUER) {
     const [existant] = await db
       .select({
         id: services.id,
@@ -159,15 +206,27 @@ async function main() {
       .where(eq(services.slug, slug))
       .limit(1)
 
-    if (existant?.isActive) {
+    if (!existant) continue
+
+    /* Le slug fait foi : si le titre a dérivé, on le remet d'aplomb. */
+    if (existant.title !== title) {
+      await db.update(services).set({ title }).where(eq(services.id, existant.id))
+      reparations += 1
+      console.log(`  corrigé  « ${existant.title} »  →  « ${title} »`)
+    }
+
+    if (existant.isActive) {
       await db
         .update(services)
-        .set({ isActive: false, groupLabel: null, sortOrder: rang })
+        .set({ isActive: false, groupId: null, sortOrder: rang })
         .where(eq(services.id, existant.id))
       rang += 1
       masques += 1
-      console.log(`  masqué   ${existant.title}`)
+      console.log(`  masqué   ${title}`)
     }
+  }
+  if (reparations > 0) {
+    console.log(`\n  ${reparations} titre(s) remis d’aplomb.`)
   }
 
   console.log(`\n  ${crees} créé(s), ${majs} rangé(s), ${masques} masqué(s).`)

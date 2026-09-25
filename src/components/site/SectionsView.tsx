@@ -66,6 +66,86 @@ export type SectionsViewData = {
     d'un rendu à l'autre (comparaison de `SectionRoot`). */
 const EMPTY_SECTIONS: Section[] = []
 
+/* ══════════════════════════════════════════════════════════════════════
+   Blocs en défaut — jamais en silence.
+
+   Deux accidents font qu'une section ne peut pas être rendue : son type
+   n'existe plus au registre (bloc renommé ou retiré), ou son payload ne
+   satisfait plus son schéma (champ ajouté, migration oubliée).
+
+   Ces deux cas rendaient `null` SANS AUCUNE TRACE en production : la
+   section disparaissait purement et simplement du site, et rien, nulle
+   part, ne disait pourquoi. Le diagnostic coûtait des heures.
+
+   Désormais : trace serveur systématique (une fois par section et par
+   motif, pour ne pas noyer les journaux d'un rendu à l'autre), et dans
+   l'éditeur un cartouche visible à la place du bloc — l'administratrice
+   voit immédiatement quelle section est cassée, et pourquoi.
+   ══════════════════════════════════════════════════════════════════════ */
+
+const dejaSignale = new Set<string>()
+
+function signalerBloc(
+  section: Section,
+  motif: string,
+  detail?: unknown,
+): void {
+  const cle = `${section.id}|${motif}`
+  if (dejaSignale.has(cle)) return
+  dejaSignale.add(cle)
+
+  console.error(
+    `[sections] bloc non rendu — ${motif} · type "${section.type}" · section ${section.id}`,
+    detail ?? '',
+  )
+}
+
+/** Cartouche d'éditeur : la section cassée reste visible et nommée. */
+function BlocEnDefaut({
+  section,
+  motif,
+}: {
+  section: Section
+  motif: string
+}) {
+  return (
+    <div
+      role="note"
+      data-block-error={section.type}
+      className="rounded-xl border border-dashed border-red-400 bg-red-50 px-5 py-4 text-left font-sans text-[13px] leading-relaxed text-red-900"
+    >
+      <p className="font-semibold">Cette section ne peut pas être affichée.</p>
+      <p className="mt-1">
+        {motif} — type «&nbsp;{section.type}&nbsp;»
+        {section.name ? ` · ${section.name}` : ''}.
+      </p>
+      <p className="mt-1 text-red-800/80">
+        Elle n’apparaît pas non plus sur le site public. Supprimez-la ou
+        remplacez-la par un template de la bibliothèque.
+      </p>
+    </div>
+  )
+}
+
+/** Le même cartouche, mais à la place d'une section racine entière. */
+function SectionEnDefaut({
+  section,
+  motif,
+}: {
+  section: Section
+  motif: string
+}) {
+  return (
+    <section
+      data-block-id={section.id}
+      data-block-root="true"
+      className="container-editorial py-10"
+    >
+      <BlocEnDefaut section={section} motif={motif} />
+    </section>
+  )
+}
+
 /**
  * Rendu des sections d'une page — LE composant de rendu, unique.
  *
@@ -261,17 +341,19 @@ type RenderEnv = {
 function renderBlock(section: Section, index: number, env: RenderEnv) {
   const { childrenOf, ctx, editable } = env
   const block = getBlock(section.type)
-  if (!block) return null
+  if (!block) {
+    signalerBloc(section, 'type inconnu au registre')
+    return editable ? (
+      <BlocEnDefaut section={section} motif="Type inconnu au registre" />
+    ) : null
+  }
 
   const parsed = block.schema.safeParse(section.payload)
   if (!parsed.success) {
-    if (process.env.NODE_ENV !== 'production') {
-      console.warn(
-        `[sections] payload invalide — type "${section.type}", id ${section.id}`,
-        parsed.error.flatten(),
-      )
-    }
-    return null
+    signalerBloc(section, 'payload invalide', parsed.error.flatten())
+    return editable ? (
+      <BlocEnDefaut section={section} motif="Contenu invalide" />
+    ) : null
   }
 
   let columns: React.ReactNode[] | undefined
@@ -399,8 +481,27 @@ const SectionRoot = memo(function SectionRoot({
   ctx,
   editable,
 }: SectionRootProps) {
+  /*
+   * Une racine qu'on ne sait pas rendre ne doit pas laisser de COQUILLE
+   * VIDE : le `<section>` porterait son fond et son padding vertical, et
+   * creuserait dans la page un trou que rien n'explique. On sort avant de
+   * le construire — et, dans l'éditeur, on met un cartouche à la place.
+   */
   const block = getBlock(section.type)
-  if (!block) return null
+
+  if (!block) {
+    signalerBloc(section, 'type inconnu au registre')
+    return editable ? (
+      <SectionEnDefaut section={section} motif="Type inconnu au registre" />
+    ) : null
+  }
+
+  if (!block.schema.safeParse(section.payload).success) {
+    signalerBloc(section, 'payload invalide')
+    return editable ? (
+      <SectionEnDefaut section={section} motif="Contenu invalide" />
+    ) : null
+  }
 
   const env: RenderEnv = { childrenOf, ctx, editable }
 

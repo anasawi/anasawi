@@ -57,6 +57,13 @@
       "when": 1788352000000,
       "tag": "0007_service_groups",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1788353000000,
+      "tag": "0008_service_groups_table",
+      "breakpoints": true
     }
   ]
 }

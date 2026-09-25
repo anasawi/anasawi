@@ -24,8 +24,22 @@ export function buildMetadata({
 }): Metadata {
   const seo = page.seo
 
+  /*
+   * Titre de l'onglet et de Google, par ordre de priorité :
+   *
+   * 1. le titre SEO propre à la page, s'il est renseigné ;
+   * 2. sur l'ACCUEIL seulement, le « Titre pour Google » des réglages —
+   *    c'est le titre du site tout entier, et « Accueil — ANASAWI » ne
+   *    dit rien ni à un visiteur ni à un moteur ;
+   * 3. ailleurs, « Titre de la page — Nom du site » : deux pages qui
+   *    partageraient le même titre se cannibaliseraient au référencement.
+   *
+   * Le réglage était auparavant lu nulle part : il se remplissait dans
+   * l'administration sans jamais rien changer sur le site.
+   */
   const title =
     seo?.title?.trim() ||
+    (page.isHome ? settings.defaultSeoTitle?.trim() : '') ||
     [page.title, settings.siteName].filter(Boolean).join(' — ')
 
   const description = truncate(

@@ -1,0 +1,15 @@
+{
+  // Les tests de bout en bout sont exclus du tsconfig principal : `next build`
+  // typerait sinon tout le dossier, ce qui couple la compilation de
+  // l'application au code de test et allonge chaque build. Ils restent
+  // vérifiés, mais à part — voir `npm run typecheck:e2e`.
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "module": "esnext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "types": ["node"]
+  },
+  "include": ["e2e/**/*.ts", "playwright.config.ts"],
+  "exclude": ["node_modules"]
+}

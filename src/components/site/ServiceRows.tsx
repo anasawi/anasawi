@@ -142,12 +142,14 @@ export function ServiceRows({
         {items.map((service, i) => {
           const last = i === items.length - 1
 
-          /* Première ligne d'une famille : on annonce l'intitulé. Les
-             familles se forment dans l'ordre de tri — pas de table dédiée,
-             et les réordonner revient à glisser des lignes dans le CMS. */
-          const group = service.groupLabel?.trim() || null
-          const previousGroup = items[i - 1]?.groupLabel?.trim() || null
-          const groupStart = group !== previousGroup ? group : null
+          /* Première ligne d'une famille : on annonce l'intitulé. La
+             comparaison porte sur l'identité de la famille, pas sur son
+             texte — deux familles peuvent porter le même nom sans se
+             confondre, et renommer n'en scinde aucune. */
+          const groupStart =
+            service.groupId && service.groupId !== items[i - 1]?.groupId
+              ? service.group?.label.trim() || null
+              : null
           const rowClass = `group grid grid-cols-1 gap-y-2 border-line px-[var(--spacing-gutter)] py-7 text-left transition-[background-color,color,border-radius] duration-[450ms] ease-[var(--ease)] hover:rounded-[24px] hover:bg-night hover:text-ivory md:py-8 lg:grid-cols-12 lg:items-baseline lg:gap-x-5 ${
             /* L'intitulé de famille porte déjà le filet du dessus. */
             groupStart ? '' : 'border-t'
@@ -208,7 +210,15 @@ export function ServiceRows({
                   {/* Ni filet ni fond, et presque la taille des rangées :
                       ce sont l'italique, le bleu et le centrage qui font
                       lire un titre, pas une échelle plus grande. */}
-                  <p className="px-[var(--spacing-gutter)] pb-3 pt-6 text-center font-serif text-[clamp(22px,2.4vw,33px)] font-light italic text-blue-deep md:pb-4 md:pt-8">
+                  <p
+                    /* Le pointeur reste dans le conteneur en passant d'une
+                       rangée au titre : sans cet effacement, la carte de la
+                       rangée précédente resterait affichée au-dessus. */
+                    onMouseEnter={
+                      showPreview ? () => setHoverIndex(null) : undefined
+                    }
+                    className="px-[var(--spacing-gutter)] pb-3 pt-6 text-center font-serif text-[clamp(22px,2.4vw,33px)] font-light italic text-blue-deep md:pb-4 md:pt-8"
+                  >
                     {groupStart}
                   </p>
                 </Reveal>

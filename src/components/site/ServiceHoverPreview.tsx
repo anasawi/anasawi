@@ -210,7 +210,7 @@ export function ServiceHoverPreview({
             <span aria-hidden="true" className="text-blue-deep">
               ✳
             </span>
-            {shown.service.groupLabel?.trim() ||
+            {shown.service.group?.label.trim() ||
               `Accompagnement · ${NUMBER_WORDS[shown.index] ?? String(shown.index + 1)}`}
             {shown.service.method && (
               <span className="text-blue-deep">· {shown.service.method}</span>

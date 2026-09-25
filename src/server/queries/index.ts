@@ -1,4 +1,4 @@
-import { and, asc, desc, eq, inArray } from 'drizzle-orm'
+import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
 import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 
@@ -11,6 +11,7 @@ import {
   savedSections,
   sections,
   seoMeta,
+  serviceGroups,
   services,
   settings,
   type FaqItem,
@@ -19,6 +20,7 @@ import {
   type SavedSection,
   type Section,
   type SeoMeta,
+  type ServiceGroup,
   type ServiceWithMedia,
   type Settings,
 } from '../db/schema'
@@ -127,17 +129,29 @@ export const getSettings = cache(
    Accompagnements
    ════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Ordre d'affichage : les familles d'abord, dans leur ordre à elles, puis les
+ * accompagnements dans leur ordre au sein de la famille. Les accompagnements
+ * sans famille ferment la liste — `nulls last` sur le rang de famille.
+ */
+const servicesOrder = [
+  sql`${serviceGroups.sortOrder} asc nulls last`,
+  asc(services.sortOrder),
+  asc(services.createdAt),
+]
+
 export const getActiveServices = cache(
   cached(
     async (): Promise<ServiceWithMedia[]> => {
       const rows = await db
-        .select({ service: services, media })
+        .select({ service: services, media, group: serviceGroups })
         .from(services)
         .leftJoin(media, eq(services.mediaId, media.id))
+        .leftJoin(serviceGroups, eq(services.groupId, serviceGroups.id))
         .where(eq(services.isActive, true))
-        .orderBy(asc(services.sortOrder), asc(services.createdAt))
+        .orderBy(...servicesOrder)
 
-      return rows.map((r) => ({ ...r.service, media: r.media }))
+      return rows.map((r) => ({ ...r.service, media: r.media, group: r.group }))
     },
     ['services-active'],
     [tags.services],
@@ -146,12 +160,21 @@ export const getActiveServices = cache(
 
 export async function getAllServices(): Promise<ServiceWithMedia[]> {
   const rows = await db
-    .select({ service: services, media })
+    .select({ service: services, media, group: serviceGroups })
     .from(services)
     .leftJoin(media, eq(services.mediaId, media.id))
-    .orderBy(asc(services.sortOrder), asc(services.createdAt))
+    .leftJoin(serviceGroups, eq(services.groupId, serviceGroups.id))
+    .orderBy(...servicesOrder)
 
-  return rows.map((r) => ({ ...r.service, media: r.media }))
+  return rows.map((r) => ({ ...r.service, media: r.media, group: r.group }))
+}
+
+/** Toutes les familles, dans leur ordre — y compris celles encore vides. */
+export async function getServiceGroups(): Promise<ServiceGroup[]> {
+  return db
+    .select()
+    .from(serviceGroups)
+    .orderBy(asc(serviceGroups.sortOrder), asc(serviceGroups.createdAt))
 }
 
 /* ════════════════════════════════════════════════════════════════════

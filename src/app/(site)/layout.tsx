@@ -54,7 +54,17 @@ export default async function SiteLayout({
         email={settings.contactEmail}
       />
       <SmoothScroll>
-        <main id="contenu">{children}</main>
+        {/* `tabIndex={-1}` : cible du lien d'évitement « Aller au contenu ».
+            Sans lui, activer le lien déplace le défilement mais PAS le
+            focus clavier — Chrome et Firefox rattrapent en déplaçant le
+            point de départ de tabulation, Safari et plusieurs lecteurs
+            d'écran non : la tabulation suivante renvoie dans l'en-tête,
+            c'est-à-dire exactement ce que le lien servait à éviter.
+            `outline-none` parce que ce focus est programmatique : il ne
+            doit pas dessiner un cadre autour de toute la page. */}
+        <main id="contenu" tabIndex={-1} className="outline-none">
+          {children}
+        </main>
         <Footer settings={settings} items={navItems} />
       </SmoothScroll>
       <AdminBar />

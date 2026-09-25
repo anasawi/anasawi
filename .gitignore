@@ -20,6 +20,16 @@ yarn-error.log*
 .netlify
 next-env.d.ts
 tsconfig.tsbuildinfo
+tsconfig.e2e.tsbuildinfo
 
 # Médias envoyés depuis le CMS en développement (pilote de stockage local).
 .storage
+
+# Tests de bout en bout
+.env.test
+.next-e2e
+e2e/.auth
+playwright-report
+test-results
+blob-report
+.playwright
