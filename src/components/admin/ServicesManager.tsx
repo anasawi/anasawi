@@ -287,6 +287,22 @@ export function ServicesManager({
         toast.error(result.error)
         return
       }
+
+      /* L'état local fait foi (voir plus haut) : `router.refresh()` seul
+         ne changeait donc RIEN à l'écran. On cliquait, la notification
+         confirmait, et rien n'apparaissait avant un rechargement manuel.
+         On pose donc nous-mêmes ce que le serveur vient d'enregistrer. */
+      const maintenant = new Date()
+      setGroups((prev) => [
+        ...prev,
+        {
+          id: result.data.id,
+          label: 'Nouveau titre',
+          sortOrder: prev.length,
+          createdAt: maintenant,
+          updatedAt: maintenant,
+        },
+      ])
       router.refresh()
     })
   }
@@ -300,7 +316,13 @@ export function ServicesManager({
       if (!result.ok) {
         setGroups(avant)
         toast.error(result.error)
+        return
       }
+
+      /* Seule écriture de cet écran qui ne confirmait rien. Le libellé
+         changeait sous les yeux avant même la réponse du serveur : en cas
+         d'échec silencieux, Anne partait convaincue d'avoir enregistré. */
+      toast.success('Titre renommé.')
     })
   }
 
@@ -312,6 +334,16 @@ export function ServicesManager({
         return
       }
       toast.success('Titre retiré — les accompagnements sont conservés.')
+
+      /* La clé étrangère est en `set null` côté base : les
+         accompagnements rejoignent la liste sans titre. L'écran doit
+         montrer exactement cela, tout de suite. */
+      setGroups((prev) => prev.filter((g) => g.id !== id))
+      setItems((prev) =>
+        prev.map((s) =>
+          s.groupId === id ? { ...s, groupId: null, group: null } : s,
+        ),
+      )
       router.refresh()
     })
   }
@@ -333,16 +365,54 @@ export function ServicesManager({
         isActive: draft.isActive,
       }
 
-      const result = draft.id
-        ? await updateService(draft.id, payload)
-        : await createService(payload)
+      /*
+       * Les deux chemins sont écrits séparément parce que l'état local
+       * fait foi (voir plus haut) : sans écriture locale, l'accompagnement
+       * créé n'apparaissait NULLE PART et le titre modifié restait
+       * l'ancien à l'écran. Anne enregistrait, voyait la confirmation, ne
+       * voyait aucun changement — et recommençait, pour se heurter cette
+       * fois à « Ce slug est déjà utilisé ».
+       */
+      const image = library.find((m) => m.id === payload.mediaId) ?? null
 
-      if (!result.ok) {
-        toast.error(result.error)
-        return
+      if (draft.id) {
+        const result = await updateService(draft.id, payload)
+        if (!result.ok) {
+          toast.error(result.error)
+          return
+        }
+
+        toast.success('Accompagnement enregistré.')
+        setItems((prev) =>
+          prev.map((s) =>
+            s.id === draft.id
+              ? { ...s, ...payload, media: image, updatedAt: new Date() }
+              : s,
+          ),
+        )
+      } else {
+        const result = await createService(payload)
+        if (!result.ok) {
+          toast.error(result.error)
+          return
+        }
+
+        toast.success('Accompagnement créé.')
+        const maintenant = new Date()
+        setItems((prev) => [
+          ...prev,
+          {
+            ...payload,
+            id: result.data.id,
+            sortOrder: prev.length,
+            media: image,
+            group: null,
+            createdAt: maintenant,
+            updatedAt: maintenant,
+          },
+        ])
       }
 
-      toast.success(draft.id ? 'Accompagnement enregistré.' : 'Accompagnement créé.')
       setDraft(null)
       router.refresh()
     })

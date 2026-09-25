@@ -8,10 +8,30 @@ import { expect, type Page, type Response } from '@playwright/test'
  * croyait couvrir.
  */
 
-/** Attend qu'une notification sonner porte exactement ce texte. */
+/**
+ * Attend qu'une notification sonner porte ce texte.
+ *
+ * En cas d'échec, l'aide dit CE QU'ELLE A VU. Sans cela, le message se
+ * réduit à « élément introuvable » alors que l'application affichait une
+ * erreur parfaitement explicite juste à côté — et l'on cherche la cause
+ * pendant trois exécutions.
+ */
 export async function attendreNotification(page: Page, texte: string | RegExp) {
-  await expect(page.locator('[data-sonner-toast]').filter({ hasText: texte }))
-    .toBeVisible({ timeout: 15_000 })
+  const toutes = page.locator('[data-sonner-toast]')
+  const attendue = toutes.filter({ hasText: texte })
+
+  try {
+    await expect(attendue.first()).toBeVisible({ timeout: 15_000 })
+  } catch (erreur) {
+    const vues = await toutes.allTextContents()
+    throw new Error(
+      `Notification attendue : « ${texte} ».\n` +
+        (vues.length > 0
+          ? `Notifications à l’écran : ${vues.map((t) => `« ${t.trim()} »`).join(', ')}`
+          : 'Aucune notification à l’écran (elle a pu s’effacer avant la lecture).') +
+        `\n\n${erreur instanceof Error ? erreur.message : String(erreur)}`,
+    )
+  }
 }
 
 /**
