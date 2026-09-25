@@ -186,7 +186,10 @@ export function buildPersonJsonLd(settings: Settings, image?: string): Json {
   })
 }
 
-export function buildFaqJsonLd(items: FaqItem[]): Json | null {
+export function buildFaqJsonLd(
+  items: FaqItem[],
+  path = '/',
+): Json | null {
   if (items.length === 0) return null
 
   return {
@@ -196,6 +199,13 @@ export function buildFaqJsonLd(items: FaqItem[]): Json | null {
       name: item.question,
       acceptedAnswer: { '@type': 'Answer', text: item.answer },
     })),
+    /* Les cinq nœuds du graphe se lient par leurs `@id` — c'est tout
+       l'intérêt d'un graphe unique plutôt que de cinq balises séparées.
+       Celui-ci flottait sans identité ni rattachement : un moteur le
+       lisait comme une fiche indépendante, sans savoir de quelle page il
+       parlait. */
+    '@id': `${absoluteUrl(path)}#faq`,
+    isPartOf: { '@id': `${absoluteUrl(path)}#webpage` },
   }
 }
 
