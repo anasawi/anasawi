@@ -52,6 +52,7 @@ export default async function PageBuilderPage({
       isHome={page.isHome}
       userName={session?.user?.name ?? session?.user?.email ?? 'Admin'}
       publishedSnapshot={page.publishedSnapshot}
+      published={page.status === 'published'}
       publishedAt={page.publishedAt}
       initialSections={page.sections}
       data={{ services, faqItems, settings, media }}

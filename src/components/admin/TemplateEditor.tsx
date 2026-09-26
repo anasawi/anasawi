@@ -75,8 +75,8 @@ export type EditorPage = {
   published: boolean
 }
 
-/** Les trois seuls états que la barre du haut sait dire. */
-type PublishState = 'live' | 'pending' | 'never'
+/** Les seuls états que la barre du haut sait dire. */
+type PublishState = 'live' | 'pending' | 'never' | 'unpublished'
 
 const PUBLISH_STATUS: Record<
   PublishState,
@@ -96,6 +96,18 @@ const PUBLISH_STATUS: Record<
     label: 'Jamais publiée',
     dot: 'bg-muted-foreground/50',
     pill: 'bg-muted text-muted-foreground',
+  },
+  /*
+   * Une page retirée du web. Elle a un instantané publié identique à son
+   * brouillon, si bien qu'elle se disait « En ligne » — et « Publier »
+   * restait inerte. Anne n'avait alors AUCUN moyen de la remettre en
+   * ligne, sinon modifier quelque chose au hasard pour rendre le bouton
+   * actif. L'état manquait, pas le bouton.
+   */
+  unpublished: {
+    label: 'Dépubliée',
+    dot: 'bg-[#c98a2d]',
+    pill: 'bg-[#fdf4e4] text-[#8a5f1e]',
   },
 }
 
@@ -157,6 +169,7 @@ export function TemplateEditor({
   pageSlug,
   isHome,
   publishedSnapshot,
+  published,
   publishedAt,
   initialSections,
   data,
@@ -171,6 +184,8 @@ export function TemplateEditor({
   isHome: boolean
   /** Instantané servi au public — sert à l'indicateur d'état. */
   publishedSnapshot: unknown
+  /** La page est-elle actuellement servie au public ? */
+  published: boolean
   publishedAt: Date | null
   initialSections: Section[]
   data: SectionsViewData
@@ -236,10 +251,12 @@ export function TemplateEditor({
      resynchronisée au rechargement. */
   const [snapshot, setSnapshot] = useState<unknown>(publishedSnapshot)
   const [publishedOn, setPublishedOn] = useState<Date | null>(publishedAt)
+  const [enLigne, setEnLigne] = useState(published)
   useEffect(() => {
     setSnapshot(publishedSnapshot)
     setPublishedOn(publishedAt)
-  }, [publishedSnapshot, publishedAt])
+    setEnLigne(published)
+  }, [publishedSnapshot, publishedAt, published])
 
   const [viewport, setViewport] = useState<Breakpoint>('desktop')
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
@@ -1392,9 +1409,11 @@ export function TemplateEditor({
   const identityStyles = identityCss(data.settings.identity)
   const publishState: PublishState = !publishedOn
     ? 'never'
-    : dirty
-      ? 'pending'
-      : 'live'
+    : !enLigne
+      ? 'unpublished'
+      : dirty
+        ? 'pending'
+        : 'live'
   const status = PUBLISH_STATUS[publishState]
   const canPublish = publishState !== 'live'
 
@@ -1418,6 +1437,7 @@ export function TemplateEditor({
       /* Vert tout de suite ; le rechargement confirme depuis la base. */
       setSnapshot(sectionsRef.current.map(projectSection))
       setPublishedOn(new Date())
+      setEnLigne(true)
       toast.success('En ligne ✓')
       router.refresh()
     } finally {

@@ -52,6 +52,11 @@ export const RESERVED_SLUGS = new Set([
   'api',
   'login',
   'logout',
+  /* `/preview` affiche les brouillons : c'est une route de l'application
+     (src/app/(preview)), protégée par le middleware. Une page du CMS qui
+     porterait ce slug serait créée sans broncher, puis masquée par la
+     route — introuvable, et impossible à comprendre. */
+  'preview',
   'sitemap.xml',
   'robots.txt',
   '_next',

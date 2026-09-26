@@ -524,6 +524,25 @@ const pageFormSchema = z.object({
   slug: slugSchema,
 })
 
+/**
+ * Refus de formulaire, avec LA raison.
+ *
+ * « Formulaire invalide. » sur deux champs, dont l'un accepte des règles
+ * précises (minuscules, chiffres et tirets ; slugs réservés par
+ * l'application), ne dit pas quoi corriger. Le schéma porte déjà des
+ * messages écrits pour être lus — « Ce slug est réservé par
+ * l'application. » — et ils se perdaient en route. On remonte le premier,
+ * en gardant le détail par champ pour l'affichage sous les libellés.
+ */
+function refusDeFormulaire(erreur: z.ZodError): ActionResult<never> {
+  const premier = erreur.issues[0]?.message
+  const parChamp: Record<string, string[]> = {}
+  for (const [champ, messages] of Object.entries(erreur.flatten().fieldErrors)) {
+    if (messages) parChamp[champ] = messages
+  }
+  return fail(premier || 'Formulaire invalide.', parChamp)
+}
+
 async function slugTaken(slug: string, exceptId?: string): Promise<boolean> {
   const [row] = await db
     .select({ id: pages.id })
@@ -542,7 +561,7 @@ export async function createPage(
 
     const parsed = pageFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return refusDeFormulaire(parsed.error)
     }
     if (await slugTaken(parsed.data.slug)) {
       return fail('Ce slug est déjà utilisé par une autre page.')
@@ -570,7 +589,7 @@ export async function updatePageMeta(
 
     const parsed = pageFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return refusDeFormulaire(parsed.error)
     }
 
     const [page] = await db
@@ -1107,7 +1126,7 @@ export async function updateSeo(
 
     const parsed = seoFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return refusDeFormulaire(parsed.error)
     }
 
     const values = {
