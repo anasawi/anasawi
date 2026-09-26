@@ -18,14 +18,20 @@ import { MESSAGE_VALIDE } from '../support/fixtures'
 
 const EXPEDITEUR = 'Expéditrice de test E2E'
 
+let compteur = 0
+
 /** Dépose un message par l'API, comme le ferait le formulaire du site. */
 async function envoyerUnMessage(page: Page, suffixe = '') {
+  compteur += 1
+
   const reponse = await page.request.post('/api/contact', {
     headers: {
       'Content-Type': 'application/json',
-      /* Adresse dédiée : la limitation de débit du formulaire ne doit pas
-         faire échouer un test qui parle d'autre chose. */
-      'X-Forwarded-For': '198.51.100.7',
+      /* UNE ADRESSE PAR ENVOI. Le formulaire n'accepte que cinq messages
+         par heure et par adresse : avec une adresse fixe, les derniers
+         tests de ce fichier se heurtaient à un 429 — un échec qui ne
+         parlait pas du tout de ce qu'ils vérifiaient. */
+      'X-Forwarded-For': `198.51.100.${compteur % 250}`,
     },
     data: {
       ...MESSAGE_VALIDE,
@@ -84,8 +90,11 @@ test.describe('Messages reçus', () => {
     const entree = ligne(page, EXPEDITEUR).first()
     await entree.getByRole('button').first().click()
 
-    /* Le corps du message apparaît, et la pastille « Nouveau » s'efface. */
-    await expect(entree.getByText(MESSAGE_VALIDE.message)).toBeVisible()
+    /* Le corps du message apparaît — dans le PARAGRAPHE déplié, pas dans
+       l'aperçu tronqué du bouton, qui porte le même texte. */
+    await expect(
+      entree.getByRole('paragraph').filter({ hasText: MESSAGE_VALIDE.message }),
+    ).toBeVisible()
     await expect(entree.getByText('Nouveau')).toHaveCount(0)
 
     await persisteApresRechargement(page, async () => {
@@ -100,7 +109,18 @@ test.describe('Messages reçus', () => {
 
     const entree = ligne(page, EXPEDITEUR).first()
     await entree.getByRole('button').first().click()
+
+    /* L'ouverture écrit « lu » en base. Enchaîner sans attendre lancerait
+       deux écritures concurrentes sur la même ligne, et la dernière
+       arrivée gagnerait — pas forcément la dernière demandée. */
+    await expect(entree.getByText('Nouveau')).toHaveCount(0)
+
     await entree.getByRole('button', { name: 'Marquer comme non lu' }).click()
+
+    /* La pastille revient APRÈS la réponse du serveur : c'est l'accusé de
+       réception, et recharger sans l'attendre annulerait la requête. */
+    await expect(ligne(page, EXPEDITEUR).first().getByText('Nouveau'))
+      .toBeVisible()
 
     /* Utile quand on ouvre un message sans avoir le temps d'y répondre :
        sans cela, il se perd dans la liste des lus. */
