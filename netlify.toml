@@ -6,7 +6,20 @@
 # l'épingler ici — Netlify le met à jour à chaque build pour suivre Next.js.
 
 [build]
-  command = "npm run build"
+  # LA MIGRATION D'ABORD, LE BUILD ENSUITE.
+  #
+  # Le schéma et le code qui en dépend voyagent dans le même commit, mais
+  # ils étaient appliqués séparément : la base à la main, le code par le
+  # déploiement. Déployer sans avoir migré donne une application qui
+  # démarre et tombe à la première requête — « relation "service_groups"
+  # does not exist » — sur un site en ligne.
+  #
+  # Netlify renseigne `DATABASE_URL` par contexte : chaque déploiement
+  # migre donc SA base, et une migration qui échoue fait échouer le build
+  # au lieu de mettre en ligne du code que la base ne peut pas servir.
+  # Drizzle tient un registre des migrations appliquées : rejouer est sans
+  # effet.
+  command = "npx tsx src/server/db/migrate.ts && npm run build"
 
 [build.environment]
   # Aligné sur `engines.node` du package.json.
