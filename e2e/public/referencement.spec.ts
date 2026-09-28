@@ -235,6 +235,24 @@ test.describe('Image de partage', () => {
     expect(octets.readUInt32BE(16)).toBe(180)
     expect(octets.readUInt32BE(20)).toBe(180)
   })
+
+  test('le favicon est servi, et le JSON-LD le désigne', async ({
+    page,
+    request,
+  }) => {
+    const reponse = await request.get('/icon.png', { failOnStatusCode: false })
+    expect(reponse.status()).toBe(200)
+
+    /* L'adresse du logo part dans le JSON-LD : si le fichier change de
+       nom, la fiche Google pointe vers un 404 sans que rien ne le
+       signale sur le site. */
+    await page.goto('/')
+    const brut = await page
+      .locator('script[type="application/ld+json"]')
+      .first()
+      .textContent()
+    expect(brut).toContain('/icon.png')
+  })
 })
 
 test.describe('Structure de titres', () => {

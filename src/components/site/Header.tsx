@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { m, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
+import { LogoMark } from './Logo'
 import { PRELOADER_DONE_EVENT } from './Preloader'
 import { anchorId, cn, navHref, toE164 } from '@/lib/utils'
 
@@ -223,12 +224,10 @@ export function Header({
           onClick={close}
           className="group mr-4 flex items-center gap-2.5 text-ink max-lg:mr-2"
         >
-          <span
-            aria-hidden="true"
-            className="inline-block font-serif text-[18px] text-blue-deep transition-transform duration-700 ease-[var(--ease)] group-hover:rotate-180"
-          >
-            ✳
-          </span>
+          {/* L'ombelle d'Anne, à la place de l'astérisque typographique
+              qui en tenait lieu. La rotation au survol reste : elle
+              appartient à la capsule, pas au glyphe. */}
+          <LogoMark className="h-7 w-7 transition-transform duration-700 ease-[var(--ease)] group-hover:rotate-180" />
           <span className="font-serif text-[16.5px] font-light tracking-[0.26em]">
             ANASAWI
           </span>
