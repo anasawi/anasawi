@@ -48,6 +48,18 @@ test.describe('Accueil', () => {
     await expect(page.getByRole('heading', { level: 1 })).toHaveCount(1)
   })
 
+  test('l’en-tête porte le logo du site', async ({ page }) => {
+    await page.goto('/')
+
+    /* Le lien de marque mène à l'accueil et montre le logo. Sans logo
+       choisi dans les Réglages, c'est celui livré avec le site. */
+    const marque = page.getByRole('banner').getByRole('link', {
+      name: /ANASAWI/,
+    })
+    await expect(marque.locator('img')).toHaveCount(1)
+    await expect(marque.locator('img')).toHaveAttribute('src', /.+/)
+  })
+
   test('toutes les images chargent et portent un alt', async ({ page }) => {
     await page.goto('/', { waitUntil: 'load' })
     /* Le rendu différé des images demande un temps de grâce. */

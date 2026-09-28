@@ -17,10 +17,19 @@ import { cn } from '@/lib/utils'
  * la boîte — si bien qu'à 16 px la marque n'occupait que huit pixels et
  * devenait une tache. Marges retirées, elle se lit.
  */
-export function LogoMark({ className }: { className?: string }) {
+export function LogoMark({
+  className,
+  src,
+}: {
+  className?: string
+  /** Logo choisi dans les Réglages. Absent : celui livré avec le site. */
+  src?: string | null
+}) {
   return (
     <Image
-      src={logoAnasawi}
+      src={src || logoAnasawi}
+      width={72}
+      height={72}
       alt=""
       aria-hidden="true"
       priority

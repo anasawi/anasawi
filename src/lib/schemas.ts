@@ -118,6 +118,7 @@ export const settingsFormSchema = z.object({
 
   defaultSeoTitle: z.string().trim().max(120).nullable().default(null),
   defaultSeoDescription: z.string().trim().max(320).nullable().default(null),
+  logoMediaId: z.string().uuid().nullable().default(null),
   defaultOgMediaId: z.string().uuid().nullable().default(null),
 })
 

@@ -78,6 +78,17 @@ test.describe('Réglages — écriture et propagation', () => {
     )
   })
 
+  test('le logo se choisit depuis les Réglages', async ({ page }) => {
+    await ouvrirReglages(page)
+
+    /* Le logo vivait dans le code : en changer demandait un
+       déploiement. Il se choisit maintenant comme une photo. */
+    await expect(page.getByText('Logo du site')).toBeVisible()
+    await expect(
+      page.getByText(/Sans choix, le logo livré avec le site est utilisé/),
+    ).toBeVisible()
+  })
+
   test('un téléphone modifié atteint le site ET le JSON-LD', async ({
     page,
   }) => {

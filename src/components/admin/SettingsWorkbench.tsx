@@ -104,6 +104,7 @@ export function SettingsWorkbench({
     (settings.socialLinks as SocialLink[]) ?? [],
   )
   const [ogMediaId, setOgMediaId] = useState(settings.defaultOgMediaId)
+  const [logoMediaId, setLogoMediaId] = useState(settings.logoMediaId)
 
   /** Erreurs de validation renvoyées par l'action, par champ — affichées
       sous le champ concerné en plus du toast. Effacées à la prochaine
@@ -160,6 +161,7 @@ export function SettingsWorkbench({
           openingHours: hours.filter((h) => h.day && h.hours),
           socialLinks: socials.filter((s) => s.label && s.url),
           defaultOgMediaId: ogMediaId,
+          logoMediaId,
         }),
         updateIdentity({ palette, buttonRadius, spacing }),
       ])
@@ -231,7 +233,25 @@ export function SettingsWorkbench({
                   placeholder="Thérapeute"
                   error={errorOf('practitionerTitle')}
                 />
-              </Card>
+              
+                <MediaPicker
+                  label="Logo du site"
+                  value={logoMediaId}
+                  onChange={(id) => {
+                    setSaved(false)
+                    setLogoMediaId(id)
+                  }}
+                  library={library}
+                  className="max-w-xs"
+                />
+                <p className="self-end text-[12px] leading-[1.6] text-muted-foreground">
+                  Il apparaît dans l’en-tête du site, dans l’onglet du
+                  navigateur et sur l’écran d’accueil d’un téléphone. Une
+                  image carrée, cadrée au plus près du dessin : les marges
+                  vides le rapetissent d’autant. Sans choix, le logo livré
+                  avec le site est utilisé.
+                </p>
+</Card>
 
               <Card
                 id="coordonnees"

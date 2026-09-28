@@ -101,6 +101,7 @@ const FALLBACK_SETTINGS: Settings = {
   practicalInfo: null,
   bookingUrl: null,
   socialLinks: [],
+  logoMediaId: null,
   defaultSeoTitle: null,
   defaultSeoDescription: null,
   defaultOgMediaId: null,

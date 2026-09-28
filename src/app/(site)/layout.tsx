@@ -8,7 +8,7 @@ import { SmoothScroll } from '@/components/site/SmoothScroll'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { identityCss } from '@/lib/identity'
 import { bookingHref } from '@/lib/settings-helpers'
-import { getNavigationItems, getSettings } from '@/server/queries'
+import { getMediaByIds, getNavigationItems, getSettings } from '@/server/queries'
 
 /**
  * Chrome du site public — et uniquement du site public.
@@ -34,6 +34,12 @@ export default async function SiteLayout({
 
   const ctaHref = bookingHref(settings)
 
+  /* Logo choisi dans les Réglages. Absent — ou média supprimé depuis —
+     le composant retombe sur celui livré avec le site. */
+  const [logo] = settings.logoMediaId
+    ? await getMediaByIds([settings.logoMediaId])
+    : []
+
   /* Identité globale : les surcharges de variables CSS choisies dans
      l'admin — vide si le site suit la charte telle quelle. */
   const identityStyles = identityCss(settings.identity)
@@ -52,6 +58,7 @@ export default async function SiteLayout({
         ctaHref={ctaHref}
         phone={settings.contactPhone}
         email={settings.contactEmail}
+        logoUrl={logo?.url ?? null}
       />
       <SmoothScroll>
         {/* `tabIndex={-1}` : cible du lien d'évitement « Aller au contenu ».

@@ -42,6 +42,7 @@ export function Header({
   ctaHref,
   phone = null,
   email = null,
+  logoUrl = null,
 }: {
   items: NavItem[]
   ctaLabel: string
@@ -49,6 +50,8 @@ export function Header({
   /** Coordonnées affichées en bas du menu mobile — rien si absentes. */
   phone?: string | null
   email?: string | null
+  /** Logo choisi dans les Réglages, s'il y en a un. */
+  logoUrl?: string | null
 }) {
   const [entered, setEntered] = useState(false)
   const [hidden, setHidden] = useState(false)
@@ -225,9 +228,10 @@ export function Header({
           className="group mr-4 flex items-center gap-2.5 text-ink max-lg:mr-2"
         >
           {/* L'ombelle d'Anne, à la place de l'astérisque typographique
-              qui en tenait lieu. La rotation au survol reste : elle
-              appartient à la capsule, pas au glyphe. */}
-          <LogoMark className="h-7 w-7 transition-transform duration-700 ease-[var(--ease)] group-hover:rotate-180" />
+              qui en tenait lieu. Pas de rotation au survol : un
+              astérisque qui tourne est un clin d'œil, une ombelle qui
+              tourne est une image à l'envers. */}
+          <LogoMark src={logoUrl} className="h-7 w-7" />
           <span className="font-serif text-[16.5px] font-light tracking-[0.26em]">
             ANASAWI
           </span>

@@ -315,6 +315,12 @@ export const settings = pgTable('settings', {
   bookingUrl: text('booking_url'),
   socialLinks: jsonb('social_links').notNull().default([]),
 
+  /** Logo du site, choisi dans la bibliothèque de médias. Nul = celui
+      livré avec l'application. */
+  logoMediaId: uuid('logo_media_id').references(() => media.id, {
+    onDelete: 'set null',
+  }),
+
   defaultSeoTitle: text('default_seo_title'),
   defaultSeoDescription: text('default_seo_description'),
   defaultOgMediaId: uuid('default_og_media_id').references(() => media.id, {
