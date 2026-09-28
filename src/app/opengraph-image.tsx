@@ -1,5 +1,6 @@
 import { ImageResponse } from 'next/og'
 
+import { LOGO_ILLUSTRATION } from './logo-illustration'
 import { getSettings } from '@/server/queries'
 
 export const alt = 'ANASAWI'
@@ -17,6 +18,7 @@ export default async function Image() {
     (
       <div
         style={{
+          position: 'relative',
           width: '100%',
           height: '100%',
           display: 'flex',
@@ -27,6 +29,21 @@ export default async function Image() {
           fontFamily: 'serif',
         }}
       >
+        {/*
+          L'ombelle, posée à droite et débordant légèrement du cadre.
+          C'est la seule surface où cette illustration a la place d'être
+          lue : la vignette de partage fait 1200×630, et c'est elle que
+          voient les gens à qui l'on envoie le lien du site.
+          Elle passe DERRIÈRE le texte (z-index 0 contre le flux normal),
+          et le titre est borné à 620px pour ne jamais la chevaucher.
+        */}
+        <img
+          src={LOGO_ILLUSTRATION}
+          alt=""
+          width={440}
+          height={440}
+          style={{ position: 'absolute', right: 40, top: 95 }}
+        />
         <div style={{ display: 'flex', alignItems: 'center', gap: 22 }}>
           <svg width="52" height="52" viewBox="0 0 64 64">
             <g
@@ -52,7 +69,7 @@ export default async function Image() {
             color: '#1F2321',
           }}
         >
-          <div style={{ fontSize: 74, lineHeight: 1.08, maxWidth: 900 }}>
+          <div style={{ fontSize: 66, lineHeight: 1.1, maxWidth: 620 }}>
             {settings.defaultSeoTitle ?? settings.tagline ?? settings.siteName}
           </div>
           {settings.practitionerName && (

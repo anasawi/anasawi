@@ -194,6 +194,41 @@ test.describe('JSON-LD', () => {
   })
 })
 
+test.describe('Image de partage', () => {
+  test('la vignette de repli est un PNG de 1200×630', async ({ request }) => {
+    /*
+     * C'est l'image que voient les gens à qui l'on envoie le lien — dans
+     * un message, sur un réseau. Elle est COMPOSÉE à la volée : une
+     * erreur dedans ne casse aucune page du site et ne se voit donc
+     * jamais, jusqu'au jour où quelqu'un partage le lien et reçoit un
+     * rectangle gris.
+     */
+    const reponse = await request.get('/opengraph-image')
+    expect(reponse.status()).toBe(200)
+    expect(reponse.headers()['content-type']).toContain('image/png')
+
+    const octets = await reponse.body()
+    expect(octets.byteLength).toBeGreaterThan(5_000)
+
+    /* Les dimensions vivent dans l'en-tête IHDR d'un PNG : octets 16 à 23,
+       en gros-boutiste. Les réseaux sociaux attendent 1200×630 ; une
+       vignette carrée se fait recadrer n'importe comment. */
+    expect(octets.readUInt32BE(16)).toBe(1200)
+    expect(octets.readUInt32BE(20)).toBe(630)
+  })
+
+  test('l’icône d’écran d’accueil existe et est carrée', async ({ request }) => {
+    const reponse = await request.get('/apple-icon.png', {
+      failOnStatusCode: false,
+    })
+    expect(reponse.status()).toBe(200)
+
+    const octets = await reponse.body()
+    expect(octets.readUInt32BE(16)).toBe(180)
+    expect(octets.readUInt32BE(20)).toBe(180)
+  })
+})
+
 test.describe('Structure de titres', () => {
   test('l’accueil suit une hiérarchie sans saut', async ({ page }) => {
     await page.goto('/')
