@@ -54,15 +54,36 @@ async function ouvrirMessages(page: Page) {
 const ligne = (page: Page, nom: string) =>
   page.getByRole('listitem').filter({ hasText: nom })
 
+/**
+ * Le bouton qui DÉPLIE un message — et pas un autre.
+ *
+ * `.first()` sur « n'importe quel bouton » désignait tantôt le dépliage,
+ * tantôt la commande de suppression, selon l'état de la ligne : un test
+ * ouvrait alors une confirmation qu'il n'attendait pas, et restait
+ * bloqué devant un dialogue qu'il ne savait pas fermer. Le dépliage
+ * porte le nom de l'expéditrice EN TÊTE ; la suppression, en queue.
+ */
+const depliage = (entree: ReturnType<typeof ligne>) =>
+  entree.getByRole('button', { name: new RegExp(`^${EXPEDITEUR}`) })
+
+/** Confirme la suppression et attend que le dialogue se ferme. */
+async function confirmerLaSuppression(page: Page) {
+  const dialogue = page.getByRole('alertdialog')
+  await dialogue.getByRole('button', { name: 'Supprimer', exact: true }).click()
+  /* Tant que le dialogue est là, le reste de la page est inerte : y
+     chercher quoi que ce soit attendrait pour rien. */
+  await expect(dialogue).toBeHidden({ timeout: 20_000 })
+}
+
 async function supprimerLesMessagesDeTest(page: Page) {
   await ouvrirMessages(page)
 
   const entrees = ligne(page, EXPEDITEUR)
   for (let reste = await entrees.count(); reste > 0 && reste < 30; reste -= 1) {
     const premiere = entrees.first()
-    await premiere.getByRole('button').first().click()
+    await depliage(premiere).click()
     await premiere.getByRole('button', { name: /^Supprimer le message/ }).click()
-    await page.getByRole('button', { name: 'Supprimer', exact: true }).click()
+    await confirmerLaSuppression(page)
     await expect(entrees).toHaveCount(reste - 1, { timeout: 15_000 })
   }
 }
@@ -88,7 +109,7 @@ test.describe('Messages reçus', () => {
     await ouvrirMessages(page)
 
     const entree = ligne(page, EXPEDITEUR).first()
-    await entree.getByRole('button').first().click()
+    await depliage(entree).click()
 
     /* Le corps du message apparaît — dans le PARAGRAPHE déplié, pas dans
        l'aperçu tronqué du bouton, qui porte le même texte. */
@@ -108,7 +129,7 @@ test.describe('Messages reçus', () => {
     await ouvrirMessages(page)
 
     const entree = ligne(page, EXPEDITEUR).first()
-    await entree.getByRole('button').first().click()
+    await depliage(entree).click()
 
     /* L'ouverture écrit « lu » en base. Enchaîner sans attendre lancerait
        deux écritures concurrentes sur la même ligne, et la dernière
@@ -138,7 +159,7 @@ test.describe('Messages reçus', () => {
     await ouvrirMessages(page)
 
     const entree = ligne(page, EXPEDITEUR).first()
-    await entree.getByRole('button').first().click()
+    await depliage(entree).click()
 
     /* Répondre en un clic, sans recopier une adresse à la main. */
     await expect(
@@ -157,7 +178,7 @@ test.describe('Messages reçus', () => {
     await ouvrirMessages(page)
 
     const entree = ligne(page, EXPEDITEUR).first()
-    await entree.getByRole('button').first().click()
+    await depliage(entree).click()
     await entree.getByRole('button', { name: /^Supprimer le message/ }).click()
 
     await expect(
@@ -172,9 +193,9 @@ test.describe('Messages reçus', () => {
     await ouvrirMessages(page)
 
     const entree = ligne(page, EXPEDITEUR).first()
-    await entree.getByRole('button').first().click()
+    await depliage(entree).click()
     await entree.getByRole('button', { name: /^Supprimer le message/ }).click()
-    await page.getByRole('button', { name: 'Supprimer', exact: true }).click()
+    await confirmerLaSuppression(page)
     await attendreNotification(page, 'Supprimé.')
 
     await persisteApresRechargement(page, async () => {

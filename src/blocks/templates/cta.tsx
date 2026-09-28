@@ -133,7 +133,7 @@ function CtaImmersif({
 
   return (
     <div className="container-editorial">
-      <div className="relative flex min-h-[58svh] items-center justify-center overflow-hidden rounded-t-[min(240px,26vw)] rounded-b-[28px] px-6 py-[var(--spacing-section-tight)] sm:px-8 md:rounded-t-[min(240px,19vw)]">
+      <div className="relative flex min-h-[50svh] items-center justify-center overflow-hidden rounded-t-[min(240px,26vw)] rounded-b-[28px] px-6 py-[var(--spacing-section-tight)] sm:px-8 md:rounded-t-[min(240px,19vw)]">
         <BlockImage
           media={image}
           instant

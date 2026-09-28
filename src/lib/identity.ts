@@ -51,10 +51,18 @@ export function parseIdentity(input: unknown): Identity {
 /* Une seule valeur : `--spacing-section`. Les dérivés (`section-tight`,
    `band`, `hero-top`) sont des `calc()` dans globals.css et suivent
    mécaniquement. */
+/*
+ * L'échelle a été descendue d'un cran (sept. 2026). L'ancien « normal »
+ * posait 306 px de padding par section à 1440×900 — un tiers de l'écran
+ * avant le moindre contenu, et sur les sections courtes plus de vide que
+ * de texte. L'ancien « normal » devient « aéré » ; l'ancien « compact »
+ * devient la valeur par défaut. Les trois restent choisissables dans
+ * Réglages → Identité.
+ */
 const SPACING = {
-  compact: 'clamp(72px, 12vh, 130px)',
-  normal: 'clamp(100px, 17vh, 190px)',
-  aere: 'clamp(130px, 22vh, 250px)',
+  compact: 'clamp(56px, 8vh, 96px)',
+  normal: 'clamp(72px, 12vh, 130px)',
+  aere: 'clamp(100px, 17vh, 190px)',
 } as const
 
 /**

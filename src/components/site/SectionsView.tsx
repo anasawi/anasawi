@@ -570,7 +570,12 @@ const SectionRoot = memo(function SectionRoot({
         } as React.CSSProperties
       }
       className={cn(
-        'relative scroll-mt-24',
+        /* Pas de `scroll-mt` ici : `html { scroll-padding-top }` compense
+           déjà la capsule de navigation pour TOUTE ancre. Les deux
+           s'additionnaient — 192 px au lieu de 96 — et chaque clic dans
+           le menu posait la section sous une bande de vide de la hauteur
+           de deux en-têtes. */
+        'relative',
         /* Sous `lg`, aucune section ne peut ouvrir de défilement
            horizontal (titres décalés, chiffres, bandeaux). `clip` ne
            crée pas de conteneur de défilement. Le desktop validé reste

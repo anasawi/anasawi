@@ -68,7 +68,7 @@
          qui doit laisser passer la capsule de navigation (7rem mini).
      Le contact K (grande arche) compose : marge externe ½ section,
      padding interne 1 section en haut, ½ section en bas. */
-  --spacing-section: clamp(100px, 17vh, 190px);
+  --spacing-section: clamp(72px, 12vh, 130px);
   --spacing-section-tight: calc(var(--spacing-section) * 0.6);
   --spacing-band: clamp(24px, 3vh, 32px);
   --spacing-hero-top: max(calc(var(--spacing-section) * 0.7), 7rem);

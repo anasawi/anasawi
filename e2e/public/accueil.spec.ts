@@ -154,19 +154,30 @@ test.describe('Ancres de navigation', () => {
     const href = await lien.getAttribute('href')
     test.skip(!href?.startsWith('#'), 'Le menu ne contient pas d’ancre.')
 
-    /* Point de départ : la section visée n'est PAS déjà sous les yeux,
-       sans quoi le test passerait sans qu'aucun défilement ait lieu. */
+    /*
+     * Point de départ : le HAUT de la section est sous la ligne de
+     * flottaison. Le hero laisse volontairement dépasser le bord de la
+     * section suivante — c'est le signe qu'il y a une suite — donc
+     * « pas un pixel visible » serait une garde fausse. Ce qui compte,
+     * c'est que le défilement ait réellement du chemin à faire.
+     */
     const cible = page.locator(`[id="${href!.slice(1)}"]`)
-    await expect(
-      cible,
-      'La cible est déjà visible au chargement : ce test ne prouverait rien.',
-    ).not.toBeInViewport()
+    const hauteurFenetre = page.viewportSize()?.height ?? 900
+    const avant = await cible.boundingBox()
+    expect(
+      avant?.y ?? 0,
+      'Le haut de la section est déjà dans l’écran : le test ne prouverait rien.',
+    ).toBeGreaterThan(hauteurFenetre * 0.5)
 
     await lien.click()
     /* Le défilement inertiel met environ une seconde à se poser. */
     await page.waitForTimeout(1200)
 
-    await expect(cible).toBeInViewport({ ratio: 0.05 })
+    /* Arrivée : le haut de la section est posé sous la capsule de
+       navigation (`scroll-mt-24`, 96 px), à quelques pixels près. */
+    const apres = await cible.boundingBox()
+    expect(apres?.y ?? 9999).toBeLessThan(130)
+    expect(apres?.y ?? -9999).toBeGreaterThan(-4)
   })
 
   test('le lien d’évitement donne le focus au contenu', async ({ page }) => {

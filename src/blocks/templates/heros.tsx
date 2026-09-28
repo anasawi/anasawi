@@ -231,7 +231,7 @@ function HeroEditorial({
   const first = ctx.index === 0
 
   return (
-    <div className="relative flex min-h-[88svh] flex-col justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)]">
+    <div className="relative flex min-h-[78svh] flex-col justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)]">
       <SectionIndex index={ctx.index} label="ouverture" />
 
       <div className="mx-auto w-full max-w-[1560px]">
@@ -361,7 +361,7 @@ function HeroMinimal({
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
 
   return (
-    <div className="relative flex min-h-[85svh] flex-col items-center justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] text-center">
+    <div className="relative flex min-h-[76svh] flex-col items-center justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] text-center">
       <SectionIndex index={ctx.index} label="ouverture" />
 
       {data.eyebrow && (
@@ -476,7 +476,7 @@ function HeroBandeau({
     <div className="relative">
       <SectionIndex index={ctx.index} label="ouverture" />
 
-      <div className="flex min-h-[74svh] flex-col items-center justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] text-center">
+      <div className="flex min-h-[66svh] flex-col items-center justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] text-center">
         {data.eyebrow && (
           <Reveal>
             <Eyebrow className="justify-center">{data.eyebrow}</Eyebrow>
