@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
+import { LogoPreview } from './LogoPreview'
 import { MediaPicker } from './MediaPicker'
 import { PaletteProvider } from './PaletteProvider'
 import { Button } from '@/components/ui/button'
@@ -244,13 +245,16 @@ export function SettingsWorkbench({
                   library={library}
                   className="max-w-xs"
                 />
-                <p className="self-end text-[12px] leading-[1.6] text-muted-foreground">
-                  Il apparaît dans l’en-tête du site, dans l’onglet du
-                  navigateur et sur l’écran d’accueil d’un téléphone. Une
-                  image carrée, cadrée au plus près du dessin : les marges
-                  vides le rapetissent d’autant. Sans choix, le logo livré
-                  avec le site est utilisé.
-                </p>
+                <div className="self-end">
+                  <p className="text-[12px] leading-[1.6] text-muted-foreground">
+                    Il apparaît dans l’en-tête du site, dans l’onglet du
+                    navigateur et sur l’écran d’accueil d’un téléphone.
+                    Sans choix, le logo livré avec le site est utilisé.
+                  </p>
+                  <LogoPreview
+                    url={library.find((m) => m.id === logoMediaId)?.url}
+                  />
+                </div>
 </Card>
 
               <Card

@@ -1,6 +1,6 @@
 import { ImageResponse } from 'next/og'
 
-import { LOGO_ILLUSTRATION } from './logo-illustration'
+import { adresseDuLogo } from './logo-du-site'
 import { getSettings } from '@/server/queries'
 
 export const alt = 'ANASAWI'
@@ -12,7 +12,7 @@ export const contentType = 'image/png'
  * Elle n'est utilisée que si aucune image OG n'a été choisie dans le CMS.
  */
 export default async function Image() {
-  const settings = await getSettings()
+  const [settings, logo] = await Promise.all([getSettings(), adresseDuLogo()])
 
   return new ImageResponse(
     (
@@ -100,7 +100,7 @@ export default async function Image() {
         </div>
 
           <img
-            src={LOGO_ILLUSTRATION}
+            src={logo}
             alt=""
             width={340}
             height={342}

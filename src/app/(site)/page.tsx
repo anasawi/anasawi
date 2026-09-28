@@ -49,7 +49,7 @@ export default async function HomePage() {
   /* Un seul graphe Schema.org pour toute la page : Person, LocalBusiness,
      WebSite, WebPage et FAQPage liés entre eux par leurs @id. */
   const graph = buildGraph([
-    buildOrganizationJsonLd(settings, absoluteUrl('/icon.png')),
+    buildOrganizationJsonLd(settings, absoluteUrl('/icon')),
     buildPersonJsonLd(settings),
     buildWebSiteJsonLd(settings),
     buildWebPageJsonLd(page, '/'),

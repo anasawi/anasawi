@@ -225,33 +225,58 @@ test.describe('Image de partage', () => {
     expect(octets.readUInt32BE(20)).toBe(630)
   })
 
-  test('l’icône d’écran d’accueil existe et est carrée', async ({ request }) => {
-    const reponse = await request.get('/apple-icon.png', {
-      failOnStatusCode: false,
-    })
-    expect(reponse.status()).toBe(200)
-
-    const octets = await reponse.body()
-    expect(octets.readUInt32BE(16)).toBe(180)
-    expect(octets.readUInt32BE(20)).toBe(180)
-  })
-
-  test('le favicon est servi, et le JSON-LD le désigne', async ({
+  test('les icônes déclarées par la page répondent vraiment', async ({
     page,
     request,
   }) => {
-    const reponse = await request.get('/icon.png', { failOnStatusCode: false })
-    expect(reponse.status()).toBe(200)
-
-    /* L'adresse du logo part dans le JSON-LD : si le fichier change de
-       nom, la fiche Google pointe vers un 404 sans que rien ne le
-       signale sur le site. */
     await page.goto('/')
+
+    /*
+     * On suit les adresses que la PAGE déclare, au lieu de coder en dur
+     * une convention de Next. Elle a déjà changé une fois sous nos pieds
+     * — un fichier statique est servi à `/icon.png`, une route dynamique
+     * à `/icon` — et le test avait raison de tomber.
+     */
+    const declarees = await page.evaluate(() =>
+      /* `~=` compare des mots entiers : « apple-touch-icon » n'est pas
+         « icon ». C'est `*=` qu'il faut pour attraper les deux. */
+      Array.from(document.querySelectorAll('link[rel*="icon"]')).map((l) => ({
+        rel: l.getAttribute('rel') ?? '',
+        href: (l as HTMLLinkElement).href,
+      })),
+    )
+
+    expect(declarees.length, 'La page ne déclare aucune icône.')
+      .toBeGreaterThanOrEqual(2)
+
+    for (const { rel, href } of declarees) {
+      const reponse = await request.get(href, { failOnStatusCode: false })
+      expect(reponse.status(), `« ${rel} » → ${href}`).toBe(200)
+      expect(reponse.headers()['content-type']).toContain('image')
+    }
+  })
+
+  test('le logo du JSON-LD répond, lui aussi', async ({ page, request }) => {
+    await page.goto('/')
+
+    /* L'adresse du logo part chez Google. Si elle pointe vers un 404,
+       rien sur le site ne le signale — la fiche est simplement sans
+       image, des mois durant. */
     const brut = await page
       .locator('script[type="application/ld+json"]')
       .first()
       .textContent()
-    expect(brut).toContain('/icon.png')
+
+    const graphe = JSON.parse(brut ?? '{}')['@graph'] as Record<
+      string,
+      unknown
+    >[]
+    const cabinet = graphe.find((n) => /Business/.test(String(n['@type'])))
+    const logo = String(cabinet?.image ?? cabinet?.logo ?? '')
+
+    expect(logo, 'Aucune image dans la fiche du cabinet.').toMatch(/^https?:/)
+    const reponse = await request.get(logo, { failOnStatusCode: false })
+    expect(reponse.status(), `Logo du JSON-LD : ${logo}`).toBe(200)
   })
 })
 

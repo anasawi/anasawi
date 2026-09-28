@@ -69,7 +69,7 @@ export default async function SitePage({
   if (page.isHome) redirect('/')
 
   const graph = buildGraph([
-    buildOrganizationJsonLd(settings, absoluteUrl('/icon.png')),
+    buildOrganizationJsonLd(settings, absoluteUrl('/icon')),
     buildPersonJsonLd(settings),
     buildWebSiteJsonLd(settings),
     buildWebPageJsonLd(page, `/${slug}`),

@@ -87,6 +87,17 @@ test.describe('Réglages — écriture et propagation', () => {
     await expect(
       page.getByText(/Sans choix, le logo livré avec le site est utilisé/),
     ).toBeVisible()
+
+    /*
+     * ET SON APERÇU AUX VRAIES TAILLES. Un sélecteur d'image montre
+     * l'image en grand — justement la taille où un logo ne pose jamais
+     * problème. Le piège est à 16 px, et rien dans l'admin ne permettait
+     * de le voir : Anne aurait enregistré une tache sans le savoir.
+     */
+    await expect(page.getByText('Ce que verront vos visiteurs')).toBeVisible()
+    for (const taille of ['Onglet', 'En-tête', 'Écran d’accueil']) {
+      await expect(page.getByText(taille, { exact: true })).toBeVisible()
+    }
   })
 
   test('un téléphone modifié atteint le site ET le JSON-LD', async ({
