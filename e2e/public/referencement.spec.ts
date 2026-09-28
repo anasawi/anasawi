@@ -249,10 +249,18 @@ test.describe('Image de partage', () => {
     expect(declarees.length, 'La page ne déclare aucune icône.')
       .toBeGreaterThanOrEqual(2)
 
+    await mkdir('.e2e-logs', { recursive: true })
+
     for (const { rel, href } of declarees) {
       const reponse = await request.get(href, { failOnStatusCode: false })
       expect(reponse.status(), `« ${rel} » → ${href}`).toBe(200)
       expect(reponse.headers()['content-type']).toContain('image')
+
+      /* Déposées sur le disque : une icône composée à la volée ne se
+         regarde pas autrement, et c'est à l'œil que se voit un cadrage
+         de travers. */
+      const nom = rel.includes('apple') ? 'icone-iphone' : 'icone-onglet'
+      await writeFile(`.e2e-logs/${nom}.png`, await reponse.body())
     }
   })
 

@@ -1,3 +1,4 @@
+import { LOGO_ICONE_PAR_DEFAUT } from './logo-icone-par-defaut'
 import { LOGO_PAR_DEFAUT } from './logo-par-defaut'
 import { absoluteUrl } from '@/lib/utils'
 import { getMediaByIds, getSettings } from '@/server/queries'
@@ -17,17 +18,25 @@ import { getMediaByIds, getSettings } from '@/server/queries'
  * supprimé, stockage indisponible — on retombe sur l'image encodée dans
  * le code plutôt que de rendre une icône vide.
  */
-export async function adresseDuLogo(): Promise<string> {
+export async function adresseDuLogo(
+  /** `icone` recadre le logo livré pour une icône carrée : voir
+      `logo-icone-par-defaut.ts`. Sans effet sur un logo choisi dans les
+      Réglages — on ne recadre pas l'image de quelqu'un d'autre. */
+  usage: 'illustration' | 'icone' = 'illustration',
+): Promise<string> {
+  const defaut =
+    usage === 'icone' ? LOGO_ICONE_PAR_DEFAUT : LOGO_PAR_DEFAUT
+
   try {
     const settings = await getSettings()
-    if (!settings.logoMediaId) return LOGO_PAR_DEFAUT
+    if (!settings.logoMediaId) return defaut
 
     const [media] = await getMediaByIds([settings.logoMediaId])
-    if (!media) return LOGO_PAR_DEFAUT
+    if (!media) return defaut
 
     /* Adresse absolue : Satori ne résout pas les chemins relatifs. */
     return media.url.startsWith('http') ? media.url : absoluteUrl(media.url)
   } catch {
-    return LOGO_PAR_DEFAUT
+    return defaut
   }
 }

@@ -16,7 +16,7 @@ export const contentType = 'image/png'
 export const dynamic = 'force-dynamic'
 
 export default async function Icon() {
-  const logo = await adresseDuLogo()
+  const logo = await adresseDuLogo('icone')
 
   return new ImageResponse(
     (
@@ -30,7 +30,21 @@ export default async function Icon() {
           background: 'transparent',
         }}
       >
-        <img src={logo} alt="" width={64} height={64} />
+        {/*
+          La taille passe par le STYLE, pas par les attributs : Satori
+          ignore `width`/`height` sur une image et l'étire alors à tout le
+          conteneur — le dessin touchait les quatre bords, et iOS en
+          rognait les coins avec son masque arrondi.
+
+          `contain` pour qu'une image non carrée ne soit jamais déformée :
+          le logo choisi dans les Réglages peut avoir n'importe quel
+          rapport.
+        */}
+        <img
+          src={logo}
+          alt=""
+          style={{ width: 52, height: 52, objectFit: 'contain' }}
+        />
       </div>
     ),
     size,
