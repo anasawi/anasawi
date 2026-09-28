@@ -4,6 +4,7 @@
   "private": true,
   "description": "ANASAWI — Anne Winzenried, thérapeute. Site vitrine + CMS.",
   "scripts": {
+    "predev": "tsx src/server/db/migrate.ts",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
