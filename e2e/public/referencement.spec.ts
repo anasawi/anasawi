@@ -1,3 +1,5 @@
+import { mkdir, writeFile } from 'node:fs/promises'
+
 import { expect, test } from '@playwright/test'
 
 import { PAGE_CASSEE, REGLAGES, SERVICES } from '../support/fixtures'
@@ -209,6 +211,12 @@ test.describe('Image de partage', () => {
 
     const octets = await reponse.body()
     expect(octets.byteLength).toBeGreaterThan(5_000)
+
+    /* La vignette est déposée sur le disque : une image composée à la
+       volée ne se relit pas autrement, et c'est la seule façon de la
+       REGARDER plutôt que de supposer qu'elle est juste. */
+    await mkdir('.e2e-logs', { recursive: true })
+    await writeFile('.e2e-logs/vignette-partage.png', octets)
 
     /* Les dimensions vivent dans l'en-tête IHDR d'un PNG : octets 16 à 23,
        en gros-boutiste. Les réseaux sociaux attendent 1200×630 ; une
