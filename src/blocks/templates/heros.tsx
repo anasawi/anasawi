@@ -46,9 +46,46 @@ function ringText(settings: Settings): string {
    texte circulaire qui tourne, méta ✳ au-dessus, boutons sobres.
    ════════════════════════════════════════════════════════════════════ */
 
+/**
+ * Placement d'une ligne du titre. `auto` : le décalage de la maquette —
+ * une ligne à gauche, la suivante à droite, en alternance. Les trois
+ * autres posent la ligne où on le dit, sans décalage.
+ */
+const ALIGNEMENTS = ['auto', 'gauche', 'centre', 'droite'] as const
+type Alignement = (typeof ALIGNEMENTS)[number]
+
+const ALIGNEMENT_CLASSES: Record<Exclude<Alignement, 'auto'>, string> = {
+  gauche: 'justify-self-start text-left',
+  centre: 'justify-self-center text-center',
+  droite: 'justify-self-end text-right',
+}
+
+/** Classes d'une ligne selon son alignement et son rang. */
+function classesDeLigne(align: Alignement, i: number): string {
+  if (align !== 'auto') return ALIGNEMENT_CLASSES[align]
+  return i % 2 === 0
+    ? '-translate-x-[4vw] md:-translate-x-[13vw]'
+    : 'translate-x-[3vw] md:translate-x-[9vw]'
+}
+
+/** Taille du titre en pour-cent de la maquette, bornée : en deçà de 50 %
+    il ne se lit plus, au-delà de 160 % il sort de l'écran. */
+const TAILLE_MIN = 50
+const TAILLE_MAX = 160
+const echelleDuTitre = (pourcent: number) =>
+  Math.min(TAILLE_MAX, Math.max(TAILLE_MIN, pourcent || 100)) / 100
+
+const ligneDeTitre = z.object({
+  text: z.string(),
+  /* `catch` plutôt que `default` : une ligne enregistrée avant ce champ,
+     ou une valeur vide, vaut « alterné » au lieu d'invalider le bloc. */
+  align: z.enum(ALIGNEMENTS).catch('auto'),
+})
+
 export const heroPleinEcranSchema = z.object({
   eyebrow: z.string().default(''),
-  titleLines: z.array(z.object({ text: z.string() })).default([]),
+  titleLines: z.array(ligneDeTitre).default([]),
+  titleSize: z.number().default(100),
   intro: z.string().default(''),
   primaryLabel: z.string().default(''),
   primaryHref: z.string().default('#contact'),
@@ -62,11 +99,14 @@ function HeroPleinEcran({
   ctx,
 }: BlockProps<z.output<typeof heroPleinEcranSchema>>) {
   const image = ctx.resolveMedia(data.mediaId)
-  const lines = data.titleLines.map((l) => l.text).filter(Boolean)
+  const lines = data.titleLines.filter((l) => l.text)
   const first = ctx.index === 0
 
   return (
-    <div className="relative overflow-x-clip px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] text-center">
+    <div
+      className="relative overflow-x-clip px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] text-center"
+      style={{ '--echelle-titre': echelleDuTitre(data.titleSize) } as React.CSSProperties}
+    >
       <SectionIndex index={ctx.index} label="ouverture" />
 
       {data.eyebrow && (
@@ -90,22 +130,19 @@ function HeroPleinEcran({
 
         {/* Mobile : taille et décalages ramenés pour que les deux lignes
             tiennent dans l'écran sans être coupées ; à partir de `md`,
-            les valeurs validées de la maquette. */}
+            les valeurs validées de la maquette — multipliées par l'échelle
+            choisie dans l'admin (`--echelle-titre`, 1 par défaut). */}
         {lines.length > 0 && (
-          <h1 className="text-invert pointer-events-none absolute inset-0 grid content-center justify-items-center font-serif text-[clamp(52px,16vw,76px)] font-light leading-[0.98] md:text-[clamp(56px,9vw,150px)] md:leading-none">
+          <h1 className="text-invert pointer-events-none absolute inset-0 grid content-center justify-items-center font-serif text-[calc(clamp(52px,16vw,76px)*var(--echelle-titre,1))] font-light leading-[0.98] md:text-[calc(clamp(56px,9vw,150px)*var(--echelle-titre,1))] md:leading-none">
             {lines.map((line, i) => {
-              const { text, italic } = splitLine(line)
+              const { text, italic } = splitLine(line.text)
               return (
                 <SplitChars
                   key={i}
                   text={text}
                   italic={italic}
                   delay={0.35 + i * 0.18}
-                  className={
-                    i % 2 === 0
-                      ? '-translate-x-[4vw] md:-translate-x-[13vw]'
-                      : 'translate-x-[3vw] md:translate-x-[9vw]'
-                  }
+                  className={classesDeLigne(line.align, i)}
                 />
               )
             })}
@@ -180,12 +217,28 @@ export const heroPleinEcranBlock: BlockDefinition<
     field.list(
       'titleLines',
       'Titre — une entrée par ligne',
-      [field.text('text', 'Ligne', { full: true })],
+      [
+        field.text('text', 'Ligne', { full: true }),
+        field.select(
+          'align',
+          'Placement',
+          [
+            { value: 'auto', label: 'Alterné (maquette)' },
+            { value: 'gauche', label: 'À gauche' },
+            { value: 'centre', label: 'Au centre' },
+            { value: 'droite', label: 'À droite' },
+          ],
+          { full: true },
+        ),
+      ],
       {
         addLabel: 'Ajouter une ligne',
-        help: 'Deux lignes courtes, idéalement. Entourez une ligne d’astérisques pour l’italique : *son souffle*.',
+        help: 'Deux lignes courtes, idéalement. Entourez une ligne d’astérisques pour l’italique : *son souffle*. « Alterné » suit la maquette : une ligne à gauche, la suivante à droite.',
       },
     ),
+    field.number('titleSize', 'Taille du titre (%)', {
+      help: `100 = la taille de la maquette. Entre ${TAILLE_MIN} et ${TAILLE_MAX}.`,
+    }),
     field.textarea('intro', 'Phrase d’introduction'),
     field.text('primaryLabel', 'Bouton principal — libellé'),
     field.text('primaryHref', 'Bouton principal — lien'),
@@ -195,7 +248,11 @@ export const heroPleinEcranBlock: BlockDefinition<
   ],
   defaults: {
     eyebrow: 'Thérapie — Cesson-Sévigné & visio',
-    titleLines: [{ text: 'Retrouver' }, { text: '*son souffle.*' }],
+    titleLines: [
+      { text: 'Retrouver', align: 'auto' },
+      { text: '*son souffle.*', align: 'auto' },
+    ],
+    titleSize: 100,
     intro:
       'Un espace stable et confidentiel pour déposer ce qui pèse — et avancer à votre rythme.',
     primaryLabel: 'Prendre rendez-vous',

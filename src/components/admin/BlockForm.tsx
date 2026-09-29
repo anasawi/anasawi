@@ -353,8 +353,16 @@ function ListField({
   const singleTextItem =
     itemFields.length === 1 && itemFields[0]?.kind === 'text'
 
+  /* Un choix vide n'existe pas : un nouvel élément prend la première
+     option de chaque sélecteur, sans quoi le bloc serait invalide dès
+     l'ajout d'une ligne. */
   const blank = () =>
-    Object.fromEntries(itemFields.map((f) => [f.name, ''])) as Payload
+    Object.fromEntries(
+      itemFields.map((f) => [
+        f.name,
+        f.kind === 'select' ? (f.options?.[0]?.value ?? '') : '',
+      ]),
+    ) as Payload
 
   const move = (from: number, to: number) => {
     if (to < 0 || to >= value.length) return

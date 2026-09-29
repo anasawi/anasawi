@@ -4,6 +4,7 @@ import {
   COMPTE,
   FAMILLES,
   PAGE_ACCUEIL,
+  PAGE_ARCHE,
   PAGE_CASSEE,
   QUESTIONS,
   SERVICES,
@@ -272,6 +273,50 @@ async function main() {
     .update(pages)
     .set({ publishedSnapshot: sectionsCassees })
     .where(eq(pages.id, cassee.id))
+
+  /* ── Page avec le hero « L'arche » et ses réglages de titre ─────── */
+  const [arche] = await db
+    .insert(pages)
+    .values({
+      slug: PAGE_ARCHE.slug,
+      title: PAGE_ARCHE.titre,
+      status: 'published',
+      isHome: false,
+      publishedAt: new Date(),
+    })
+    .returning()
+
+  if (!arche) throw new Error('Page avec l’arche non créée.')
+
+  const sectionsArche = await db
+    .insert(sections)
+    .values([
+      {
+        pageId: arche.id,
+        type: 'heroPleinEcran',
+        anchor: 'ouverture',
+        navLabel: 'Ouverture',
+        showInNav: false,
+        sortOrder: 0,
+        payload: {
+          eyebrow: 'Ouverture',
+          titleLines: [...PAGE_ARCHE.lignes],
+          titleSize: PAGE_ARCHE.taille,
+          intro: '',
+          primaryLabel: '',
+          primaryHref: '#contact',
+          secondaryLabel: '',
+          secondaryHref: '#a-propos',
+          mediaId: null,
+        },
+      },
+    ])
+    .returning()
+
+  await db
+    .update(pages)
+    .set({ publishedSnapshot: sectionsArche })
+    .where(eq(pages.id, arche.id))
 
   /* ── Accompagnements et familles ────────────────────────────────── */
   const famillesCreees = await db

@@ -49,6 +49,23 @@ export const PAGE_ACCUEIL = {
  * désormais que le reste de la page tienne debout, et que l'éditeur dise
  * clairement laquelle est cassée.
  */
+/**
+ * Page portant le hero « L'arche » avec ses réglages de titre : une ligne
+ * par placement, et une taille réduite. Le site d'Anne s'ouvre sur ce
+ * hero ; l'accueil du jeu de test, lui, utilise le hero en deux colonnes.
+ */
+export const PAGE_ARCHE = {
+  slug: 'page-avec-arche',
+  titre: 'Page avec l’arche',
+  /** Pour-cent de la taille de la maquette. */
+  taille: 80,
+  lignes: [
+    { text: 'Ligne à gauche', align: 'gauche' },
+    { text: 'Ligne au centre', align: 'centre' },
+    { text: 'Ligne à droite', align: 'droite' },
+  ],
+} as const
+
 export const PAGE_CASSEE = {
   slug: 'page-avec-blocs-casses',
   titre: 'Page aux blocs cassés',
