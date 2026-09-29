@@ -32,11 +32,12 @@ test.describe('Médias — vidéo', () => {
     await champ.setInputFiles('e2e/support/fichiers/boucle.webm')
     await page.getByLabel(/^Description/).fill(DESCRIPTION)
 
-    const envois: { size: number; type: string }[] = []
+    const envois: Promise<number>[] = []
     page.on('request', (r) => {
       if (r.url().endsWith('/api/upload') && r.method() === 'POST') {
-        const corps = r.postDataBuffer()
-        envois.push({ size: corps?.byteLength ?? 0, type: r.headers()['content-type'] ?? '' })
+        /* La taille réelle du corps (multipart binaire), pas
+           `postDataBuffer`, vide pour un envoi de fichier. */
+        envois.push(r.sizes().then((s) => s.requestBodySize))
       }
     })
 
@@ -47,8 +48,9 @@ test.describe('Médias — vidéo', () => {
 
     /* Ce qui est parti au serveur tient sous la limite d'envoi. */
     expect(envois.length).toBe(1)
-    expect(envois[0]!.size).toBeLessThan(4 * 1024 * 1024)
-    expect(envois[0]!.size).toBeGreaterThan(1000)
+    const taille = await envois[0]!
+    expect(taille).toBeLessThan(4 * 1024 * 1024)
+    expect(taille).toBeGreaterThan(1000)
 
     /* Dans la médiathèque, c'est une VIDÉO : un lecteur muet, pas une
        image cassée. */

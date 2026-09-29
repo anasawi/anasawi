@@ -248,6 +248,9 @@ test.describe('Ancre modifiée depuis l’admin', () => {
   test('le menu suit l’ancre renommée — après publication seulement', async ({
     page,
   }) => {
+    /* Trois écrans, une publication, un défilement : plus long que la
+       moyenne, par nature. */
+    test.slow()
     await ouvrirEditeur(page)
     await renommerLAncre(page, ANCRE_ESSAI)
 

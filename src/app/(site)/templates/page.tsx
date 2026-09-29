@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 
 import { blockRegistry, templateLibrary } from '@/blocks/registry'
+import { isVideoMimeType } from '@/lib/media-kind'
 import { SectionsView } from '@/components/site/SectionsView'
 import type { Section } from '@/server/db/schema'
 import {
@@ -53,7 +54,11 @@ export default async function TemplatesPage() {
     getAllMedia(),
   ])
 
-  const ids = media.map((m) => m.id)
+  /* Les modèles s'illustrent avec des IMAGES : une vidéo glissée dans un
+     champ d'image donnerait une image cassée (et une erreur du serveur
+     d'images). Le modèle vidéo, lui, reste sans média — son cadre vide
+     le montre bien. */
+  const ids = media.filter((m) => !isVideoMimeType(m.mimeType)).map((m) => m.id)
   const now = new Date()
   let position = 0
 

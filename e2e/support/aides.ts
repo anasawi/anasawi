@@ -67,8 +67,31 @@ export async function pasDeDebordementHorizontal(page: Page) {
   ).toBeLessThanOrEqual(fenetre + 1)
 }
 
-/** Toutes les images de la page ont-elles chargé et porté un texte alternatif ? */
+/**
+ * Toutes les images de la page ont-elles chargé et porté un texte
+ * alternatif ?
+ *
+ * Les images sont chargées à l'approche (différé) : on parcourt d'abord
+ * toute la page, écran par écran, pour qu'elles soient toutes demandées,
+ * puis on attend qu'elles soient arrivées. Sans ce parcours, une image
+ * en bas de page est « non chargée » par construction — et un test qui
+ * ne trouve aucune image passe pour rien.
+ */
 export async function imagesSaines(page: Page, options: { altObligatoire?: boolean } = {}) {
+  await page.evaluate(async () => {
+    const pas = Math.max(200, Math.floor(window.innerHeight * 0.8))
+    for (let y = 0; y < document.documentElement.scrollHeight; y += pas) {
+      window.scrollTo({ top: y, behavior: 'instant' })
+      await new Promise((r) => setTimeout(r, 120))
+    }
+    window.scrollTo({ top: 0, behavior: 'instant' })
+  })
+  await page.waitForFunction(
+    () => Array.from(document.images).every((img) => img.complete),
+    undefined,
+    { timeout: 15_000 },
+  ).catch(() => undefined)
+
   const defauts = await page.evaluate((altObligatoire) => {
     const problemes: string[] = []
     for (const img of Array.from(document.images)) {
@@ -172,6 +195,15 @@ export async function ouvrirAdmin(page: Page, chemin: string, titre: string | Re
   await expect(page.getByRole('heading', { name: titre }).first()).toBeVisible({
     timeout: 20_000,
   })
+}
+
+/** Referme le panneau mobile s'il est ouvert — sans effet sur la capsule. */
+export async function refermerLeMenu(page: Page) {
+  const fermer = page.getByRole('button', { name: 'Fermer le menu' })
+  if (await fermer.isVisible()) {
+    await fermer.click()
+    await expect(page.getByRole('dialog', { name: 'Menu' })).toBeHidden()
+  }
 }
 
 /**

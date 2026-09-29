@@ -36,7 +36,9 @@ test.describe('Navigation dans le CMS', () => {
     await rail(page).getByRole('link', { name: 'Réglages' }).click()
 
     /* Immédiatement : le fil de progression court en haut de l'écran… */
-    const fil = page.getByRole('progressbar', { name: 'Chargement de la page' })
+    /* Par sélecteur, pas par rôle : rangé, le fil est `aria-hidden`, et
+       une requête par rôle ne le trouverait plus. */
+    const fil = page.locator('[role="progressbar"][aria-label="Chargement de la page"]')
     await expect(fil).toHaveAttribute('data-actif', '', { timeout: 500 })
 
     /* …et pendant l'attente, l'écran montre un squelette à la place du

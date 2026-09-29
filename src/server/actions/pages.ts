@@ -758,13 +758,19 @@ function validateSnapshotRows(
 
   const validated: ValidatedSnapshotRow[] = []
   for (const row of rows) {
+    /*
+     * Une section dont le type a disparu du registre, ou dont le contenu
+     * ne satisfait plus son schéma, n'est pas une raison de refuser TOUT
+     * l'instantané : elle est reprise telle quelle. Le site ne la rend
+     * pas, l'éditeur la signale (cartouche) — c'est déjà son état. La
+     * refuser rendait « Annuler les modifications » impossible sur toute
+     * page portant une section cassée, alors que c'est précisément là
+     * qu'on veut pouvoir revenir en arrière. Ce qui est forgé (styles,
+     * position) reste vérifié strictement.
+     */
     const block = getBlock(row.type)
-    if (!block) return { ok: false, error: `Type inconnu : ${row.type}.` }
-
-    const payload = block.schema.safeParse(row.payload)
-    if (!payload.success) {
-      return { ok: false, error: 'Contenu invalide dans l’instantané.' }
-    }
+    const payload = block ? block.schema.safeParse(row.payload) : null
+    const contenu = payload?.success ? payload.data : row.payload
 
     let styles: NodeStyles | null = null
     if (row.styles !== null) {
@@ -800,7 +806,7 @@ function validateSnapshotRows(
       showInNav: row.showInNav,
       isActive: row.isActive,
       backgroundColor: row.backgroundColor,
-      payload: payload.data,
+      payload: contenu,
       styles,
       placement,
       settings,

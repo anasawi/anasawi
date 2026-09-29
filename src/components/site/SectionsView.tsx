@@ -94,6 +94,11 @@ function signalerBloc(
   if (dejaSignale.has(cle)) return
   dejaSignale.add(cle)
 
+  /* Dans les journaux du serveur, pas dans la console du visiteur : le
+     visiteur ne voit rien de technique, et l'administratrice a le
+     cartouche dans l'éditeur. */
+  if (typeof window !== 'undefined') return
+
   console.error(
     `[sections] bloc non rendu — ${motif} · type "${section.type}" · section ${section.id}`,
     detail ?? '',

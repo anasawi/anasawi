@@ -70,6 +70,33 @@ export function BlockImage({
     if (element && element.complete && element.naturalWidth > 0) setReady(true)
   }, [])
 
+  /*
+   * Le chargement différé du navigateur ne suffit plus : Chrome tient
+   * compte du découpage (`clip-path`) pour décider qu'une image est « à
+   * l'écran », et une image entièrement rognée par le rideau fermé n'y
+   * est jamais — elle ne se chargeait pas, le rideau attendait, et rien
+   * ne se passait. On décide donc nous-mêmes : à 800 px de l'écran, en
+   * observant le CADRE (jamais rogné), l'image passe en chargement
+   * immédiat. Le hero, lui, est `priority` dès le départ.
+   */
+  const [proche, setProche] = useState(priority)
+  useEffect(() => {
+    if (proche) return
+    const cadre = img.current?.closest('[data-veil]') ?? img.current
+    if (!cadre) return
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry?.isIntersecting) {
+          setProche(true)
+          observer.disconnect()
+        }
+      },
+      { rootMargin: '800px 0px 800px 0px' },
+    )
+    observer.observe(cadre)
+    return () => observer.disconnect()
+  }, [proche])
+
   const content = media ? (
     <Image
       ref={img}
@@ -78,6 +105,7 @@ export function BlockImage({
       fill
       sizes={sizes}
       priority={priority}
+      loading={priority ? undefined : proche ? 'eager' : 'lazy'}
       quality={88}
       onLoad={() => setReady(true)}
       className={cn('object-cover', imageClassName)}

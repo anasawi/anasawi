@@ -5,6 +5,7 @@ import {
   imagesSaines,
   ouvrirLeMenu,
   pasDeDebordementHorizontal,
+  refermerLeMenu,
 } from '../support/aides'
 import { REGLAGES, SERVICES } from '../support/fixtures'
 
@@ -199,6 +200,7 @@ test.describe('Ancres de navigation', () => {
     const nav = await ouvrirLeMenu(page)
     const hrefs = await ancresDuMenu(nav)
     test.skip(hrefs.length === 0, 'Le menu ne contient pas d’ancre.')
+    await refermerLeMenu(page)
 
     /*
      * TOUTES les entrées, pas la première : la première suit le hero, qui

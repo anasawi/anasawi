@@ -62,6 +62,7 @@ test.describe('Images', () => {
       .locator(':scope > div')
       .first()
       .evaluate((el) => getComputedStyle(el).clipPath)
-    expect(clip).toMatch(/inset\(0(px|%)? 0(px|%)? 0(px|%)? 0(px|%)?\)|none/)
+    /* Chrome écrit `inset(0% 0% 0% 0%)`, WebKit abrège en `inset(0%)`. */
+    expect(clip).toMatch(/^inset\(0(px|%)?( 0(px|%)?){0,3}\)$|^none$/)
   })
 })
