@@ -3,7 +3,6 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { TemplateEditor } from '@/components/admin/TemplateEditor'
 import { auth } from '@/lib/auth'
 import {
-  getAdminPages,
   getAllFaq,
   getAllMedia,
   getAllServices,
@@ -23,7 +22,7 @@ export const dynamic = 'force-dynamic'
  * publier n'existe pas, la page EST la donnée.
  */
 export default async function HomeBuilderPage() {
-  const [page, media, services, faqItems, settings, saved, allPages, session] =
+  const [page, media, services, faqItems, settings, saved, session] =
     await Promise.all([
       getHomePageForAdmin(),
       getAllMedia(),
@@ -31,7 +30,6 @@ export default async function HomeBuilderPage() {
       getAllFaq(),
       getSettings(),
       getSavedSections(),
-      getAdminPages(),
       auth(),
     ])
 
@@ -51,21 +49,12 @@ export default async function HomeBuilderPage() {
       key={page.id}
       pageId={page.id}
       pageTitle={page.title}
-      pageSlug={page.slug}
-      isHome={page.isHome}
       userName={session?.user?.name ?? session?.user?.email ?? 'Admin'}
       publishedSnapshot={page.publishedSnapshot}
-      published={page.status === 'published'}
       publishedAt={page.publishedAt}
       initialSections={page.sections}
       data={{ services, faqItems, settings, media }}
       saved={saved}
-      pages={allPages.map((p) => ({
-        id: p.id,
-        title: p.title,
-        isHome: p.isHome,
-        published: p.status === 'published',
-      }))}
     />
   )
 }

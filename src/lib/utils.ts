@@ -50,24 +50,6 @@ export function slugify(input: string): string {
     .slice(0, 80)
 }
 
-/** Slugs que le CMS ne doit jamais laisser créer — ils entrent en collision avec les routes. */
-export const RESERVED_SLUGS = new Set([
-  'admin',
-  'api',
-  'login',
-  'logout',
-  /* `/preview` affiche les brouillons : c'est une route de l'application
-     (src/app/(preview)), protégée par le middleware. Une page du CMS qui
-     porterait ce slug serait créée sans broncher, puis masquée par la
-     route — introuvable, et impossible à comprendre. */
-  'preview',
-  'sitemap.xml',
-  'robots.txt',
-  '_next',
-  /* Page annexe de revue de la bibliothèque (non indexée). */
-  'templates',
-])
-
 /** Formate un numéro français en E.164 pour les liens tel: et le JSON-LD. */
 export function toE164(phone: string, country = '+33'): string {
   const digits = phone.replace(/\D/g, '')

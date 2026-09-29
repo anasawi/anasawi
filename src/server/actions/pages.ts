@@ -18,7 +18,7 @@ import {
   parseSectionSettings,
   sectionSettingsSchema,
 } from '@/lib/section-settings'
-import { seoFormSchema, slugSchema } from '@/lib/schemas'
+import { seoFormSchema } from '@/lib/schemas'
 import { db } from '@/server/db'
 import {
   pages,
@@ -516,22 +516,15 @@ export async function updateSectionSettings(
 }
 
 /* ════════════════════════════════════════════════════════════════════
-   Pages — CRUD
+   Formulaires
    ════════════════════════════════════════════════════════════════════ */
-
-const pageFormSchema = z.object({
-  title: z.string().trim().min(1, 'Le titre est requis.').max(120),
-  slug: slugSchema,
-})
 
 /**
  * Refus de formulaire, avec LA raison.
  *
- * « Formulaire invalide. » sur deux champs, dont l'un accepte des règles
- * précises (minuscules, chiffres et tirets ; slugs réservés par
- * l'application), ne dit pas quoi corriger. Le schéma porte déjà des
- * messages écrits pour être lus — « Ce slug est réservé par
- * l'application. » — et ils se perdaient en route. On remonte le premier,
+ * « Formulaire invalide. » sur plusieurs champs ne dit pas quoi corriger.
+ * Le schéma porte déjà des messages écrits pour être lus — « La
+ * description dépasse 160 caractères. » — et ils se perdaient en route. On remonte le premier,
  * en gardant le détail par champ pour l'affichage sous les libellés.
  */
 function refusDeFormulaire(erreur: z.ZodError): ActionResult<never> {
@@ -541,183 +534,6 @@ function refusDeFormulaire(erreur: z.ZodError): ActionResult<never> {
     if (messages) parChamp[champ] = messages
   }
   return fail(premier || 'Formulaire invalide.', parChamp)
-}
-
-async function slugTaken(slug: string, exceptId?: string): Promise<boolean> {
-  const [row] = await db
-    .select({ id: pages.id })
-    .from(pages)
-    .where(eq(pages.slug, slug))
-    .limit(1)
-  return row !== undefined && row.id !== exceptId
-}
-
-/** Crée une page vide, en brouillon. */
-export async function createPage(
-  input: z.input<typeof pageFormSchema>,
-): Promise<ActionResult<{ id: string }>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const parsed = pageFormSchema.safeParse(input)
-    if (!parsed.success) {
-      return refusDeFormulaire(parsed.error)
-    }
-    if (await slugTaken(parsed.data.slug)) {
-      return fail('Ce slug est déjà utilisé par une autre page.')
-    }
-
-    const [created] = await db
-      .insert(pages)
-      .values({ title: parsed.data.title, slug: parsed.data.slug, status: 'draft' })
-      .returning({ id: pages.id })
-
-    if (!created) return fail('Création impossible.')
-
-    revalidatePage(parsed.data.slug)
-    return ok({ id: created.id })
-  })
-}
-
-/** Renomme une page (titre, slug). Le slug de l'accueil ne bouge pas. */
-export async function updatePageMeta(
-  id: string,
-  input: z.input<typeof pageFormSchema>,
-): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const parsed = pageFormSchema.safeParse(input)
-    if (!parsed.success) {
-      return refusDeFormulaire(parsed.error)
-    }
-
-    const [page] = await db
-      .select({ isHome: pages.isHome, slug: pages.slug })
-      .from(pages)
-      .where(eq(pages.id, id))
-      .limit(1)
-    if (!page) return fail('Page introuvable.')
-
-    const slug = page.isHome ? page.slug : parsed.data.slug
-    if (!page.isHome && (await slugTaken(slug, id))) {
-      return fail('Ce slug est déjà utilisé par une autre page.')
-    }
-
-    await db
-      .update(pages)
-      .set({ title: parsed.data.title, slug, updatedAt: new Date() })
-      .where(eq(pages.id, id))
-
-    revalidatePage(page.slug)
-    revalidatePage(slug)
-    return ok()
-  })
-}
-
-/** Duplique une page avec toutes ses sections, en brouillon. */
-export async function duplicatePage(
-  id: string,
-): Promise<ActionResult<{ id: string }>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const [source] = await db
-      .select()
-      .from(pages)
-      .where(eq(pages.id, id))
-      .limit(1)
-    if (!source) return fail('Page introuvable.')
-
-    /* Slug unique : -copie, -copie-2, -copie-3… */
-    let slug = `${source.slug}-copie`.slice(0, 80)
-    for (let i = 2; await slugTaken(slug); i++) {
-      slug = `${source.slug}-copie-${i}`.slice(0, 80)
-    }
-
-    const [created] = await db
-      .insert(pages)
-      .values({
-        title: `${source.title} (copie)`,
-        slug,
-        status: 'draft',
-      })
-      .returning({ id: pages.id })
-    if (!created) return fail('Duplication impossible.')
-
-    const rows = await db
-      .select()
-      .from(sections)
-      .where(eq(sections.pageId, id))
-
-    if (rows.length > 0) {
-      await db.insert(sections).values(
-        rows.map((row) => ({
-          pageId: created.id,
-          parentId: null,
-          columnIndex: row.columnIndex,
-          placement: row.placement,
-          styles: row.styles,
-          settings: row.settings,
-          name: row.name,
-          type: row.type,
-          anchor: row.anchor,
-          navLabel: row.navLabel,
-          showInNav: row.showInNav,
-          sortOrder: row.sortOrder,
-          isActive: row.isActive,
-          backgroundColor: row.backgroundColor,
-          payload: row.payload,
-        })),
-      )
-    }
-
-    revalidatePage(slug)
-    return ok({ id: created.id })
-  })
-}
-
-/** Supprime une page et ses sections. L'accueil est indestructible. */
-export async function deletePage(id: string): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const [page] = await db
-      .select({ isHome: pages.isHome, slug: pages.slug })
-      .from(pages)
-      .where(eq(pages.id, id))
-      .limit(1)
-    if (!page) return fail('Page introuvable.')
-    if (page.isHome) return fail('La page d’accueil ne peut pas être supprimée.')
-
-    await db.delete(pages).where(eq(pages.id, id))
-
-    revalidatePage(page.slug)
-    return ok()
-  })
-}
-
-/** Retire une page du site public sans toucher à son contenu. */
-export async function unpublishPage(id: string): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
-    const [page] = await db
-      .select({ isHome: pages.isHome, slug: pages.slug })
-      .from(pages)
-      .where(eq(pages.id, id))
-      .limit(1)
-    if (!page) return fail('Page introuvable.')
-    if (page.isHome) return fail('La page d’accueil ne peut pas être dépubliée.')
-
-    await db
-      .update(pages)
-      .set({ status: 'draft', updatedAt: new Date() })
-      .where(eq(pages.id, id))
-
-    revalidatePage(page.slug)
-    return ok()
-  })
 }
 
 /* ════════════════════════════════════════════════════════════════════

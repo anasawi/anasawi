@@ -7,9 +7,7 @@ import { AdminPill, EyeIcon } from '@/components/site/AdminPill'
 /** Routes où l'éditeur de page rend sa propre pilule, avec l'état de
     publication de la page (« En ligne », « Modifications à publier »…). */
 export function isEditorPath(pathname: string): boolean {
-  if (pathname === '/admin/accueil') return true
-  const m = /^\/admin\/pages\/([^/]+)$/.exec(pathname)
-  return m !== null && m[1] !== 'nouvelle'
+  return pathname === '/admin/accueil'
 }
 
 /**

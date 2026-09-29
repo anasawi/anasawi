@@ -3,9 +3,9 @@ import { config } from 'dotenv'
 import {
   COMPTE,
   FAMILLES,
+  BLOCS_CASSES,
+  HERO_ARCHE,
   PAGE_ACCUEIL,
-  PAGE_ARCHE,
-  PAGE_CASSEE,
   QUESTIONS,
   SERVICES,
 } from './fixtures'
@@ -120,7 +120,7 @@ async function main() {
     socialLinks: [],
   })
 
-  /* ── Page d'accueil, publiée, avec deux sections ────────────────── */
+  /* ── Page d'accueil, publiée — la seule page du site ────────────── */
   const [accueil] = await db
     .insert(pages)
     .values({
@@ -141,14 +141,15 @@ async function main() {
         pageId: accueil.id,
         /* Le type doit exister au registre (`src/blocks/registry.ts`) : un
            type inconnu ne rend rien, silencieusement. */
-        type: 'hero',
+        type: 'heroPleinEcran',
         anchor: 'accueil',
         navLabel: 'Accueil',
         showInNav: false,
         sortOrder: 0,
         payload: {
           eyebrow: 'Thérapie — Cesson-Sévigné',
-          titleLines: [{ text: 'Retrouver' }, { text: 'son souffle.' }],
+          titleLines: [...HERO_ARCHE.lignes],
+          titleSize: HERO_ARCHE.taille,
           intro: 'Un espace stable et confidentiel pour déposer ce qui pèse.',
           primaryLabel: 'Prendre rendez-vous',
           primaryHref: '#contact',
@@ -208,6 +209,37 @@ async function main() {
           intro: '',
         },
       },
+      {
+        pageId: accueil.id,
+        type: 'texteCentre',
+        anchor: 'valide',
+        navLabel: 'Valide',
+        showInNav: false,
+        sortOrder: 4,
+        payload: { statement: BLOCS_CASSES.texteValide },
+      },
+      {
+        /* Type absent du registre : ce que devient une section dont le
+           bloc a été renommé ou retiré entre deux versions. */
+        pageId: accueil.id,
+        type: BLOCS_CASSES.typeInconnu,
+        anchor: 'inconnu',
+        navLabel: 'Inconnu',
+        showInNav: false,
+        sortOrder: 5,
+        payload: {},
+      },
+      {
+        /* Type connu, payload qui ne satisfait pas son schéma :
+           `statement` attend une chaîne, pas un nombre. */
+        pageId: accueil.id,
+        type: 'texteCentre',
+        anchor: 'invalide',
+        navLabel: 'Invalide',
+        showInNav: false,
+        sortOrder: 6,
+        payload: { statement: 42 },
+      },
     ])
     .returning()
 
@@ -217,106 +249,6 @@ async function main() {
     .update(pages)
     .set({ publishedSnapshot: creees })
     .where(eq(pages.id, accueil.id))
-
-  /* ── Page secondaire aux blocs cassés ───────────────────────────── */
-  const [cassee] = await db
-    .insert(pages)
-    .values({
-      slug: PAGE_CASSEE.slug,
-      title: PAGE_CASSEE.titre,
-      status: 'published',
-      isHome: false,
-      publishedAt: new Date(),
-    })
-    .returning()
-
-  if (!cassee) throw new Error('Page aux blocs cassés non créée.')
-
-  const sectionsCassees = await db
-    .insert(sections)
-    .values([
-      {
-        pageId: cassee.id,
-        type: 'texteCentre',
-        anchor: 'valide',
-        navLabel: 'Valide',
-        showInNav: false,
-        sortOrder: 0,
-        payload: { statement: PAGE_CASSEE.texteValide },
-      },
-      {
-        /* Type absent du registre : ce que devient une section dont le
-           bloc a été renommé ou retiré entre deux versions. */
-        pageId: cassee.id,
-        type: PAGE_CASSEE.typeInconnu,
-        anchor: 'inconnu',
-        navLabel: 'Inconnu',
-        showInNav: false,
-        sortOrder: 1,
-        payload: {},
-      },
-      {
-        /* Type connu, payload qui ne satisfait pas son schéma :
-           `statement` attend une chaîne, pas un nombre. */
-        pageId: cassee.id,
-        type: 'texteCentre',
-        anchor: 'invalide',
-        navLabel: 'Invalide',
-        showInNav: false,
-        sortOrder: 2,
-        payload: { statement: 42 },
-      },
-    ])
-    .returning()
-
-  await db
-    .update(pages)
-    .set({ publishedSnapshot: sectionsCassees })
-    .where(eq(pages.id, cassee.id))
-
-  /* ── Page avec le hero « L'arche » et ses réglages de titre ─────── */
-  const [arche] = await db
-    .insert(pages)
-    .values({
-      slug: PAGE_ARCHE.slug,
-      title: PAGE_ARCHE.titre,
-      status: 'published',
-      isHome: false,
-      publishedAt: new Date(),
-    })
-    .returning()
-
-  if (!arche) throw new Error('Page avec l’arche non créée.')
-
-  const sectionsArche = await db
-    .insert(sections)
-    .values([
-      {
-        pageId: arche.id,
-        type: 'heroPleinEcran',
-        anchor: 'ouverture',
-        navLabel: 'Ouverture',
-        showInNav: false,
-        sortOrder: 0,
-        payload: {
-          eyebrow: 'Ouverture',
-          titleLines: [...PAGE_ARCHE.lignes],
-          titleSize: PAGE_ARCHE.taille,
-          intro: '',
-          primaryLabel: '',
-          primaryHref: '#contact',
-          secondaryLabel: '',
-          secondaryHref: '#a-propos',
-          mediaId: null,
-        },
-      },
-    ])
-    .returning()
-
-  await db
-    .update(pages)
-    .set({ publishedSnapshot: sectionsArche })
-    .where(eq(pages.id, arche.id))
 
   /* ── Accompagnements et familles ────────────────────────────────── */
   const famillesCreees = await db

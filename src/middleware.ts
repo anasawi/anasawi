@@ -17,7 +17,5 @@ export const { auth: middleware } = NextAuth(authConfig)
 export default middleware
 
 export const config = {
-  /* `/preview` affiche les brouillons et les sections masquées : il doit être
-     protégé exactement comme le CMS. */
-  matcher: ['/admin/:path*', '/preview/:path*'],
+  matcher: ['/admin/:path*'],
 }

@@ -94,7 +94,7 @@ Sans `RESEND_API_KEY`, le formulaire de contact fonctionne : les messages sont e
 ```
 src/
 ├── app/
-│   ├── (site)/        Site public — page d'accueil et pages du CMS
+│   ├── (site)/        Site public — la page d'accueil (site à page unique)
 │   ├── (admin)/admin/ CMS
 │   ├── login/
 │   └── api/           auth · upload · media/[key] · contact
@@ -169,10 +169,10 @@ Puis l'ajouter au registre. Le formulaire d'édition est généré à partir de 
 
 ## SEO
 
-- `generateMetadata` par page, lue depuis `seo_meta` avec repli sur les Réglages
-- `sitemap.xml` et `robots.txt` générés depuis la base — une page publiée y apparaît au prochain revalidate, sans redéploiement
+- `generateMetadata` de l'accueil, lue depuis `seo_meta` avec repli sur les Réglages
+- `sitemap.xml` et `robots.txt` générés depuis la base — la date de dernière publication suit au prochain revalidate, sans redéploiement
 - Graphe Schema.org unique : `Person` (Anne Winzenried), `HealthAndBeautyBusiness` (ANASAWI), `WebSite`, `WebPage`, `FAQPage`
-- `/admin/seo` : title et description avec compteurs, slug, canonical, image OG, index/follow, aperçu du snippet Google
+- `/admin/seo` : title et description avec compteurs, canonical, image OG, index/follow, aperçu du snippet Google
 - `/admin`, `/login` et `/api` en `noindex`
 
 Le tableau de bord signale les réglages manquants qui dégradent le balisage — c'est le premier endroit à regarder après le déploiement.
@@ -216,7 +216,7 @@ Le cache est invalidé par tag à chaque enregistrement dans le CMS : la modific
 | `npm run db:migrate` | applique les migrations (driver HTTP) |
 | `npm run db:studio` | explorateur de base Drizzle |
 | `npm run db:seed` | amorce la base (structure + coordonnées) |
-| `npm run db:seed-site` | remplit tout le site (accueil, pages secondaires, médias Unsplash, réglages, accompagnements, FAQ) — remplace les sections existantes, ne publie rien |
+| `npm run db:seed-site` | remplit tout le site (accueil, médias Unsplash, réglages, accompagnements, FAQ) — remplace les sections existantes, ne publie rien |
 | `npm run db:seed-home` | ancienne amorce de l'accueil seul, remplacée par `db:seed-site` (conservée pour référence) |
 | `npm run db:seed-images` | images de substitution (Picsum, noir et blanc) |
 | `npm run db:rename-brand` | remplace l'ancien nom de marque dans les contenus en base |

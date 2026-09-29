@@ -39,43 +39,41 @@ export const PAGE_ACCUEIL = {
 } as const
 
 /**
- * Page secondaire publiée, porteuse de deux sections VOLONTAIREMENT
- * cassées : un type absent du registre et un payload qui ne satisfait pas
- * son schéma.
- *
- * Elle existe parce que ces deux accidents faisaient auparavant disparaître
- * la section du site SANS AUCUNE TRACE — un hero entier s'est ainsi
- * volatilisé, et le diagnostic a coûté des heures. Les tests exigent
- * désormais que le reste de la page tienne debout, et que l'éditeur dise
- * clairement laquelle est cassée.
+ * Le hero « L'arche » de l'accueil du jeu de test, avec ses réglages de
+ * titre : une ligne par placement, un mot insécable, une taille réduite.
+ * C'est le hero sur lequel s'ouvre le site d'Anne.
  */
-/**
- * Page portant le hero « L'arche » avec ses réglages de titre : une ligne
- * par placement, et une taille réduite. Le site d'Anne s'ouvre sur ce
- * hero ; l'accueil du jeu de test, lui, utilise le hero en deux colonnes.
- */
-export const PAGE_ARCHE = {
-  slug: 'page-avec-arche',
-  titre: 'Page avec l’arche',
+export const HERO_ARCHE = {
   /** Pour-cent de la taille de la maquette. */
   taille: 80,
   lignes: [
-    { text: 'Ligne à gauche', align: 'gauche' },
-    { text: 'Ligne au centre', align: 'centre' },
-    { text: 'Ligne à droite', align: 'droite' },
+    { text: 'Retrouver', align: 'gauche' },
+    { text: 'son souffle.', align: 'centre' },
     /* Un mot long, insécable : sur un téléphone, il ne tient qu'en
        réduisant le titre — c'est ce qu'on vérifie. */
-    { text: 'Psychothérapeute', align: 'centre' },
+    { text: 'Psychothérapeute', align: 'droite' },
   ],
 } as const
 
-export const PAGE_CASSEE = {
-  slug: 'page-avec-blocs-casses',
-  titre: 'Page aux blocs cassés',
+/**
+ * Deux sections VOLONTAIREMENT cassées, semées sur l'accueil : un type
+ * absent du registre et un payload qui ne satisfait pas son schéma.
+ *
+ * Elles existent parce que ces deux accidents faisaient auparavant
+ * disparaître la section du site SANS AUCUNE TRACE — un hero entier s'est
+ * ainsi volatilisé, et le diagnostic a coûté des heures. Les tests
+ * exigent désormais que le reste de la page tienne debout, et que
+ * l'éditeur dise clairement laquelle est cassée.
+ */
+export const BLOCS_CASSES = {
   /** Type qui n'existe pas au registre — et qui ne doit jamais y entrer. */
   typeInconnu: 'blocQuiNExistePasAuRegistre',
-  /** Texte de la seule section valide de la page : elle, doit s'afficher. */
+  /** Texte d'une section valide voisine : elle, doit s'afficher. */
   texteValide: 'Cette section-ci doit rester visible.',
+  /** Sections de l'accueil que le visiteur doit voir rendues. */
+  sectionsRendues: 5,
+  /** Sections cassées, que l'éditeur seul signale. */
+  sectionsCassees: 2,
 } as const
 
 export const SERVICES = [

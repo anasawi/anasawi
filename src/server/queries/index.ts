@@ -285,11 +285,6 @@ export const getPublishedHome = cache(
   ),
 )
 
-/** Lecture admin — brouillons inclus, jamais cachée. */
-export function getPageById(id: string) {
-  return loadPage(eq(pages.id, id), false)
-}
-
 /**
  * La page d'accueil, côté administration.
  *
@@ -301,64 +296,11 @@ export function getHomePageForAdmin() {
   return loadPage(eq(pages.isHome, true), false)
 }
 
-/** Une page publiée par son slug — le rendu des pages secondaires. */
-export function getPublishedPageBySlug(slug: string) {
-  return loadPage(eq(pages.slug, slug), true)
-}
-
-/**
- * Identité minimale d'une page par son slug — brouillons inclus, jamais
- * cachée. Sert à la redirection « Modifier » de la barre d'administration :
- * on n'a besoin ni des sections ni du SEO, seulement de savoir où envoyer
- * l'admin.
- */
-export async function getPageRefBySlug(
-  slug: string,
-): Promise<{ id: string; isHome: boolean } | null> {
-  const [row] = await db
-    .select({ id: pages.id, isHome: pages.isHome })
-    .from(pages)
-    .where(eq(pages.slug, slug))
-    .limit(1)
-  return row ?? null
-}
-
-/** Toutes les pages, pour le gestionnaire — accueil en tête. */
-export async function getAdminPages(): Promise<Page[]> {
-  return db
-    .select()
-    .from(pages)
-    .orderBy(desc(pages.isHome), asc(pages.createdAt))
-}
-
-
-/**
- * URL à déclarer dans le sitemap.
- *
- * Toutes les pages publiées (`status = 'published'`) : l'accueil et les
- * pages secondaires servies par `(site)/[slug]`. `isHome` est renvoyé pour
- * que le sitemap adresse l'accueil à `/` plutôt qu'à `/<slug>` ; une page
- * en brouillon ou dépubliée n'y figure pas.
- */
-export const getPublishedPagesForSitemap = cached(
-  async () =>
-    db
-      .select({
-        slug: pages.slug,
-        isHome: pages.isHome,
-        updatedAt: pages.updatedAt,
-      })
-      .from(pages)
-      .where(eq(pages.status, 'published')),
-  ['sitemap-pages'],
-  [tags.pages],
-)
-
 /**
  * Menu du site.
  *
  * Géré à la main dans l'admin (`settings.navigation`) — `anchor` porte
- * alors soit une ancre nue (`contact`), soit un lien complet (`/approche`,
+ * alors soit une ancre nue (`contact`), soit un lien complet (`/#contact`,
  * `https://…`). À défaut, dérivation historique : les sections de
  * l'accueil marquées « visible dans la navigation ».
  */

@@ -4,10 +4,9 @@ import Link from 'next/link'
  * 404 de l'administration — rendue DANS le shell du CMS (rail, palette),
  * pas la 404 publique.
  *
- * Elle s'affiche quand un écran admin appelle `notFound()` : un
- * `/admin/pages/<id inconnu>` par exemple. Une URL qui ne correspond à
- * aucune route (`/admin/nimporte-quoi`) reste servie par `app/not-found.tsx`,
- * c'est le fonctionnement de Next.
+ * Elle s'affiche quand un écran admin appelle `notFound()`. Une URL qui
+ * ne correspond à aucune route (`/admin/nimporte-quoi`) reste servie par
+ * `app/not-found.tsx`, c'est le fonctionnement de Next.
  */
 export default function AdminNotFound() {
   return (
@@ -33,10 +32,10 @@ export default function AdminNotFound() {
               Tableau de bord
             </Link>
             <Link
-              href="/admin/pages"
+              href="/admin/accueil"
               className="inline-flex h-9 items-center rounded-lg border border-border bg-white px-4 text-[13px] transition-colors hover:bg-ivory"
             >
-              Toutes les pages
+              Mon site
             </Link>
           </div>
         </div>

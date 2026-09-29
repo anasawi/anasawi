@@ -41,7 +41,7 @@ export function SeoEditor({
   const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const errorOf = (key: string) => fieldErrors[key]?.[0]
 
-  const url = absoluteUrl(page.isHome ? '/' : `/${page.slug}`)
+  const url = absoluteUrl('/')
   const previewTitle = title || `${page.title} — ${siteName}`
 
   function save() {

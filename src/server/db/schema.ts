@@ -328,8 +328,8 @@ export const settings = pgTable('settings', {
   }),
 
   /**
-   * Menu du site, géré à la main : [{ label, href }] — pages, ancres de
-   * sections ou liens externes. Null = dérivation automatique historique
+   * Menu du site, géré à la main : [{ label, href }] — ancres de
+   * sections de l'accueil ou liens externes. Null = dérivation automatique historique
    * (sections `showInNav` de l'accueil).
    */
   navigation: jsonb('navigation'),

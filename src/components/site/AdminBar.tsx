@@ -1,6 +1,5 @@
 'use client'
 
-import { usePathname } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { AdminPill, PencilIcon } from './AdminPill'
@@ -18,8 +17,6 @@ export function AdminBar() {
   const [state, setState] = useState<{ admin: boolean; name?: string } | null>(
     null,
   )
-  const pathname = usePathname()
-
   useEffect(() => {
     const controller = new AbortController()
 
@@ -38,15 +35,13 @@ export function AdminBar() {
 
   if (!state?.admin) return null
 
-  /* `/` correspond à la page d'accueil, dont le slug n'apparaît pas dans
-     l'URL — la route de redirection s'en charge quand le paramètre est vide. */
-  const slug = pathname === '/' ? '' : pathname.replace(/^\//, '')
-
   return (
     <AdminPill
       status="Aperçu"
       actionLabel="Modifier"
-      actionHref={`/admin/edit?slug=${encodeURIComponent(slug)}`}
+      /* Le site est une page unique : l'éditeur, c'est toujours celui de
+         l'accueil. */
+      actionHref="/admin/accueil"
       icon={<PencilIcon />}
       homeHref="/admin"
       name={state.name ?? 'Admin'}

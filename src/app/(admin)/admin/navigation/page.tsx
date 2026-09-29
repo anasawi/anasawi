@@ -2,7 +2,6 @@ import { AdminContent } from '@/components/admin/AdminContent'
 import { NavigationEditor } from '@/components/admin/NavigationEditor'
 import { PageHeader } from '@/components/admin/PageHeader'
 import {
-  getAdminPages,
   getHomePageForAdmin,
   getNavigationItems,
   getSettings,
@@ -11,9 +10,8 @@ import {
 export const dynamic = 'force-dynamic'
 
 export default async function NavigationAdminPage() {
-  const [settings, pages, home, current] = await Promise.all([
+  const [settings, home, current] = await Promise.all([
     getSettings(),
-    getAdminPages(),
     getHomePageForAdmin(),
     getNavigationItems(),
   ])
@@ -24,10 +22,9 @@ export default async function NavigationAdminPage() {
     ? (settings.navigation as { label: string; href: string }[])
     : current.map((item) => ({ label: item.label, href: item.anchor }))
 
+  /* Les suggestions : les sections de l'accueil — le site est une page
+     unique, ses entrées de menu sont des ancres. */
   const suggestions = [
-    ...pages
-      .filter((p) => !p.isHome && p.status === 'published')
-      .map((p) => ({ label: p.title, href: `/${p.slug}`, hint: `/${p.slug}` })),
     ...(home?.sections ?? [])
       .filter((s) => !s.parentId && s.anchor && s.isActive)
       .map((s) => ({

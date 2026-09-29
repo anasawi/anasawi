@@ -7,7 +7,7 @@ import { faqItems, pages, sections, services, settings } from './schema'
 
 /**
  * REMPLACÉ PAR `seed-site.ts` (`npm run db:seed-site`), qui remplit tout le
- * site — accueil, pages secondaires, médias, réglages. Conservé pour
+ * site — accueil, médias, réglages. Conservé pour
  * référence ; préférez le script complet.
  *
  * Remplit la page d'accueil avec les vrais textes, dans l'ordre exact de la

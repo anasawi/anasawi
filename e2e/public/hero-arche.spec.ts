@@ -1,6 +1,6 @@
 import { expect, test } from '@playwright/test'
 
-import { PAGE_ARCHE } from '../support/fixtures'
+import { HERO_ARCHE } from '../support/fixtures'
 
 /*
  * Le hero « L'arche » et ses réglages de titre.
@@ -28,7 +28,7 @@ async function boiteDeLigne(
 
 test.describe('Hero — L’arche', () => {
   test('chaque ligne du titre se pose où on l’a dit', async ({ page }) => {
-    await page.goto(`/${PAGE_ARCHE.slug}`)
+    await page.goto('/')
     /* Les lettres montent une à une : la boîte est stable une fois
        l'animation jouée. */
     await page.waitForTimeout(1500)
@@ -36,7 +36,7 @@ test.describe('Hero — L’arche', () => {
     const titre = await page.locator('h1').boundingBox()
     if (!titre) throw new Error('Pas de titre.')
     const [gauche, centre, droite] = await Promise.all(
-      PAGE_ARCHE.lignes.map((l) => boiteDeLigne(page, l.text)),
+      HERO_ARCHE.lignes.map((l) => boiteDeLigne(page, l.text)),
     )
 
     /* À 2 px près : le bord de la ligne touche celui du titre. */
@@ -54,11 +54,11 @@ test.describe('Hero — L’arche', () => {
     /* Et elles sont bien distinctes : trois lignes qui se seraient toutes
        rangées au même endroit passeraient un test moins regardant. */
     expect(gauche!.x).toBeLessThan(centre!.x)
-    expect(centre!.x).toBeLessThan(droite!.x)
+    expect(centre!.x + centre!.width).toBeLessThan(droite!.x + droite!.width)
   })
 
   test('la taille du titre suit le pourcentage choisi', async ({ page }) => {
-    await page.goto(`/${PAGE_ARCHE.slug}`)
+    await page.goto('/')
 
     /* La taille de la maquette dépend de l'écran (`clamp` avec du `vw`) :
        on la recalcule ici, dans la même fenêtre, et on attend exactement
@@ -77,10 +77,10 @@ test.describe('Hero — L’arche', () => {
       return { reelle: parseFloat(getComputedStyle(h1).fontSize), maquette, ajustement }
     })
 
-    const attendue = (mesure.maquette * PAGE_ARCHE.taille * mesure.ajustement) / 100
+    const attendue = (mesure.maquette * HERO_ARCHE.taille * mesure.ajustement) / 100
     expect(
       Math.abs(mesure.reelle - attendue),
-      `Titre à ${mesure.reelle}px, attendu ${attendue}px (${PAGE_ARCHE.taille} % de ${mesure.maquette}px × ${mesure.ajustement}).`,
+      `Titre à ${mesure.reelle}px, attendu ${attendue}px (${HERO_ARCHE.taille} % de ${mesure.maquette}px × ${mesure.ajustement}).`,
     ).toBeLessThanOrEqual(0.5)
   })
 
@@ -91,11 +91,11 @@ test.describe('Hero — L’arche', () => {
      * côtés. Le titre doit se réduire jusqu'à ce que chaque ligne tienne
      * — sur tous les profils d'écran, et pour n'importe quel mot.
      */
-    await page.goto(`/${PAGE_ARCHE.slug}`)
+    await page.goto('/')
     await page.waitForTimeout(1500)
 
     const largeurEcran = page.viewportSize()?.width ?? 0
-    for (const ligne of PAGE_ARCHE.lignes) {
+    for (const ligne of HERO_ARCHE.lignes) {
       const boite = await boiteDeLigne(page, ligne.text)
       expect(boite.x, `« ${ligne.text} » sort à gauche.`).toBeGreaterThanOrEqual(-1)
       expect(

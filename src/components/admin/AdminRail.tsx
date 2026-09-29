@@ -41,8 +41,7 @@ const ENTRIES: RailEntry[] = [
     href: '/admin/accueil',
     label: 'Mon site',
     icon: Home,
-    isActive: (p) =>
-      p.startsWith('/admin/accueil') || p.startsWith('/admin/pages'),
+    isActive: (p) => p.startsWith('/admin/accueil'),
   },
   {
     href: '/admin/medias',

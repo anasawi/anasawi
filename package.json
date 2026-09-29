@@ -27,6 +27,7 @@
     "test:reset": "tsx e2e/support/reset-db.ts",
     "verifier": "npm run lint && npm run typecheck && npm run test",
     "db:fix-nav": "tsx src/server/db/fix-nav-links.ts",
+    "db:prune-pages": "tsx src/server/db/prune-pages.ts",
     "admin:create": "tsx src/server/db/create-admin.ts",
     "doctor": "tsx src/server/db/doctor.ts"
   },

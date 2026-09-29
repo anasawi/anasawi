@@ -68,16 +68,8 @@ import {
   type SectionsViewData,
 } from '@/components/site/SectionsView'
 
-/** Une page du site, pour le menu déroulant de la barre du haut. */
-export type EditorPage = {
-  id: string
-  title: string
-  isHome: boolean
-  published: boolean
-}
-
 /** Les seuls états que la barre du haut sait dire. */
-type PublishState = 'live' | 'pending' | 'never' | 'unpublished'
+type PublishState = 'live' | 'pending' | 'never'
 
 const PUBLISH_STATUS: Record<
   PublishState,
@@ -97,18 +89,6 @@ const PUBLISH_STATUS: Record<
     label: 'Jamais publiée',
     dot: 'bg-muted-foreground/50',
     pill: 'bg-muted text-muted-foreground',
-  },
-  /*
-   * Une page retirée du web. Elle a un instantané publié identique à son
-   * brouillon, si bien qu'elle se disait « En ligne » — et « Publier »
-   * restait inerte. Anne n'avait alors AUCUN moyen de la remettre en
-   * ligne, sinon modifier quelque chose au hasard pour rendre le bouton
-   * actif. L'état manquait, pas le bouton.
-   */
-  unpublished: {
-    label: 'Dépubliée',
-    dot: 'bg-[#c98a2d]',
-    pill: 'bg-[#fdf4e4] text-[#8a5f1e]',
   },
 }
 
@@ -167,33 +147,22 @@ function snapshotRow(row: Section) {
 export function TemplateEditor({
   pageId,
   pageTitle,
-  pageSlug,
-  isHome,
   publishedSnapshot,
-  published,
   publishedAt,
   initialSections,
   data,
   saved,
-  pages,
   userName,
 }: {
   pageId: string
   pageTitle: string
-  /** Slug public — la cible de « Voir le site ». */
-  pageSlug: string
-  isHome: boolean
   /** Instantané servi au public — sert à l'indicateur d'état. */
   publishedSnapshot: unknown
-  /** La page est-elle actuellement servie au public ? */
-  published: boolean
   publishedAt: Date | null
   initialSections: Section[]
   data: SectionsViewData
   /** Modèles personnels (« Mes sections »). */
   saved: SavedSection[]
-  /** Toutes les pages du site — le menu de la barre du haut. */
-  pages: EditorPage[]
   /** Pour la pilule du bas (initiale de l'avatar). */
   userName: string
 }) {
@@ -252,12 +221,10 @@ export function TemplateEditor({
      resynchronisée au rechargement. */
   const [snapshot, setSnapshot] = useState<unknown>(publishedSnapshot)
   const [publishedOn, setPublishedOn] = useState<Date | null>(publishedAt)
-  const [enLigne, setEnLigne] = useState(published)
   useEffect(() => {
     setSnapshot(publishedSnapshot)
     setPublishedOn(publishedAt)
-    setEnLigne(published)
-  }, [publishedSnapshot, publishedAt, published])
+  }, [publishedSnapshot, publishedAt])
 
   const [viewport, setViewport] = useState<Breakpoint>('desktop')
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
@@ -391,22 +358,6 @@ export function TemplateEditor({
     [],
   )
 
-  /* ── Menu des pages (chip de la barre du haut) ───────────────────── */
-
-  const [pageMenuOpen, setPageMenuOpen] = useState(false)
-  const pageMenuRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!pageMenuOpen) return
-    const onDown = (e: PointerEvent) => {
-      if (!pageMenuRef.current?.contains(e.target as Node)) {
-        setPageMenuOpen(false)
-      }
-    }
-    window.addEventListener('pointerdown', onDown)
-    return () => window.removeEventListener('pointerdown', onDown)
-  }, [pageMenuOpen])
-
   /* ── Menu « ⋯ » à côté de Publier ────────────────────────────────── */
 
   const [moreOpen, setMoreOpen] = useState(false)
@@ -528,8 +479,7 @@ export function TemplateEditor({
       if (libraryOpen || confirmDiscard) return
 
       if (e.key === 'Escape') {
-        if (pageMenuOpen || moreOpen) {
-          setPageMenuOpen(false)
+        if (moreOpen) {
           setMoreOpen(false)
         } else if (confirmDeleteId) {
           setConfirmDeleteId(null)
@@ -565,7 +515,6 @@ export function TemplateEditor({
     libraryOpen,
     mode,
     moreOpen,
-    pageMenuOpen,
     railOverlay,
     runHistory,
     selectedId,
@@ -1432,11 +1381,9 @@ export function TemplateEditor({
   const identityStyles = identityCss(data.settings.identity)
   const publishState: PublishState = !publishedOn
     ? 'never'
-    : !enLigne
-      ? 'unpublished'
-      : dirty
-        ? 'pending'
-        : 'live'
+    : dirty
+      ? 'pending'
+      : 'live'
   const status = PUBLISH_STATUS[publishState]
   const canPublish = publishState !== 'live'
 
@@ -1460,7 +1407,6 @@ export function TemplateEditor({
       /* Vert tout de suite ; le rechargement confirme depuis la base. */
       setSnapshot(sectionsRef.current.map(projectSection))
       setPublishedOn(new Date())
-      setEnLigne(true)
       toast.success('En ligne ✓')
       router.refresh()
     } finally {
@@ -1505,84 +1451,11 @@ export function TemplateEditor({
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
       {/* ── Barre supérieure ─────────────────────────────────────── */}
       <header className="flex h-[54px] shrink-0 items-center gap-3.5 border-b border-border bg-ivory px-[18px]">
-        {/* 1. Chip de la page — ouvre le menu des pages du site. */}
-        <div ref={pageMenuRef} className="relative">
-          <button
-            type="button"
-            onClick={() => setPageMenuOpen((open) => !open)}
-            aria-haspopup="menu"
-            aria-expanded={pageMenuOpen}
-            className={cn(
-              'flex items-center gap-2 rounded-lg px-2.5 py-[5px] transition-colors hover:bg-white/90',
-              FOCUS_RING,
-            )}
-          >
-            <span className="max-w-56 truncate font-serif text-[15px]">
-              {pageTitle}
-            </span>
-            <span aria-hidden="true" className="text-[10px] text-muted-foreground">
-              ▼
-            </span>
-          </button>
-
-          {pageMenuOpen && (
-            <div
-              role="menu"
-              className="absolute left-0 top-[calc(100%+6px)] z-40 w-60 rounded-[10px] border border-border bg-white p-1.5 shadow-[0_10px_30px_rgba(28,32,30,0.14)]"
-            >
-              {pages.map((page) => {
-                const current = page.id === pageId
-                return (
-                  <button
-                    key={page.id}
-                    type="button"
-                    role="menuitem"
-                    onClick={() => {
-                      setPageMenuOpen(false)
-                      if (!current) {
-                        router.push(
-                          page.isHome
-                            ? '/admin/accueil'
-                            : `/admin/pages/${page.id}`,
-                        )
-                      }
-                    }}
-                    className={cn(
-                      'flex w-full items-center gap-2.5 rounded-[7px] px-2.5 py-[7px] text-left text-[12.5px] transition-colors',
-                      current
-                        ? 'bg-blue-mist/60 text-foreground'
-                        : 'text-ink-soft hover:bg-blue-mist/40 hover:text-foreground',
-                    )}
-                  >
-                    <span
-                      aria-hidden="true"
-                      title={page.published ? 'Publiée' : 'Brouillon'}
-                      className={cn(
-                        'h-[6px] w-[6px] shrink-0 rounded-full',
-                        page.published
-                          ? 'bg-[#3e9e6f]'
-                          : 'bg-muted-foreground/40',
-                      )}
-                    />
-                    <span className="truncate">{page.title}</span>
-                  </button>
-                )
-              })}
-              <div className="mx-1 my-1 border-t border-border" />
-              <button
-                type="button"
-                role="menuitem"
-                onClick={() => {
-                  setPageMenuOpen(false)
-                  router.push('/admin/pages')
-                }}
-                className="w-full rounded-[7px] px-2.5 py-[7px] text-left text-[12.5px] text-muted-foreground transition-colors hover:bg-blue-mist/40 hover:text-foreground"
-              >
-                Gérer les pages…
-              </button>
-            </div>
-          )}
-        </div>
+        {/* 1. Le nom de la page. Le site est une page unique : pas de
+            menu de pages ici. */}
+        <span className="max-w-56 truncate px-2.5 font-serif text-[15px]">
+          {pageTitle}
+        </span>
 
         {/* 2. UN seul indicateur d'état : En ligne / Modifications à
             publier / Jamais publiée. L'enregistrement automatique se lit
@@ -2026,7 +1899,7 @@ export function TemplateEditor({
       <AdminPill
         actionLabel="Voir le site"
         actionHref={
-          publishState === 'never' ? undefined : isHome ? '/' : `/${pageSlug}`
+          publishState === 'never' ? undefined : '/'
         }
         actionDisabledHint="Cette page n’est pas encore en ligne — publiez-la d’abord."
         icon={<EyeIcon />}

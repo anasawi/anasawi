@@ -1,6 +1,5 @@
 import { z } from 'zod'
 
-import { RESERVED_SLUGS } from './utils'
 
 /** Validation partagée entre le formulaire client et la route API. */
 export const contactSchema = z.object({
@@ -39,9 +38,6 @@ export const slugSchema = z
     /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
     'Minuscules, chiffres et tirets uniquement.',
   )
-  .refine((s) => !RESERVED_SLUGS.has(s), {
-    message: 'Ce slug est réservé par l’application.',
-  })
 
 export const serviceFormSchema = z.object({
   title: z.string().trim().min(1, 'Le titre est requis.').max(160),

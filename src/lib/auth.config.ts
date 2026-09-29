@@ -16,9 +16,7 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl
-      const isProtected =
-        pathname.startsWith('/admin') || pathname.startsWith('/preview')
-      if (!isProtected) return true
+      if (!pathname.startsWith('/admin')) return true
       return Boolean(auth?.user)
     },
     jwt({ token, user }) {

@@ -15,8 +15,8 @@ type Suggestion = { label: string; href: string; hint: string }
 /**
  * Éditeur du menu du site.
  *
- * Des entrées ordonnées {libellé, lien} : pages publiées, ancres de
- * l'accueil ou liens externes. Le site (en-tête et pied de page) suit
+ * Des entrées ordonnées {libellé, lien} : ancres des sections de
+ * l'accueil, ou liens externes. Le site (en-tête et pied de page) suit
  * immédiatement l'enregistrement.
  */
 export function NavigationEditor({
@@ -68,8 +68,8 @@ export function NavigationEditor({
       <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
         {items.length === 0 && (
           <li className="px-4 py-10 text-center text-[13px] text-muted-foreground">
-            Votre menu est vide pour l’instant — ajoutez des pages ou des
-            sections ci-dessous.
+            Votre menu est vide pour l’instant — ajoutez des sections
+            ci-dessous.
           </li>
         )}
         {items.map((item, i) => (
@@ -137,7 +137,7 @@ export function NavigationEditor({
         ))}
       </ul>
 
-      {/* Suggestions : pages publiées et ancres de l'accueil */}
+      {/* Suggestions : les ancres des sections de l'accueil */}
       {remaining.length > 0 && (
         <div>
           <p className="mb-2 text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">

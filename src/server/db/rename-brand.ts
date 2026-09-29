@@ -182,7 +182,7 @@ async function main() {
 
   console.log(`\n✓ ${changes} enregistrement(s) mis à jour.`)
   console.log('  Le site dit désormais ANASAWI et Anne Winzenried.')
-  console.log('  Republiez les pages depuis l’éditeur pour propager au public.\n')
+  console.log('  Republiez l’accueil depuis l’éditeur pour propager au public.\n')
 }
 
 main()

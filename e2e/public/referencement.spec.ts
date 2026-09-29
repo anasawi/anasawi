@@ -2,7 +2,7 @@ import { mkdir, writeFile } from 'node:fs/promises'
 
 import { expect, test } from '@playwright/test'
 
-import { PAGE_CASSEE, REGLAGES, SERVICES } from '../support/fixtures'
+import { REGLAGES, SERVICES } from '../support/fixtures'
 
 /*
  * Référencement — ce que voient les moteurs, jamais les visiteurs.
@@ -58,7 +58,7 @@ test.describe('robots.txt', () => {
 })
 
 test.describe('sitemap.xml', () => {
-  test('est un XML valide qui liste les pages publiées', async ({ request }) => {
+  test('est un XML valide qui ne liste que l’accueil', async ({ request }) => {
     const reponse = await request.get('/sitemap.xml')
     expect(reponse.status()).toBe(200)
     expect(reponse.headers()['content-type']).toContain('xml')
@@ -66,10 +66,11 @@ test.describe('sitemap.xml', () => {
     const xml = await reponse.text()
     expect(xml).toContain('<urlset')
 
-    /* L'accueil et la page secondaire publiée y sont ; rien d'autre ne
-       doit s'y glisser. */
-    expect(xml).toMatch(/<loc>https?:\/\/[^<]+\/<\/loc>/)
-    expect(xml).toContain(`/${PAGE_CASSEE.slug}`)
+    /* Le site est une page unique : l'accueil, et rien d'autre. Une
+       deuxième adresse serait une page fantôme offerte à Google. */
+    const adresses = [...xml.matchAll(/<loc>([^<]+)<\/loc>/g)].map((m) => m[1])
+    expect(adresses).toHaveLength(1)
+    expect(adresses[0]).toMatch(/^https?:\/\/[^/]+\/$/)
   })
 
   test('n’expose ni l’administration ni les brouillons', async ({ request }) => {
