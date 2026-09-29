@@ -28,11 +28,16 @@ export function ConfirmDelete({
   description,
   onConfirm,
   trigger,
+  succes = 'Supprimé.',
 }: {
   label: string
   description?: string
+  /** Attendu jusqu'au bout : la notification « Supprimé. » n'apparaît
+      qu'une fois le serveur d'accord — jamais avant. */
   onConfirm: () => Promise<ActionResult<unknown>>
   trigger?: React.ReactNode
+  /** Message de réussite, quand « Supprimé. » ne dit pas assez. */
+  succes?: string
 }) {
   const [pending, start] = useTransition()
 
@@ -64,7 +69,7 @@ export function ConfirmDelete({
               event.preventDefault()
               start(async () => {
                 const result = await onConfirm()
-                if (result.ok) toast.success('Supprimé.')
+                if (result.ok) toast.success(succes)
                 else toast.error(result.error)
               })
             }}

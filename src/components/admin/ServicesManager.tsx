@@ -351,15 +351,14 @@ export function ServicesManager({
     })
   }
 
-  function supprimerFamille(id: string) {
-    start(async () => {
-      const result = await deleteServiceGroup(id)
-      if (!result.ok) {
-        toast.error(result.error)
-        return
-      }
-      toast.success('Titre retiré — les accompagnements sont conservés.')
-
+  /* Rend le résultat du serveur : la confirmation attend qu'il soit là
+     avant d'annoncer « supprimé ». Avant, elle l'annonçait tout de suite,
+     et un rechargement rapide annulait la requête en vol — le titre
+     réapparaissait, malgré la notification. */
+  async function supprimerFamille(id: string): Promise<ActionResult<unknown>> {
+    const result = await deleteServiceGroup(id)
+    if (!result.ok) return result
+    start(() => {
       /* La clé étrangère est en `set null` côté base : les
          accompagnements rejoignent la liste sans titre. L'écran doit
          montrer exactement cela, tout de suite. */
@@ -371,6 +370,7 @@ export function ServicesManager({
       )
       router.refresh()
     })
+    return result
   }
 
   function save() {
@@ -817,7 +817,7 @@ function Famille({
   services: ServiceWithMedia[]
   dragged: string | null
   onRename?: (label: string) => void
-  onDelete?: () => void
+  onDelete?: () => Promise<ActionResult<unknown>>
   onEdit: (service: ServiceWithMedia) => void
   onToggle: (service: ServiceWithMedia, checked: boolean) => void
   onDeleted: (service: ServiceWithMedia) => Promise<ActionResult<unknown>>
@@ -904,7 +904,7 @@ function TitreFamille({
   dragAttributes?: DraggableAttributes
   dragListeners?: SyntheticListenerMap
   onRename?: (label: string) => void
-  onDelete?: () => void
+  onDelete?: () => Promise<ActionResult<unknown>>
 }) {
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(label)
@@ -991,10 +991,8 @@ function TitreFamille({
             <ConfirmDelete
               label={label}
               description="Le titre disparaît du site, les accompagnements restent : ils rejoignent la liste sans titre, à leur place."
-              onConfirm={async () => {
-                onDelete()
-                return { ok: true, data: undefined }
-              }}
+              succes="Titre retiré — les accompagnements sont conservés."
+              onConfirm={onDelete}
             />
           )}
         </>

@@ -1456,7 +1456,14 @@ export function TemplateEditor({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
       {/* ── Barre supérieure ─────────────────────────────────────── */}
-      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border bg-ivory px-4 py-2.5 lg:h-[54px] lg:flex-nowrap lg:py-0">
+      {/* Une région nommée : dans le repère principal de l'administration,
+          un <header> n'est plus une « bannière » pour les lecteurs
+          d'écran — on la nomme donc explicitement. */}
+      <header
+        role="region"
+        aria-label="Barre de l’éditeur"
+        className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border bg-ivory px-4 py-2.5 lg:h-[54px] lg:flex-nowrap lg:py-0"
+      >
         {/* 1. Où l'on est, et dans quel état : le nom de la page, l'état de
             publication, et — en clair — ce qu'il advient des modifications.
             C'est LA phrase qui répond à « est-ce que c'est enregistré ?

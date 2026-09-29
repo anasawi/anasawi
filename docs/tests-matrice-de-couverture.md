@@ -42,9 +42,10 @@ rien de plus.
 | Titres de regroupement | ajout, renommage persistant, abandon par Échap, titre vidé, suppression qui conserve les accompagnements | `admin/accompagnements.spec.ts` |
 | Questions fréquentes | création, question sans réponse, question démesurée, caractères spéciaux conservés tels quels, annulation, modification, visibilité propagée, suppression, et **chaque commande nomme sa question** | `admin/faq.spec.ts` |
 | Brouillon / publication | état « En ligne », une modification bascule l'état **sans toucher au site**, publication, annulation du brouillon, survie au rechargement, menu inerte quand tout est en ligne, aperçu qui ne publie rien | `admin/editeur-publication.spec.ts` |
+| Liste des sections — les gestes | menu d'actions nommées **sans survol** (Modifier, Monter, Descendre, Dupliquer, Masquer/Afficher, Renommer, Supprimer), parcours au clavier (flèches, Début/Fin, Échap rend le focus), Monter/Descendre vérifiés dans la liste **et dans la page** puis après rechargement, duplication au même contenu, renommage sans effet sur la page, suppression avec confirmation en clair puis annulation depuis la notification, bibliothèque rangée par besoin sans nom technique, lien d'un bouton choisi par le nom de la section | `admin/editeur-sections.spec.ts` |
 | Blocs cassés côté éditeur | cartouche nommant le type fautif et son motif, sections saines toujours affichées — sur l'accueil, dans le cadre de la scène | `admin/blocs-casses.spec.ts` |
 | Médias — vidéo | fichier vidéo recompressé dans le navigateur puis envoyé (< 4 Mo), rangé comme vidéo (lecteur muet, servi en 206), supprimé ensuite ; sans description, rien ne part | `admin/medias-video.spec.ts` |
-| Réglages | valeurs affichées, téléphone modifié **jusqu'au JSON-LD**, adresse jusqu'au pied de page, e-mail invalide, nom démesuré, abandon sans enregistrement | `admin/reglages.spec.ts` |
+| Réglages | valeurs affichées, téléphone modifié **jusqu'au JSON-LD**, adresse jusqu'au pied de page, e-mail invalide, nom démesuré (raison sous le champ), abandon sans enregistrement **après avertissement du navigateur** | `admin/reglages.spec.ts` |
 | Messages | arrivée depuis le formulaire public, marquage lu / non lu persistant, coordonnées actionnables, confirmation nommée, suppression, ordre antichronologique | `admin/messages.spec.ts` |
 
 ## API
@@ -63,9 +64,9 @@ Ces zones sont **connues et assumées**, pas oubliées.
 
 | Zone | Raison |
 | --- | --- |
-| Administration sous 1000 px | L'interface n'y est pas adaptée : le constat est antérieur aux tests, et le chantier n'est pas ouvert. Les suites `admin/` ne tournent donc que sur le profil ordinateur. Y ajouter des tests reviendrait à figer un état qu'on sait provisoire. |
+| Administration sous 1024 px | L'administration est désormais utilisable sur tablette et téléphone (barre latérale en tiroir, éditeur avec liste en volet et page à la largeur réelle) — vérifié à la main, pas encore par la série : les suites `admin/` ne tournent que sur le profil ordinateur. Prochaine étape naturelle. |
 | Glisser-déposer (accompagnements, sections, grille) | Le harnais pilote un vrai navigateur, mais dnd-kit décide à partir de séquences de `pointerdown` / `pointermove` dont la fidélité en automatisation reste incertaine. Un test instable sur ce terrain coûterait plus qu'il ne rapporte. La logique de réordonnancement est en revanche couverte indirectement : l'ordre obtenu est relu après rechargement dans les tests de famille. |
-| Éditeur de sections : inspecteur, bibliothèque, grille, styles | Le contrat central (brouillon / publication) est couvert. Le détail de chaque champ de chaque bloc — plus de quatre-vingts types — demanderait une campagne à part. |
+| Éditeur de sections : détail des champs de chaque modèle | Le contrat central (brouillon / publication) et les gestes de la liste (`admin/editeur-sections.spec.ts`) sont couverts. Le détail de chaque champ de chaque modèle — plus de cinquante — demanderait une campagne à part. |
 | Envoi de courriel (Resend) | Aucune clé en environnement de test, et la route est écrite pour que l'échec de notification ne fasse jamais échouer l'enregistrement du message. C'est ce comportement-là qui est vérifié. |
 | Stockage Netlify Blobs | Les tests utilisent le pilote local (`MEDIA_STORAGE=local`). L'interface des deux pilotes est la même ; ce qui n'est pas vérifié, c'est le comportement de Netlify lui-même. |
 | Compression d'image côté navigateur | `MediaPicker` redimensionne via `createImageBitmap` et `canvas`. Vérifiable, mais demande des images de référence et une tolérance de comparaison — un chantier en soi. |
