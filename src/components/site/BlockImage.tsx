@@ -1,4 +1,7 @@
+'use client'
+
 import Image from 'next/image'
+import { useEffect, useRef, useState } from 'react'
 
 import { ImageVeil } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
@@ -52,14 +55,31 @@ export function BlockImage({
   const fallback =
     PLACEHOLDERS[Math.abs(placeholder) % PLACEHOLDERS.length] ?? PLACEHOLDERS[0]
 
+  /*
+   * L'image est-elle là ? Le rideau ne s'ouvre qu'à ce moment. Une image
+   * lointaine dans la page n'est demandée qu'à l'approche (chargement
+   * différé) : le rideau s'ouvrait AVANT qu'elle arrive, sur le flou, et
+   * la photo apparaissait d'un coup après l'animation. Deux chemins pour
+   * le savoir : `onLoad`, et — si l'image était déjà en cache avant que
+   * React ne s'attache — `complete` à la première occasion.
+   */
+  const [ready, setReady] = useState(!media)
+  const img = useRef<HTMLImageElement>(null)
+  useEffect(() => {
+    const element = img.current
+    if (element && element.complete && element.naturalWidth > 0) setReady(true)
+  }, [])
+
   const content = media ? (
     <Image
+      ref={img}
       src={media.url}
       alt={media.alt}
       fill
       sizes={sizes}
       priority={priority}
       quality={88}
+      onLoad={() => setReady(true)}
       className={cn('object-cover', imageClassName)}
       {...(media.blurDataUrl
         ? { placeholder: 'blur' as const, blurDataURL: media.blurDataUrl }
@@ -89,7 +109,7 @@ export function BlockImage({
   }
 
   return (
-    <ImageVeil tone={tone} delay={delay} className={className}>
+    <ImageVeil tone={tone} delay={delay} className={className} ready={ready}>
       {content}
     </ImageVeil>
   )

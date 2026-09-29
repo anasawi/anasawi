@@ -8,6 +8,7 @@ import {
   BLOCS_CASSES,
   HERO_ARCHE,
   PAGE_ACCUEIL,
+  PHOTO,
   QUESTIONS,
   SERVICES,
   VIDEO_CINEMA,
@@ -148,6 +149,26 @@ async function main() {
     .returning()
   if (!video) throw new Error('Vidéo de test non créée.')
 
+  await copyFile(
+    path.join(process.cwd(), 'e2e/support/fichiers/photo.webp'),
+    path.join(process.cwd(), '.storage', PHOTO.cle),
+  )
+  const [photo] = await db
+    .insert(media)
+    .values({
+      url: `/api/media/${PHOTO.cle}`,
+      pathname: PHOTO.cle,
+      filename: 'photo.webp',
+      alt: PHOTO.description,
+      width: 640,
+      height: 480,
+      blurDataUrl: null,
+      mimeType: 'image/webp',
+      size: 3534,
+    })
+    .returning()
+  if (!photo) throw new Error('Photo de test non créée.')
+
   /* ── Page d'accueil, publiée — la seule page du site ────────────── */
   const [accueil] = await db
     .insert(pages)
@@ -245,6 +266,15 @@ async function main() {
         showInNav: false,
         sortOrder: 4,
         payload: { statement: BLOCS_CASSES.texteValide },
+      },
+      {
+        pageId: accueil.id,
+        type: 'imageLegende',
+        anchor: PHOTO.ancre,
+        navLabel: 'Photo',
+        showInNav: false,
+        sortOrder: 8,
+        payload: { caption: PHOTO.legende, format: 'arche', mediaId: photo.id },
       },
       {
         pageId: accueil.id,

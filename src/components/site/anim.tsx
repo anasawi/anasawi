@@ -293,6 +293,7 @@ export function ImageVeil({
   children,
   delay = 0,
   className,
+  ready = true,
 }: {
   /** L'image (ou tout contenu) à dévoiler. */
   children: ReactNode
@@ -300,8 +301,17 @@ export function ImageVeil({
   tone?: VeilTone
   delay?: number
   className?: string
+  /**
+   * Faux tant que l'image n'est pas chargée : le rideau attend. Sans
+   * cela, il se retirait à l'entrée dans l'écran, sur une image encore
+   * en route — on voyait le flou, puis la photo apparaissait d'un coup,
+   * après l'animation. Le rideau ne s'ouvre que sur une image prête.
+   */
+  ready?: boolean
 }) {
   const on = useAnimEnabled()
+  const ref = useRef<HTMLDivElement>(null)
+  const inView = useInView(ref, VIEWPORT)
 
   if (!on) {
     return (
@@ -322,6 +332,7 @@ export function ImageVeil({
      l'image est révélée du bas vers le haut, et rien ne peut dépasser. */
   return (
     <m.div
+      ref={ref}
       /* Le masque radial force le compositeur à rogner les enfants
          transformés sur l'arrondi : sans lui, un liseré d'un pixel de
          la photo déborde sur les coins. Et l'image finit à 1.02, jamais
@@ -332,8 +343,8 @@ export function ImageVeil({
         className,
       )}
       initial="hidden"
-      whileInView="visible"
-      viewport={VIEWPORT}
+      animate={inView && ready ? 'visible' : 'hidden'}
+      data-veil={inView && ready ? 'ouvert' : 'ferme'}
     >
       <m.div
         /* -inset-px : l'image déborde d'un pixel de son cadre, pour que la

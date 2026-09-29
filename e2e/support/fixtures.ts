@@ -77,13 +77,25 @@ export const VIDEO_CINEMA = {
   ancre: 'en-mouvement',
 } as const
 
+/**
+ * Une photo du jeu de test (`fichiers/photo.webp`), copiée dans le
+ * stockage local par `reset-db.ts`, et une section « Image — Légende »
+ * qui la montre derrière le rideau d'apparition.
+ */
+export const PHOTO = {
+  cle: 'photo-e2e.webp',
+  description: 'Photo de test — le cabinet',
+  ancre: 'photo',
+  legende: 'Le cabinet, photo de test',
+} as const
+
 export const BLOCS_CASSES = {
   /** Type qui n'existe pas au registre — et qui ne doit jamais y entrer. */
   typeInconnu: 'blocQuiNExistePasAuRegistre',
   /** Texte d'une section valide voisine : elle, doit s'afficher. */
   texteValide: 'Cette section-ci doit rester visible.',
   /** Sections de l'accueil que le visiteur doit voir rendues. */
-  sectionsRendues: 6,
+  sectionsRendues: 7,
   /** Sections cassées, que l'éditeur seul signale. */
   sectionsCassees: 2,
 } as const
