@@ -84,6 +84,31 @@ test.describe('Hero — L’arche', () => {
     ).toBeLessThanOrEqual(0.5)
   })
 
+  test('aucun mot du titre n’est coupé en deux', async ({ page }) => {
+    /*
+     * Chaque lettre du titre est une boîte à part (elle monte séparément) :
+     * sans regroupement, le navigateur coupait n'importe où — « Anne Wi /
+     * nzenried » sur un téléphone. Un mot doit tenir sur une seule ligne.
+     */
+    await page.goto('/')
+    await page.waitForTimeout(1500)
+
+    const mots = await page.locator('h1 .whitespace-nowrap').evaluateAll((els) =>
+      els.map((el) => ({
+        texte: el.textContent ?? '',
+        hauteur: el.getBoundingClientRect().height,
+        ligne: parseFloat(getComputedStyle(el).fontSize),
+      })),
+    )
+    expect(mots.length, 'Le titre devrait porter des mots.').toBeGreaterThan(0)
+    for (const mot of mots) {
+      expect(
+        mot.hauteur,
+        `« ${mot.texte} » s'étale sur plus d'une ligne.`,
+      ).toBeLessThan(mot.ligne * 1.6)
+    }
+  })
+
   test('aucune ligne du titre ne sort de l’écran', async ({ page }) => {
     /*
      * Un mot long ne se coupe pas : sur un téléphone, « SUPERVISION » en

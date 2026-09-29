@@ -3,6 +3,7 @@
 import { m, useInView, useReducedMotion } from 'motion/react'
 import {
   Children,
+  Fragment,
   createContext,
   useContext,
   useEffect,
@@ -181,35 +182,57 @@ export function SplitChars({
   const ref = useRef<HTMLSpanElement>(null)
   const inView = useInView(ref, VIEWPORT)
 
+  /*
+   * Les MOTS restent entiers. Chaque lettre est un `inline-block` pour
+   * pouvoir monter séparément ; sans regroupement, le navigateur voyait
+   * quinze boîtes indépendantes et coupait n'importe où — « Anne Wi /
+   * nzenried » sur un téléphone. Un mot est donc une boîte insécable ;
+   * la ligne ne se replie qu'aux espaces, et un mot trop large pour
+   * l'écran déborde, ce que `TitreAjuste` mesure et corrige en réduisant
+   * le titre. Même règle sans animation, pour que le rendu ne dépende
+   * pas de l'interrupteur.
+   */
+  const mots = text.split(' ')
+
   if (!on) {
     return (
-      <Comp className={cn('block', style, className)}>{text}</Comp>
+      <Comp className={cn('block', style, className)}>
+        {mots.map((mot, indexMot) => (
+          <Fragment key={indexMot}>
+            {indexMot > 0 && ' '}
+            <span className="whitespace-nowrap">{mot}</span>
+          </Fragment>
+        ))}
+      </Comp>
     )
   }
 
-  const chars = Array.from(text)
+  let index = 0
 
   return (
     <Comp className={cn('line-mask', style, className)} aria-label={text}>
       <span ref={ref} className="block">
-        {chars.map((char, i) =>
-          char === ' ' ? (
-            <span key={i} aria-hidden="true">
-              {' '}
+        {mots.map((mot, indexMot) => (
+          <Fragment key={indexMot}>
+            {indexMot > 0 && <span aria-hidden="true"> </span>}
+            <span aria-hidden="true" className="inline-block whitespace-nowrap">
+              {Array.from(mot).map((char) => {
+                const i = index++
+                return (
+                  <m.span
+                    key={i}
+                    className="inline-block will-change-transform"
+                    initial={{ y: '115%' }}
+                    animate={inView ? { y: '0%' } : { y: '115%' }}
+                    transition={{ duration: 1, ease: EASE, delay: delay + i * 0.028 }}
+                  >
+                    {char}
+                  </m.span>
+                )
+              })}
             </span>
-          ) : (
-            <m.span
-              key={i}
-              aria-hidden="true"
-              className="inline-block will-change-transform"
-              initial={{ y: '115%' }}
-              animate={inView ? { y: '0%' } : { y: '115%' }}
-              transition={{ duration: 1, ease: EASE, delay: delay + i * 0.028 }}
-            >
-              {char}
-            </m.span>
-          ),
-        )}
+          </Fragment>
+        ))}
       </span>
     </Comp>
   )
