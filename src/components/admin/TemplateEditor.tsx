@@ -9,9 +9,11 @@ import {
   useState,
 } from 'react'
 import { flushSync } from 'react-dom'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import {
   Eye,
+  ExternalLink,
   Monitor,
   PanelLeft,
   Pencil,
@@ -1556,7 +1558,28 @@ export function TemplateEditor({
             ))}
           </div>
 
-          {/* 4. Aperçu du brouillon (bascule) */}
+          {/* 4. Voir le site en ligne — depuis l'éditeur aussi, dans le
+              même onglet : on va et vient entre la page et son
+              administration. Tant que rien n'est publié, il n'y a rien à
+              voir : le lien le dit. */}
+          {publishState === 'never' ? (
+            <Button
+              type="button"
+              variant="outline"
+              disabled
+              title="Cette page n’est pas encore en ligne — publiez-la d’abord."
+            >
+              <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.6} /> Voir le site
+            </Button>
+          ) : (
+            <Button asChild variant="outline">
+              <Link href="/" title="Ouvrir le site tel que vos visiteurs le voient">
+                <ExternalLink className="h-3.5 w-3.5" strokeWidth={1.6} /> Voir le site
+              </Link>
+            </Button>
+          )}
+
+          {/* 5. Aperçu du brouillon (bascule) */}
           <Button
             type="button"
             variant="outline"
