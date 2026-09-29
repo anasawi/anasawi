@@ -86,6 +86,31 @@ test.describe('Accueil', () => {
     await imagesSaines(page, { altObligatoire: true })
   })
 
+  test('les astérisques ✳︎ sont des caractères, jamais des emojis', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page.waitForTimeout(800)
+
+    /* U+2733 est aussi un emoji : sur iPhone, nu, il se dessine en
+       pictogramme vert. Chaque occurrence doit porter le sélecteur de
+       présentation texte (U+FE0E) — dans le DOM, pas seulement dans le
+       code : un texte saisi dans l'admin y passe aussi. */
+    const nus = await page.evaluate(() => {
+      const marcheur = document.createTreeWalker(document.body, NodeFilter.SHOW_TEXT)
+      const fautifs: string[] = []
+      let total = 0
+      for (let n = marcheur.nextNode(); n; n = marcheur.nextNode()) {
+        const texte = n.textContent ?? ''
+        total += (texte.match(/\u2733/g) ?? []).length
+        if (/\u2733(?!\uFE0E)/.test(texte)) fautifs.push(texte.trim().slice(0, 40))
+      }
+      return { fautifs, total }
+    })
+    expect(nus.total, 'La page devrait porter des astérisques.').toBeGreaterThan(0)
+    expect(nus.fautifs, 'Astérisques sans sélecteur texte (emoji sur iPhone).').toEqual([])
+  })
+
   test('ne déborde pas horizontalement', async ({ page }) => {
     await page.goto('/')
     await pasDeDebordementHorizontal(page)

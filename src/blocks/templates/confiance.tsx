@@ -184,7 +184,7 @@ function Engagements({
 export const engagementsBlock: BlockDefinition<typeof engagementsSchema> = {
   label: 'Engagements — La liste',
   description:
-    'Les promesses du cadre, une par rangée, ouvertes par l’astérisque ✳.',
+    'Les promesses du cadre, une par rangée, ouvertes par l’astérisque ✳︎.',
   group: 'Sections',
   schema: engagementsSchema,
   fields: [

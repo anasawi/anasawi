@@ -371,7 +371,7 @@ export function Marquee({
 
 /* ── CircleText ────────────────────────────────────────────────────────
    Texte sur un cercle qui tourne (26s, linéaire). `center` pose un
-   glyphe au milieu — l'astérisque ✳ de la marque, typiquement. */
+   glyphe au milieu — l'astérisque ✳︎ de la marque, typiquement. */
 
 export function CircleText({
   text,
@@ -387,7 +387,7 @@ export function CircleText({
   text: string
   /** Côté du carré SVG, en pixels (viewBox 120 constant). */
   size?: number
-  /** Glyphe central optionnel, ex. '✳'. */
+  /** Glyphe central optionnel, ex. '✳︎'. */
   center?: string
   /** Durée d'un tour, en secondes. */
   duration?: number

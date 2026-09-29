@@ -23,7 +23,7 @@ export const heroSchema = z.object({
 export type HeroPayload = z.output<typeof heroSchema>
 
 /**
- * Hero en deux colonnes : l'éditorial à gauche — méta ✳, titre serif en
+ * Hero en deux colonnes : l'éditorial à gauche — méta ✳︎, titre serif en
  * lignes masquées, boutons sobres — et l'arche photographique à droite.
  */
 function Hero({ data, ctx }: BlockProps<HeroPayload>) {

@@ -638,7 +638,7 @@ export const videoArcheBlock: BlockDefinition<typeof videoArcheSchema> = {
 
 /* ════════════════════════════════════════════════════════════════════
    Séparateur — L'astérisque
-   La ponctuation entre deux sections : trois points bleus, un ✳ seul,
+   La ponctuation entre deux sections : trois points bleus, un ✳︎ seul,
    ou un fin filet vertical.
    ════════════════════════════════════════════════════════════════════ */
 
@@ -668,14 +668,14 @@ export const separateurAsterisqueBlock: BlockDefinition<
   typeof separateurAsterisqueSchema
 > = {
   label: 'Séparateur — Ponctuation',
-  description: 'Trois points bleus, un ✳ seul, ou un fin filet vertical.',
+  description: 'Trois points bleus, un ✳︎ seul, ou un fin filet vertical.',
   group: 'Sections',
   schema: separateurAsterisqueSchema,
   bleed: true,
   fields: [
     field.select('variant', 'Forme', [
       { value: 'points', label: 'Trois points' },
-      { value: 'asterisque', label: 'Astérisque ✳' },
+      { value: 'asterisque', label: 'Astérisque ✳︎' },
       { value: 'filet', label: 'Filet vertical' },
     ]),
   ],

@@ -59,7 +59,7 @@ export function IgniteEmphasis({
 
 /* ════════════════════════════════════════════════════════════════════
    Éditorial — Texte centré
-   Le manifeste doux : ✳, une déclaration serif centrée, un paragraphe
+   Le manifeste doux : ✳︎, une déclaration serif centrée, un paragraphe
    d'appui, un lien discret. Respiration entre deux sections denses.
    ════════════════════════════════════════════════════════════════════ */
 
@@ -125,7 +125,7 @@ function TexteCentre({
 export const texteCentreBlock: BlockDefinition<typeof texteCentreSchema> = {
   label: 'Éditorial — Texte centré',
   description:
-    'Le manifeste doux : ✳, déclaration serif centrée, paragraphe d’appui.',
+    'Le manifeste doux : ✳︎, déclaration serif centrée, paragraphe d’appui.',
   group: 'Sections',
   schema: texteCentreSchema,
   fields: [
@@ -152,7 +152,7 @@ export const texteCentreBlock: BlockDefinition<typeof texteCentreSchema> = {
 
 /* ════════════════════════════════════════════════════════════════════
    Éditorial — Manifeste (proposition H de la planche)
-   ✳, une conviction en très grande serif dont les mots s'allument un
+   ✳︎, une conviction en très grande serif dont les mots s'allument un
    à un — le passage entre astérisques souligné de bleu — et un méta
    discret en dessous.
    ════════════════════════════════════════════════════════════════════ */

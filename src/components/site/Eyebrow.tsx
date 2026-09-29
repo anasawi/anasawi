@@ -1,7 +1,7 @@
 import { cn } from '@/lib/utils'
 
 /**
- * Label supérieur de section — « ✳  QUI JE SUIS ».
+ * Label supérieur de section — « ✳︎  QUI JE SUIS ».
  *
  * L'astérisque signature remplace l'ancien filet : c'est le méta-texte de la
  * planche V8, en capitales espacées de 0.24em. La couleur vient du thème de
@@ -25,7 +25,7 @@ export function Eyebrow({
       )}
     >
       <span aria-hidden="true" className="font-serif text-[1.25em] font-normal">
-        ✳
+        ✳︎
       </span>
       <span>{children}</span>
     </p>

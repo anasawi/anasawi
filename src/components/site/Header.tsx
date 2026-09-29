@@ -23,7 +23,7 @@ const FOCUSABLE =
 /**
  * Navigation Α — « l'îlot flottant » de la planche V8.
  *
- * Capsule givrée détachée du bord (fixe, top 16px, centrée) : brand ✳ +
+ * Capsule givrée détachée du bord (fixe, top 16px, centrée) : brand ✳︎ +
  * ANASAWI, liens en pastilles, bouton « Contact » plein. Elle reste
  * cachée (-140 %) tant que le préchargeur n'a pas fini, se cache en
  * descendant au-delà de ~260px et revient dès qu'on remonte.
@@ -382,7 +382,7 @@ export function Header({
                         aria-hidden="true"
                         className="ml-1 self-center font-serif text-[18px] text-blue"
                       >
-                        ✳
+                        ✳︎
                       </span>
                     )}
                   </a>
@@ -421,7 +421,7 @@ export function Header({
             <div className="border-t border-ivory/12 px-[var(--spacing-gutter)] pb-[max(28px,env(safe-area-inset-bottom))] pt-6">
               <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/45">
                 <span aria-hidden="true" className="font-serif text-[1.2em] font-normal normal-case tracking-normal">
-                  ✳
+                  ✳︎
                 </span>
                 &nbsp;&nbsp;Contact
               </p>

@@ -39,7 +39,7 @@ function comesFromAdmin(): boolean {
 
 /**
  * Rideau ivoire plein écran : le wordmark ANASAWI se lève depuis un masque,
- * l'astérisque ✳ tourne en bas, puis tout le rideau monte (~1.1s) et se
+ * l'astérisque ✳︎ tourne en bas, puis tout le rideau monte (~1.1s) et se
  * retire du DOM. Joue à chaque chargement complet de page — comme la
  * maquette validée ; jamais sous prefers-reduced-motion.
  *
@@ -110,7 +110,7 @@ export function Preloader() {
       </div>
       <span className="absolute bottom-9 left-1/2 -translate-x-1/2">
         <span className="block animate-[anasawi-spin_3.5s_linear_infinite] font-serif text-[18px] text-blue-deep">
-          ✳
+          ✳︎
         </span>
       </span>
     </div>

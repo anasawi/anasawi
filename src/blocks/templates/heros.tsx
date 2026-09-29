@@ -44,7 +44,7 @@ function ringText(settings: Settings): string {
 /* ════════════════════════════════════════════════════════════════════
    Hero — L'arche (proposition A de la planche)
    Arche centrale, titre serif géant qui l'enlace lettre à lettre,
-   texte circulaire qui tourne, méta ✳ au-dessus, boutons sobres.
+   texte circulaire qui tourne, méta ✳︎ au-dessus, boutons sobres.
    ════════════════════════════════════════════════════════════════════ */
 
 /**
@@ -152,7 +152,7 @@ function HeroPleinEcran({
 
         <CircleText
           text={ringText(ctx.settings)}
-          center="✳"
+          center="✳︎"
           /* Sable soutenu : le sable de la charte (#f4eee3) est un fond,
              il disparaît sur l'ivoire. Même famille, assez foncé pour
              se lire. */
@@ -347,7 +347,7 @@ function HeroEditorial({
             />
             <CircleText
               text={ringText(ctx.settings)}
-              center="✳"
+              center="✳︎"
               className="absolute -bottom-6 -left-6 hidden h-auto w-[110px] lg:block"
             />
           </div>

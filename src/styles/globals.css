@@ -184,6 +184,12 @@
 
   html {
     -webkit-text-size-adjust: 100%;
+    /* L'astérisque ✳︎ (U+2733) est aussi un emoji : sur iPhone, sans
+       cela, il se dessine en pictogramme vert. Le sélecteur de
+       présentation texte (U+FE0E) est posé sur chaque occurrence dans le
+       code ; cette règle couvre le reste (contenus saisis dans l'admin)
+       sur les navigateurs qui la connaissent. */
+    font-variant-emoji: text;
     scroll-behavior: smooth;
     /* Ce que le NAVIGATEUR laisse sous la capsule quand c'est lui qui
        défile — tabulation vers un champ, ⌘F, `scrollIntoView`. Les

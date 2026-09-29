@@ -8,17 +8,17 @@ import { cn } from '@/lib/utils'
  * template consomme pour parler la même langue.
  */
 
-/** L'astérisque ✳ seul, en serif — l'ornement signature. */
+/** L'astérisque ✳︎ seul, en serif — l'ornement signature. */
 export function Aster({ className }: { className?: string }) {
   return (
     <span aria-hidden="true" className={cn('font-serif', className)}>
-      ✳
+      ✳︎
     </span>
   )
 }
 
 /**
- * Méta-texte de section : « ✳  Label » en capitales espacées.
+ * Méta-texte de section : « ✳︎  Label » en capitales espacées.
  * C'est le label supérieur de presque toutes les sections de la maquette.
  */
 export function MetaLabel({

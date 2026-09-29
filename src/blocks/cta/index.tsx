@@ -18,7 +18,7 @@ export const ctaSchema = z.object({
 export type CtaPayload = z.output<typeof ctaSchema>
 
 /**
- * Bandeau d'invitation aux coins doux : bleu brume ou nuit, ✳, une ou
+ * Bandeau d'invitation aux coins doux : bleu brume ou nuit, ✳︎, une ou
  * deux lignes serif, un bouton sobre.
  */
 function Cta({ data }: BlockProps<CtaPayload>) {

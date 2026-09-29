@@ -89,7 +89,7 @@ export default async function TemplatesPage() {
     <div className="pt-28">
       <div className="px-[var(--spacing-gutter)] pb-10">
         <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-blue-deep">
-          ✳ &nbsp;Bibliothèque
+          ✳︎ &nbsp;Bibliothèque
         </p>
         <h1 className="mt-5 font-serif text-[clamp(34px,4vw,56px)] font-light leading-[1.1]">
           Tous les templates, <em>en vrai</em>.

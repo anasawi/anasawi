@@ -208,7 +208,7 @@ export function ServiceHoverPreview({
           />
           <p className="flex items-center gap-2 text-[10px] font-semibold uppercase tracking-[0.22em] text-stone">
             <span aria-hidden="true" className="text-blue-deep">
-              ✳
+              ✳︎
             </span>
             {shown.service.group?.label.trim() ||
               `Accompagnement · ${NUMBER_WORDS[shown.index] ?? String(shown.index + 1)}`}
