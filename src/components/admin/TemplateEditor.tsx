@@ -26,7 +26,6 @@ import { toast } from 'sonner'
 
 import type { HistoryEntry } from './history'
 import { SectionInspector, type SectionDraft } from './SectionInspector'
-import { SiteViewer } from './SiteViewer'
 import { SectionRail } from './SectionRail'
 import { TemplateLibrary } from './TemplateLibrary'
 import { getBlock } from '@/blocks/registry'
@@ -261,7 +260,6 @@ export function TemplateEditor({
 
   const [viewport, setViewport] = useState<Breakpoint>('desktop')
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
-  const [siteOuvert, setSiteOuvert] = useState(false)
   const [selectedId, setSelectedId] = useState<string | null>(null)
   const [libraryOpen, setLibraryOpen] = useState(false)
   /** Section dont la suppression attend confirmation (ligne du rail). */
@@ -1985,24 +1983,19 @@ export function TemplateEditor({
       />
 
       {/* Pilule du bas — sans libellé d'état (la barre du haut le porte
-          déjà) ; « Voir le site » montre la version EN LIGNE par-dessus
-          l'éditeur, sans le quitter : le brouillon reste là où il est. */}
+          déjà) ; « Voir le site » ouvre la version EN LIGNE dans un
+          nouvel onglet. */}
       <AdminPill
         actionLabel="Voir le site"
         actionHref={
           publishState === 'never' ? undefined : isHome ? '/' : `/${pageSlug}`
         }
         actionDisabledHint="Cette page n’est pas encore en ligne — publiez-la d’abord."
-        onAction={() => setSiteOuvert(true)}
+        newTab
         icon={<EyeIcon />}
         homeHref="/admin"
         name={userName}
         className="bottom-6"
-      />
-      <SiteViewer
-        href={isHome ? '/' : `/${pageSlug}`}
-        open={siteOuvert}
-        onClose={() => setSiteOuvert(false)}
       />
 
       {/* Confirmation — revenir à la version en ligne. */}

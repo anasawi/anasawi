@@ -51,92 +51,49 @@ test.describe('Navigation dans le CMS', () => {
     await expect(fil).not.toHaveAttribute('data-actif', '')
   })
 
-  test('« Voir le site » montre le site par-dessus le CMS, sans le quitter', async ({
+  test('« Voir le site » ouvre le site à côté, sans quitter le CMS', async ({
     page,
+    context,
   }) => {
     await page.goto('/admin/medias', { waitUntil: 'domcontentloaded' })
     await expect(
       page.getByRole('heading', { name: 'Médias', level: 1 }),
     ).toBeVisible({ timeout: 20_000 })
 
+    const nouvelOnglet = context.waitForEvent('page')
     await page
       .getByRole('navigation', { name: 'Raccourcis d’administration' })
-      .getByRole('button', { name: 'Voir le site' })
+      .getByRole('link', { name: 'Voir le site' })
       .click()
 
-    const cadre = page.getByRole('dialog', { name: 'Le site en ligne' })
-    await expect(cadre).toBeVisible()
-    /* Pendant le chargement, on le dit ; puis le site est là. */
-    const site = cadre.frameLocator('iframe[title="Le site en ligne"]')
-    await expect(site.getByRole('heading', { level: 1 })).toBeVisible({
-      timeout: 20_000,
-    })
-    await expect(cadre.getByRole('status', { name: 'Chargement du site' }))
-      .toHaveCount(0)
+    const site = await nouvelOnglet
+    await site.waitForLoadState('domcontentloaded')
+    expect(new URL(site.url()).pathname).toBe('/')
 
-    /* Le site dans le cadre ne porte PAS la pilule « Modifier » : on est
-       déjà dans le CMS. */
-    await expect(
-      site.getByRole('navigation', { name: 'Raccourcis d’administration' }),
-    ).toHaveCount(0)
-
-    /* Le CMS n'a pas bougé : même adresse, même écran derrière. */
+    /* Le CMS n'a pas bougé : même adresse, même écran. */
     expect(new URL(page.url()).pathname).toBe('/admin/medias')
-
-    /* Échap referme, et on retrouve l'écran tel quel. */
-    await page.keyboard.press('Escape')
-    await expect(cadre).toBeHidden()
     await expect(
       page.getByRole('heading', { name: 'Médias', level: 1 }),
     ).toBeVisible()
+    await site.close()
   })
 
-  test('depuis le cadre, « Ouvrir dans un onglet » ouvre le site à côté', async ({
+  test('le tableau de bord aussi ouvre le site à côté', async ({
     page,
     context,
   }) => {
     await page.goto('/admin', { waitUntil: 'domcontentloaded' })
-    /* La carte « Aperçu » du tableau de bord ouvre le même cadre. */
-    const carte = page.getByRole('button', { name: /Aperçu/ })
+    /* La carte « Aperçu » — pas la pilule du bas, qui dit aussi « Voir le
+       site » et que le test précédent couvre. */
+    const carte = page.getByRole('link', { name: /Aperçu/ })
     await expect(carte).toBeVisible({ timeout: 20_000 })
-    await carte.click()
-
-    const cadre = page.getByRole('dialog', { name: 'Le site en ligne' })
-    await expect(cadre).toBeVisible()
 
     const nouvelOnglet = context.waitForEvent('page')
-    await cadre.getByRole('link', { name: 'Ouvrir dans un onglet' }).click()
+    await carte.click()
     const site = await nouvelOnglet
     await site.waitForLoadState('domcontentloaded')
     expect(new URL(site.url()).pathname).toBe('/')
     expect(new URL(page.url()).pathname).toBe('/admin')
     await site.close()
-  })
-
-  test('dans l’éditeur aussi, « Voir le site » ne quitte pas le brouillon', async ({
-    page,
-  }) => {
-    await page.goto('/admin/accueil', { waitUntil: 'domcontentloaded' })
-    await expect(page.getByRole('button', { name: 'Publier' })).toBeVisible({
-      timeout: 25_000,
-    })
-
-    await page
-      .getByRole('navigation', { name: 'Raccourcis d’administration' })
-      .getByRole('button', { name: 'Voir le site' })
-      .click()
-
-    const cadre = page.getByRole('dialog', { name: 'Le site en ligne' })
-    await expect(cadre).toBeVisible()
-    await expect(
-      cadre
-        .frameLocator('iframe[title="Le site en ligne"]')
-        .getByRole('heading', { level: 1 }),
-    ).toBeVisible({ timeout: 20_000 })
-
-    await cadre.getByRole('button', { name: 'Fermer' }).click()
-    await expect(cadre).toBeHidden()
-    expect(new URL(page.url()).pathname).toBe('/admin/accueil')
-    await expect(page.getByRole('button', { name: 'Publier' })).toBeVisible()
   })
 })
