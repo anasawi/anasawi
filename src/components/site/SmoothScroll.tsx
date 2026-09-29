@@ -42,6 +42,13 @@ const SEUIL = 0.5
  */
 const BAS_DE_LA_CAPSULE = 80
 
+/**
+ * Attribut posé sur `<html>` le temps d'un trajet vers une ancre. Lu par
+ * le Header, qui ne se cache pas pendant un défilement qu'on lui a
+ * demandé.
+ */
+export const ANCRE_EN_COURS = 'data-ancre-en-cours'
+
 /*
  * ── Ancres ────────────────────────────────────────────────────────────
  *
@@ -151,6 +158,24 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       derniereEcrite = window.scrollY
     }
 
+    /*
+     * Pendant un trajet vers une ancre, le document le dit. La capsule de
+     * navigation, qui se cache quand on descend, lit cette marque et
+     * reste : c'est elle qu'on vient de cliquer, la faire disparaître
+     * serait répondre à un geste en retirant ce qu'on a touché. Le
+     * prochain coup de molette la cache comme d'habitude.
+     */
+    let finDeTrajet = 0
+    const marquerLeTrajet = (duree?: number) => {
+      document.documentElement.setAttribute(ANCRE_EN_COURS, '')
+      window.clearTimeout(finDeTrajet)
+      if (duree) finDeTrajet = window.setTimeout(finirLeTrajet, duree)
+    }
+    const finirLeTrajet = () => {
+      window.clearTimeout(finDeTrajet)
+      document.documentElement.removeAttribute(ANCRE_EN_COURS)
+    }
+
     const boucle = () => {
       if (suivi) cible = positionDe(suivi)
       const reste = cible - courant
@@ -160,6 +185,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
         poser(courant)
         anime = false
         suivi = null
+        finirLeTrajet()
         return
       }
 
@@ -179,15 +205,21 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       if (inertie && !immediat) {
         suivi = element
         courant = window.scrollY
+        marquerLeTrajet()
         lancer()
         return
       }
       suivi = null
       if (reduced || immediat) {
+        /* Un saut : le temps que l'événement de défilement passe. */
+        marquerLeTrajet(100)
         poser(positionDe(element))
         cible = courant = window.scrollY
         return
       }
+      /* Glissé natif : pas de signal de fin fiable partout — une seconde
+         couvre le plus long trajet. */
+      marquerLeTrajet(1000)
       window.scrollTo({ top: positionDe(element), behavior: 'smooth' })
     }
 
@@ -207,6 +239,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       /* La molette reprend la main sur un trajet vers une ancre. */
       suivi = null
       intact = false
+      finirLeTrajet()
       cible = Math.min(Math.max(0, cible + delta), maximum())
       lancer()
     }
@@ -283,6 +316,7 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
 
     return () => {
       cancelAnimationFrame(frame)
+      finirLeTrajet()
       window.removeEventListener('wheel', onWheel)
       window.removeEventListener('scroll', onScroll)
       window.removeEventListener('resize', onResize)

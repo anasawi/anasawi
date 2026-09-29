@@ -6,6 +6,7 @@ import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import { LogoMark } from './Logo'
 import { PRELOADER_DONE_EVENT } from './Preloader'
+import { ANCRE_EN_COURS } from './SmoothScroll'
 import { anchorId, cn, navHref, toE164 } from '@/lib/utils'
 
 export type NavItem = { label: string; anchor: string }
@@ -98,9 +99,18 @@ export function Header({
     const onScroll = () => {
       const y = window.scrollY
       const delta = y - last
+      last = y
+
+      /* Trajet vers une ancre — donc un lien de CETTE capsule qu'on vient
+         de cliquer : elle reste. Elle se cachera au prochain coup de
+         molette vers le bas, comme d'habitude. */
+      if (document.documentElement.hasAttribute(ANCRE_EN_COURS)) {
+        setHidden(false)
+        return
+      }
+
       if (delta > 4 && y > 260) setHidden(true)
       else if (delta < -4) setHidden(false)
-      last = y
     }
 
     window.addEventListener('scroll', onScroll, { passive: true })

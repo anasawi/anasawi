@@ -227,7 +227,40 @@ test.describe('Ancres de navigation', () => {
       /* L'adresse suit, pour que le lien se partage et que « retour »
          ramène où on était. */
       expect(new URL(page.url()).hash).toBe(ancre)
+
+      /* La capsule qu'on vient de cliquer est TOUJOURS LÀ : elle se cache
+         quand on descend à la molette, pas quand on lui a demandé le
+         trajet. */
+      const capsule = await page.getByRole('banner').boundingBox()
+      expect(
+        capsule?.y ?? -9999,
+        `${href} : la capsule s'est cachée pendant le trajet.`,
+      ).toBeGreaterThanOrEqual(0)
     }
+  })
+
+  test('la capsule reste après un clic, et se cache quand on descend', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    const nav = await ouvrirLeMenu(page)
+    const hrefs = await ancresDuMenu(nav)
+    test.skip(hrefs.length === 0, 'Le menu ne contient pas d’ancre.')
+
+    await nav.locator(`a[href="${hrefs[hrefs.length - 1]}"]`).click()
+    await page.waitForTimeout(1200)
+    const banniere = page.getByRole('banner')
+    expect((await banniere.boundingBox())?.y ?? -9999).toBeGreaterThanOrEqual(0)
+
+    /* Puis la personne descend elle-même : la capsule s'efface. Un
+       défilement natif plutôt que la molette : les profils tactiles n'en
+       ont pas, et c'est le même chemin dans l'en-tête. */
+    await page.evaluate(() => window.scrollBy({ top: 600, behavior: 'instant' }))
+    await page.waitForTimeout(800)
+    expect(
+      (await banniere.boundingBox())?.y ?? 0,
+      'La capsule devrait se cacher quand on descend à la molette.',
+    ).toBeLessThan(0)
   })
 
   test('l’ancre d’arrivée tient une fois la page entièrement chargée', async ({
