@@ -131,12 +131,23 @@ export function Header({
 
     if (targets.length === 0) return
 
+    /*
+     * Ce qui croise la bande centrale de l'écran, section par section.
+     * L'observateur ne rapporte que ce qui CHANGE : il faut tenir le
+     * compte soi-même pour savoir quand plus rien n'y est — le hero, le
+     * pied de page, une section absente du menu. Avant, la dernière
+     * entrée allumée le restait : « À propos » sélectionné alors qu'on
+     * était revenu tout en haut, sur l'accueil.
+     */
+    const croisent = new Map<Element, number>()
     const observer = new IntersectionObserver(
       (entries) => {
-        const visible = entries
-          .filter((e) => e.isIntersecting)
-          .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0]
-        if (visible) setActiveAnchor(visible.target.id)
+        for (const entry of entries) {
+          if (entry.isIntersecting) croisent.set(entry.target, entry.intersectionRatio)
+          else croisent.delete(entry.target)
+        }
+        const [meilleure] = [...croisent.entries()].sort((a, b) => b[1] - a[1])
+        setActiveAnchor(meilleure ? meilleure[0].id : null)
       },
       { rootMargin: '-45% 0px -45% 0px', threshold: [0, 0.25, 0.5] },
     )

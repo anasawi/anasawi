@@ -239,6 +239,39 @@ test.describe('Ancres de navigation', () => {
     }
   })
 
+  test('l’entrée sélectionnée suit la section — et aucune hors des sections', async ({
+    page,
+  }) => {
+    await page.goto('/')
+    await page.waitForTimeout(600)
+
+    /* Tout en haut, on est sur le hero, qui n'est pas dans le menu :
+       rien ne doit être marqué comme courant. */
+    const courante = () =>
+      page.locator('nav a[aria-current="true"]').evaluateAll((liens) =>
+        liens.map((l) => l.getAttribute('href')),
+      )
+    expect(await courante(), 'Sur le hero, aucune entrée ne devrait être sélectionnée.')
+      .toEqual([])
+
+    const nav = await ouvrirLeMenu(page)
+    const hrefs = await ancresDuMenu(nav)
+    test.skip(hrefs.length === 0, 'Le menu ne contient pas d’ancre.')
+
+    const href = hrefs[0]!
+    await nav.locator(`a[href="${href}"]`).click()
+    await page.waitForTimeout(1200)
+    /* Les deux menus (capsule et panneau) portent la même marque. */
+    expect(new Set(await courante())).toEqual(new Set([href]))
+
+    /* Retour en haut : la sélection s'éteint, elle ne reste pas collée
+       à la dernière section traversée. */
+    await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+    await page.waitForTimeout(600)
+    expect(await courante(), 'Revenu sur le hero, l’entrée devrait s’éteindre.')
+      .toEqual([])
+  })
+
   test('la capsule reste après un clic, et se cache quand on descend', async ({
     page,
   }) => {
