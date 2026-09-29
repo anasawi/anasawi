@@ -1,6 +1,7 @@
 import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { TemplateEditor } from '@/components/admin/TemplateEditor'
+import { auth } from '@/lib/auth'
 import {
   getAllFaq,
   getAllMedia,
@@ -21,7 +22,7 @@ export const dynamic = 'force-dynamic'
  * en brouillon ; « Publier » la met en ligne.
  */
 export default async function HomeBuilderPage() {
-  const [page, media, services, faqItems, settings, saved] =
+  const [page, media, services, faqItems, settings, saved, session] =
     await Promise.all([
       getHomePageForAdmin(),
       getAllMedia(),
@@ -29,6 +30,7 @@ export default async function HomeBuilderPage() {
       getAllFaq(),
       getSettings(),
       getSavedSections(),
+      auth(),
     ])
 
   if (!page) {
@@ -53,6 +55,7 @@ export default async function HomeBuilderPage() {
       initialSections={page.sections}
       data={{ services, faqItems, settings, media }}
       saved={saved}
+      userName={session?.user?.name ?? session?.user?.email ?? 'Admin'}
     />
   )
 }
