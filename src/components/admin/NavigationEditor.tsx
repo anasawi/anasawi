@@ -111,7 +111,7 @@ export function NavigationEditor({
             <div className="min-w-0 flex-1">
               <Input
                 value={item.href}
-                placeholder="/approche, contact ou https://…"
+                placeholder="contact, /#contact ou https://…"
                 aria-invalid={errorOf(i, 'href') ? true : undefined}
                 onChange={(e) => update(i, { href: e.target.value })}
                 className="h-8 font-mono text-[0.74rem]"
@@ -194,8 +194,8 @@ export function NavigationEditor({
           {pending ? 'Enregistrement…' : 'Enregistrer le menu'}
         </Button>
         <p className="text-[0.72rem] text-muted-foreground">
-          Un lien peut mener vers une page du site, une section de l’accueil
-          (« contact », « /#contact ») ou une adresse https://…
+          Un lien mène vers une section de l’accueil (« contact », « /#contact »)
+          ou vers une adresse https://…
         </p>
       </div>
     </div>

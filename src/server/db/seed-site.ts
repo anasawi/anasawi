@@ -386,6 +386,7 @@ async function writeSettings(): Promise<void> {
       { label: 'Accompagnements', href: '#accompagnements' },
       { label: 'Approche', href: '#approche' },
       { label: 'Le cabinet', href: '#cabinet' },
+      { label: 'Questions', href: '#questions' },
     ],
   }
 

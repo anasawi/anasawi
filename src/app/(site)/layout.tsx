@@ -7,7 +7,6 @@ import { Preloader } from '@/components/site/Preloader'
 import { SmoothScroll } from '@/components/site/SmoothScroll'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { identityCss } from '@/lib/identity'
-import { bookingHref } from '@/lib/settings-helpers'
 import { getMediaByIds, getNavigationItems, getSettings } from '@/server/queries'
 
 /**
@@ -32,8 +31,6 @@ export default async function SiteLayout({
     getNavigationItems(),
   ])
 
-  const ctaHref = bookingHref(settings)
-
   /* Logo choisi dans les Réglages. Absent — ou média supprimé depuis —
      le composant retombe sur celui livré avec le site. */
   const [logo] = settings.logoMediaId
@@ -54,8 +51,12 @@ export default async function SiteLayout({
       <CustomCursor />
       <Header
         items={navItems}
-        ctaLabel="Rendez-vous"
-        ctaHref={ctaHref}
+        /* Le bouton plein de la capsule mène à la section Contact — pas à
+           l'agenda en ligne : « Contact » dit ce qu'on trouve derrière,
+           et la section, elle, propose le rendez-vous, le téléphone et
+           l'e-mail. */
+        ctaLabel="Contact"
+        ctaHref="/#contact"
         phone={settings.contactPhone}
         email={settings.contactEmail}
         logoUrl={logo?.url ?? null}

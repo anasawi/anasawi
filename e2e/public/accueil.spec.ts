@@ -328,6 +328,48 @@ test.describe('Ancres de navigation', () => {
     ).toBeLessThanOrEqual(2)
   })
 
+  test('le bouton plein de la capsule s’appelle « Contact » et y mène', async ({
+    page,
+  }) => {
+    await page.goto('/')
+
+    /* « Rendez-vous » menait à l'agenda en ligne quand il y en avait un,
+       à la section contact sinon : deux destinations pour un même mot.
+       « Contact » dit ce qu'il y a derrière — la section, avec le
+       rendez-vous, le téléphone et l'e-mail. */
+    const bouton = page.getByRole('banner').getByRole('link', {
+      name: 'Contact',
+      exact: true,
+    })
+    await expect(bouton).toBeVisible()
+    await expect(bouton).toHaveAttribute('href', '/#contact')
+    await expect(
+      page.getByRole('banner').getByRole('link', { name: /rendez-vous|RDV/i }),
+    ).toHaveCount(0)
+  })
+
+  test('aucune entrée de la capsule ne se replie sur deux lignes', async ({
+    page,
+  }, infos) => {
+    test.skip(
+      infos.project.name !== 'desktop',
+      'Sous 1024px, le menu est un panneau, pas une capsule.',
+    )
+    await page.goto('/')
+
+    /* Posée à `left: 50 %`, la capsule ne disposait que de la moitié
+       droite de l'écran pour se dimensionner : cinq entrées repliaient
+       « À propos » sur deux lignes. Une entrée tient sur une ligne. */
+    const nav = await ouvrirLeMenu(page)
+    for (const lien of await nav.getByRole('link').all()) {
+      const boite = await lien.boundingBox()
+      expect(
+        boite?.height ?? 999,
+        `« ${await lien.textContent()} » se replie sur deux lignes.`,
+      ).toBeLessThan(40)
+    }
+  })
+
   test('le lien d’évitement donne le focus au contenu', async ({ page }) => {
     await page.goto('/')
 

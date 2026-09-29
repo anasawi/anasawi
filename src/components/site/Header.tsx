@@ -24,7 +24,7 @@ const FOCUSABLE =
  * Navigation Α — « l'îlot flottant » de la planche V8.
  *
  * Capsule givrée détachée du bord (fixe, top 16px, centrée) : brand ✳ +
- * ANASAWI, liens en pastilles, bouton « Rendez-vous » plein. Elle reste
+ * ANASAWI, liens en pastilles, bouton « Contact » plein. Elle reste
  * cachée (-140 %) tant que le préchargeur n'a pas fini, se cache en
  * descendant au-delà de ~260px et revient dès qu'on remonte.
  *
@@ -232,7 +232,11 @@ export function Header({
 
       <header
         className={cn(
-          'fixed left-1/2 top-4 z-[110] flex items-center gap-1.5',
+          /* `w-max` : posée à `left: 50%`, la capsule ne dispose que de
+             la moitié droite de l'écran pour se dimensionner ; sans cela,
+             cinq entrées la faisaient replier « À propos » sur deux
+             lignes à 1 440 px. Elle prend la largeur de son contenu. */
+          'fixed left-1/2 top-4 z-[110] flex w-max items-center gap-1.5',
           'rounded-full border border-line bg-[rgba(251,248,242,0.82)] py-[7px] pl-5 pr-2',
           'shadow-[0_10px_34px_rgba(43,47,44,0.07)] backdrop-blur-[16px]',
           'transition-transform duration-700 ease-[var(--ease)]',
@@ -271,7 +275,7 @@ export function Header({
                 href={navHref(item.anchor)}
                 aria-current={isActive ? 'true' : undefined}
                 className={cn(
-                  'rounded-full px-[13px] py-[9px] text-[10.5px] font-semibold uppercase tracking-[0.16em]',
+                  'whitespace-nowrap rounded-full px-[13px] py-[9px] text-[10.5px] font-semibold uppercase tracking-[0.16em]',
                   'transition-colors duration-300',
                   isActive
                     ? 'bg-blue-mist text-blue-deep'
@@ -290,13 +294,12 @@ export function Header({
           onClick={close}
           className={cn(
             'ml-2.5 whitespace-nowrap rounded-full bg-blue-deep px-5 py-[11px] text-[10.5px] font-semibold uppercase tracking-[0.16em] text-ivory transition-colors duration-300 hover:bg-night',
-            /* Compacte sous `lg` ; réduite à « RDV » sur les plus petits
-               écrans pour que brand + pilule + menu tiennent à 360px. */
-            'max-lg:ml-1 max-lg:px-4 max-lg:py-[9px]',
+            /* Compacte sous `lg`, pour que brand + pilule + menu tiennent
+               à 360px. */
+            'max-lg:ml-1 max-lg:px-3.5 max-lg:py-[9px]',
           )}
         >
-          <span className="sm:hidden">RDV</span>
-          <span className="hidden sm:inline">{ctaLabel}</span>
+          {ctaLabel}
         </a>
 
         {/* Bouton « Menu » — deux traits fins, croix à l'ouverture. */}
