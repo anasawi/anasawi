@@ -13,8 +13,8 @@ calque automatique. Les 38 Ko de métadonnées de provenance C2PA ont été
 retirés.
 
 **Ses couleurs ont été ramenées à la palette du site.** Le fichier reçu
-était vert sauge (`#7C9174`) ; la tache est désormais le bleu brume
-(`--color-blue`, `#7BA3B6`), et les vingt-six teintes intermédiaires des
+était vert sauge (`#7C9174`) ; la tache est désormais le bleu profond
+(`--color-blue-deep`, `#46728A`, celui des boutons), et les vingt-six teintes intermédiaires des
 akènes ont suivi le même déplacement en teinte, saturation et clarté,
 pour garder leurs rapports entre elles. Les ivoires et blancs sont
 intacts. C'est une transformation mécanique — si la palette change, elle

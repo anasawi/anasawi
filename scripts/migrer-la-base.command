@@ -18,5 +18,8 @@ mkdir -p .e2e-logs
   echo "TERMINÉ"
 } > .e2e-logs/migration.log 2>&1
 
-echo
-echo "Terminé. Vous pouvez fermer cette fenêtre."
+# Ferme la fenêtre de Terminal ouverte par le double-clic. Sans cela,
+# chaque lancement en laissait une de plus — seize se sont empilées en
+# une journée. Lancé en arrière-plan, pour que le script puisse se
+# terminer avant que la fenêtre ne disparaisse.
+(sleep 1; osascript -e 'tell application "Terminal" to close (every window whose name contains "'"${0:t}"'")' >/dev/null 2>&1) &
