@@ -238,18 +238,30 @@ export function TemplateEditor({
      (le canvas garde toujours au moins 520 px) ; une icône la rouvre,
      flottante au-dessus de la page. ───────────────────────────────── */
   const [wide, setWide] = useState(true)
+  /* Téléphone : la liste et la page ne tiennent pas côte à côte. La liste
+     se replie toujours et s'ouvre par-dessus la page, d'un bouton. */
+  const [narrow, setNarrow] = useState(false)
   const [railOverlay, setRailOverlay] = useState(false)
   useEffect(() => {
     const mq = window.matchMedia('(min-width: 1280px)')
-    const sync = () => setWide(mq.matches)
+    const mqNarrow = window.matchMedia('(max-width: 767px)')
+    const sync = () => {
+      setWide(mq.matches)
+      setNarrow(mqNarrow.matches)
+    }
     sync()
     mq.addEventListener('change', sync)
-    return () => mq.removeEventListener('change', sync)
+    mqNarrow.addEventListener('change', sync)
+    return () => {
+      mq.removeEventListener('change', sync)
+      mqNarrow.removeEventListener('change', sync)
+    }
   }, [])
-  /* Fenêtre élargie ou inspecteur fermé : la liste reprend sa place. */
+  /* Fenêtre élargie ou inspecteur fermé : la liste reprend sa place —
+     sauf sur téléphone, où elle reste un volet. */
   useEffect(() => {
-    if (wide || !selectedId) setRailOverlay(false)
-  }, [wide, selectedId])
+    if (wide || (!selectedId && !narrow)) setRailOverlay(false)
+  }, [wide, narrow, selectedId])
 
   /* Le cadre de la scène : `frameRef.current.stage` est le conteneur du
      contenu DANS le cadre (mesures, `querySelector`), `.frame` le cadre
@@ -287,8 +299,12 @@ export function TemplateEditor({
   /** Écriture forcée du reliquat de frappe de l'inspecteur. */
   const flushDraftRef = useRef<(() => Promise<void>) | null>(null)
 
-  const vw = GRID_VIEWPORTS[viewport]
-  const scale = Math.min(1, (paneWidth - 48) / vw)
+  /* Sur téléphone, la page est rendue à la largeur RÉELLE de l'écran, à
+     l'échelle 1 : ce qu'Anne voit est ce que verra un visiteur sur le même
+     téléphone. Ailleurs, l'écran simulé choisi, réduit s'il ne tient pas. */
+  const effectiveViewport: Breakpoint = narrow ? 'mobile' : viewport
+  const vw = narrow ? Math.max(320, paneWidth - 16) : GRID_VIEWPORTS[viewport]
+  const scale = narrow ? 1 : Math.min(1, (paneWidth - 48) / vw)
   const editing = mode === 'edit'
 
   const byId = useMemo(
@@ -1379,7 +1395,7 @@ export function TemplateEditor({
 
   /* Sous 1280 px avec l'inspecteur ouvert, la liste se replie en une
      bande à icône ; le canvas garde ≥ 520 px. */
-  const railCollapsed = !wide && selected !== null && !railOverlay
+  const railCollapsed = (narrow || (!wide && selected !== null)) && !railOverlay
 
   const [publishing, setPublishing] = useState(false)
 
@@ -1472,7 +1488,7 @@ export function TemplateEditor({
 
         <div className="flex-1" />
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           {/* 2. Annuler / rétablir : nommés, pour le clavier et le lecteur
               d'écran, avec le raccourci des deux systèmes. */}
           <div className="flex items-center gap-0.5">
@@ -1505,10 +1521,12 @@ export function TemplateEditor({
           </div>
 
           {/* 3. L'écran simulé */}
+          {/* Sur téléphone, l'écran simulé est l'écran lui-même : le
+              choix disparaît. */}
           <div
             role="group"
             aria-label="Écran simulé"
-            className="flex items-center gap-px rounded-md border border-foreground/15 p-[2px]"
+            className="hidden items-center gap-px rounded-md border border-foreground/15 p-[2px] sm:flex"
           >
             {VIEWPORT_ICONS.map(({ bp, icon: Icon, label }) => (
               <button
@@ -1653,7 +1671,7 @@ export function TemplateEditor({
           onPointerDown={() => {
             if (railOverlay) setRailOverlay(false)
           }}
-          className="min-h-0 min-w-[520px] flex-1 overflow-auto bg-[#eae6df] p-[22px]"
+          className="min-h-0 flex-1 overflow-auto bg-[#eae6df] p-2 md:min-w-[520px] md:p-[22px]"
         >
           {/* Page sans section : une invitation, au centre — pas une page
               blanche muette. */}
@@ -1716,11 +1734,11 @@ export function TemplateEditor({
                       visible. */}
                   <AnimProvider enabled={false}>
                     <SectionsView
-                      key={`${viewport}-${mode}`}
+                      key={`${effectiveViewport}-${mode}`}
                       sections={sections}
                       data={data}
                       editable={editing}
-                      breakpoint={viewport}
+                      breakpoint={effectiveViewport}
                     />
                   </AnimProvider>
                 </MotionProvider>
