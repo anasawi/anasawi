@@ -28,9 +28,8 @@ export function AdminShellPill({ userName }: { userName: string }) {
       status="Édition"
       actionLabel="Voir le site"
       actionHref="/"
-      /* Dans un nouvel onglet, comme depuis l'éditeur : on regarde le
-         site, on ne quitte pas le CMS. */
-      newTab
+      /* Le même onglet : « Voir le site », c'est REVENIR sur le site —
+         pas l'ouvrir ailleurs. La pilule du site ramène ici. */
       icon={<EyeIcon />}
       homeHref="/admin"
       name={userName}

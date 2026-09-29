@@ -142,12 +142,9 @@ export default async function DashboardPage() {
           </p>
         </Link>
 
-        <a
-          href="/"
-          target="_blank"
-          rel="noreferrer"
-          className={cardClass}
-        >
+        {/* Le même onglet : on retourne sur le site, on n'en ouvre pas un
+            deuxième. */}
+        <Link href="/" className={cardClass}>
           <span className={cardTitleClass}>
             <ExternalLink className={iconClass} strokeWidth={1.6} />
             <span className={cardLabelClass}>Aperçu</span>
@@ -158,7 +155,7 @@ export default async function DashboardPage() {
           <p className="mt-1.5 text-[12px] text-muted-foreground">
             Votre site, tel que vos visiteurs le découvrent.
           </p>
-        </a>
+        </Link>
       </div>
 
       {missing.length > 0 && (

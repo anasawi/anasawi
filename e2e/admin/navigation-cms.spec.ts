@@ -6,8 +6,9 @@ import { expect, test } from '@playwright/test'
  * Chaque écran charge ses données depuis Neon avant de s'afficher. Entre
  * le clic et l'arrivée, il DOIT se passer quelque chose à l'écran : un
  * bouton muet pendant une seconde est un bouton qu'on reclique, puis une
- * application qu'on croit en panne. Et « Voir le site » regarde, il ne
- * quitte pas : le CMS reste là où on l'a laissé.
+ * application qu'on croit en panne. Et « Voir le site » RAMÈNE sur le
+ * site, dans le même onglet — jamais un autre onglet, jamais une autre
+ * fenêtre : on va et vient entre le site et son administration.
  */
 
 /** Retarde la réponse d'un écran : le temps de VOIR ce qui se passe
@@ -51,7 +52,7 @@ test.describe('Navigation dans le CMS', () => {
     await expect(fil).not.toHaveAttribute('data-actif', '')
   })
 
-  test('« Voir le site » ouvre le site à côté, sans quitter le CMS', async ({
+  test('« Voir le site » revient sur le site, dans le même onglet', async ({
     page,
     context,
   }) => {
@@ -60,40 +61,59 @@ test.describe('Navigation dans le CMS', () => {
       page.getByRole('heading', { name: 'Médias', level: 1 }),
     ).toBeVisible({ timeout: 20_000 })
 
-    const nouvelOnglet = context.waitForEvent('page')
+    const ongletsAvant = context.pages().length
     await page
       .getByRole('navigation', { name: 'Raccourcis d’administration' })
       .getByRole('link', { name: 'Voir le site' })
       .click()
 
-    const site = await nouvelOnglet
-    await site.waitForLoadState('domcontentloaded')
-    expect(new URL(site.url()).pathname).toBe('/')
+    /* Le site, ICI — pas dans un nouvel onglet. */
+    await expect(page).toHaveURL(/\/$/, { timeout: 20_000 })
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    expect(context.pages().length).toBe(ongletsAvant)
 
-    /* Le CMS n'a pas bougé : même adresse, même écran. */
-    expect(new URL(page.url()).pathname).toBe('/admin/medias')
-    await expect(
-      page.getByRole('heading', { name: 'Médias', level: 1 }),
-    ).toBeVisible()
-    await site.close()
+    /* Et de là, la pilule du site ramène dans le CMS — même onglet. */
+    const pilule = page.getByRole('navigation', {
+      name: 'Raccourcis d’administration',
+    })
+    await expect(pilule.getByRole('link', { name: 'Modifier' })).toBeVisible({
+      timeout: 10_000,
+    })
+    await pilule.getByRole('link', { name: 'Modifier' }).click()
+    await expect(page).toHaveURL(/\/admin\//, { timeout: 20_000 })
+    expect(context.pages().length).toBe(ongletsAvant)
   })
 
-  test('le tableau de bord aussi ouvre le site à côté', async ({
+  test('le tableau de bord aussi revient sur le site, sans autre onglet', async ({
     page,
     context,
   }) => {
     await page.goto('/admin', { waitUntil: 'domcontentloaded' })
-    /* La carte « Aperçu » — pas la pilule du bas, qui dit aussi « Voir le
-       site » et que le test précédent couvre. */
     const carte = page.getByRole('link', { name: /Aperçu/ })
     await expect(carte).toBeVisible({ timeout: 20_000 })
 
-    const nouvelOnglet = context.waitForEvent('page')
+    const ongletsAvant = context.pages().length
     await carte.click()
-    const site = await nouvelOnglet
-    await site.waitForLoadState('domcontentloaded')
-    expect(new URL(site.url()).pathname).toBe('/')
-    expect(new URL(page.url()).pathname).toBe('/admin')
-    await site.close()
+    await expect(page).toHaveURL(/\/$/, { timeout: 20_000 })
+    expect(context.pages().length).toBe(ongletsAvant)
+  })
+
+  test('depuis l’éditeur, « Voir le site » revient sur le site', async ({
+    page,
+    context,
+  }) => {
+    await page.goto('/admin/accueil', { waitUntil: 'domcontentloaded' })
+    await expect(page.getByRole('button', { name: 'Publier' })).toBeVisible({
+      timeout: 25_000,
+    })
+
+    const ongletsAvant = context.pages().length
+    await page
+      .getByRole('navigation', { name: 'Raccourcis d’administration' })
+      .getByRole('link', { name: 'Voir le site' })
+      .click()
+    await expect(page).toHaveURL(/\/$/, { timeout: 20_000 })
+    await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
+    expect(context.pages().length).toBe(ongletsAvant)
   })
 })

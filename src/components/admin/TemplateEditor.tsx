@@ -1983,15 +1983,15 @@ export function TemplateEditor({
       />
 
       {/* Pilule du bas — sans libellé d'état (la barre du haut le porte
-          déjà) ; « Voir le site » ouvre la version EN LIGNE dans un
-          nouvel onglet. */}
+          déjà) ; « Voir le site » REVIENT sur la version en ligne, dans
+          le même onglet — jamais ailleurs. Le brouillon est enregistré au
+          fil de l'eau : on ne perd rien en partant. */}
       <AdminPill
         actionLabel="Voir le site"
         actionHref={
           publishState === 'never' ? undefined : isHome ? '/' : `/${pageSlug}`
         }
         actionDisabledHint="Cette page n’est pas encore en ligne — publiez-la d’abord."
-        newTab
         icon={<EyeIcon />}
         homeHref="/admin"
         name={userName}

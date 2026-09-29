@@ -35,8 +35,9 @@ export function AdminPill({
   homeHref: string
   name: string
   className?: string
-  /** Ouvre l'action dans un nouvel onglet (« Voir le site » depuis
-      l'éditeur : la version en ligne, sans quitter le brouillon). */
+  /** Ouvre l'action dans un nouvel onglet. Sans usage aujourd'hui :
+      « Voir le site » revient sur le site dans le même onglet — jamais
+      une autre page, jamais un autre onglet. */
   newTab?: boolean
   /** Couleur de la pastille d'état — vert par défaut. */
   dotClassName?: string
