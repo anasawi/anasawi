@@ -355,6 +355,11 @@ test.describe('Accompagnements — titres de regroupement', () => {
 
     await page.getByRole('button', { name: 'Supprimer', exact: true }).click()
 
+    /* La confirmation n'arrive qu'une fois le serveur d'accord — et elle
+       redit la promesse. Recharger avant, c'est recharger pendant que la
+       suppression est en vol. */
+    await attendreNotification(page, 'Titre retiré — les accompagnements sont conservés.')
+
     await persisteApresRechargement(page, async () => {
       await expect(titreFamille(page, NOUVEAU_TITRE)).toHaveCount(0)
       /* Les deux accompagnements du jeu initial sont toujours là. */
