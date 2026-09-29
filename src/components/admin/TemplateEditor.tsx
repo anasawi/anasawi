@@ -1894,13 +1894,14 @@ export function TemplateEditor({
           brouillon est enregistré au fil de l'eau : on ne perd rien en
           partant. */}
       <AdminPill
+        status="Édition"
         actionLabel="Voir le site"
         actionHref={publishState === 'never' ? undefined : '/'}
         actionDisabledHint="Cette page n’est pas encore en ligne — publiez-la d’abord."
         icon={<EyeIcon />}
         homeHref="/admin"
         name={userName}
-        className="bottom-6"
+        className="bottom-7"
       />
 
       {/* Confirmation — revenir à la version en ligne. */}
