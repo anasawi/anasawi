@@ -63,6 +63,9 @@ export const PAGE_ARCHE = {
     { text: 'Ligne à gauche', align: 'gauche' },
     { text: 'Ligne au centre', align: 'centre' },
     { text: 'Ligne à droite', align: 'droite' },
+    /* Un mot long, insécable : sur un téléphone, il ne tient qu'en
+       réduisant le titre — c'est ce qu'on vérifie. */
+    { text: 'Psychothérapeute', align: 'centre' },
   ],
 } as const
 

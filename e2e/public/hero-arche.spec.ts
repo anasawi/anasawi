@@ -70,13 +70,38 @@ test.describe('Hero — L’arche', () => {
         Math.min(max, Math.max(min, (largeur * vw) / 100))
       const maquette =
         largeur >= 768 ? clamp(56, 9, 150) : clamp(52, 16, 76)
-      return { reelle: parseFloat(getComputedStyle(h1).fontSize), maquette }
+      /* Sur un écran étroit, le titre peut avoir été réduit pour tenir
+         (voir `TitreAjuste`) : le facteur est posé sur l'élément. La
+         réduction elle-même est vérifiée par le test suivant. */
+      const ajustement = parseFloat(h1.style.getPropertyValue('--ajustement') || '1')
+      return { reelle: parseFloat(getComputedStyle(h1).fontSize), maquette, ajustement }
     })
 
-    const attendue = (mesure.maquette * PAGE_ARCHE.taille) / 100
+    const attendue = (mesure.maquette * PAGE_ARCHE.taille * mesure.ajustement) / 100
     expect(
       Math.abs(mesure.reelle - attendue),
-      `Titre à ${mesure.reelle}px, attendu ${attendue}px (${PAGE_ARCHE.taille} % de ${mesure.maquette}px).`,
+      `Titre à ${mesure.reelle}px, attendu ${attendue}px (${PAGE_ARCHE.taille} % de ${mesure.maquette}px × ${mesure.ajustement}).`,
     ).toBeLessThanOrEqual(0.5)
+  })
+
+  test('aucune ligne du titre ne sort de l’écran', async ({ page }) => {
+    /*
+     * Un mot long ne se coupe pas : sur un téléphone, « SUPERVISION » en
+     * 16 vw est plus large que l'écran et se faisait rogner des deux
+     * côtés. Le titre doit se réduire jusqu'à ce que chaque ligne tienne
+     * — sur tous les profils d'écran, et pour n'importe quel mot.
+     */
+    await page.goto(`/${PAGE_ARCHE.slug}`)
+    await page.waitForTimeout(1500)
+
+    const largeurEcran = page.viewportSize()?.width ?? 0
+    for (const ligne of PAGE_ARCHE.lignes) {
+      const boite = await boiteDeLigne(page, ligne.text)
+      expect(boite.x, `« ${ligne.text} » sort à gauche.`).toBeGreaterThanOrEqual(-1)
+      expect(
+        boite.x + boite.width,
+        `« ${ligne.text} » sort à droite (${boite.x + boite.width} > ${largeurEcran}).`,
+      ).toBeLessThanOrEqual(largeurEcran + 1)
+    }
   })
 })

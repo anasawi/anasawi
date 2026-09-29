@@ -13,6 +13,7 @@ import { ActionLink } from '@/components/site/ActionLink'
 import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis, stripEmphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
+import { TitreAjuste } from '@/components/site/TitreAjuste'
 import { Aster, SectionIndex } from '@/components/site/ornaments'
 import type { Settings } from '@/server/db/schema'
 
@@ -133,7 +134,7 @@ function HeroPleinEcran({
             les valeurs validées de la maquette — multipliées par l'échelle
             choisie dans l'admin (`--echelle-titre`, 1 par défaut). */}
         {lines.length > 0 && (
-          <h1 className="text-invert pointer-events-none absolute inset-0 grid content-center justify-items-center font-serif text-[calc(clamp(52px,16vw,76px)*var(--echelle-titre,1))] font-light leading-[0.98] md:text-[calc(clamp(56px,9vw,150px)*var(--echelle-titre,1))] md:leading-none">
+          <TitreAjuste className="text-invert pointer-events-none absolute inset-0 grid content-center justify-items-center font-serif text-[calc(clamp(52px,16vw,76px)*var(--echelle-titre,1)*var(--ajustement,1))] font-light leading-[0.98] md:text-[calc(clamp(56px,9vw,150px)*var(--echelle-titre,1)*var(--ajustement,1))] md:leading-none">
             {lines.map((line, i) => {
               const { text, italic } = splitLine(line.text)
               return (
@@ -146,7 +147,7 @@ function HeroPleinEcran({
                 />
               )
             })}
-          </h1>
+          </TitreAjuste>
         )}
 
         <CircleText

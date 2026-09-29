@@ -102,7 +102,13 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
 
     const preparer = () => {
       const doc = frame.contentDocument
-      if (!doc || racine) return
+      /* Le document du cadre est celui de `srcdoc`, et il est prêt : pas
+         le `about:blank` initial, que le navigateur REMPLACE au premier
+         chargement — tout ce qu'on y aurait mis disparaîtrait avec lui
+         (c'est arrivé : cadre vide après un rechargement complet). */
+      if (!doc || doc.URL !== 'about:srcdoc' || doc.readyState !== 'complete')
+        return
+      if (racine && doc.contains(racine)) return
 
       /* Même langue, mêmes variables de police (`next/font` les pose en
          classe sur `<html>`). */
@@ -129,6 +135,7 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
         }
       }
       recopier()
+      observateur?.disconnect()
       observateur = new MutationObserver(recopier)
       observateur.observe(document.head, {
         childList: true,
@@ -142,16 +149,10 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
       onReady?.()
     }
 
-    /* `about:blank` : le document existe déjà, mais certains navigateurs
-       le remplacent au premier `load`. On prépare maintenant ET on
-       re-vérifie au chargement. */
+    /* Selon le moment, le document `srcdoc` est déjà là (second passage
+       des effets en développement) ou arrive avec `load`. */
     preparer()
-    const onLoad = () => {
-      if (racine && frame.contentDocument?.contains(racine)) return
-      racine = null
-      setMount(null)
-      preparer()
-    }
+    const onLoad = () => preparer()
     frame.addEventListener('load', onLoad)
 
     return () => {
@@ -195,6 +196,10 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
     <iframe
       ref={frameRef}
       title={title}
+      /* Un document explicite, chargé une fois pour toutes : le
+         `about:blank` implicite est remplacé en cours de route par le
+         navigateur, et emporte ce qu'on y a mis. */
+      srcDoc="<!doctype html><html><head></head><body></body></html>"
       className={className}
       style={{
         display: 'block',
