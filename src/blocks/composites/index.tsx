@@ -379,7 +379,7 @@ export const tarifBlock: BlockDefinition<typeof tarifSchema> = {
     field.list('features', 'Détails', [field.text('text', 'Ligne')], {
       addLabel: 'Ajouter une ligne',
     }),
-    field.text('ctaLabel', 'Libellé du bouton'),
+    field.text('ctaLabel', 'Texte du bouton'),
     field.text('ctaHref', 'Lien du bouton'),
     field.boolean('highlight', 'Mise en avant'),
   ],

@@ -123,21 +123,21 @@ function TexteCentre({
 }
 
 export const texteCentreBlock: BlockDefinition<typeof texteCentreSchema> = {
-  label: 'Éditorial — Texte centré',
+  label: 'Texte — Centré',
   description:
-    'Le manifeste doux : ✳︎, déclaration serif centrée, paragraphe d’appui.',
+    'Une phrase centrée avec un paragraphe d’appui.',
   group: 'Sections',
   schema: texteCentreSchema,
   fields: [
     field.textarea('statement', 'Déclaration', {
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
     }),
     field.textarea('text', 'Paragraphe d’appui'),
-    field.text('eyebrow', 'Petit label sous le texte', {
+    field.text('eyebrow', 'Petite mention sous le texte', {
       placeholder: 'L’essentiel',
     }),
-    field.text('label', 'Lien — libellé'),
-    field.text('href', 'Lien — destination'),
+    field.text('label', 'Lien — texte'),
+    field.text('href', 'Lien — vers où'),
   ],
   defaults: {
     eyebrow: 'L’essentiel',
@@ -196,16 +196,16 @@ function Manifeste({ data, ctx }: BlockProps<z.output<typeof manifesteSchema>>) 
 }
 
 export const manifesteBlock: BlockDefinition<typeof manifesteSchema> = {
-  label: 'Éditorial — Manifeste',
+  label: 'Texte — Grande conviction',
   description:
-    'Une conviction en très grande serif dont les mots s’allument un à un.',
+    'Une phrase forte en très grand, dont les mots apparaissent un à un.',
   group: 'Sections',
   schema: manifesteSchema,
   fields: [
     field.textarea('title', 'La conviction', {
       help: 'Astérisques pour le mot-pivot souligné : *s’entendent*.',
     }),
-    field.text('eyebrow', 'Petit label sous le texte', {
+    field.text('eyebrow', 'Petite mention sous le texte', {
       placeholder: 'Ma conviction',
     }),
   ],
@@ -325,15 +325,15 @@ function LieuArches({
 }
 
 export const lieuArchesBlock: BlockDefinition<typeof lieuArchesSchema> = {
-  label: 'Le lieu — Arches sœurs',
+  label: 'Photos — Deux arches',
   description:
-    'Deux arches côte à côte, la seconde remontée, titre serif et lien méta — la section « cabinet » de la planche.',
+    'Deux photos en arche côte à côte, un titre et un lien — parfait pour le cabinet.',
   group: 'Sections',
   schema: lieuArchesSchema,
   suggestedAnchor: 'cabinet',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur', { placeholder: 'Le lieu' }),
+    field.text('eyebrow', 'Petit titre au-dessus', { placeholder: 'Le lieu' }),
     field.list(
       'titleLines',
       'Titre — une entrée par ligne',
@@ -347,8 +347,8 @@ export const lieuArchesBlock: BlockDefinition<typeof lieuArchesSchema> = {
     field.media('mediaId', 'Première arche'),
     field.media('secondMediaId', 'Seconde arche (remontée)'),
     field.text('caption', 'Légende sous les arches', { full: true }),
-    field.text('linkLabel', 'Lien — libellé'),
-    field.text('linkHref', 'Lien — destination'),
+    field.text('linkLabel', 'Lien — texte'),
+    field.text('linkHref', 'Lien — vers où'),
   ],
   defaults: {
     eyebrow: 'Le lieu',
@@ -417,8 +417,8 @@ function ImagePleine({
 }
 
 export const imagePleineBlock: BlockDefinition<typeof imagePleineSchema> = {
-  label: 'Éditorial — La grande arche',
-  description: 'Une immense image en arche, titre en surimpression douce.',
+  label: 'Photos — Grande image',
+  description: 'Une immense photo en arche avec un titre par-dessus.',
   group: 'Sections',
   schema: imagePleineSchema,
   fields: [

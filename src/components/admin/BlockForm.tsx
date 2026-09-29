@@ -4,6 +4,7 @@ import { Plus, X } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
 
+import { LinkField } from './LinkField'
 import { MediaLibraryDialog } from './MediaPicker'
 import { MediaThumb } from './MediaThumb'
 import type { FieldDescriptor } from '@/blocks/field'
@@ -43,27 +44,39 @@ export function BlockForm({
   value,
   onChange,
   library,
+  errors,
 }: {
   fields: readonly FieldDescriptor[]
   value: Payload
   onChange: (next: Payload) => void
   library: Media[]
+  /** Erreurs par champ renvoyées par le serveur — affichées SOUS le champ
+      concerné, là où on peut corriger, et pas seulement dans un toast. */
+  errors?: Record<string, string[]>
 }) {
   const set = (name: string, next: unknown) =>
     onChange({ ...value, [name]: next })
 
   return (
     <div className="grid grid-cols-1 gap-3">
-      {fields.map((field) => (
-        <div key={field.name}>
-          <FieldControl
-            field={field}
-            value={value[field.name]}
-            onChange={(next) => set(field.name, next)}
-            library={library}
-          />
-        </div>
-      ))}
+      {fields.map((field) => {
+        const erreur = errors?.[field.name]?.[0]
+        return (
+          <div key={field.name}>
+            <FieldControl
+              field={field}
+              value={value[field.name]}
+              onChange={(next) => set(field.name, next)}
+              library={library}
+            />
+            {erreur && (
+              <p role="alert" className="mt-1.5 text-[12px] leading-snug text-red-700">
+                {erreur}
+              </p>
+            )}
+          </div>
+        )
+      })}
     </div>
   )
 }
@@ -227,6 +240,15 @@ function FieldControl({
 
     case 'text':
     default:
+      /* Un champ « lien » se règle en choisissant sa destination, pas en
+         tapant « #contact ». */
+      if (field.name === 'href' || field.name.endsWith('Href')) {
+        return (
+          <Wrapper id={id} field={field}>
+            <LinkField id={id} value={String(value ?? '')} onChange={onChange} />
+          </Wrapper>
+        )
+      }
       return (
         <Wrapper id={id} field={field}>
           <Input

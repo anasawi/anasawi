@@ -138,17 +138,17 @@ function AproposPortrait({
 export const aproposPortraitBlock: BlockDefinition<
   typeof aproposPortraitSchema
 > = {
-  label: 'À propos — Portrait',
+  label: 'Qui je suis — Portrait',
   description:
-    'Arche portrait avec badge du nom, titre serif, chiffres qui se comptent.',
+    'Votre portrait en arche avec votre nom, une présentation et quelques chiffres.',
   group: 'Sections',
   schema: aproposPortraitSchema,
   suggestedAnchor: 'a-propos',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.textarea('title', 'Titre', {
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
     }),
     field.textarea('intro', 'Accroche'),
     field.richtext('body', 'Présentation'),
@@ -166,8 +166,8 @@ export const aproposPortraitBlock: BlockDefinition<
       ],
       { addLabel: 'Ajouter un chiffre' },
     ),
-    field.text('linkLabel', 'Lien — libellé'),
-    field.text('linkHref', 'Lien — destination'),
+    field.text('linkLabel', 'Lien — texte'),
+    field.text('linkHref', 'Lien — vers où'),
   ],
   defaults: {
     eyebrow: 'Qui je suis',
@@ -283,15 +283,15 @@ function AproposAsymetrique({
 export const aproposAsymetriqueBlock: BlockDefinition<
   typeof aproposAsymetriqueSchema
 > = {
-  label: 'À propos — Asymétrique',
+  label: 'Qui je suis — Décalé',
   description:
-    'Titre à droite, arche descendue à gauche, chiffre italique en chevauchement.',
+    'Le titre à droite, la photo plus bas à gauche, un chiffre en relief.',
   group: 'Sections',
   schema: aproposAsymetriqueSchema,
   suggestedAnchor: 'a-propos',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.text('statValue', 'Chiffre clé', { placeholder: '15 ans' }),
     field.text('statLabel', 'Légende du chiffre', {
@@ -409,14 +409,14 @@ function AproposParcours({
 export const aproposParcoursBlock: BlockDefinition<
   typeof aproposParcoursSchema
 > = {
-  label: 'À propos — Parcours',
-  description: 'Chronologie d’étapes le long d’un filet, introduction fixe.',
+  label: 'Qui je suis — Parcours',
+  description: 'Les étapes de votre parcours, dans l’ordre, le long d’une ligne.',
   group: 'Sections',
   schema: aproposParcoursSchema,
   suggestedAnchor: 'parcours',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.richtext('intro', 'Introduction'),
     field.list(
@@ -537,9 +537,9 @@ function AproposMedaillon({
 export const aproposMedaillonBlock: BlockDefinition<
   typeof aproposMedaillonSchema
 > = {
-  label: 'À propos — Le médaillon',
+  label: 'Qui je suis — Le médaillon',
   description:
-    'Un grand chiffre dans un médaillon, une couronne de texte qui tourne autour.',
+    'Un grand chiffre dans un médaillon — vos années d’expérience, par exemple — entouré d’un texte qui tourne.',
   group: 'Sections',
   schema: aproposMedaillonSchema,
   suggestedAnchor: 'a-propos',
@@ -551,7 +551,7 @@ export const aproposMedaillonBlock: BlockDefinition<
       help: 'Il tourne autour du médaillon — terminez par « · ».',
     }),
     field.textarea('title', 'Phrase principale', {
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
     }),
     field.textarea('text', 'Texte d’appui'),
   ],
@@ -634,14 +634,14 @@ function AproposCitation({
 export const aproposCitationBlock: BlockDefinition<
   typeof aproposCitationSchema
 > = {
-  label: 'À propos — Citation personnelle',
-  description: 'Petit portrait rond, conviction en grande serif, signature.',
+  label: 'Qui je suis — Une conviction',
+  description: 'Un petit portrait rond, une phrase qui vous ressemble, votre signature.',
   group: 'Sections',
   schema: aproposCitationSchema,
   suggestedAnchor: 'a-propos',
   fields: [
     field.textarea('quote', 'La phrase', {
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
     }),
     field.text('name', 'Nom'),
     field.text('role', 'Précision', { placeholder: 'Thérapeute' }),

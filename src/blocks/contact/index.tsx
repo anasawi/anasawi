@@ -169,13 +169,13 @@ function Row({
 export const contactBlock: BlockDefinition<typeof contactSectionSchema> = {
   label: 'Contact — Complet',
   description:
-    'Coordonnées et formulaire. Les coordonnées proviennent des Réglages.',
+    'Vos coordonnées et un formulaire de contact. Les coordonnées viennent des Réglages.',
   group: 'Sections',
   schema: contactSectionSchema,
   suggestedAnchor: 'contact',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Introduction'),
     field.boolean('showForm', 'Afficher le formulaire'),

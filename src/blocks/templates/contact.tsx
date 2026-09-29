@@ -196,7 +196,7 @@ export const contactMinimalBlock: BlockDefinition<typeof contactMinimalSchema> =
   {
     label: 'Contact — La grande arche',
     description:
-      'L’immense arche bleue : invitation, bouton clair, coordonnées en colonnes. Les coordonnées proviennent des Réglages.',
+      'Une immense arche bleue avec une invitation, un bouton et vos coordonnées. Les coordonnées viennent des Réglages.',
     group: 'Sections',
     schema: contactMinimalSchema,
     suggestedAnchor: 'contact',
@@ -215,7 +215,7 @@ export const contactMinimalBlock: BlockDefinition<typeof contactMinimalSchema> =
       field.boolean('showAddress', 'Afficher l’adresse'),
       field.boolean('showHours', 'Afficher les horaires'),
       field.boolean('showBooking', 'Afficher le bouton de rendez-vous'),
-      field.text('bookingLabel', 'Libellé du bouton'),
+      field.text('bookingLabel', 'Texte du bouton'),
     ],
     defaults: {
       eyebrow: 'Prendre contact',
@@ -407,18 +407,18 @@ function ContactCarte({
 }
 
 export const contactCarteBlock: BlockDefinition<typeof contactCarteSchema> = {
-  label: 'Contact — La carte pratique',
+  label: 'Contact — Carte pratique',
   description:
-    'Grands liens serif, carte crème avec horaires, accès et rendez-vous. Connecté aux Réglages.',
+    'Vos liens de contact en grand, avec horaires, accès et rendez-vous. Connecté aux Réglages.',
   group: 'Sections',
   schema: contactCarteSchema,
   suggestedAnchor: 'contact',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Texte d’accompagnement'),
-    field.text('bookingLabel', 'Libellé du bouton'),
+    field.text('bookingLabel', 'Texte du bouton'),
   ],
   defaults: {
     eyebrow: 'Contact',
@@ -485,17 +485,17 @@ function AppelDoux({ data }: BlockProps<z.output<typeof appelDouxSchema>>) {
 }
 
 export const appelDouxBlock: BlockDefinition<typeof appelDouxSchema> = {
-  label: 'Appel doux — Fin de page',
-  description: 'Un filet, une phrase serif, un bouton — l’invitation discrète.',
+  label: 'Rendez-vous — Invitation discrète',
+  description: 'Un trait, une phrase, un bouton : l’invitation de fin de page.',
   group: 'Sections',
   schema: appelDouxSchema,
   suggestedAnchor: 'rendez-vous',
   fields: [
     field.textarea('title', 'La phrase', {
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
     }),
     field.textarea('text', 'Texte d’appui'),
-    field.text('label', 'Bouton — libellé'),
+    field.text('label', 'Bouton — texte'),
     field.text('href', 'Bouton — lien'),
   ],
   defaults: {

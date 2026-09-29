@@ -141,7 +141,7 @@ function Services({ data, ctx }: BlockProps<ServicesPayload>) {
 export const servicesBlock: BlockDefinition<typeof servicesSchema> = {
   label: 'Accompagnements — Cartes',
   description:
-    'Liste des accompagnements, en lignes ou en cartes. Le contenu se gère dans l’écran « Accompagnements ».',
+    'Vos accompagnements en cartes ou en lignes. Les textes viennent de l’écran Accompagnements.',
   group: 'Sections',
   schema: servicesSchema,
   suggestedAnchor: 'accompagnements',
@@ -151,7 +151,7 @@ export const servicesBlock: BlockDefinition<typeof servicesSchema> = {
     href: '/admin/accompagnements',
   },
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Introduction'),
     field.select('layout', 'Disposition', [

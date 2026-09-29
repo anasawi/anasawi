@@ -95,14 +95,14 @@ function About({ data, ctx }: BlockProps<AboutPayload>) {
 }
 
 export const aboutBlock: BlockDefinition<typeof aboutSchema> = {
-  label: 'À propos — Image + texte',
-  description: 'Arche portrait, présentation, parcours et valeurs.',
+  label: 'Qui je suis — Photo et texte',
+  description: 'Une photo en arche, votre présentation, votre parcours et vos valeurs.',
   group: 'Sections',
   schema: aboutSchema,
   suggestedAnchor: 'a-propos',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Accroche'),
     field.richtext('body', 'Présentation'),

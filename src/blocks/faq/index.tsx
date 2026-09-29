@@ -56,9 +56,9 @@ function Faq({ data, ctx }: BlockProps<FaqPayload>) {
 }
 
 export const faqBlock: BlockDefinition<typeof faqSchema> = {
-  label: 'FAQ — Deux colonnes',
+  label: 'Questions — Deux colonnes',
   description:
-    'Titre à gauche, accordéon de questions à droite. Le contenu se gère dans l’écran « FAQ ».',
+    'Le titre à gauche, les questions dépliables à droite. Les questions viennent de l’écran Questions fréquentes.',
   group: 'Sections',
   schema: faqSchema,
   suggestedAnchor: 'faq',
@@ -68,7 +68,7 @@ export const faqBlock: BlockDefinition<typeof faqSchema> = {
     href: '/admin/faq',
   },
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Introduction'),
   ],

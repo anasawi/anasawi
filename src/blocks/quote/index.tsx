@@ -53,8 +53,8 @@ function Quote({ data }: BlockProps<QuotePayload>) {
 }
 
 export const quoteBlock: BlockDefinition<typeof quoteSchema> = {
-  label: 'Éditorial — Citation',
-  description: 'Respiration centrée entre deux sections.',
+  label: 'Texte — Citation',
+  description: 'Une citation centrée, comme une respiration entre deux sections.',
   group: 'Sections',
   schema: quoteSchema,
   fields: [
@@ -64,7 +64,7 @@ export const quoteBlock: BlockDefinition<typeof quoteSchema> = {
       [field.text('text', 'Ligne', { full: true })],
       {
         addLabel: 'Ajouter une ligne',
-        help: 'Astérisques pour l’italique : *mot*.',
+        help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
       },
     ),
     field.text('attribution', 'Attribution', { full: true }),

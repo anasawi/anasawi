@@ -70,8 +70,8 @@ function TemoignageSimple({
 export const temoignageSimpleBlock: BlockDefinition<
   typeof temoignageSimpleSchema
 > = {
-  label: 'Témoignage — Simple',
-  description: 'Une parole centrée et sobre, nom et précision en dessous.',
+  label: 'Témoignage — Sobre',
+  description: 'Une parole centrée, avec le nom en dessous.',
   group: 'Sections',
   schema: temoignageSimpleSchema,
   suggestedAnchor: 'temoignages',
@@ -153,9 +153,9 @@ function TemoignageGrand({
 export const temoignageGrandBlock: BlockDefinition<
   typeof temoignageGrandSchema
 > = {
-  label: 'Témoignage — La nuit',
+  label: 'Témoignage — Une seule parole',
   description:
-    'Fond nuit, halo qui respire, une seule parole en très grande serif.',
+    'Fond sombre et une seule parole en grand — pour un témoignage qui compte.',
   group: 'Sections',
   schema: temoignageGrandSchema,
   suggestedAnchor: 'temoignages',
@@ -289,12 +289,12 @@ export const temoignagesMultiplesBlock: BlockDefinition<
 > = {
   label: 'Témoignages — Trois voix',
   description:
-    'Trois paroles sur un fil, la voix centrale sur une carte bleu brume.',
+    'Trois paroles côte à côte, celle du milieu mise en avant.',
   group: 'Sections',
   schema: temoignagesMultiplesSchema,
   suggestedAnchor: 'temoignages',
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.list(
       'items',

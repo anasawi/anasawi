@@ -78,7 +78,7 @@ export const headingBlock: BlockDefinition<typeof headingSchema> = {
     field.text('eyebrow', 'Label au-dessus'),
     field.text('text', 'Titre', {
       full: true,
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
     }),
     field.select('level', 'Niveau', [
       { value: 'h2', label: 'H2 — titre de section' },

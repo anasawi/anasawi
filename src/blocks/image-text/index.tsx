@@ -98,12 +98,12 @@ function ImageText({ data, ctx }: BlockProps<ImageTextPayload>) {
 }
 
 export const imageTextBlock: BlockDefinition<typeof imageTextSchema> = {
-  label: 'Éditorial — Image + texte',
-  description: 'Bloc polyvalent, arche à gauche ou à droite.',
+  label: 'Texte — Image et texte',
+  description: 'Un texte et une photo en arche, à gauche ou à droite.',
   group: 'Sections',
   schema: imageTextSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.richtext('body', 'Texte'),
     field.media('mediaId', 'Image'),
@@ -116,8 +116,8 @@ export const imageTextBlock: BlockDefinition<typeof imageTextSchema> = {
       { value: 'square', label: 'Carré' },
       { value: 'landscape', label: 'Paysage 4:3' },
     ]),
-    field.text('ctaLabel', 'CTA — libellé'),
-    field.text('ctaHref', 'CTA — lien'),
+    field.text('ctaLabel', 'Bouton — texte'),
+    field.text('ctaHref', 'Bouton — lien'),
   ],
   defaults: {
     eyebrow: 'Le cabinet',

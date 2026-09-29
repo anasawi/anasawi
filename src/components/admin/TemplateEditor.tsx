@@ -13,23 +13,25 @@ import { useRouter } from 'next/navigation'
 import {
   Eye,
   Monitor,
-  MoreHorizontal,
   PanelLeft,
   Pencil,
   Plus,
   Redo2,
+  RotateCcw,
   Smartphone,
   Tablet,
   Undo2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 
+import { AnchorsContext, type AnchorOption } from './anchors-context'
 import type { HistoryEntry } from './history'
 import { SectionInspector, type SectionDraft } from './SectionInspector'
 import { StageFrame, versLaFenetre, type StageFrameHandle } from './StageFrame'
-import { SectionRail } from './SectionRail'
+import { SectionRail, labelOf } from './SectionRail'
 import { TemplateLibrary } from './TemplateLibrary'
 import { getBlock } from '@/blocks/registry'
+import { ActionMenu } from '@/components/ui/action-menu'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -325,6 +327,15 @@ export function TemplateEditor({
   )
 
   const roots = useMemo(() => rootsOf(sections), [sections])
+  /* Les sections vers lesquelles un bouton peut mener (celles qui ont
+     une ancre), nommées comme dans la liste. */
+  const anchorOptions = useMemo<AnchorOption[]>(
+    () =>
+      roots
+        .filter((r) => r.anchor)
+        .map((r) => ({ anchor: r.anchor as string, label: labelOf(r) })),
+    [roots],
+  )
 
   /* ── File d'actions serveur ──────────────────────────────────────── */
 
@@ -353,20 +364,6 @@ export function TemplateEditor({
     },
     [],
   )
-
-  /* ── Menu « ⋯ » à côté de Publier ────────────────────────────────── */
-
-  const [moreOpen, setMoreOpen] = useState(false)
-  const moreRef = useRef<HTMLDivElement>(null)
-
-  useEffect(() => {
-    if (!moreOpen) return
-    const onDown = (e: PointerEvent) => {
-      if (!moreRef.current?.contains(e.target as Node)) setMoreOpen(false)
-    }
-    window.addEventListener('pointerdown', onDown)
-    return () => window.removeEventListener('pointerdown', onDown)
-  }, [moreOpen])
 
   /* ── Historique (⌘Z / ⌘⇧Z) ───────────────────────────────────────── */
 
@@ -475,9 +472,7 @@ export function TemplateEditor({
       if (libraryOpen || confirmDiscard) return
 
       if (e.key === 'Escape') {
-        if (moreOpen) {
-          setMoreOpen(false)
-        } else if (confirmDeleteId) {
+        if (confirmDeleteId) {
           setConfirmDeleteId(null)
         } else if (railOverlay) {
           setRailOverlay(false)
@@ -510,7 +505,6 @@ export function TemplateEditor({
     confirmDiscard,
     libraryOpen,
     mode,
-    moreOpen,
     railOverlay,
     runHistory,
     selectedId,
@@ -1446,181 +1440,155 @@ export function TemplateEditor({
   return (
     <div className="flex h-full min-h-0 flex-1 flex-col bg-background">
       {/* ── Barre supérieure ─────────────────────────────────────── */}
-      <header className="flex h-[54px] shrink-0 items-center gap-3.5 border-b border-border bg-ivory px-[18px]">
-        {/* 1. Le nom de la page. Le site est une page unique : pas de
-            menu de pages ici. */}
-        <span className="max-w-56 truncate px-2.5 font-serif text-[15px]">
-          {pageTitle}
-        </span>
-
-        {/* 2. UN seul indicateur d'état : En ligne / Modifications à
-            publier / Jamais publiée. L'enregistrement automatique se lit
-            en dessous, en petit — ce n'est pas un état concurrent. */}
-        <div className="flex flex-col items-start gap-[2px]">
+      <header className="flex shrink-0 flex-wrap items-center gap-x-3 gap-y-2 border-b border-border bg-ivory px-4 py-2.5 lg:h-[54px] lg:flex-nowrap lg:py-0">
+        {/* 1. Où l'on est, et dans quel état : le nom de la page, l'état de
+            publication, et — en clair — ce qu'il advient des modifications.
+            C'est LA phrase qui répond à « est-ce que c'est enregistré ?
+            est-ce que c'est en ligne ? ». */}
+        <div className="flex min-w-0 items-center gap-3">
+          <span className="max-w-48 truncate font-serif text-[15px]">{pageTitle}</span>
           <span
             className={cn(
-              'flex items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[11.5px]',
+              'flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[11.5px]',
               status.pill,
             )}
           >
             <span className={cn('h-[6px] w-[6px] rounded-full', status.dot)} />
             {status.label}
           </span>
-          {selected && (
-            <span
-              className="pl-2.5 text-[11px] leading-none text-stone"
-              aria-live="polite"
-            >
-              {saveState === 'saved'
-                ? 'Enregistré automatiquement'
-                : 'Enregistrement…'}
-            </span>
-          )}
+          <span
+            className="hidden text-[11.5px] leading-none text-stone xl:block"
+            aria-live="polite"
+          >
+            {saveState !== 'saved'
+              ? 'Enregistrement…'
+              : publishState === 'pending'
+                ? 'Enregistré automatiquement · visible par vos visiteurs après « Publier »'
+                : publishState === 'never'
+                  ? 'Enregistré automatiquement · rien n’est encore en ligne'
+                  : 'Enregistré automatiquement · tout est en ligne'}
+          </span>
         </div>
 
         <div className="flex-1" />
 
-        {/* 3. Annuler / rétablir */}
-        <div className="flex items-center gap-0.5">
-          <button
-            type="button"
-            onClick={() => void runHistory('undo')}
-            disabled={historyLen.undo === 0}
-            title="Annuler (⌘Z)"
-            className={cn(
-              'rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/90 hover:text-foreground disabled:opacity-30',
-              FOCUS_RING,
-            )}
-          >
-            <Undo2 className="h-4 w-4" strokeWidth={1.6} />
-          </button>
-          <button
-            type="button"
-            onClick={() => void runHistory('redo')}
-            disabled={historyLen.redo === 0}
-            title="Rétablir (⌘⇧Z)"
-            className={cn(
-              'rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/90 hover:text-foreground disabled:opacity-30',
-              FOCUS_RING,
-            )}
-          >
-            <Redo2 className="h-4 w-4" strokeWidth={1.6} />
-          </button>
-        </div>
-
-        {/* 4. Appareils */}
-        <div className="flex items-center gap-px rounded-[9px] border border-foreground/15 p-[2px]">
-          {VIEWPORT_ICONS.map(({ bp, icon: Icon, label }) => (
+        <div className="flex items-center gap-2">
+          {/* 2. Annuler / rétablir : nommés, pour le clavier et le lecteur
+              d'écran, avec le raccourci des deux systèmes. */}
+          <div className="flex items-center gap-0.5">
             <button
-              key={bp}
               type="button"
-              title={label}
-              onClick={() => setViewport(bp)}
+              onClick={() => void runHistory('undo')}
+              disabled={historyLen.undo === 0}
+              aria-label="Annuler la dernière modification"
+              title="Annuler (⌘Z / Ctrl+Z)"
               className={cn(
-                'flex h-[26px] w-8 items-center justify-center rounded-[7px] transition-colors',
+                'flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/90 hover:text-foreground disabled:opacity-30',
                 FOCUS_RING,
-                viewport === bp
-                  ? 'bg-foreground text-ivory'
-                  : 'text-muted-foreground hover:text-foreground',
               )}
             >
-              <Icon className="h-3.5 w-3.5" strokeWidth={1.6} />
+              <Undo2 className="h-4 w-4" strokeWidth={1.6} />
             </button>
-          ))}
-        </div>
-
-        {/* 5. Aperçu du brouillon (bascule) */}
-        <button
-          type="button"
-          title={
-            mode === 'edit'
-              ? 'Aperçu du brouillon — la page telle qu’elle sera publiée'
-              : 'Revenir à l’édition'
-          }
-          onClick={() => {
-            setMode((m) => (m === 'edit' ? 'preview' : 'edit'))
-            setSelectedId(null)
-          }}
-          className={cn(
-            'flex items-center gap-1.5 rounded-lg border border-foreground/15 px-3 py-[6px] text-[12.5px] text-ink-soft transition-colors hover:border-foreground hover:text-foreground',
-            FOCUS_RING,
-          )}
-        >
-          {mode === 'edit' ? (
-            <>
-              <Eye className="h-3.5 w-3.5" strokeWidth={1.6} /> Aperçu
-            </>
-          ) : (
-            <>
-              <Pencil className="h-3.5 w-3.5" strokeWidth={1.6} /> Éditer
-            </>
-          )}
-        </button>
-
-        {/* 6. Publier — l'action principale, inerte quand tout est en ligne. */}
-        <button
-          type="button"
-          onClick={() => void publish()}
-          disabled={publishing || !canPublish}
-          title={
-            canPublish
-              ? 'Mettre le brouillon en ligne'
-              : 'Tout est en ligne — rien à publier'
-          }
-          className={cn(
-            'rounded-lg px-4 py-[7px] text-[12.5px] font-medium transition-all',
-            FOCUS_RING,
-            canPublish
-              ? 'bg-blue-deep text-white hover:brightness-105'
-              : 'bg-muted text-muted-foreground',
-          )}
-        >
-          {publishing ? 'Publication…' : 'Publier'}
-        </button>
-
-        {/* 7. Menu ⋯ — revenir à la version en ligne. */}
-        <div ref={moreRef} className="relative -ml-1.5">
-          <button
-            type="button"
-            onClick={() => setMoreOpen((open) => !open)}
-            aria-haspopup="menu"
-            aria-expanded={moreOpen}
-            aria-label="Autres actions"
-            title="Autres actions"
-            className={cn(
-              'rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-white/90 hover:text-foreground',
-              FOCUS_RING,
-            )}
-          >
-            <MoreHorizontal className="h-4 w-4" strokeWidth={1.6} />
-          </button>
-
-          {moreOpen && (
-            <div
-              role="menu"
-              className="absolute right-0 top-[calc(100%+6px)] z-40 w-72 rounded-[10px] border border-border bg-white p-1.5 shadow-[0_10px_30px_rgba(28,32,30,0.14)]"
+            <button
+              type="button"
+              onClick={() => void runHistory('redo')}
+              disabled={historyLen.redo === 0}
+              aria-label="Rétablir la modification annulée"
+              title="Rétablir (⌘⇧Z / Ctrl+⇧Z)"
+              className={cn(
+                'flex h-9 w-9 items-center justify-center rounded-md text-muted-foreground transition-colors hover:bg-white/90 hover:text-foreground disabled:opacity-30',
+                FOCUS_RING,
+              )}
             >
+              <Redo2 className="h-4 w-4" strokeWidth={1.6} />
+            </button>
+          </div>
+
+          {/* 3. L'écran simulé */}
+          <div
+            role="group"
+            aria-label="Écran simulé"
+            className="flex items-center gap-px rounded-md border border-foreground/15 p-[2px]"
+          >
+            {VIEWPORT_ICONS.map(({ bp, icon: Icon, label }) => (
               <button
+                key={bp}
                 type="button"
-                role="menuitem"
-                disabled={publishState !== 'pending'}
-                onClick={() => {
-                  setMoreOpen(false)
-                  setConfirmDiscard(true)
-                }}
-                className="w-full rounded-[7px] px-2.5 py-[7px] text-left text-[12.5px] text-ink-soft transition-colors hover:bg-blue-mist/40 hover:text-foreground disabled:cursor-default disabled:opacity-40 disabled:hover:bg-transparent"
+                aria-label={label}
+                aria-pressed={viewport === bp}
+                title={label}
+                onClick={() => setViewport(bp)}
+                className={cn(
+                  'flex h-[30px] w-9 items-center justify-center rounded-[5px] transition-colors',
+                  FOCUS_RING,
+                  viewport === bp
+                    ? 'bg-foreground text-ivory'
+                    : 'text-muted-foreground hover:text-foreground',
+                )}
               >
-                Annuler les modifications non publiées
-                <span className="mt-0.5 block text-[11px] leading-snug text-stone">
-                  {publishState === 'never'
+                <Icon className="h-3.5 w-3.5" strokeWidth={1.6} />
+              </button>
+            ))}
+          </div>
+
+          {/* 4. Aperçu du brouillon (bascule) */}
+          <Button
+            type="button"
+            variant="outline"
+            title={
+              mode === 'edit'
+                ? 'Voir la page telle qu’elle sera une fois publiée'
+                : 'Revenir à l’édition'
+            }
+            onClick={() => {
+              setMode((m) => (m === 'edit' ? 'preview' : 'edit'))
+              setSelectedId(null)
+            }}
+          >
+            {mode === 'edit' ? (
+              <>
+                <Eye className="h-3.5 w-3.5" strokeWidth={1.6} /> Aperçu
+              </>
+            ) : (
+              <>
+                <Pencil className="h-3.5 w-3.5" strokeWidth={1.6} /> Éditer
+              </>
+            )}
+          </Button>
+
+          {/* 5. Publier — l'action principale, inerte quand tout est en ligne. */}
+          <Button
+            type="button"
+            onClick={() => void publish()}
+            disabled={publishing || !canPublish}
+            title={
+              canPublish
+                ? 'Mettre vos modifications en ligne'
+                : 'Tout est en ligne — rien à publier'
+            }
+          >
+            {publishing ? 'Publication…' : 'Publier'}
+          </Button>
+
+          {/* 6. Autres actions : revenir à la version en ligne. */}
+          <ActionMenu
+            label="Autres actions"
+            size="md"
+            items={[
+              {
+                label: 'Annuler les modifications non publiées',
+                icon: <RotateCcw />,
+                disabled: publishState !== 'pending',
+                hint:
+                  publishState === 'never'
                     ? 'Cette page n’a jamais été publiée.'
                     : publishState === 'live'
                       ? 'Le brouillon est identique à la version en ligne.'
-                      : 'Revenir à la version en ligne.'}
-                </span>
-              </button>
-            </div>
-          )}
+                      : 'Revenir à la version en ligne.',
+                onSelect: () => setConfirmDiscard(true),
+              },
+            ]}
+          />
         </div>
       </header>
 
@@ -1850,7 +1818,10 @@ export function TemplateEditor({
 
         {/* ── Contenu de la section — seulement quand elle existe ──── */}
         {editing && selected && (
-          <aside className="flex w-[300px] shrink-0 flex-col overflow-hidden border-l border-border bg-ivory">
+          /* Sous 1024 px, l'inspecteur devient un volet posé par-dessus la
+             scène : à côté, il ne restait plus de place pour la page. */
+          <aside className="flex w-[300px] shrink-0 flex-col overflow-hidden border-l border-border bg-ivory max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-30 max-lg:w-[min(320px,92vw)] max-lg:shadow-[-8px_0_28px_rgba(28,32,30,0.14)]">
+            <AnchorsContext.Provider value={anchorOptions}>
             <SectionInspector
               key={selected.id}
               section={selected}
@@ -1869,6 +1840,7 @@ export function TemplateEditor({
               }
               simple
             />
+            </AnchorsContext.Provider>
           </aside>
         )}
       </div>

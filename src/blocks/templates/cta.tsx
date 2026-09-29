@@ -88,15 +88,15 @@ function CtaImage({ data, ctx }: BlockProps<z.output<typeof ctaImageSchema>>) {
 }
 
 export const ctaImageBlock: BlockDefinition<typeof ctaImageSchema> = {
-  label: 'Appel à l’action — Avec image',
-  description: 'Carte en deux moitiés : image et panneau bleu brume.',
+  label: 'Rendez-vous — Avec photo',
+  description: 'Une carte en deux moitiés : une photo et un panneau bleu avec un bouton.',
   group: 'Sections',
   schema: ctaImageSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('text', 'Texte'),
-    field.text('label', 'Bouton — libellé'),
+    field.text('label', 'Bouton — texte'),
     field.text('href', 'Bouton — lien'),
     field.media('mediaId', 'Image'),
   ],
@@ -183,9 +183,9 @@ function CtaImmersif({
 }
 
 export const ctaImmersifBlock: BlockDefinition<typeof ctaImmersifSchema> = {
-  label: 'Appel à l’action — L’arche immersive',
+  label: 'Rendez-vous — Grande photo',
   description:
-    'Une grande arche pleine d’image sous un voile nuit, phrase serif au centre.',
+    'Une grande photo en arche sous un voile sombre, une phrase et un bouton au centre.',
   group: 'Sections',
   schema: ctaImmersifSchema,
   fields: [
@@ -195,10 +195,10 @@ export const ctaImmersifBlock: BlockDefinition<typeof ctaImmersifSchema> = {
       [field.text('text', 'Ligne', { full: true })],
       {
         addLabel: 'Ajouter une ligne',
-        help: 'Astérisques pour l’italique : *mot*.',
+        help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
       },
     ),
-    field.text('label', 'Bouton — libellé'),
+    field.text('label', 'Bouton — texte'),
     field.text('href', 'Bouton — lien'),
     field.media('mediaId', 'Image de fond'),
   ],

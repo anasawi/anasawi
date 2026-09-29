@@ -107,15 +107,15 @@ function ApprocheColonnes({
 export const approcheColonnesBlock: BlockDefinition<
   typeof approcheColonnesSchema
 > = {
-  label: 'Approche — Principes',
+  label: 'Ma méthode — Trois principes',
   description:
-    'Trois principes en colonnes, filets appuyés, index en toutes lettres.',
+    'Trois principes côte à côte, numérotés en toutes lettres.',
   group: 'Sections',
   schema: approcheColonnesSchema,
   suggestedAnchor: 'approche',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Introduction'),
     field.list(
@@ -242,14 +242,14 @@ function ProcessusVertical({
 export const processusVerticalBlock: BlockDefinition<
   typeof processusVerticalSchema
 > = {
-  label: 'Approche — Processus vertical',
-  description: 'Étapes alternées le long d’une fine ligne centrale.',
+  label: 'Ma méthode — Pas à pas',
+  description: 'Des étapes qui alternent de part et d’autre d’une ligne verticale.',
   group: 'Sections',
   schema: processusVerticalSchema,
   suggestedAnchor: 'approche',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.list(
       'steps',

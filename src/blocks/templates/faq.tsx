@@ -92,9 +92,9 @@ function FaqEditoriale({
 
 export const faqEditorialeBlock: BlockDefinition<typeof faqEditorialeSchema> =
   {
-    label: 'FAQ — Éditoriale',
+    label: 'Questions — En colonne',
     description:
-      'Colonne centrale de questions serif ; la question ouverte se pose sur un dégradé de sable. Le contenu se gère dans l’écran « FAQ ».',
+      'Les questions les unes sous les autres, la question ouverte se détache. Les questions viennent de l’écran Questions fréquentes.',
     group: 'Sections',
     schema: faqEditorialeSchema,
     suggestedAnchor: 'questions',
@@ -104,10 +104,10 @@ export const faqEditorialeBlock: BlockDefinition<typeof faqEditorialeSchema> =
       href: '/admin/faq',
     },
     fields: [
-      field.text('eyebrow', 'Label supérieur'),
+      field.text('eyebrow', 'Petit titre au-dessus'),
       field.text('title', 'Titre', {
         full: true,
-        help: 'Astérisques pour l’italique : *mot*.',
+        help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
       }),
       field.textarea('intro', 'Introduction'),
     ],

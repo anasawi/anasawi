@@ -13,8 +13,8 @@ import type { FieldDescriptor } from '@/blocks/field'
 import { getBlock } from '@/blocks/registry'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Choice } from '@/components/ui/choice'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
 import { parseNodeStyles, type NodeStyles } from '@/lib/node-styles'
 import { cn, slugify } from '@/lib/utils'
 import {
@@ -180,13 +180,17 @@ export function SectionInspector({
   )
   /** Groupes ouverts — TOUS repliés à l'arrivée : on ouvre ce dont on a
       besoin, le panneau reste une table des matières lisible. */
+  /* « Contenu » est ouvert d'emblée : c'est ce qu'on vient modifier neuf
+     fois sur dix. Le reste se déplie à la demande. */
   const [open, setOpen] = useState({
-    content: false,
+    content: true,
     button: false,
     style: false,
     advanced: false,
     ...initialOpen,
   })
+  /** Erreurs par champ de la dernière écriture refusée. */
+  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
   const toggle = (key: keyof typeof open) =>
     setOpen((o) => ({ ...o, [key]: !o[key] }))
 
@@ -268,9 +272,11 @@ export function SectionInspector({
     if (!result.ok) {
       dirty.current = true
       setSaveState('dirty')
+      setFieldErrors(result.fieldErrors ?? {})
       toast.error(result.error)
       return
     }
+    setFieldErrors({})
 
     const prevMeta = prev.meta
     const prevPayload = prev.payload
@@ -425,13 +431,21 @@ export function SectionInspector({
 
   return (
     <>
-      <div className="flex shrink-0 items-center justify-between gap-2 border-b border-border px-4 py-3.5">
-        <h2 className="truncate font-serif text-[15px]">{block.label}</h2>
+      <div className="flex shrink-0 items-start justify-between gap-2 border-b border-border px-4 py-3">
+        <div className="min-w-0">
+          {/* Le nom de LA section (celui de la liste), puis le modèle dont
+              elle vient — pas l'inverse : « Hero — L'arche » ne dit pas
+              à Anne qu'elle est en train de modifier son ouverture. */}
+          <h2 className="truncate font-serif text-[15px]">{section.name ?? block.label}</h2>
+          {section.name && (
+            <p className="truncate text-[11.5px] text-muted-foreground">Modèle : {block.label}</p>
+          )}
+        </div>
         <button
           type="button"
           onClick={onClose}
           aria-label="Fermer le panneau"
-          className="shrink-0 text-stone transition-colors hover:text-foreground"
+          className="shrink-0 rounded-md p-1 text-stone transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50"
         >
           <X className="h-[15px] w-[15px]" strokeWidth={1.7} />
         </button>
@@ -464,6 +478,7 @@ export function SectionInspector({
               value={payload}
               onChange={setPayload}
               library={library}
+              errors={fieldErrors}
             />
           </Group>
         )}
@@ -487,7 +502,7 @@ export function SectionInspector({
         {/* ── Style ───────────────────────────────────────────────── */}
         {hasStyleGroup && (
           <Group
-            title="Style"
+            title="Apparence"
             open={open.style}
             onToggle={() => toggle('style')}
           >
@@ -512,73 +527,42 @@ export function SectionInspector({
                   />
 
                   <div>
-                    <p className="mb-[5px] text-[11.5px] text-ink-soft">
-                      Animation d’apparition
-                    </p>
                     <div className="grid grid-cols-2 gap-2">
-                      <select
+                      <Choice
+                        id="section-animation"
+                        label="Animation d’apparition"
+                        className="col-span-2"
                         value={anim.animation}
-                        onChange={(e) =>
-                          writeAnim({
-                            animation: e.target
-                              .value as SectionSettings['animation'],
-                          })
-                        }
-                        className="col-span-2 h-[34px] rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
-                      >
-                        <option value="aucune">
-                          Aucune — les blocs s’animent seuls
-                        </option>
-                        <option value="fade">Fondu</option>
-                        <option value="fade-up">Fondu montant</option>
-                        <option value="scale">Zoom léger</option>
-                      </select>
+                        onChange={(animation) => writeAnim({ animation })}
+                        options={[
+                          { value: 'aucune', label: 'Aucune — les éléments s’animent seuls' },
+                          { value: 'fade', label: 'Fondu' },
+                          { value: 'fade-up', label: 'Fondu montant' },
+                          { value: 'scale', label: 'Zoom léger' },
+                        ]}
+                      />
                       {anim.animation !== 'aucune' && (
-                        <>
-                          <label className="flex items-center gap-1.5 text-[11.5px] text-ink-soft">
-                            Délai
-                            <Input
-                              type="number"
-                              min={0}
-                              max={2}
-                              step={0.1}
-                              value={anim.delay}
-                              onChange={(e) =>
-                                writeAnim({
-                                  delay: Math.min(
-                                    2,
-                                    Math.max(0, e.target.valueAsNumber || 0),
-                                  ),
-                                })
-                              }
-                              className="h-7 rounded-[8px] border-line-strong bg-white text-[12px] focus-visible:border-blue-deep focus-visible:ring-0"
-                            />
-                            s
-                          </label>
-                          <label className="flex items-center gap-1.5 text-[11.5px] text-ink-soft">
-                            Durée
-                            <Input
-                              type="number"
-                              min={0.2}
-                              max={2}
-                              step={0.1}
-                              value={anim.duration}
-                              onChange={(e) =>
-                                writeAnim({
-                                  duration: Math.min(
-                                    2,
-                                    Math.max(
-                                      0.2,
-                                      e.target.valueAsNumber || 0.8,
-                                    ),
-                                  ),
-                                })
-                              }
-                              className="h-7 rounded-[8px] border-line-strong bg-white text-[12px] focus-visible:border-blue-deep focus-visible:ring-0"
-                            />
-                            s
-                          </label>
-                        </>
+                        /* Une vitesse, pas des secondes : « 0,8 s » ne parle
+                           à personne. Trois allures, qui posent la durée. */
+                        <Choice
+                          id="section-animation-vitesse"
+                          label="Vitesse"
+                          className="col-span-2"
+                          value={
+                            anim.duration <= 0.5 ? 'rapide' : anim.duration >= 1.3 ? 'lente' : 'normale'
+                          }
+                          onChange={(vitesse) =>
+                            writeAnim({
+                              delay: 0,
+                              duration: vitesse === 'rapide' ? 0.45 : vitesse === 'lente' ? 1.4 : 0.8,
+                            })
+                          }
+                          options={[
+                            { value: 'rapide', label: 'Rapide' },
+                            { value: 'normale', label: 'Normale' },
+                            { value: 'lente', label: 'Lente' },
+                          ]}
+                        />
                       )}
                     </div>
                   </div>
@@ -586,25 +570,20 @@ export function SectionInspector({
                   {/* Bord bas : le fond de cette section se déverse en
                       ondulant dans la suivante. */}
                   <div>
-                    <p className="mb-[5px] text-[11.5px] text-ink-soft">
-                      Bord du bas
-                    </p>
-                    <select
+                    <Choice
+                      id="section-bord"
+                      label="Bord du bas"
                       value={anim.edge}
-                      onChange={(e) =>
-                        writeAnim({
-                          edge: e.target.value as SectionSettings['edge'],
-                        })
-                      }
-                      className="h-[34px] w-full rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
-                    >
-                      <option value="aucun">Droit</option>
-                      <option value="vague">Vague</option>
-                      <option value="courbe">Courbe douce</option>
-                      <option value="arche">Arche</option>
-                      <option value="ondulation">Ondulations</option>
-                      <option value="oblique">Oblique</option>
-                    </select>
+                      onChange={(edge) => writeAnim({ edge })}
+                      options={[
+                        { value: 'aucun', label: 'Droit' },
+                        { value: 'vague', label: 'Vague' },
+                        { value: 'courbe', label: 'Courbe douce' },
+                        { value: 'arche', label: 'Arche' },
+                        { value: 'ondulation', label: 'Ondulations' },
+                        { value: 'oblique', label: 'Oblique' },
+                      ]}
+                    />
                     <p className="mt-1.5 text-[11px] leading-[1.5] text-stone">
                       Visible si la section suivante a un fond différent.
                     </p>
@@ -612,62 +591,52 @@ export function SectionInspector({
 
                   {/* Décor au trait — un motif calme posé sur la section. */}
                   <div>
-                    <p className="mb-[5px] text-[11.5px] text-ink-soft">
-                      Décor
-                    </p>
                     <div className="grid grid-cols-2 gap-2">
-                      <select
+                      <Choice
+                        id="section-decor"
+                        label="Décor"
+                        className="col-span-2"
                         value={anim.ornament}
-                        onChange={(e) =>
-                          writeAnim({
-                            ornament: e.target
-                              .value as SectionSettings['ornament'],
-                          })
-                        }
-                        className="col-span-2 h-[34px] rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
-                      >
-                        <option value="aucun">Aucun</option>
-                        <option value="ondes">Ondes</option>
-                        <option value="cercles">Cercles concentriques</option>
-                        <option value="arche">Arche</option>
-                        <option value="soleil">Soleil levant</option>
-                        <option value="spirale">Spirale</option>
-                        <option value="horizon">Horizon</option>
-                      </select>
+                        onChange={(ornament) => writeAnim({ ornament })}
+                        options={[
+                          { value: 'aucun', label: 'Aucun' },
+                          { value: 'ondes', label: 'Ondes' },
+                          { value: 'cercles', label: 'Cercles concentriques' },
+                          { value: 'arche', label: 'Arche' },
+                          { value: 'soleil', label: 'Soleil levant' },
+                          { value: 'spirale', label: 'Spirale' },
+                          { value: 'horizon', label: 'Horizon' },
+                        ]}
+                      />
 
                       {anim.ornament !== 'aucun' && (
                         <>
-                          <select
+                          <Choice
+                            id="section-decor-position"
+                            label="Position du décor"
+                            hideLabel
                             value={anim.ornamentPosition}
-                            onChange={(e) =>
-                              writeAnim({
-                                ornamentPosition: e.target
-                                  .value as SectionSettings['ornamentPosition'],
-                              })
-                            }
-                            className="h-[34px] rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
-                          >
-                            <option value="haut-gauche">En haut à gauche</option>
-                            <option value="haut-droite">En haut à droite</option>
-                            <option value="bas-gauche">En bas à gauche</option>
-                            <option value="bas-droite">En bas à droite</option>
-                            <option value="centre">Au centre</option>
-                          </select>
-
-                          <select
+                            onChange={(ornamentPosition) => writeAnim({ ornamentPosition })}
+                            options={[
+                              { value: 'haut-gauche', label: 'En haut à gauche' },
+                              { value: 'haut-droite', label: 'En haut à droite' },
+                              { value: 'bas-gauche', label: 'En bas à gauche' },
+                              { value: 'bas-droite', label: 'En bas à droite' },
+                              { value: 'centre', label: 'Au centre' },
+                            ]}
+                          />
+                          <Choice
+                            id="section-decor-taille"
+                            label="Taille du décor"
+                            hideLabel
                             value={anim.ornamentSize}
-                            onChange={(e) =>
-                              writeAnim({
-                                ornamentSize: e.target
-                                  .value as SectionSettings['ornamentSize'],
-                              })
-                            }
-                            className="h-[34px] rounded-[8px] border border-line-strong bg-white px-2 text-[12.5px] outline-none focus:border-blue-deep"
-                          >
-                            <option value="petit">Petit</option>
-                            <option value="moyen">Moyen</option>
-                            <option value="grand">Grand</option>
-                          </select>
+                            onChange={(ornamentSize) => writeAnim({ ornamentSize })}
+                            options={[
+                              { value: 'petit', label: 'Petit' },
+                              { value: 'moyen', label: 'Moyen' },
+                              { value: 'grand', label: 'Grand' },
+                            ]}
+                          />
                         </>
                       )}
                     </div>
@@ -714,42 +683,11 @@ export function SectionInspector({
                   className="h-auto rounded-[8px] border-line-strong bg-white px-2.5 py-2 text-[12.5px] focus-visible:border-blue-deep focus-visible:ring-0"
                 />
                 <p className="mt-1.5 text-[0.68rem] leading-relaxed text-muted-foreground">
-                  Permet un lien direct vers cette section, ex. #contact.
+                  Le mot après le # dans l’adresse de la section (ex.
+                  anasawi.com/#contact). Il sert au menu du site et aux
+                  boutons qui mènent ici. Pour ajouter cette section au
+                  menu : Réglages › Menu du site.
                 </p>
-              </div>
-
-              <div>
-                <Label
-                  htmlFor="navLabel"
-                  className="mb-[5px] block text-[11.5px] font-normal text-ink-soft"
-                >
-                  Nom dans le menu
-                </Label>
-                <Input
-                  id="navLabel"
-                  value={meta.navLabel}
-                  placeholder="À propos"
-                  onChange={(e) =>
-                    setMeta((m) => ({ ...m, navLabel: e.target.value }))
-                  }
-                  className="h-auto rounded-[8px] border-line-strong bg-white px-2.5 py-2 text-[12.5px] focus-visible:border-blue-deep focus-visible:ring-0"
-                />
-              </div>
-
-              <div className="flex items-center justify-between gap-3 py-0.5">
-                <Label
-                  htmlFor="showInNav"
-                  className="cursor-pointer text-[11.5px] font-normal text-ink-soft"
-                >
-                  Dans le menu
-                </Label>
-                <Switch
-                  id="showInNav"
-                  checked={meta.showInNav}
-                  onCheckedChange={(checked) =>
-                    setMeta((m) => ({ ...m, showInNav: checked }))
-                  }
-                />
               </div>
 
               {/* Modèle personnel : garder cette section sous la main. */}

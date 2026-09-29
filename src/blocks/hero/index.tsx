@@ -116,15 +116,15 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
 }
 
 export const heroBlock: BlockDefinition<typeof heroSchema> = {
-  label: 'Hero — Deux colonnes',
-  description: 'Titre et boutons à gauche, arche photographique à droite.',
+  label: 'Ouverture — Texte et photo',
+  description: 'Votre titre et vos boutons à gauche, une photo en arche à droite.',
   group: 'Sections',
   schema: heroSchema,
   suggestedAnchor: 'accueil',
   navigable: true,
   bleed: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur', {
+    field.text('eyebrow', 'Petit titre au-dessus', {
       placeholder: 'Thérapie · Accompagnement · Écoute',
     }),
     field.list(
@@ -137,10 +137,10 @@ export const heroBlock: BlockDefinition<typeof heroSchema> = {
       },
     ),
     field.textarea('intro', 'Texte d’introduction'),
-    field.text('primaryLabel', 'CTA principal — libellé'),
-    field.text('primaryHref', 'CTA principal — lien'),
-    field.text('secondaryLabel', 'CTA secondaire — libellé'),
-    field.text('secondaryHref', 'CTA secondaire — lien'),
+    field.text('primaryLabel', 'Bouton principal — texte'),
+    field.text('primaryHref', 'Bouton principal — lien'),
+    field.text('secondaryLabel', 'Bouton discret — texte'),
+    field.text('secondaryHref', 'Bouton discret — lien'),
     field.media('mediaId', 'Image du hero'),
   ],
   defaults: {

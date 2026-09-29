@@ -1,26 +1,43 @@
 'use client'
 
-import { Copy, Eye, EyeOff, Plus, Trash2, X } from 'lucide-react'
+import {
+  ArrowDown,
+  ArrowUp,
+  Copy,
+  Eye,
+  EyeOff,
+  GripVertical,
+  Pencil,
+  Plus,
+  TextCursorInput,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 import { getBlock } from '@/blocks/registry'
+import { ActionMenu } from '@/components/ui/action-menu'
 import { cn } from '@/lib/utils'
 import type { Section } from '@/server/db/schema'
 
 /**
  * Liste des sections de la page — la colonne gauche de l'éditeur.
  *
- * Fidèle à la maquette : lignes calmes, grip visible au survol, ligne
- * active sur fond blanc avec une barre bleue à gauche, actions discrètes
- * au survol. Le glisser vertical réordonne via le `reorderTo` partagé du
- * constructeur ; le double-clic renomme en place.
+ * Chaque ligne est un bouton (clavier, doigt, souris) qui sélectionne la
+ * section, avec un menu « ⋯ » TOUJOURS visible : Modifier, Monter,
+ * Descendre, Dupliquer, Masquer/Afficher, Renommer, Supprimer. Rien ne
+ * dépend d'un survol ni d'un double-clic que rien n'annonce — la
+ * première version cachait tout cela, et une personne qui découvre
+ * l'outil ne le trouvait pas. La poignée reste pour glisser à la souris,
+ * en plus de Monter/Descendre.
  *
  * Aucune action serveur ici : chaque geste remonte au constructeur, qui
  * met son état à jour tout de suite et écrit en base via sa file.
  */
 
-function labelOf(section: Section): string {
-  return section.name ?? getBlock(section.type)?.label ?? section.type
+/** Le nom qu'Anne lit : celui qu'elle a donné, sinon celui du modèle. */
+export function labelOf(section: Section): string {
+  return section.name ?? getBlock(section.type)?.label ?? 'Section'
 }
 
 export function SectionRail({
@@ -198,6 +215,9 @@ export function SectionRail({
             const confirming = confirmId === section.id
             const dragged = drag?.id === section.id
             const highlighted = highlightId === section.id
+            const nom = labelOf(section)
+            const premiere = index === 0
+            const derniere = index === roots.length - 1
 
             return (
               <li
@@ -220,14 +240,6 @@ export function SectionRail({
                     ? { transform: `translateY(${drag.delta}px)` }
                     : undefined
                 }
-                onClick={() => {
-                  if (!renaming && !confirming) onSelect(section.id)
-                }}
-                onDoubleClick={() => {
-                  if (renaming || confirming) return
-                  setRenamingId(section.id)
-                  setDraft(section.name ?? '')
-                }}
               >
                 {active && (
                   <span
@@ -236,18 +248,21 @@ export function SectionRail({
                   />
                 )}
 
-                <div className="flex items-center gap-[9px] px-2.5 py-[9px]">
+                <div className="flex items-center gap-1.5 py-1 pl-1.5 pr-1.5">
+                  {/* Poignée : glisser à la souris. Monter/Descendre, dans
+                      le menu, font la même chose au clavier et au doigt. */}
                   <span
                     aria-hidden="true"
                     onPointerDown={(e) => beginDrag(e, section.id, index)}
-                    className="shrink-0 cursor-grab text-[11px] leading-none tracking-[1px] text-transparent group-hover:text-stone active:cursor-grabbing"
+                    className="flex h-6 w-4 shrink-0 cursor-grab items-center justify-center text-stone/60 active:cursor-grabbing"
                   >
-                    ⋮⋮
+                    <GripVertical className="h-[13px] w-[13px]" strokeWidth={1.7} />
                   </span>
 
                   {renaming ? (
                     <input
                       autoFocus
+                      aria-label={`Nouveau nom de « ${nom} »`}
                       value={draft}
                       onChange={(e) => setDraft(e.target.value)}
                       onBlur={() => commitRename(section, draft)}
@@ -256,69 +271,64 @@ export function SectionRail({
                         if (e.key === 'Escape') setRenamingId(null)
                       }}
                       onClick={(e) => e.stopPropagation()}
-                      className="min-w-0 flex-1 rounded-[4px] border border-blue-deep/50 bg-white px-1 py-0.5 text-[12.5px] outline-none"
+                      className="min-w-0 flex-1 rounded-md border border-blue-deep/50 bg-white px-1.5 py-1 text-[12.5px] outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/40"
                     />
                   ) : (
-                    <span className="min-w-0 flex-1 truncate">
-                      {labelOf(section)}
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (!confirming) onSelect(section.id)
+                      }}
+                      aria-current={active ? 'true' : undefined}
+                      className="flex min-w-0 flex-1 items-center gap-1.5 rounded-md py-1.5 pl-1 pr-1 text-left focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/40"
+                    >
+                      <span className="min-w-0 flex-1 truncate">{nom}</span>
                       {!section.isActive && (
-                        <span className="ml-1.5 text-[10px] text-stone">
+                        <span className="shrink-0 rounded-full bg-stone/15 px-1.5 py-px text-[10.5px] font-medium text-stone">
                           masquée
                         </span>
                       )}
-                    </span>
+                    </button>
                   )}
 
-                  {/* Actions — visibles au survol seulement. */}
                   {!renaming && !confirming && (
-                    <span className="ml-auto hidden shrink-0 items-center gap-0.5 group-hover:flex group-focus-within:flex">
-                      <button
-                        type="button"
-                        title={section.isActive ? 'Masquer' : 'Afficher'}
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onToggle(section)
-                        }}
-                        className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-blue-mist hover:text-blue-deep"
-                      >
-                        {section.isActive ? (
-                          <Eye
-                            className="h-[13px] w-[13px]"
-                            strokeWidth={1.7}
-                          />
-                        ) : (
-                          <EyeOff
-                            className="h-[13px] w-[13px]"
-                            strokeWidth={1.7}
-                          />
-                        )}
-                      </button>
-                      <button
-                        type="button"
-                        title="Dupliquer"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          onDuplicate(section)
-                        }}
-                        className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-blue-mist hover:text-blue-deep"
-                      >
-                        <Copy className="h-[13px] w-[13px]" strokeWidth={1.7} />
-                      </button>
-                      <button
-                        type="button"
-                        title="Supprimer"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setConfirmId(section.id)
-                        }}
-                        className="flex h-[22px] w-[22px] items-center justify-center rounded-md text-stone transition-colors hover:bg-red-50 hover:text-red-600"
-                      >
-                        <Trash2
-                          className="h-[13px] w-[13px]"
-                          strokeWidth={1.7}
-                        />
-                      </button>
-                    </span>
+                    <ActionMenu
+                      label={`Actions de « ${nom} »`}
+                      items={[
+                        { label: 'Modifier', icon: <Pencil />, onSelect: () => onSelect(section.id) },
+                        {
+                          label: 'Monter',
+                          icon: <ArrowUp />,
+                          disabled: premiere,
+                          onSelect: () => void reorderTo(section.id, index, index - 1),
+                        },
+                        {
+                          label: 'Descendre',
+                          icon: <ArrowDown />,
+                          disabled: derniere,
+                          onSelect: () => void reorderTo(section.id, index, index + 2),
+                        },
+                        { label: 'Dupliquer', icon: <Copy />, hint: 'Une copie juste en dessous', onSelect: () => onDuplicate(section) },
+                        {
+                          label: section.isActive ? 'Masquer' : 'Afficher',
+                          icon: section.isActive ? <EyeOff /> : <Eye />,
+                          hint: section.isActive
+                            ? 'La section reste ici, mais disparaît du site'
+                            : 'La section revient sur le site',
+                          onSelect: () => onToggle(section),
+                        },
+                        {
+                          label: 'Renommer',
+                          icon: <TextCursorInput />,
+                          hint: 'Le nom dans cette liste seulement',
+                          onSelect: () => {
+                            setRenamingId(section.id)
+                            setDraft(section.name ?? '')
+                          },
+                        },
+                        { label: 'Supprimer', icon: <Trash2 />, danger: true, onSelect: () => setConfirmId(section.id) },
+                      ]}
+                    />
                   )}
                 </div>
 
@@ -331,7 +341,10 @@ export function SectionRail({
                     onClick={(e) => e.stopPropagation()}
                     className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-2.5 pb-2 pt-1.5 text-[11.5px] text-foreground"
                   >
-                    <span className="mr-auto">Supprimer cette section ?</span>
+                    <span className="mr-auto basis-full leading-snug">
+                      Supprimer « {nom} » ? Elle disparaîtra du site à la
+                      prochaine publication — vous pourrez annuler juste après.
+                    </span>
                     <button
                       type="button"
                       autoFocus

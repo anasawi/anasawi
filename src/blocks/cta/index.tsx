@@ -98,8 +98,8 @@ function Cta({ data }: BlockProps<CtaPayload>) {
 }
 
 export const ctaBlock: BlockDefinition<typeof ctaSchema> = {
-  label: 'Appel à l’action — Bandeau',
-  description: 'Bandeau d’invitation aux coins doux, bleu brume ou nuit.',
+  label: 'Rendez-vous — Bandeau',
+  description: 'Un bandeau qui invite à prendre rendez-vous, bleu clair ou sombre.',
   group: 'Sections',
   schema: ctaSchema,
   fields: [
@@ -109,11 +109,11 @@ export const ctaBlock: BlockDefinition<typeof ctaSchema> = {
       [field.text('text', 'Ligne', { full: true })],
       {
         addLabel: 'Ajouter une ligne',
-        help: 'Astérisques pour l’italique : *mot*.',
+        help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
       },
     ),
     field.textarea('text', 'Texte'),
-    field.text('label', 'Bouton — libellé'),
+    field.text('label', 'Bouton — texte'),
     field.text('href', 'Bouton — lien'),
     field.select('tone', 'Fond', [
       { value: 'mist', label: 'Bleu brume' },

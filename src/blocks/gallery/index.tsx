@@ -81,12 +81,12 @@ function Gallery({ data, ctx }: BlockProps<GalleryPayload>) {
 }
 
 export const galleryBlock: BlockDefinition<typeof gallerySchema> = {
-  label: 'Éditorial — Galerie',
-  description: 'Grille d’arches décalées, légendes en méta.',
+  label: 'Photos — Grille',
+  description: 'Une grille de photos en arche, légèrement décalées, avec légendes.',
   group: 'Sections',
   schema: gallerySchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.mediaList('mediaIds', 'Images', {
       help: 'La légende de chaque image vient de la bibliothèque de médias.',

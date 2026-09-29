@@ -203,16 +203,16 @@ function HeroPleinEcran({
 export const heroPleinEcranBlock: BlockDefinition<
   typeof heroPleinEcranSchema
 > = {
-  label: 'Hero — L’arche',
+  label: 'Ouverture — Photo en arche',
   description:
-    'L’ouverture signature : arche centrale, grand titre qui l’enlace, texte circulaire.',
+    'Une grande photo en arche au centre, votre titre qui l’entoure, un bouton pour prendre rendez-vous.',
   group: 'Sections',
   schema: heroPleinEcranSchema,
   suggestedAnchor: 'accueil',
   navigable: true,
   bleed: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur', {
+    field.text('eyebrow', 'Petit titre au-dessus', {
       placeholder: 'Thérapie — Cesson-Sévigné & visio',
     }),
     field.list(
@@ -241,9 +241,9 @@ export const heroPleinEcranBlock: BlockDefinition<
       help: `100 = la taille de la maquette. Entre ${TAILLE_MIN} et ${TAILLE_MAX}.`,
     }),
     field.textarea('intro', 'Phrase d’introduction'),
-    field.text('primaryLabel', 'Bouton principal — libellé'),
+    field.text('primaryLabel', 'Bouton principal — texte'),
     field.text('primaryHref', 'Bouton principal — lien'),
-    field.text('secondaryLabel', 'Bouton discret — libellé'),
+    field.text('secondaryLabel', 'Bouton discret — texte'),
     field.text('secondaryHref', 'Bouton discret — lien'),
     field.media('mediaId', 'Image de l’arche'),
   ],
@@ -359,23 +359,23 @@ function HeroEditorial({
 
 export const heroEditorialBlock: BlockDefinition<typeof heroEditorialSchema> =
   {
-    label: 'Hero — Éditorial',
+    label: 'Ouverture — Grand titre',
     description:
-      'Grand titre magazine qui traverse la page, arche portrait décalée à droite.',
+      'Un titre qui traverse toute la largeur, une photo portrait décalée à droite.',
     group: 'Sections',
     schema: heroEditorialSchema,
     suggestedAnchor: 'accueil',
     navigable: true,
     bleed: true,
     fields: [
-      field.text('eyebrow', 'Label supérieur'),
+      field.text('eyebrow', 'Petit titre au-dessus'),
       field.list(
         'titleLines',
         'Titre — une entrée par ligne',
         [field.text('text', 'Ligne', { full: true })],
         {
           addLabel: 'Ajouter une ligne',
-          help: 'Astérisques pour l’italique : *mot*.',
+          help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
         },
       ),
       field.textarea('intro', 'Texte d’introduction'),
@@ -471,15 +471,15 @@ function HeroMinimal({
 }
 
 export const heroMinimalBlock: BlockDefinition<typeof heroMinimalSchema> = {
-  label: 'Hero — Minimal',
-  description: 'Typographie seule, centrée, immense respiration.',
+  label: 'Ouverture — Texte seul',
+  description: 'Un titre centré, beaucoup d’air, sans photo.',
   group: 'Sections',
   schema: heroMinimalSchema,
   suggestedAnchor: 'accueil',
   navigable: true,
   bleed: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.list(
       'titleLines',
       'Titre — une entrée par ligne',
@@ -490,7 +490,7 @@ export const heroMinimalBlock: BlockDefinition<typeof heroMinimalSchema> = {
       },
     ),
     field.textarea('intro', 'Ligne d’introduction'),
-    field.text('linkLabel', 'Bouton — libellé'),
+    field.text('linkLabel', 'Bouton — texte'),
     field.text('linkHref', 'Bouton — lien'),
   ],
   defaults: {
@@ -592,27 +592,27 @@ function HeroBandeau({
 }
 
 export const heroBandeauBlock: BlockDefinition<typeof heroBandeauSchema> = {
-  label: 'Hero — Avec bandeau',
+  label: 'Ouverture — Avec bandeau',
   description:
-    'Titre centré, refermé par le bandeau de mots qui défilent sur fond sable.',
+    'Un titre centré, suivi d’un bandeau de mots qui défilent.',
   group: 'Sections',
   schema: heroBandeauSchema,
   suggestedAnchor: 'accueil',
   navigable: true,
   bleed: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.list(
       'titleLines',
       'Titre — une entrée par ligne',
       [field.text('text', 'Ligne', { full: true })],
       {
         addLabel: 'Ajouter une ligne',
-        help: 'Astérisques pour l’italique : *mot*.',
+        help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
       },
     ),
     field.textarea('intro', 'Phrase d’introduction'),
-    field.text('primaryLabel', 'Bouton — libellé'),
+    field.text('primaryLabel', 'Bouton — texte'),
     field.text('primaryHref', 'Bouton — lien'),
     field.text('marqueeWords', 'Mots du bandeau', {
       full: true,

@@ -108,7 +108,7 @@ export const servicesListeBlock: BlockDefinition<typeof servicesListeSchema> =
   {
     label: 'Accompagnements — Liste',
     description:
-      'Une rangée par accompagnement : grand titre serif, inversion vers le fond nuit au survol. Le contenu se gère dans l’écran « Accompagnements ».',
+      'Une ligne par accompagnement, avec un grand titre. Les textes viennent de l’écran Accompagnements.',
     group: 'Sections',
     schema: servicesListeSchema,
     suggestedAnchor: 'accompagnements',
@@ -117,7 +117,7 @@ export const servicesListeBlock: BlockDefinition<typeof servicesListeSchema> =
     /* Section standard : le wrapper porte le padding. Seules les rangées
        débordent horizontalement (elles posent leur propre gouttière). */
     fields: [
-      field.text('eyebrow', 'Label supérieur'),
+      field.text('eyebrow', 'Petit titre au-dessus'),
       field.text('title', 'Titre', { full: true }),
       field.textarea('intro', 'Introduction'),
       field.text('panelCta', 'Fiche — bouton', {
@@ -230,19 +230,19 @@ function ServicesNumerotes({
 export const servicesNumerotesBlock: BlockDefinition<
   typeof servicesNumerotesSchema
 > = {
-  label: 'Accompagnements — Numérotés',
+  label: 'Accompagnements — Trois colonnes',
   description:
-    'Trois colonnes séparées de filets, index serif en toutes lettres.',
+    'Trois accompagnements côte à côte, numérotés en toutes lettres. Les textes viennent de l’écran Accompagnements.',
   group: 'Sections',
   schema: servicesNumerotesSchema,
   suggestedAnchor: 'accompagnements',
   navigable: true,
   dataSource: SERVICES_SOURCE,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.textarea('intro', 'Introduction'),
-    field.text('linkLabel', 'Libellé du lien'),
+    field.text('linkLabel', 'Texte du lien'),
   ],
   defaults: {
     eyebrow: 'Accompagnements',
@@ -366,18 +366,18 @@ function ServicesImmersifs({
 export const servicesImmersifsBlock: BlockDefinition<
   typeof servicesImmersifsSchema
 > = {
-  label: 'Accompagnements — Immersifs',
+  label: 'Accompagnements — Grandes photos',
   description:
-    'Grandes arches alternées gauche/droite, un accompagnement par rangée.',
+    'Une grande photo par accompagnement, alternée à gauche et à droite. Les textes viennent de l’écran Accompagnements.',
   group: 'Sections',
   schema: servicesImmersifsSchema,
   suggestedAnchor: 'accompagnements',
   navigable: true,
   dataSource: SERVICES_SOURCE,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
-    field.text('linkLabel', 'Libellé du lien'),
+    field.text('linkLabel', 'Texte du lien'),
   ],
   defaults: {
     eyebrow: 'Accompagnements',
@@ -476,18 +476,18 @@ function ServicesArches({
 
 export const servicesArchesBlock: BlockDefinition<typeof servicesArchesSchema> =
   {
-    label: 'Accompagnements — Arches',
+    label: 'Accompagnements — Photos en arche',
     description:
-      'Une arche par accompagnement, l’arche centrale abaissée — comme des sœurs.',
+      'Une photo en arche par accompagnement, celle du milieu un peu plus basse. Les textes viennent de l’écran Accompagnements.',
     group: 'Sections',
     schema: servicesArchesSchema,
     suggestedAnchor: 'accompagnements',
     navigable: true,
     dataSource: SERVICES_SOURCE,
     fields: [
-      field.text('eyebrow', 'Label supérieur'),
+      field.text('eyebrow', 'Petit titre au-dessus'),
       field.text('title', 'Titre', { full: true }),
-      field.text('linkLabel', 'Bouton sous la rangée — libellé'),
+      field.text('linkLabel', 'Bouton sous la rangée — texte'),
     ],
     defaults: {
       eyebrow: 'Accompagnements',
@@ -588,22 +588,22 @@ function ServicesDetail({
 
 export const servicesDetailBlock: BlockDefinition<typeof servicesDetailSchema> =
   {
-    label: 'Accompagnement — À la une',
+    label: 'Accompagnements — Un seul à la une',
     description:
-      'Un seul accompagnement mis en avant, grande arche et texte long.',
+      'Un accompagnement mis en avant, avec une grande photo et un texte long.',
     group: 'Sections',
     schema: servicesDetailSchema,
     suggestedAnchor: 'accompagnement',
     dataSource: SERVICES_SOURCE,
     fields: [
-      field.text('eyebrow', 'Label supérieur'),
+      field.text('eyebrow', 'Petit titre au-dessus'),
       field.number('position', 'Numéro de l’accompagnement', {
         help: '1 pour le premier de l’écran « Accompagnements », 2 pour le deuxième…',
       }),
-      field.richtext('extra', 'Texte de remplacement', {
+      field.richtext('extra', 'Texte de remplacement (si l’image ne s’affiche pas)', {
         help: 'Affiché seulement si l’accompagnement n’a pas de description longue.',
       }),
-      field.text('linkLabel', 'Bouton — libellé'),
+      field.text('linkLabel', 'Bouton — texte'),
       field.text('linkHref', 'Bouton — lien'),
     ],
     defaults: {
@@ -702,14 +702,14 @@ function TarifsSobre({
 }
 
 export const tarifsSobreBlock: BlockDefinition<typeof tarifsSobreSchema> = {
-  label: 'Tarifs — Sobres',
-  description: 'Des rangées serif sur filets fins, montants en italique bleu.',
+  label: 'Accompagnements — Tarifs',
+  description: 'Vos tarifs en lignes sobres, montants en bleu.',
   group: 'Sections',
   schema: tarifsSobreSchema,
   suggestedAnchor: 'tarifs',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.list(
       'items',
@@ -837,13 +837,13 @@ function SeanceDeroule({
 }
 
 export const seanceDerouleBlock: BlockDefinition<typeof seanceDerouleSchema> = {
-  label: 'Une séance — Le déroulé',
-  description: 'Le fil d’une séance, étape par étape, le long d’un filet.',
+  label: 'Ma méthode — Le déroulé d’une séance',
+  description: 'Ce qui se passe pendant une séance, étape par étape.',
   group: 'Sections',
   schema: seanceDerouleSchema,
   suggestedAnchor: 'une-seance',
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.list(
       'steps',

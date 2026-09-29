@@ -253,7 +253,7 @@ export const carteBlock: BlockDefinition<typeof carteSchema> = {
     ]),
     field.text('title', 'Titre', { full: true }),
     field.textarea('text', 'Texte'),
-    field.text('linkLabel', 'Libellé du lien'),
+    field.text('linkLabel', 'Texte du lien'),
     field.text('href', 'Lien'),
   ],
   defaults: {
@@ -461,7 +461,7 @@ export const videoBlock: BlockDefinition<typeof videoSchema> = {
       full: true,
       help: 'YouTube ou Vimeo — l’URL de la page suffit.',
     }),
-    field.text('title', 'Titre (accessibilité)'),
+    field.text('title', 'Titre de la vidéo (pour les lecteurs d’écran)'),
   ],
   defaults: { url: '', title: '' },
   Component: Video,

@@ -7,14 +7,16 @@ import {
   useRef,
   useState,
 } from 'react'
-import { Bookmark, Search, Trash2 } from 'lucide-react'
+import { Bookmark, Plus, Search, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 
 import {
   blockRegistry,
+  CATEGORY_HINT,
   getBlock,
   templateLibrary,
   type BlockType,
+  type TemplateCategory,
   type TemplateOption,
 } from '@/blocks/registry'
 import {
@@ -35,12 +37,14 @@ import type { Media, SavedSection, Section } from '@/server/db/schema'
 const MINE = '__mine__'
 
 /**
- * Bibliothèque de templates — la fenêtre « Ajouter une section ».
+ * Bibliothèque de modèles — la fenêtre « Ajouter une section ».
  *
- * Chaque template est prévisualisé par un VRAI rendu : son composant, ses
- * contenus d'exemple, les images de la bibliothèque médias, le tout à
- * l'échelle. « Mes sections » liste les modèles personnels — des sections
- * personnalisées enregistrées pour être réutilisées.
+ * Les modèles sont rangés par BESOIN (« Qui je suis », « Accompagnements »,
+ * « Contact & rendez-vous »…), dans l'ordre où l'on lit un site, chacun
+ * avec une phrase qui dit à quoi sert la catégorie. Chaque modèle est
+ * prévisualisé par un VRAI rendu : son composant, ses contenus d'exemple,
+ * les images de la médiathèque, le tout à l'échelle. « Mes modèles »
+ * liste les sections qu'Anne a enregistrées pour les réutiliser.
  */
 export function TemplateLibrary({
   open,
@@ -121,20 +125,34 @@ export function TemplateLibrary({
       key={option.type}
       type="button"
       disabled={busy !== null}
+      aria-label={`Ajouter la section « ${option.label} »`}
       onClick={() => void pick(() => onPick(option.type, option.label), option.type)}
       className={cn(
-        'group rounded-[11px] border border-border p-2.5 text-left transition-[border-color,transform] duration-150',
-        'hover:-translate-y-0.5 hover:border-blue-deep focus-visible:border-blue-deep',
+        'group relative rounded-[11px] border border-border p-2.5 text-left transition-[border-color,transform] duration-150',
+        'hover:-translate-y-0.5 hover:border-blue-deep focus-visible:border-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/40',
         busy === option.type && 'opacity-60',
       )}
     >
       <TemplatePreview type={option.type} data={data} />
-      <p className="mt-2.5 text-[0.82rem] font-medium text-foreground">
-        {option.label}
-      </p>
-      <p className="mt-0.5 line-clamp-2 text-[0.72rem] leading-[1.5] text-muted-foreground">
-        {option.description}
-      </p>
+      <div className="mt-2.5 flex items-start gap-2">
+        <div className="min-w-0 flex-1">
+          <p className="text-[13px] font-medium text-foreground">{option.label}</p>
+          <p className="mt-0.5 line-clamp-2 text-[12px] leading-[1.5] text-muted-foreground">
+            {option.description}
+          </p>
+        </div>
+        {/* L'action, écrite : on ajoute, on ne « sélectionne » pas. */}
+        <span
+          aria-hidden="true"
+          className="mt-0.5 flex shrink-0 items-center gap-1 rounded-md border border-line-strong px-2 py-1 text-[12px] text-ink-soft transition-colors group-hover:border-blue-deep group-hover:bg-blue-deep group-hover:text-white group-focus-visible:border-blue-deep group-focus-visible:bg-blue-deep group-focus-visible:text-white"
+        >
+          {busy === option.type ? 'Ajout…' : (
+            <>
+              <Plus className="h-3 w-3" strokeWidth={2} /> Ajouter
+            </>
+          )}
+        </span>
+      </div>
     </button>
   )
 
@@ -228,7 +246,7 @@ export function TemplateLibrary({
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Rechercher un modèle…"
+                placeholder="Rechercher… (ex. témoignage, contact)"
                 aria-label="Rechercher un modèle"
                 className="h-8 w-full rounded-md border border-border bg-transparent pl-8 pr-3 text-[0.8rem] outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40"
               />
@@ -241,7 +259,7 @@ export function TemplateLibrary({
           {!searching && (
             <nav className="w-44 shrink-0 space-y-0.5 overflow-y-auto border-r border-border p-2.5">
               <p className="px-2.5 pb-1 pt-2 text-[0.66rem] uppercase tracking-[0.09em] text-muted-foreground">
-                Bibliothèque
+                Une section pour…
               </p>
               {templateLibrary.map((group) => (
                 <button
@@ -278,7 +296,7 @@ export function TemplateLibrary({
                   >
                     <span className="flex items-center gap-1.5">
                       <Bookmark className="h-3 w-3" />
-                      Mes sections
+                      Mes modèles
                     </span>
                     <span className="text-[0.65rem] text-muted-foreground">
                       {saved.length}
@@ -312,13 +330,26 @@ export function TemplateLibrary({
                 </div>
               )
             ) : active === MINE ? (
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                {saved.map(savedCard)}
-              </div>
+              <>
+                <p className="mb-4 text-[13px] text-muted-foreground">
+                  Les sections que vous avez enregistrées comme modèles, avec
+                  leur contenu — pour les réutiliser telles quelles.
+                </p>
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                  {saved.map(savedCard)}
+                </div>
+              </>
             ) : (
-              <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
-                {currentGroup?.options.map(templateCard)}
-              </div>
+              <>
+                {/* Ce que la catégorie sert à faire, en une phrase : on
+                    cherche « une section pour… », pas un nom de modèle. */}
+                <p className="mb-4 text-[13px] text-muted-foreground">
+                  {CATEGORY_HINT[active as TemplateCategory]}
+                </p>
+                <div className="grid grid-cols-1 gap-5 lg:grid-cols-2">
+                  {currentGroup?.options.map(templateCard)}
+                </div>
+              </>
             )}
           </div>
         </div>

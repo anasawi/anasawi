@@ -91,9 +91,9 @@ function BandeauRespirer({
 export const bandeauRespirerBlock: BlockDefinition<
   typeof bandeauRespirerSchema
 > = {
-  label: 'Bandeau — Mots qui défilent',
+  label: 'Texte — Mots qui défilent',
   description:
-    'Les mots-souffle en serif italique, séparés d’astérisques, à tempo constant.',
+    'Une bande de mots qui défilent lentement, séparés d’astérisques.',
   group: 'Sections',
   schema: bandeauRespirerSchema,
   bleed: true,
@@ -203,15 +203,15 @@ function GalerieArches({
 
 export const galerieArchesBlock: BlockDefinition<typeof galerieArchesSchema> =
   {
-    label: 'Galerie — Travelling d’arches',
+    label: 'Photos — Galerie qui défile',
     description:
-      'Un rail horizontal d’arches sœurs, formats alternés, légendes en méta.',
+      'Une rangée de photos en arche qui se parcourt sur le côté, avec légendes.',
     group: 'Sections',
     schema: galerieArchesSchema,
     /* Section standard : seul le rail déborde horizontalement. */
     suggestedAnchor: 'le-cabinet',
     fields: [
-      field.text('eyebrow', 'Label supérieur'),
+      field.text('eyebrow', 'Petit titre au-dessus'),
       field.mediaList('mediaIds', 'Images', {
         help: 'La légende de chaque image vient de la bibliothèque de médias.',
       }),
@@ -263,8 +263,8 @@ function ImageLegende({
 }
 
 export const imageLegendeBlock: BlockDefinition<typeof imageLegendeSchema> = {
-  label: 'Image — Avec légende',
-  description: 'Une seule arche centrée, sa légende en méta dessous.',
+  label: 'Photos — Une image et sa légende',
+  description: 'Une seule photo en arche, centrée, sa légende dessous.',
   group: 'Sections',
   schema: imageLegendeSchema,
   fields: [
@@ -347,11 +347,11 @@ export const texteDeuxColonnesBlock: BlockDefinition<
 > = {
   label: 'Texte — Deux colonnes',
   description:
-    'Texte composé en deux colonnes typographiques, ouvert par une lettrine.',
+    'Un texte long présenté en deux colonnes, comme dans un magazine.',
   group: 'Sections',
   schema: texteDeuxColonnesSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.richtext('body', 'Texte'),
   ],
@@ -429,12 +429,12 @@ function ListeAtouts({
 }
 
 export const listeAtoutsBlock: BlockDefinition<typeof listeAtoutsSchema> = {
-  label: 'Liste — Les atouts',
-  description: 'Une grille d’atouts ponctués de l’astérisque signature.',
+  label: 'Texte — Liste d’atouts',
+  description: 'Plusieurs points forts en grille, chacun ouvert par un astérisque.',
   group: 'Sections',
   schema: listeAtoutsSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.list(
       'items',
@@ -544,7 +544,7 @@ export const videoCinemaBlock: BlockDefinition<typeof videoCinemaSchema> = {
       { value: 'cinema', label: 'Cinéma (21:9)' },
       { value: 'ecran', label: 'Écran (16:9)' },
     ]),
-    field.text('eyebrow', 'Label supérieur', { placeholder: 'Le cabinet, en mouvement' }),
+    field.text('eyebrow', 'Petit titre au-dessus', { placeholder: 'Le cabinet, en mouvement' }),
     field.text('caption', 'Légende', { full: true }),
   ],
   defaults: {
@@ -616,8 +616,8 @@ function VideoArche({ data }: BlockProps<z.output<typeof videoArcheSchema>>) {
 }
 
 export const videoArcheBlock: BlockDefinition<typeof videoArcheSchema> = {
-  label: 'Vidéo — Encadrée',
-  description: 'Une vidéo YouTube ou Vimeo dans un cadre aux coins doux.',
+  label: 'Vidéo — YouTube ou Vimeo',
+  description: 'Une vidéo hébergée sur YouTube ou Vimeo, dans un cadre aux coins doux.',
   group: 'Sections',
   schema: videoArcheSchema,
   fields: [
@@ -625,7 +625,7 @@ export const videoArcheBlock: BlockDefinition<typeof videoArcheSchema> = {
       full: true,
       placeholder: 'https://www.youtube.com/watch?v=…',
     }),
-    field.text('title', 'Titre (accessibilité)'),
+    field.text('title', 'Titre de la vidéo (pour les lecteurs d’écran)'),
     field.text('caption', 'Légende', { full: true }),
   ],
   defaults: {
@@ -667,8 +667,8 @@ function SeparateurAsterisque({
 export const separateurAsterisqueBlock: BlockDefinition<
   typeof separateurAsterisqueSchema
 > = {
-  label: 'Séparateur — Ponctuation',
-  description: 'Trois points bleus, un ✳︎ seul, ou un fin filet vertical.',
+  label: 'Texte — Séparateur',
+  description: 'Une respiration entre deux sections : trois points, un astérisque ou un fin trait.',
   group: 'Sections',
   schema: separateurAsterisqueSchema,
   bleed: true,
@@ -732,14 +732,14 @@ function CitationSoulignee({
 export const citationSouligneeBlock: BlockDefinition<
   typeof citationSouligneeSchema
 > = {
-  label: 'Citation — Soulignée',
+  label: 'Texte — Phrase soulignée',
   description:
-    'Une phrase en grande serif, le mot-pivot en italique bleue soulignée.',
+    'Une phrase en grand, avec un mot mis en valeur en bleu souligné.',
   group: 'Sections',
   schema: citationSouligneeSchema,
   fields: [
     field.textarea('quote', 'Citation', {
-      help: 'Astérisques pour le mot souligné : *de l’aide*.',
+      help: 'Pour souligner un mot, entourez-le d’astérisques : *de l’aide*.',
     }),
     field.text('attribution', 'Attribution', { full: true }),
   ],

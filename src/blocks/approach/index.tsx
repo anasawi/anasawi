@@ -99,15 +99,15 @@ function Approach({ data, ctx }: BlockProps<ApproachPayload>) {
 }
 
 export const approachBlock: BlockDefinition<typeof approachSchema> = {
-  label: 'Approche — Étapes',
+  label: 'Ma méthode — Étapes',
   description:
-    'Section éditoriale asymétrique : texte, étapes et arche décalée.',
+    'Un texte de présentation, des étapes numérotées et une photo décalée.',
   group: 'Sections',
   schema: approachSchema,
   suggestedAnchor: 'approche',
   navigable: true,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.richtext('body', 'Texte'),
     field.media('mediaId', 'Image'),

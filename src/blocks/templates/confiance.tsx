@@ -83,13 +83,13 @@ function ChiffresClefs({
 }
 
 export const chiffresClefsBlock: BlockDefinition<typeof chiffresClefsSchema> = {
-  label: 'Chiffres — La rangée',
+  label: 'Qui je suis — Chiffres clés',
   description:
-    'Des chiffres serif italiques qui se comptent, séparés de filets fins.',
+    'Une rangée de chiffres qui se comptent à l’écran : années, personnes accompagnées…',
   group: 'Sections',
   schema: chiffresClefsSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.list(
       'items',
@@ -182,13 +182,13 @@ function Engagements({
 }
 
 export const engagementsBlock: BlockDefinition<typeof engagementsSchema> = {
-  label: 'Engagements — La liste',
+  label: 'Qui je suis — Mes engagements',
   description:
-    'Les promesses du cadre, une par rangée, ouvertes par l’astérisque ✳︎.',
+    'Vos promesses de cadre, une par ligne.',
   group: 'Sections',
   schema: engagementsSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', { full: true }),
     field.list(
       'items',
@@ -277,13 +277,13 @@ function LogosPresse({
 }
 
 export const logosPresseBlock: BlockDefinition<typeof logosPresseSchema> = {
-  label: 'Reconnaissances — Logos',
+  label: 'Qui je suis — Formations et fédérations',
   description:
     'Une rangée discrète de logos : formations, fédérations, presse.',
   group: 'Sections',
   schema: logosPresseSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur', {
+    field.text('eyebrow', 'Petit titre au-dessus', {
       placeholder: 'Formations & affiliations',
     }),
     field.mediaList('mediaIds', 'Logos'),

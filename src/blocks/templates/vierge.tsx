@@ -107,16 +107,16 @@ function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {
 }
 
 export const viergeBlock: BlockDefinition<typeof viergeSchema> = {
-  label: 'Section vierge',
+  label: 'Texte — Section libre',
   description:
-    'Le point de départ neutre : label, titre, texte, image et bouton — tous optionnels.',
+    'Le point de départ neutre : un titre, un texte, une image et un bouton — tous facultatifs.',
   group: 'Sections',
   schema: viergeSchema,
   fields: [
-    field.text('eyebrow', 'Label supérieur'),
+    field.text('eyebrow', 'Petit titre au-dessus'),
     field.text('title', 'Titre', {
       full: true,
-      help: 'Astérisques pour l’italique : *mot*.',
+      help: 'Pour mettre un mot en italique, entourez-le d’astérisques : *comme ceci*.',
     }),
     field.richtext('body', 'Texte'),
     field.select('imageSide', 'Image', [
@@ -129,7 +129,7 @@ export const viergeBlock: BlockDefinition<typeof viergeSchema> = {
       { value: 'left', label: 'Gauche' },
       { value: 'center', label: 'Centré' },
     ]),
-    field.text('buttonLabel', 'Bouton — libellé'),
+    field.text('buttonLabel', 'Bouton — texte'),
     field.text('buttonHref', 'Bouton — lien'),
   ],
   defaults: {
