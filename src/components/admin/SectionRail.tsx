@@ -222,6 +222,7 @@ export function SectionRail({
             return (
               <li
                 key={section.id}
+                data-section-id={section.id}
                 ref={(el) => {
                   if (el) rowRefs.current.set(section.id, el)
                   else rowRefs.current.delete(section.id)

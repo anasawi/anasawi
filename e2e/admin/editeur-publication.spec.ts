@@ -38,18 +38,31 @@ async function ouvrirEditeur(page: Page) {
   await expect(etat(page)).toBeVisible({ timeout: 20_000 })
 }
 
+/** La liste des sections — pas le menu d'administration, qui a lui aussi
+    un élément « Accompagnements ». */
+const listeDesSections = (page: Page) =>
+  page
+    .getByRole('list')
+    .filter({ has: page.getByRole('button', { name: /^Actions de/ }) })
+    .first()
+
 /** Ligne de la liste des sections, par son intitulé. */
 const rangee = (page: Page, nom: string) =>
-  page.getByRole('listitem').filter({ hasText: nom }).first()
+  listeDesSections(page).getByRole('listitem').filter({ hasText: nom }).first()
 
 /**
  * Masque une section depuis la liste — geste simple, effet net : le
  * brouillon diffère alors de la version en ligne.
+ *
+ * Le geste passe par le menu « Actions de « … » » de la ligne : un vrai
+ * bouton, toujours visible, jamais un pictogramme qui n'apparaît qu'au
+ * survol. L'action y est NOMMÉE : « Masquer » ou « Afficher », selon
+ * l'état — le test lit le nom, comme Anne.
  */
 async function basculerVisibilite(page: Page, nom: string) {
   const ligne = rangee(page, nom)
-  await ligne.hover()
-  await ligne.getByTitle(/^(Masquer|Afficher)$/).click()
+  await ligne.getByRole('button', { name: /^Actions de/ }).click()
+  await page.getByRole('menuitem', { name: /^(Masquer|Afficher)$/ }).click()
 }
 
 /** Jette le brouillon courant et revient à la version en ligne. */
@@ -211,7 +224,7 @@ const ANCRE_ESSAI = 'nos-accompagnements'
 
 /** Ouvre l'inspecteur de la section et son groupe « Options avancées ». */
 async function ouvrirLesOptionsAvancees(page: Page, nom: string) {
-  await rangee(page, nom).click()
+  await rangee(page, nom).getByRole('button').first().click()
   const avancees = page.getByRole('button', { name: 'Options avancées' })
   await expect(avancees).toBeVisible()
   if ((await avancees.getAttribute('aria-expanded')) !== 'true') {

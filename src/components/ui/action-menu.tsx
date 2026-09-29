@@ -70,9 +70,10 @@ export function ActionMenu({
     })
   }, [open])
 
-  /* Focus sur le premier élément, clic ailleurs, Échap. */
+  /* Focus sur le premier élément (une fois le menu POSÉ : il n'est rendu
+     qu'avec sa position), clic ailleurs, Échap. */
   useEffect(() => {
-    if (!open) return
+    if (!open || !position) return
     const first = menu.current?.querySelector<HTMLElement>('[role="menuitem"]:not([aria-disabled="true"])')
     first?.focus()
 
@@ -93,7 +94,13 @@ export function ActionMenu({
       document.removeEventListener('pointerdown', onDown, true)
       document.removeEventListener('keydown', onKey)
     }
-  }, [open, close])
+  }, [open, position, close])
+
+  /* Le menu fermé oublie sa position : la prochaine ouverture la recalcule
+     et ne rend rien tant qu'elle n'est pas connue. */
+  useEffect(() => {
+    if (!open) setPosition(null)
+  }, [open])
 
   const onMenuKey = (e: React.KeyboardEvent) => {
     const els = Array.from(
@@ -120,11 +127,16 @@ export function ActionMenu({
   const ordinary = items.filter((i) => !i.danger)
   const dangerous = items.filter((i) => i.danger)
 
-  const rendre = (item: ActionMenuItem) => (
+  /* Le NOM accessible d'une entrée est son libellé seul ; l'aide est une
+     description. Sinon le lecteur d'écran (et Playwright) lisent
+     « Masquer La section reste ici, mais disparaît du site » d'un bloc. */
+  const rendre = (item: ActionMenuItem, index: number) => (
     <button
       key={item.label}
       type="button"
       role="menuitem"
+      aria-label={item.label}
+      aria-describedby={item.hint ? `${id}-aide-${index}` : undefined}
       aria-disabled={item.disabled || undefined}
       tabIndex={-1}
       onClick={() => {
@@ -149,7 +161,9 @@ export function ActionMenu({
       <span className="min-w-0 flex-1">
         <span className="block truncate">{item.label}</span>
         {item.hint && (
-          <span className="block text-[11.5px] leading-snug text-muted-foreground">{item.hint}</span>
+          <span id={`${id}-aide-${index}`} className="block text-[11.5px] leading-snug text-muted-foreground">
+            {item.hint}
+          </span>
         )}
       </span>
     </button>
@@ -197,11 +211,11 @@ export function ActionMenu({
             }
             className="fixed z-[300] min-w-[200px] rounded-[10px] border border-border bg-white p-1.5 shadow-[0_10px_30px_rgba(28,32,30,0.16)]"
           >
-            {ordinary.map(rendre)}
+            {ordinary.map((item, i) => rendre(item, i))}
             {dangerous.length > 0 && ordinary.length > 0 && (
               <div role="separator" className="mx-1 my-1 border-t border-border" />
             )}
-            {dangerous.map(rendre)}
+            {dangerous.map((item, i) => rendre(item, ordinary.length + i))}
           </div>,
           document.body,
         )}
