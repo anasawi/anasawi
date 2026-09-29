@@ -20,6 +20,7 @@ export function AdminPill({
   name,
   className,
   newTab = false,
+  onAction,
   dotClassName = 'bg-[#12b981]',
 }: {
   /** Libellé d'état à gauche. Omis dans l'éditeur de page, qui porte
@@ -38,6 +39,10 @@ export function AdminPill({
   /** Ouvre l'action dans un nouvel onglet (« Voir le site » depuis
       l'éditeur : la version en ligne, sans quitter le brouillon). */
   newTab?: boolean
+  /** Fourni : l'action est un bouton qui appelle ceci — sans quitter la
+      page — au lieu d'un lien. `actionHref` sert alors de repli (clic du
+      milieu, lecteur d'écran) et de « lien à ouvrir à côté ». */
+  onAction?: () => void
   /** Couleur de la pastille d'état — vert par défaut. */
   dotClassName?: string
 }) {
@@ -70,7 +75,16 @@ export function AdminPill({
           </span>
         )}
 
-        {actionHref ? (
+        {actionHref && onAction ? (
+          <button
+            type="button"
+            onClick={onAction}
+            className="flex items-center gap-2 rounded-full bg-ivory-warm px-4 py-2 text-[0.82rem] font-medium text-ink transition-colors duration-300 hover:bg-ivory-deep"
+          >
+            {icon}
+            {actionLabel}
+          </button>
+        ) : actionHref ? (
           <Link
             href={actionHref}
             target={newTab ? '_blank' : undefined}

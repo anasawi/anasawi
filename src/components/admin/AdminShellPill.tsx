@@ -1,7 +1,12 @@
 'use client'
 
 import { usePathname } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
+import {
+  EVENEMENT_VOIR_LE_SITE,
+  SiteViewer,
+} from '@/components/admin/SiteViewer'
 import { AdminPill, EyeIcon } from '@/components/site/AdminPill'
 
 /** Routes où l'éditeur de page rend sa propre pilule, avec l'état de
@@ -21,20 +26,37 @@ export function isEditorPath(pathname: string): boolean {
  */
 export function AdminShellPill({ userName }: { userName: string }) {
   const pathname = usePathname()
+  const [siteOuvert, setSiteOuvert] = useState(false)
+
+  /* La carte « Voir le site » du tableau de bord, ou tout autre bouton,
+     ouvre le même cadre. */
+  useEffect(() => {
+    const ouvrir = () => setSiteOuvert(true)
+    window.addEventListener(EVENEMENT_VOIR_LE_SITE, ouvrir)
+    return () => window.removeEventListener(EVENEMENT_VOIR_LE_SITE, ouvrir)
+  }, [])
+
   if (isEditorPath(pathname)) return null
 
   return (
-    <AdminPill
-      status="Édition"
-      actionLabel="Voir le site"
-      actionHref="/"
-      /* Dans un nouvel onglet, comme depuis l'éditeur : on regarde le
-         site, on ne quitte pas le CMS. */
-      newTab
-      icon={<EyeIcon />}
-      homeHref="/admin"
-      name={userName}
-      className="bottom-6"
-    />
+    <>
+      <AdminPill
+        status="Édition"
+        actionLabel="Voir le site"
+        actionHref="/"
+        /* Par-dessus le CMS, sans le quitter : on regarde, on ferme, on
+           est toujours au même endroit. */
+        onAction={() => setSiteOuvert(true)}
+        icon={<EyeIcon />}
+        homeHref="/admin"
+        name={userName}
+        className="bottom-6"
+      />
+      <SiteViewer
+        href="/"
+        open={siteOuvert}
+        onClose={() => setSiteOuvert(false)}
+      />
+    </>
   )
 }

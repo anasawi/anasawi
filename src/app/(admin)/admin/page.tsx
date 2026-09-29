@@ -1,14 +1,10 @@
 import { and, count, eq, isNull } from 'drizzle-orm'
-import {
-  ExternalLink,
-  Image as ImageIcon,
-  Mail,
-  PenLine,
-} from 'lucide-react'
+import { Image as ImageIcon, Mail, PenLine } from 'lucide-react'
 import Link from 'next/link'
 
 import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
+import { VoirLeSiteCard } from '@/components/admin/VoirLeSiteCard'
 import { db } from '@/server/db'
 import { contactMessages, media, sections } from '@/server/db/schema'
 import { getHomePageForAdmin, getSettings } from '@/server/queries'
@@ -142,23 +138,12 @@ export default async function DashboardPage() {
           </p>
         </Link>
 
-        <a
-          href="/"
-          target="_blank"
-          rel="noreferrer"
+        <VoirLeSiteCard
           className={cardClass}
-        >
-          <span className={cardTitleClass}>
-            <ExternalLink className={iconClass} strokeWidth={1.6} />
-            <span className={cardLabelClass}>Aperçu</span>
-          </span>
-          <p className="mt-3 font-serif text-[1.3rem] leading-snug">
-            Voir le site
-          </p>
-          <p className="mt-1.5 text-[12px] text-muted-foreground">
-            Votre site, tel que vos visiteurs le découvrent.
-          </p>
-        </a>
+          titleClassName={cardTitleClass}
+          labelClassName={cardLabelClass}
+          iconClassName={iconClass}
+        />
       </div>
 
       {missing.length > 0 && (

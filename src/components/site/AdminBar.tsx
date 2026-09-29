@@ -21,6 +21,11 @@ export function AdminBar() {
   const pathname = usePathname()
 
   useEffect(() => {
+    /* Dans le cadre « Voir le site » du CMS : pas de pilule — on est déjà
+       dans l'administration, un raccourci vers elle n'aurait pas de sens
+       et pointerait à l'intérieur du cadre. */
+    if (new URLSearchParams(window.location.search).has('dans-le-cms')) return
+
     const controller = new AbortController()
 
     fetch('/api/admin-bar', {
