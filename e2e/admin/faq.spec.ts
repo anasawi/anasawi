@@ -106,8 +106,12 @@ test.describe('FAQ — création', () => {
     await dialogue.getByLabel('Réponse').fill(NOUVELLE.reponse)
     await dialogue.getByRole('button', { name: 'Enregistrer' }).click()
 
-    /* 300 caractères maximum côté schéma. */
-    await attendreNotification(page, 'Formulaire invalide.')
+    /* 300 caractères maximum côté schéma — refus en français, sous le
+       champ fautif, le dialogue restant ouvert pour corriger. */
+    await attendreNotification(page, 'Certains champs sont à corriger.')
+    await expect(dialogue).toBeVisible()
+    await expect(dialogue.getByLabel('Question')).toHaveAttribute('aria-invalid', 'true')
+    await expect(dialogue.getByRole('alert')).toContainText('La question est trop longue (300 caractères maximum).')
   })
 
   test('les caractères spéciaux sont conservés tels quels', async ({ page }) => {

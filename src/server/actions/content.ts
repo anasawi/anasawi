@@ -28,6 +28,14 @@ function refreshSite(tag: string) {
   revalidatePath('/', 'layout')
 }
 
+/** Message unique pour une adresse de page déjà prise — lisible par Anne,
+    renvoyé aussi sous le champ concerné. */
+const ADRESSE_PRISE =
+  'Cette adresse est déjà utilisée par un autre accompagnement. Choisissez-en une autre.'
+
+/** Message unique pour un formulaire refusé : le détail est sous chaque champ. */
+const A_CORRIGER = 'Certains champs sont à corriger.'
+
 /** Garde contre un identifiant fabriqué : Postgres refuserait en 500. */
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
 const isUuid = (value: string) => UUID.test(value)
@@ -44,7 +52,7 @@ export async function createService(
 
     const parsed = serviceFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return fail(A_CORRIGER, parsed.error.flatten().fieldErrors)
     }
 
     const [existing] = await db
@@ -52,7 +60,9 @@ export async function createService(
       .from(services)
       .where(eq(services.slug, parsed.data.slug))
       .limit(1)
-    if (existing) return fail('Ce slug est déjà utilisé.')
+    if (existing) {
+      return fail(ADRESSE_PRISE, { slug: [ADRESSE_PRISE] })
+    }
 
     const [{ value: currentMax } = { value: null }] = await db
       .select({ value: max(services.sortOrder) })
@@ -63,7 +73,7 @@ export async function createService(
       .values({ ...parsed.data, sortOrder: (currentMax ?? -1) + 1 })
       .returning({ id: services.id })
 
-    if (!created) return fail('Création impossible.')
+    if (!created) return fail('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
 
     refreshSite(tags.services)
     return ok({ id: created.id })
@@ -79,7 +89,7 @@ export async function updateService(
 
     const parsed = serviceFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return fail(A_CORRIGER, parsed.error.flatten().fieldErrors)
     }
 
     /* Même contrôle qu'à la création : sans lui, l'index unique renvoyait
@@ -90,7 +100,7 @@ export async function updateService(
       .where(eq(services.slug, parsed.data.slug))
       .limit(1)
     if (existing && existing.id !== id) {
-      return fail('Ce slug est déjà utilisé.')
+      return fail(ADRESSE_PRISE, { slug: [ADRESSE_PRISE] })
     }
 
     await db
@@ -164,7 +174,7 @@ export async function createServiceGroup(
     await requireAdmin()
 
     const parsed = groupLabelSchema.safeParse(label)
-    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? 'Titre invalide.')
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? 'Donnez un titre à ce regroupement.')
 
     /* La nouvelle famille se pose en fin de liste : on ne déplace jamais
        l'existant sans qu'on l'ait demandé. */
@@ -177,7 +187,7 @@ export async function createServiceGroup(
       .values({ label: parsed.data, sortOrder: (currentMax ?? -1) + 1 })
       .returning({ id: serviceGroups.id })
 
-    if (!created) return fail('Création impossible.')
+    if (!created) return fail('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
 
     refreshSite(tags.services)
     return ok(created)
@@ -190,10 +200,10 @@ export async function renameServiceGroup(
 ): Promise<ActionResult<void>> {
   return guard(async () => {
     await requireAdmin()
-    if (!isUuid(id)) return fail('Famille introuvable.')
+    if (!isUuid(id)) return fail('Ce titre de regroupement n’existe plus. Rechargez la page.')
 
     const parsed = groupLabelSchema.safeParse(label)
-    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? 'Titre invalide.')
+    if (!parsed.success) return fail(parsed.error.issues[0]?.message ?? 'Donnez un titre à ce regroupement.')
 
     const [updated] = await db
       .update(serviceGroups)
@@ -201,7 +211,7 @@ export async function renameServiceGroup(
       .where(eq(serviceGroups.id, id))
       .returning({ id: serviceGroups.id })
 
-    if (!updated) return fail('Famille introuvable.')
+    if (!updated) return fail('Ce titre de regroupement n’existe plus. Rechargez la page.')
 
     refreshSite(tags.services)
     return ok()
@@ -220,7 +230,7 @@ export async function deleteServiceGroup(
 ): Promise<ActionResult<void>> {
   return guard(async () => {
     await requireAdmin()
-    if (!isUuid(id)) return fail('Famille introuvable.')
+    if (!isUuid(id)) return fail('Ce titre de regroupement n’existe plus. Rechargez la page.')
 
     await db.delete(serviceGroups).where(eq(serviceGroups.id, id))
 
@@ -235,7 +245,7 @@ export async function reorderServiceGroups(
   return guard(async () => {
     await requireAdmin()
     if (orderedIds.length === 0) return ok()
-    if (!orderedIds.every(isUuid)) return fail('Famille introuvable.')
+    if (!orderedIds.every(isUuid)) return fail('Ce titre de regroupement n’existe plus. Rechargez la page.')
 
     const cases = orderedIds
       .map((id, index) => sql`when ${serviceGroups.id} = ${id} then ${index}`)
@@ -265,9 +275,9 @@ export async function arrangeServices(
 
     for (const [groupIndex, bloc] of plan.entries()) {
       if (bloc.groupId !== null && !isUuid(bloc.groupId)) {
-        return fail('Famille introuvable.')
+        return fail('Ce titre de regroupement n’existe plus. Rechargez la page.')
       }
-      if (!bloc.serviceIds.every(isUuid)) return fail('Accompagnement introuvable.')
+      if (!bloc.serviceIds.every(isUuid)) return fail('Cet accompagnement n’existe plus. Rechargez la page.')
 
       for (const [index, serviceId] of bloc.serviceIds.entries()) {
         await db
@@ -299,7 +309,7 @@ export async function createFaq(
 
     const parsed = faqFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return fail(A_CORRIGER, parsed.error.flatten().fieldErrors)
     }
 
     const [{ value: currentMax } = { value: null }] = await db
@@ -311,7 +321,7 @@ export async function createFaq(
       .values({ ...parsed.data, sortOrder: (currentMax ?? -1) + 1 })
       .returning({ id: faqItems.id })
 
-    if (!created) return fail('Création impossible.')
+    if (!created) return fail('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
 
     refreshSite(tags.faq)
     return ok({ id: created.id })
@@ -327,7 +337,7 @@ export async function updateFaq(
 
     const parsed = faqFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return fail(A_CORRIGER, parsed.error.flatten().fieldErrors)
     }
 
     await db
@@ -397,7 +407,7 @@ export async function updateMedia(
 
     const parsed = mediaFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return fail(A_CORRIGER, parsed.error.flatten().fieldErrors)
     }
 
     await db
@@ -423,7 +433,7 @@ export async function updateSettings(
 
     const parsed = settingsFormSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Formulaire invalide.', parsed.error.flatten().fieldErrors)
+      return fail(A_CORRIGER, parsed.error.flatten().fieldErrors)
     }
 
     const values = {

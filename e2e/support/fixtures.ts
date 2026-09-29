@@ -146,8 +146,9 @@ export const MESSAGES = {
   contactInvalide: 'Formulaire invalide.',
   contactTropDeMessages: 'Trop de messages envoyés. Réessayez dans une heure.',
   altObligatoire: 'Le texte alternatif est obligatoire.',
-  slugPris: 'Ce slug est déjà utilisé.',
-  formulaireInvalide: 'Formulaire invalide.',
+  adressePrise:
+    'Cette adresse est déjà utilisée par un autre accompagnement. Choisissez-en une autre.',
+  champsACorriger: 'Certains champs sont à corriger.',
   /* Message unique et volontairement muet : il ne distingue ni le compte
      inconnu, ni le mot de passe faux, ni le blocage par limitation de débit
      — pour ne pas permettre d'énumérer les comptes ni de deviner le seuil. */

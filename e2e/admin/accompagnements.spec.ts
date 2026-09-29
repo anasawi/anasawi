@@ -112,9 +112,13 @@ test.describe('Accompagnements — création', () => {
     await dialogue.getByRole('button', { name: 'Enregistrer' }).click()
 
     /* 160 caractères maximum : la borne doit tenir même si l'interface
-       a laissé taper davantage. */
-    await attendreNotification(page, 'Formulaire invalide.')
+       a laissé taper davantage. Le refus se lit en français, ET sous le
+       champ fautif — une notification seule s'efface avant qu'on ait
+       compris quel champ est en cause. */
+    await attendreNotification(page, 'Certains champs sont à corriger.')
     await expect(dialogue).toBeVisible()
+    await expect(dialogue.getByLabel('Titre', { exact: true })).toHaveAttribute('aria-invalid', 'true')
+    await expect(dialogue.getByRole('alert')).toContainText('Le titre est trop long (160 caractères maximum).')
   })
 
   test('les caractères spéciaux d’un titre donnent une adresse propre', async ({
@@ -144,8 +148,13 @@ test.describe('Accompagnements — création', () => {
     await dialogue.getByRole('button', { name: 'Enregistrer' }).click()
 
     /* Deux accompagnements à la même adresse : le second écraserait le
-       premier sur le site. */
-    await attendreNotification(page, 'Ce slug est déjà utilisé.')
+       premier sur le site. Le refus dit « adresse », pas « slug », et
+       s'affiche sous le champ concerné. */
+    const message =
+      'Cette adresse est déjà utilisée par un autre accompagnement. Choisissez-en une autre.'
+    await attendreNotification(page, message)
+    await expect(dialogue.getByLabel('Adresse de la page')).toHaveAttribute('aria-invalid', 'true')
+    await expect(dialogue.getByRole('alert')).toContainText(message)
   })
 
   test('annuler ne crée rien', async ({ page }) => {
@@ -367,7 +376,7 @@ test.describe('Accompagnements — titres de regroupement', () => {
  * `count()` ne patiente pas : c'est un relevé instantané. Conclure
  * « absent » sur une page encore en cours d'hydratation, c'est ne rien
  * supprimer du tout — et faire échouer six tests plus loin sur un
- * « Ce slug est déjà utilisé » parfaitement incompréhensible. On s'ancre
+ * « Cette adresse est déjà utilisée » parfaitement incompréhensible. On s'ancre
  * donc d'abord sur un élément dont on SAIT qu'il est là.
  */
 async function listeChargee(page: Page) {

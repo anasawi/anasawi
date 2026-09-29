@@ -32,18 +32,22 @@ export const loginSchema = z.object({
 export const slugSchema = z
   .string()
   .trim()
-  .min(1, 'Le slug est requis.')
-  .max(80)
+  .min(1, 'Indiquez une adresse de page.')
+  .max(80, 'L’adresse de la page est trop longue (80 caractères maximum).')
   .regex(
     /^[a-z0-9]+(?:-[a-z0-9]+)*$/,
-    'Minuscules, chiffres et tirets uniquement.',
+    'Une adresse de page ne contient que des lettres minuscules, des chiffres et des tirets.',
   )
 
 export const serviceFormSchema = z.object({
-  title: z.string().trim().min(1, 'Le titre est requis.').max(160),
+  title: z
+    .string()
+    .trim()
+    .min(1, 'Donnez un titre à cet accompagnement.')
+    .max(160, 'Le titre est trop long (160 caractères maximum).'),
   slug: slugSchema,
-  excerpt: z.string().trim().max(600).default(''),
-  body: z.string().trim().max(8000).default(''),
+  excerpt: z.string().trim().max(600, 'La description courte est trop longue (600 caractères maximum).').default(''),
+  body: z.string().trim().max(8000, 'Le texte est trop long (8 000 caractères maximum).').default(''),
   duration: z.string().trim().max(80).nullable().default(null),
   /* Famille d'appartenance et mention de méthode : nulles par défaut, le
      regroupement ne s'impose donc jamais. */
@@ -54,8 +58,16 @@ export const serviceFormSchema = z.object({
 })
 
 export const faqFormSchema = z.object({
-  question: z.string().trim().min(1, 'La question est requise.').max(300),
-  answer: z.string().trim().min(1, 'La réponse est requise.').max(4000),
+  question: z
+    .string()
+    .trim()
+    .min(1, 'Écrivez la question.')
+    .max(300, 'La question est trop longue (300 caractères maximum).'),
+  answer: z
+    .string()
+    .trim()
+    .min(1, 'Écrivez la réponse.')
+    .max(4000, 'La réponse est trop longue (4 000 caractères maximum).'),
   category: z.string().trim().max(80).nullable().default(null),
   isActive: z.boolean().default(true),
 })
@@ -77,7 +89,7 @@ export const seoFormSchema = z.object({
 })
 
 export const settingsFormSchema = z.object({
-  siteName: z.string().trim().min(1).max(120),
+  siteName: z.string().trim().min(1, 'Indiquez le nom du site.').max(120, 'Le nom du site est trop long (120 caractères maximum).'),
   practitionerName: z.string().trim().max(160).default(''),
   practitionerTitle: z.string().trim().max(160).nullable().default(null),
   tagline: z.string().trim().max(300).nullable().default(null),
@@ -125,7 +137,7 @@ export const mediaFormSchema = z.object({
   alt: z
     .string()
     .trim()
-    .min(1, 'Le texte alternatif est obligatoire : il conditionne l’accessibilité et le SEO.')
-    .max(300),
+    .min(1, 'Décrivez l’image en quelques mots : cette description est lue par Google et par les personnes malvoyantes.')
+    .max(300, 'La description est trop longue (300 caractères maximum).'),
   caption: z.string().trim().max(300).nullable().default(null),
 })

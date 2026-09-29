@@ -38,14 +38,14 @@ export function ColorPicker({
 
   return (
     <div>
-      <span className="mb-[5px] block text-[11.5px] text-ink-soft">
+      <span className="mb-[5px] block text-xs text-ink-soft">
         {label}
       </span>
 
       <div className="space-y-[9px]">
         {groups.map((group) => (
           <div key={group.label}>
-            <span className="mb-[3px] block text-[10px] uppercase tracking-[0.1em] text-stone">
+            <span className="mb-[3px] block text-xs uppercase tracking-[0.1em] text-stone">
               {group.label}
             </span>
             <div className="flex flex-wrap gap-[7px]">
@@ -76,7 +76,7 @@ export function ColorPicker({
         {/* Hors palette : le sélecteur natif — gratuit, accessible au
             clavier et identique aux habitudes du système. */}
         <div>
-          <span className="mb-[3px] block text-[10px] uppercase tracking-[0.1em] text-stone">
+          <span className="mb-[3px] block text-xs uppercase tracking-[0.1em] text-stone">
             Autre
           </span>
           <label
@@ -108,16 +108,19 @@ export function ColorPicker({
       </div>
 
       {/* L'aperçu du canvas juge la couleur ; ici, une seule ligne honnête
-          sur la lisibilité du texte calculé. */}
+          sur la lisibilité du texte calculé — en mots, pas en ratio. Le
+          chiffre reste dans l'infobulle pour qui le veut. */}
       <p
+        aria-live="polite"
+        title={`Contraste ${ratio.toFixed(1)}:1`}
         className={cn(
-          'mt-[9px] text-[10.5px]',
+          'mt-[9px] text-xs',
           ratio >= 4.5 ? 'text-stone' : 'text-destructive',
         )}
       >
         {ratio >= 4.5
-          ? `Contraste du texte : ${ratio.toFixed(1)}:1 — lisible.`
-          : `Contraste du texte : ${ratio.toFixed(1)}:1 — insuffisant.`}
+          ? 'Lisible ✓ — le texte se lit bien sur ce fond.'
+          : 'Texte difficile à lire sur ce fond — choisissez une couleur plus claire ou plus foncée.'}
       </p>
     </div>
   )

@@ -18,7 +18,7 @@ export async function updateIdentity(
     await requireAdmin()
 
     const parsed = identitySchema.safeParse(input)
-    if (!parsed.success) return fail('Réglages invalides.')
+    if (!parsed.success) return fail('Certains champs sont à corriger.')
 
     await db
       .update(settings)

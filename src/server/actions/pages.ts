@@ -102,7 +102,7 @@ async function validateParent({
     .where(eq(sections.id, parentId))
     .limit(1)
 
-  if (!parent) return 'Section introuvable.'
+  if (!parent) return 'Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.'
   if (parent.parentId) return 'Imbrication trop profonde.'
 
   /* Toute section racine accueille des blocs : les conteneurs dans leurs
@@ -161,13 +161,13 @@ export async function updateTextField(
       .where(eq(sections.id, id))
       .limit(1)
 
-    if (!section) return fail('Bloc introuvable.')
+    if (!section) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
     if (!INLINE_EDITABLE[section.type]?.has(fieldName)) {
-      return fail('Ce champ ne se modifie pas en direct.')
+      return fail('Ce texte se modifie depuis le panneau de droite, pas directement dans la page.')
     }
 
     const block = getBlock(section.type)
-    if (!block) return fail('Type de bloc inconnu.')
+    if (!block) return fail('Ce modèle de section n’est plus disponible.')
 
     /* Repasse par le schéma du bloc : la fusion ne peut pas produire un
        payload que le rendu refuserait. */
@@ -175,7 +175,7 @@ export async function updateTextField(
       ...(section.payload as Record<string, unknown>),
       [fieldName]: trimmed,
     })
-    if (!merged.success) return fail('Texte invalide pour ce bloc.')
+    if (!merged.success) return fail('Ce texte n’est pas accepté pour cette section.')
 
     await db
       .update(sections)
@@ -213,13 +213,13 @@ export async function insertSection({
   return guard(async () => {
     await requireAdmin()
 
-    if (!isUuid(pageId)) return fail('Page introuvable.')
+    if (!isUuid(pageId)) return fail('La page n’a pas été trouvée. Rechargez l’administration.')
     if (parentId !== null && !isUuid(parentId)) {
-      return fail('Section introuvable.')
+      return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
     }
 
     const block = isBlockType(type) ? getBlock(type) : null
-    if (!block) return fail('Type de bloc inconnu.')
+    if (!block) return fail('Ce modèle de section n’est plus disponible.')
 
     const invalid = await validateParent({ block, parentId, pageId })
     if (invalid) return fail(invalid)
@@ -240,7 +240,7 @@ export async function insertSection({
       ? gridPositionSchema.safeParse(placement)
       : null
     if (parsedPlacement && !parsedPlacement.success) {
-      return fail('Position invalide.')
+      return fail('Impossible de placer la section à cet endroit. Réessayez.')
     }
 
     const [created] = await db
@@ -261,7 +261,7 @@ export async function insertSection({
       })
       .returning({ id: sections.id })
 
-    if (!created) return fail('Création impossible.')
+    if (!created) return fail('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
 
     revalidatePage(await slugOf(pageId))
     return ok({ id: created.id })
@@ -303,14 +303,14 @@ export async function updateSection(
       .where(eq(sections.id, id))
       .limit(1)
 
-    if (!section) return fail('Section introuvable.')
+    if (!section) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
 
     const block = getBlock(section.type)
-    if (!block) return fail('Type de section inconnu.')
+    if (!block) return fail('Ce modèle de section n’est plus disponible.')
 
     const parsedMeta = sectionMetaSchema.safeParse(meta)
     if (!parsedMeta.success) {
-      return fail('Réglages invalides.', parsedMeta.error.flatten().fieldErrors)
+      return fail('Certains champs sont à corriger.', parsedMeta.error.flatten().fieldErrors)
     }
 
     /* Le payload est validé par le schéma du bloc avant d'atteindre la base :
@@ -338,7 +338,7 @@ export async function updateSection(
       parsedStyles = null
     } else {
       const result = nodeStylesSchema.safeParse(styles)
-      if (!result.success) return fail('Styles invalides.')
+      if (!result.success) return fail('Ces réglages d’apparence ne sont pas acceptés.')
       parsedStyles = result.data
     }
 
@@ -370,7 +370,7 @@ export async function toggleSection(
       .from(sections)
       .where(eq(sections.id, id))
       .limit(1)
-    if (!section) return fail('Bloc introuvable.')
+    if (!section) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
 
     await db
       .update(sections)
@@ -395,7 +395,7 @@ export async function renameSection(
       .from(sections)
       .where(eq(sections.id, id))
       .limit(1)
-    if (!section) return fail('Bloc introuvable.')
+    if (!section) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
 
     await db
       .update(sections)
@@ -417,7 +417,7 @@ export async function deleteSection(id: string): Promise<ActionResult<void>> {
       .where(eq(sections.id, id))
       .limit(1)
 
-    if (!section) return fail('Section introuvable.')
+    if (!section) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
 
     await db.delete(sections).where(eq(sections.id, id))
 
@@ -438,7 +438,7 @@ export async function duplicateSection(
       .where(eq(sections.id, id))
       .limit(1)
 
-    if (!source) return fail('Section introuvable.')
+    if (!source) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
 
     /* La copie prend la place juste après l'original : les frères situés
        à partir de ce rang sont décalés d'un cran, comme à l'insertion. Sans
@@ -481,7 +481,7 @@ export async function duplicateSection(
       })
       .returning({ id: sections.id })
 
-    if (!created) return fail('Duplication impossible.')
+    if (!created) return fail('La copie n’a pas abouti. Réessayez.')
 
     revalidatePage(await slugOf(source.pageId))
     return ok({ id: created.id })
@@ -497,14 +497,14 @@ export async function updateSectionSettings(
     await requireAdmin()
 
     const parsed = sectionSettingsSchema.safeParse(input)
-    if (!parsed.success) return fail('Réglages invalides.')
+    if (!parsed.success) return fail('Certains champs sont à corriger.')
 
     const [section] = await db
       .select({ pageId: sections.pageId })
       .from(sections)
       .where(eq(sections.id, id))
       .limit(1)
-    if (!section) return fail('Section introuvable.')
+    if (!section) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
 
     await db
       .update(sections)
@@ -534,7 +534,7 @@ function refusDeFormulaire(erreur: z.ZodError): ActionResult<never> {
   for (const [champ, messages] of Object.entries(erreur.flatten().fieldErrors)) {
     if (messages) parChamp[champ] = messages
   }
-  return fail(premier || 'Formulaire invalide.', parChamp)
+  return fail(premier || 'Certains champs sont à corriger.', parChamp)
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -562,9 +562,9 @@ export async function saveSectionAsTemplate(
       .where(eq(sections.id, sectionId))
       .limit(1)
 
-    if (!section) return fail('Section introuvable.')
-    if (section.parentId) return fail('Seule une section entière s’enregistre.')
-    if (!getBlock(section.type)) return fail('Type de section inconnu.')
+    if (!section) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
+    if (section.parentId) return fail('Seule une section entière peut devenir un modèle.')
+    if (!getBlock(section.type)) return fail('Ce modèle de section n’est plus disponible.')
 
     const [created] = await db
       .insert(savedSections)
@@ -577,7 +577,7 @@ export async function saveSectionAsTemplate(
       })
       .returning()
 
-    if (!created) return fail('Enregistrement impossible.')
+    if (!created) return fail('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
     /* La ligne complète est renvoyée : l'éditeur l'ajoute à « Mes
        sections » sans recharger la page. */
     return ok(created)
@@ -607,8 +607,8 @@ export async function insertSavedSection({
   return guard(async () => {
     await requireAdmin()
 
-    if (!isUuid(pageId)) return fail('Page introuvable.')
-    if (!isUuid(savedId)) return fail('Modèle introuvable.')
+    if (!isUuid(pageId)) return fail('La page n’a pas été trouvée. Rechargez l’administration.')
+    if (!isUuid(savedId)) return fail('Ce modèle n’existe plus. Rechargez la page.')
 
     const [saved] = await db
       .select()
@@ -616,15 +616,15 @@ export async function insertSavedSection({
       .where(eq(savedSections.id, savedId))
       .limit(1)
 
-    if (!saved) return fail('Modèle introuvable.')
+    if (!saved) return fail('Ce modèle n’existe plus. Rechargez la page.')
 
     const block = getBlock(saved.type)
-    if (!block) return fail('Type de section inconnu.')
+    if (!block) return fail('Ce modèle de section n’est plus disponible.')
 
     /* Le payload repasse par le schéma du type : un modèle enregistré
        avant une évolution du template reste insérable proprement. */
     const payload = block.schema.safeParse(saved.payload)
-    if (!payload.success) return fail('Ce modèle n’est plus compatible.')
+    if (!payload.success) return fail('Ce modèle a été créé avec une ancienne version du site et ne peut plus être ajouté.')
 
     await db
       .update(sections)
@@ -650,7 +650,7 @@ export async function insertSavedSection({
       })
       .returning({ id: sections.id })
 
-    if (!created) return fail('Insertion impossible.')
+    if (!created) return fail('L’ajout de la section n’a pas abouti. Réessayez.')
 
     revalidatePage(await slugOf(pageId))
     return ok({ id: created.id })
@@ -670,7 +670,7 @@ export async function publishPage(pageId: string): Promise<ActionResult<void>> {
   return guard(async () => {
     await requireAdmin()
 
-    if (!isUuid(pageId)) return fail('Page introuvable.')
+    if (!isUuid(pageId)) return fail('La page n’a pas été trouvée. Rechargez l’administration.')
 
     /* Sans ce contrôle, un identifiant arbitraire renvoyait `ok` sans
        rien écrire — l'éditeur affichait « Publié » à tort. */
@@ -679,7 +679,7 @@ export async function publishPage(pageId: string): Promise<ActionResult<void>> {
       .from(pages)
       .where(eq(pages.id, pageId))
       .limit(1)
-    if (!page) return fail('Page introuvable.')
+    if (!page) return fail('La page n’a pas été trouvée. Rechargez l’administration.')
 
     const rows = await db
       .select()
@@ -749,12 +749,12 @@ function validateSnapshotRows(
   | { ok: true; rows: ValidatedSnapshotRow[]; pageId: string | null }
   | { ok: false; error: string } {
   const parsed = z.array(snapshotRowSchema).max(500).safeParse(input)
-  if (!parsed.success) return { ok: false, error: 'Instantané invalide.' }
+  if (!parsed.success) return { ok: false, error: 'La version en ligne de la page est illisible. Contactez la personne qui gère le site.' }
   const rows = parsed.data
 
   const pageId = rows[0]?.pageId ?? null
   if (pageId !== null && rows.some((row) => row.pageId !== pageId)) {
-    return { ok: false, error: 'Instantané incohérent.' }
+    return { ok: false, error: 'La version en ligne de la page est illisible. Contactez la personne qui gère le site.' }
   }
 
   const validated: ValidatedSnapshotRow[] = []
@@ -776,7 +776,7 @@ function validateSnapshotRows(
     let styles: NodeStyles | null = null
     if (row.styles !== null) {
       const parsedStyles = nodeStylesSchema.safeParse(row.styles)
-      if (!parsedStyles.success) return { ok: false, error: 'Styles invalides.' }
+      if (!parsedStyles.success) return { ok: false, error: 'Ces réglages d’apparence ne sont pas acceptés.' }
       styles = parsedStyles.data
     }
 
@@ -786,7 +786,7 @@ function validateSnapshotRows(
          (converti) : un instantané pris avant la migration reste
          restaurable. */
       placement = parseGridPosition(row.placement)
-      if (!placement) return { ok: false, error: 'Position invalide.' }
+      if (!placement) return { ok: false, error: 'Impossible de placer la section à cet endroit. Réessayez.' }
     }
 
     const settings =
@@ -844,7 +844,7 @@ export async function restoreSections(
     const validated = validateSnapshotRows(input)
     if (!validated.ok) return fail(validated.error)
     if (validated.rows.length === 0 || !validated.pageId) {
-      return fail('Instantané vide.')
+      return fail('Rien à publier : la page ne contient aucune section.')
     }
 
     await insertSnapshotRows(validated.rows)
@@ -881,7 +881,7 @@ export async function discardDraft(
       .where(eq(pages.id, pageId))
       .limit(1)
 
-    if (!page) return fail('Page introuvable.')
+    if (!page) return fail('La page n’a pas été trouvée. Rechargez l’administration.')
     if (!page.publishedAt || !Array.isArray(page.publishedSnapshot)) {
       return fail('Cette page n’a jamais été publiée : rien vers quoi revenir.')
     }
@@ -889,7 +889,7 @@ export async function discardDraft(
     const validated = validateSnapshotRows(page.publishedSnapshot)
     if (!validated.ok) return fail(validated.error)
     if (validated.pageId !== null && validated.pageId !== pageId) {
-      return fail('La version en ligne ne correspond pas à cette page.')
+      return fail('La version en ligne ne correspond pas à cette page. Rechargez l’administration.')
     }
 
     /* Validation faite AVANT toute écriture : si l'instantané est
@@ -916,9 +916,9 @@ export async function reorderSections(
   return guard(async () => {
     await requireAdmin()
 
-    if (!isUuid(pageId)) return fail('Page introuvable.')
+    if (!isUuid(pageId)) return fail('La page n’a pas été trouvée. Rechargez l’administration.')
     if (orderedIds.length === 0) return ok()
-    if (!orderedIds.every(isUuid)) return fail('Section introuvable.')
+    if (!orderedIds.every(isUuid)) return fail('Cette section n’existe plus — elle a peut-être été supprimée. Rechargez la page.')
 
     const cases = orderedIds
       .map((id, index) => sql`when ${sections.id} = ${id} then ${index}`)
@@ -945,7 +945,7 @@ export async function updateSeo(
   return guard(async () => {
     await requireAdmin()
 
-    if (!isUuid(pageId)) return fail('Page introuvable.')
+    if (!isUuid(pageId)) return fail('La page n’a pas été trouvée. Rechargez l’administration.')
 
     const parsed = seoFormSchema.safeParse(input)
     if (!parsed.success) {

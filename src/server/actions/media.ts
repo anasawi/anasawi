@@ -50,11 +50,11 @@ export async function registerMedia(
 
     const parsed = registerSchema.safeParse(input)
     if (!parsed.success) {
-      return fail('Métadonnées invalides.', parsed.error.flatten().fieldErrors)
+      return fail('Certains champs sont à corriger.', parsed.error.flatten().fieldErrors)
     }
 
     const [created] = await db.insert(media).values(parsed.data).returning()
-    if (!created) return fail('Enregistrement impossible.')
+    if (!created) return fail('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
 
     revalidateTag(tags.media)
     revalidatePath('/admin/medias')
@@ -67,7 +67,7 @@ export async function deleteMedia(id: string): Promise<ActionResult<void>> {
     await requireAdmin()
 
     const [row] = await db.select().from(media).where(eq(media.id, id)).limit(1)
-    if (!row) return fail('Média introuvable.')
+    if (!row) return fail('Cette image n’existe plus. Rechargez la page.')
 
     /* On supprime d'abord la ligne : si l'effacement du fichier échoue, on
        préfère un objet orphelin sur le stockage à une image cassée. */

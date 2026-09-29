@@ -24,10 +24,17 @@ import {
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
-import { Check, GripVertical, Pencil, Plus, X } from 'lucide-react'
+import { Check, ChevronRight, GripVertical, Pencil, Plus, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
-import { useEffect, useMemo, useRef, useState, useTransition } from 'react'
+import {
+  useEffect,
+  useId,
+  useMemo,
+  useRef,
+  useState,
+  useTransition,
+} from 'react'
 import { toast } from 'sonner'
 
 import { ConfirmDelete } from './ConfirmDelete'
@@ -36,6 +43,7 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -93,6 +101,10 @@ type Draft = {
   id: string | null
   title: string
   slug: string
+  /** Vrai dès qu'Anne a retouché l'adresse à la main : on cesse alors de
+      la recalculer depuis le titre. Toujours vrai pour un accompagnement
+      existant — son adresse est déjà connue du site. */
+  slugEdite: boolean
   excerpt: string
   body: string
   duration: string
@@ -105,12 +117,22 @@ const emptyDraft: Draft = {
   id: null,
   title: '',
   slug: '',
+  slugEdite: false,
   excerpt: '',
   body: '',
   duration: '',
   method: '',
   mediaId: null,
   isActive: true,
+}
+
+/** Rappel commun aux écrans de contenus : ici, pas d'étape « publier ». */
+function NoteEnLigne() {
+  return (
+    <p className="mb-4 rounded-lg border border-blue-deep/20 bg-blue-mist/30 px-3.5 py-2.5 text-[12.5px] leading-[1.5] text-foreground">
+      Les modifications sont visibles sur le site dès que vous enregistrez.
+    </p>
+  )
 }
 
 export function ServicesManager({
@@ -126,6 +148,9 @@ export function ServicesManager({
   const [items, setItems] = useState(initial)
   const [groups, setGroups] = useState(initialGroups)
   const [draft, setDraft] = useState<Draft | null>(null)
+  /* Erreurs renvoyées par le serveur, champ par champ : affichées SOUS le
+     champ fautif, pas seulement dans une notification qui s'efface. */
+  const [erreurs, setErreurs] = useState<Record<string, string[]>>({})
   const [dragged, setDragged] = useState<string | null>(null)
   const [pending, start] = useTransition()
 
@@ -371,13 +396,15 @@ export function ServicesManager({
        * créé n'apparaissait NULLE PART et le titre modifié restait
        * l'ancien à l'écran. Anne enregistrait, voyait la confirmation, ne
        * voyait aucun changement — et recommençait, pour se heurter cette
-       * fois à « Ce slug est déjà utilisé ».
+       * fois à « Cette adresse est déjà utilisée ».
        */
       const image = library.find((m) => m.id === payload.mediaId) ?? null
 
+      setErreurs({})
       if (draft.id) {
         const result = await updateService(draft.id, payload)
         if (!result.ok) {
+          setErreurs(result.fieldErrors ?? {})
           toast.error(result.error)
           return
         }
@@ -393,6 +420,7 @@ export function ServicesManager({
       } else {
         const result = await createService(payload)
         if (!result.ok) {
+          setErreurs(result.fieldErrors ?? {})
           toast.error(result.error)
           return
         }
@@ -423,6 +451,7 @@ export function ServicesManager({
       id: service.id,
       title: service.title,
       slug: service.slug,
+      slugEdite: true,
       excerpt: service.excerpt,
       body: service.body,
       duration: service.duration ?? '',
@@ -437,6 +466,11 @@ export function ServicesManager({
       if (result.ok) {
         setItems((prev) =>
           prev.map((s) => (s.id === service.id ? { ...s, isActive: checked } : s)),
+        )
+        toast.success(
+          checked
+            ? 'Accompagnement affiché sur le site.'
+            : 'Accompagnement masqué du site.',
         )
       } else toast.error(result.error)
     })
@@ -457,30 +491,28 @@ export function ServicesManager({
 
   return (
     <>
-      <div className="mb-4 flex justify-end gap-2">
+      <NoteEnLigne />
+
+      {/* Sur téléphone, les deux boutons passent l'un sous l'autre plutôt
+          que de se comprimer ; l'action principale reste en dernier. */}
+      <div className="mb-4 flex flex-col gap-2 sm:flex-row sm:justify-end">
         <Button variant="outline" onClick={ajouterFamille} disabled={pending}>
           <Plus />
           Ajouter un titre
         </Button>
-        <Button
-          className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
-          onClick={() => setDraft(emptyDraft)}
-        >
+        <Button onClick={() => setDraft(emptyDraft)}>
           <Plus />
           Nouvel accompagnement
         </Button>
       </div>
 
       {vide ? (
-        <div className="rounded-xl border border-border bg-white px-6 py-14 text-center">
-          <p className="text-[13px] text-muted-foreground">
-            Aucun accompagnement pour l’instant — créez le premier pour le
+        <div className="rounded-lg border border-border bg-white px-6 py-14 text-center">
+          <p className="text-[13px] leading-[1.6] text-muted-foreground">
+            Aucun accompagnement pour l’instant. Créez le premier pour le
             présenter sur votre site.
           </p>
-          <Button
-            className="mt-4 rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
-            onClick={() => setDraft(emptyDraft)}
-          >
+          <Button className="mt-4" onClick={() => setDraft(emptyDraft)}>
             <Plus />
             Créer un accompagnement
           </Button>
@@ -540,8 +572,8 @@ export function ServicesManager({
               chassent et l'élément paraît sauter d'une position à l'autre. */}
           <DragOverlay dropAnimation={dropAnimation}>
             {draggedGroup ? (
-              <div className="w-full overflow-hidden rounded-xl border border-blue-deep/50 bg-white shadow-xl">
-                <p className="border-b border-border bg-ivory/60 px-4 py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+              <div className="w-full overflow-hidden rounded-lg border border-blue-deep/50 bg-white shadow-xl">
+                <p className="border-b border-border bg-ivory/60 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
                   {draggedGroup.label}
                 </p>
                 <p className="px-4 py-3 text-[12.5px] text-muted-foreground">
@@ -581,6 +613,11 @@ export function ServicesManager({
             <DialogTitle>
               {draft?.id ? 'Modifier l’accompagnement' : 'Nouvel accompagnement'}
             </DialogTitle>
+            <DialogDescription>
+              {draft?.id
+                ? 'Vos changements seront visibles sur le site dès l’enregistrement.'
+                : 'Seul le titre est obligatoire ; vous pourrez compléter le reste plus tard.'}
+            </DialogDescription>
           </DialogHeader>
 
           {draft && (
@@ -592,27 +629,22 @@ export function ServicesManager({
                 <Input
                   id="s-title"
                   value={draft.title}
+                  autoComplete="off"
+                  aria-invalid={erreurs.title ? true : undefined}
+                  aria-describedby={erreurs.title ? 's-title-erreur' : undefined}
                   onChange={(e) =>
                     setDraft({
                       ...draft,
                       title: e.target.value,
-                      slug: draft.id ? draft.slug : slugify(e.target.value),
+                      /* L'adresse suit le titre tant qu'Anne n'y a pas
+                         touché elle-même. */
+                      slug: draft.slugEdite
+                        ? draft.slug
+                        : slugify(e.target.value),
                     })
                   }
                 />
-              </div>
-
-              <div>
-                <Label htmlFor="s-slug" className="mb-2 block">
-                  Adresse de la page
-                </Label>
-                <Input
-                  id="s-slug"
-                  value={draft.slug}
-                  onChange={(e) =>
-                    setDraft({ ...draft, slug: slugify(e.target.value) })
-                  }
-                />
+                <ErreurChamp id="s-title-erreur" messages={erreurs.title} />
               </div>
 
               <div>
@@ -629,7 +661,7 @@ export function ServicesManager({
                 />
               </div>
 
-              <div className="sm:col-span-2">
+              <div>
                 <Label htmlFor="s-method" className="mb-2 block">
                   Méthode
                 </Label>
@@ -639,9 +671,8 @@ export function ServicesManager({
                   placeholder="Gestalt-thérapie"
                   onChange={(e) => setDraft({ ...draft, method: e.target.value })}
                 />
-                <p className="mt-1.5 text-xs text-muted-foreground">
-                  Mention discrète affichée en regard du titre. Le regroupement
-                  sous un intitulé se fait en glissant la ligne dans la liste.
+                <p className="mt-1.5 text-xs leading-[1.5] text-muted-foreground">
+                  Petite mention affichée à côté du titre.
                 </p>
               </div>
 
@@ -657,7 +688,7 @@ export function ServicesManager({
                     setDraft({ ...draft, excerpt: e.target.value })
                   }
                 />
-                <p className="mt-1.5 text-xs text-muted-foreground">
+                <p className="mt-1.5 text-xs leading-[1.5] text-muted-foreground">
                   C’est ce texte qui apparaît sur la page d’accueil.
                 </p>
               </div>
@@ -672,6 +703,9 @@ export function ServicesManager({
                   value={draft.body}
                   onChange={(e) => setDraft({ ...draft, body: e.target.value })}
                 />
+                <p className="mt-1.5 text-xs leading-[1.5] text-muted-foreground">
+                  Affichée sur la page de l’accompagnement.
+                </p>
               </div>
 
               <MediaPicker
@@ -681,8 +715,8 @@ export function ServicesManager({
                 library={library}
               />
 
-              <div className="flex h-fit items-center justify-between self-end rounded-md border border-border px-3.5 py-2.5">
-                <Label htmlFor="s-active" className="cursor-pointer">
+              <div className="flex h-fit items-center justify-between gap-3 self-end rounded-lg border border-border px-3.5 py-2.5">
+                <Label htmlFor="s-active" className="cursor-pointer text-[13px] text-foreground">
                   Visible sur le site
                 </Label>
                 <Switch
@@ -693,10 +727,58 @@ export function ServicesManager({
                   }
                 />
               </div>
+
+              {/*
+               * L'adresse web est reléguée sous un pli « Options avancées » :
+               * elle se calcule toute seule, Anne n'a en principe jamais à
+               * la voir. Le pli reste OUVERT par défaut : le champ doit être
+               * visible pour être rempli (les tests e2e le remplissent
+               * directement, et Playwright ne déplie pas un `<details>`
+               * fermé). Le prix visuel est faible, tout en bas du
+               * formulaire.
+               */}
+              <details
+                open
+                className="group/avance rounded-lg border border-border sm:col-span-2"
+              >
+                <summary className="flex cursor-pointer select-none items-center gap-2 px-3.5 py-2.5 text-[13px] font-medium text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 [&::-webkit-details-marker]:hidden">
+                  <ChevronRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-open/avance:rotate-90" />
+                  Options avancées
+                </summary>
+                <div className="border-t border-border px-3.5 py-3">
+                  <Label htmlFor="s-slug" className="mb-2 block">
+                    Adresse de la page
+                  </Label>
+                  <Input
+                    id="s-slug"
+                    value={draft.slug}
+                    autoComplete="off"
+                    spellCheck={false}
+                    aria-invalid={erreurs.slug ? true : undefined}
+                    aria-describedby={erreurs.slug ? 's-slug-erreur' : undefined}
+                    onChange={(e) => {
+                      /* Champ vidé : on reprend la main et l'adresse
+                         redevient celle du titre. */
+                      const saisie = e.target.value.trim()
+                      setDraft({
+                        ...draft,
+                        slug: saisie ? slugify(saisie) : slugify(draft.title),
+                        slugEdite: saisie.length > 0,
+                      })
+                    }}
+                  />
+                  <ErreurChamp id="s-slug-erreur" messages={erreurs.slug} />
+                  <p className="mt-1.5 text-xs leading-[1.5] text-muted-foreground">
+                    Dernière partie de l’adresse web de cet accompagnement,
+                    générée automatiquement à partir du titre. Modifiez-la
+                    seulement si nécessaire.
+                  </p>
+                </div>
+              </details>
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setDraft(null)}
@@ -705,9 +787,9 @@ export function ServicesManager({
               Annuler
             </Button>
             <Button
-              className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
               onClick={save}
               disabled={pending || !draft?.title.trim()}
+              aria-busy={pending}
             >
               {pending ? 'Enregistrement…' : 'Enregistrer'}
             </Button>
@@ -764,7 +846,7 @@ function Famille({
           : undefined
       }
       className={cn(
-        'overflow-hidden rounded-xl border bg-white transition-colors',
+        'overflow-hidden rounded-lg border bg-white transition-colors',
         isOver ? 'border-blue-deep/60 bg-blue-mist/30' : 'border-border',
         /* C'est le calque qu'on suit : l'original marque la place. */
         group && sortable.isDragging && 'opacity-35',
@@ -779,7 +861,7 @@ function Famille({
           onDelete={onDelete}
         />
       ) : (
-        <p className="border-b border-border bg-muted/40 px-4 py-2.5 text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+        <p className="border-b border-border bg-muted/40 px-4 py-2.5 text-[12px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
           Sans titre — présentés seuls
         </p>
       )}
@@ -790,7 +872,7 @@ function Famille({
       >
         {services.length === 0 ? (
           <p className="px-4 py-6 text-center text-[12.5px] text-muted-foreground">
-            Glissez un accompagnement ici.
+            Aucun accompagnement sous ce titre. Glissez-en un ici.
           </p>
         ) : (
           <ul className="divide-y divide-border">
@@ -827,6 +909,7 @@ function TitreFamille({
   const [editing, setEditing] = useState(false)
   const [value, setValue] = useState(label)
   const inputRef = useRef<HTMLInputElement>(null)
+  const champId = useId()
 
   useEffect(() => setValue(label), [label])
   useEffect(() => {
@@ -841,14 +924,16 @@ function TitreFamille({
   }
 
   return (
-    <div className="group/titre flex items-center gap-2 border-b border-border bg-ivory/60 px-4 py-2.5">
+    <div className="flex items-center gap-2 border-b border-border bg-ivory/60 px-3 py-2 sm:px-4">
+      {/* Poignée toujours visible : rien ne doit dépendre du survol, qui
+          n'existe pas au doigt. */}
       {!editing && (
         <button
           type="button"
           {...dragAttributes}
           {...dragListeners}
           aria-label={`Déplacer le bloc ${label}`}
-          className="-ml-1 cursor-grab touch-none text-muted-foreground/50 opacity-0 transition-opacity active:cursor-grabbing group-focus-within/titre:opacity-100 group-hover/titre:opacity-100"
+          className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:cursor-grabbing"
         >
           <GripVertical className="h-4 w-4" />
         </button>
@@ -856,7 +941,11 @@ function TitreFamille({
 
       {editing ? (
         <>
+          <Label htmlFor={champId} className="sr-only">
+            Nom du titre
+          </Label>
           <Input
+            id={champId}
             ref={inputRef}
             value={value}
             onChange={(e) => setValue(e.target.value)}
@@ -867,7 +956,7 @@ function TitreFamille({
                 setEditing(false)
               }
             }}
-            className="h-8 max-w-sm text-[13px]"
+            className="max-w-sm"
           />
           <Button variant="ghost" size="icon" onClick={valider} aria-label="Valider">
             <Check className="h-4 w-4" />
@@ -889,18 +978,19 @@ function TitreFamille({
           <button
             type="button"
             onClick={() => setEditing(true)}
-            className="group flex min-w-0 flex-1 items-center gap-2 text-left"
+            title="Cliquer pour renommer"
+            className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-lg px-1 text-left transition-colors hover:bg-white/70 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           >
-            <span className="truncate text-[10.5px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">
+            <span className="truncate text-[12px] font-semibold uppercase tracking-[0.12em] text-muted-foreground">
               {label}
             </span>
-            <Pencil className="h-3 w-3 shrink-0 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100" />
+            <Pencil className="h-3.5 w-3.5 shrink-0 text-muted-foreground/60" />
           </button>
 
           {onDelete && (
             <ConfirmDelete
               label={label}
-              description="Le titre disparaît, les accompagnements restent : ils rejoignent la liste sans titre, à leur place."
+              description="Le titre disparaît du site, les accompagnements restent : ils rejoignent la liste sans titre, à leur place."
               onConfirm={async () => {
                 onDelete()
                 return { ok: true, data: undefined }
@@ -932,23 +1022,26 @@ function ServiceRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'group flex items-center gap-3 bg-white px-4 py-3 transition-colors duration-150 hover:bg-ivory/50',
+        /* `flex-wrap` : sur téléphone, les commandes passent sous le texte
+           plutôt que de l'écraser. */
+        'flex flex-wrap items-center gap-x-3 gap-y-2 bg-white px-3 py-3 transition-colors duration-150 hover:bg-ivory/50 sm:px-4',
         /* C'est le calque qu'on suit : l'original marque la place. */
         isDragging && 'opacity-35',
         !service.isActive && 'opacity-60',
       )}
     >
+      {/* Poignée toujours visible — rien n'apparaît seulement au survol. */}
       <button
         type="button"
         {...attributes}
         {...listeners}
         aria-label={`Déplacer ${service.title}`}
-        className="cursor-grab touch-none text-muted-foreground/50 opacity-0 transition-opacity active:cursor-grabbing group-focus-within:opacity-100 group-hover:opacity-100"
+        className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:cursor-grabbing"
       >
         <GripVertical className="h-4 w-4" />
       </button>
 
-      <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded bg-muted">
+      <span className="relative h-11 w-11 shrink-0 overflow-hidden rounded-lg bg-muted">
         {service.media && (
           <Image
             src={service.media.url}
@@ -960,38 +1053,68 @@ function ServiceRow({
         )}
       </span>
 
-      <div className="min-w-0 flex-1">
+      <div className="min-w-[9rem] flex-1">
         <p className="flex items-center gap-2 truncate text-sm font-medium">
           {service.title}
           {service.method && (
-            <span className="shrink-0 text-[10px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
               {service.method}
+            </span>
+          )}
+          {!service.isActive && (
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              Masqué
             </span>
           )}
         </p>
         <p className="truncate text-xs text-muted-foreground">
-          {service.excerpt || `/${service.slug}`}
+          {service.excerpt || 'Aucune description courte pour l’instant.'}
         </p>
       </div>
 
-      <Switch
-        checked={service.isActive}
-        onCheckedChange={onToggle}
-        aria-label={`Afficher ${service.title}`}
-      />
+      <span className="ml-auto flex shrink-0 items-center gap-1">
+        {/* Le mot « Visible » explique l'interrupteur ; l'aria-label reste
+            le nom complet, propre à chaque ligne. */}
+        <span className="mr-1 flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="hidden text-xs text-muted-foreground sm:inline"
+          >
+            Visible
+          </span>
+          <Switch
+            checked={service.isActive}
+            onCheckedChange={onToggle}
+            aria-label={`Afficher ${service.title}`}
+          />
+        </span>
 
-      <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
         <Button
           variant="ghost"
           size="icon"
           onClick={onEdit}
           aria-label={`Modifier ${service.title}`}
+          title="Modifier"
         >
           <Pencil />
         </Button>
 
-        <ConfirmDelete label={service.title} onConfirm={onDeleted} />
+        <ConfirmDelete
+          label={service.title}
+          description="Cet accompagnement disparaîtra du site immédiatement. Cette action est définitive."
+          onConfirm={onDeleted}
+        />
       </span>
     </li>
+  )
+}
+
+/** Message d'erreur sous un champ — annoncé au lecteur d'écran. */
+function ErreurChamp({ id, messages }: { id: string; messages?: string[] }) {
+  if (!messages || messages.length === 0) return null
+  return (
+    <p id={id} role="alert" className="mt-1.5 text-xs leading-[1.5] text-red-700">
+      {messages[0]}
+    </p>
   )
 }

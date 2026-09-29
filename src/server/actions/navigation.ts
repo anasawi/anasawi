@@ -47,7 +47,7 @@ export async function updateNavigation(
         const key = issue.path.length > 0 ? issue.path.join('.') : '_'
         ;(fieldErrors[key] ??= []).push(issue.message)
       }
-      return fail('Menu invalide.', fieldErrors)
+      return fail('Certains liens du menu sont à corriger.', fieldErrors)
     }
 
     await db

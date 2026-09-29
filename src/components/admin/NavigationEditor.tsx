@@ -1,202 +1,308 @@
 'use client'
 
-import { useState, useTransition } from 'react'
-import { useRouter } from 'next/navigation'
 import { ArrowDown, ArrowUp, Plus, Trash2 } from 'lucide-react'
-import { toast } from 'sonner'
 
+import { useAnchors } from './anchors-context'
+import { ActionMenu } from '@/components/ui/action-menu'
 import { Button } from '@/components/ui/button'
+import { Choice } from '@/components/ui/choice'
 import { Input } from '@/components/ui/input'
-import { updateNavigation } from '@/server/actions/navigation'
+import { Label } from '@/components/ui/label'
+import { anchorId } from '@/lib/utils'
 
-type Item = { label: string; href: string }
+export type NavigationItem = { label: string; href: string }
 type Suggestion = { label: string; href: string; hint: string }
 
 /**
  * Éditeur du menu du site.
  *
- * Des entrées ordonnées {libellé, lien} : ancres des sections de
- * l'accueil, ou liens externes. Le site (en-tête et pied de page) suit
- * immédiatement l'enregistrement.
+ * Des entrées ordonnées {texte du lien, destination}. Le composant ne
+ * possède pas ses données : la liste vit dans l'écran Réglages
+ * (`SettingsWorkbench`), qui l'enregistre depuis SA barre « Enregistrer ».
+ * Ce qu'on tape ici survit donc au passage d'un onglet à l'autre.
+ *
+ * La destination ne se tape pas : on la CHOISIT — une section de la page
+ * d'accueil (par son nom), une autre page du site, ou une adresse web.
+ * La valeur technique (« /#contact ») s'écrit toute seule.
  */
+
+/** Ce que reçoit l'écran Réglages depuis le serveur (voir page.tsx). */
 export type NavigationEditorProps = {
-  initial: Item[]
+  initial: NavigationItem[]
   suggestions: Suggestion[]
 }
 
-export function NavigationEditor({ initial, suggestions }: NavigationEditorProps) {
-  const router = useRouter()
-  const [items, setItems] = useState<Item[]>(initial)
-  const [pending, start] = useTransition()
+/** Chaque lien doit avoir un texte et une destination. */
+export function menuComplet(items: NavigationItem[]): boolean {
+  return items.every((i) => i.label.trim() && i.href.trim())
+}
+
+export function NavigationEditor({
+  items,
+  onChange,
+  suggestions,
+  fieldErrors,
+}: {
+  items: NavigationItem[]
+  onChange: (next: NavigationItem[]) => void
+  suggestions: Suggestion[]
   /** Erreurs de validation renvoyées par l'action, clés `<index>.<champ>`
-      (« 2.href ») — affichées sous l'entrée concernée en plus du toast.
-      Effacées dès que la liste change. */
-  const [fieldErrors, setFieldErrors] = useState<Record<string, string[]>>({})
-  const errorOf = (index: number, field: keyof Item) =>
+      (« 2.href ») — affichées sous l'entrée concernée en plus du toast. */
+  fieldErrors: Record<string, string[]>
+}) {
+  const errorOf = (index: number, field: keyof NavigationItem) =>
     fieldErrors[`${index}.${field}`]?.[0]
 
+  /* Les sections vers lesquelles un lien peut mener : celles de l'accueil
+     (passées par l'écran), sinon celles fournies par le contexte. */
+  const contexte = useAnchors()
+  const sections: { anchor: string; label: string }[] =
+    suggestions.length > 0
+      ? suggestions.map((s) => ({ anchor: anchorId(s.href), label: s.label }))
+      : contexte
+
   const move = (index: number, delta: -1 | 1) => {
-    /* Les erreurs sont indexées par position : toute réorganisation les
-       rend caduques. */
-    setFieldErrors({})
-    setItems((prev) => {
-      const next = [...prev]
-      const target = index + delta
-      const a = next[index]
-      const b = next[target]
-      if (!a || !b) return prev
-      next[index] = b
-      next[target] = a
-      return next
-    })
+    const next = [...items]
+    const target = index + delta
+    const a = next[index]
+    const b = next[target]
+    if (!a || !b) return
+    next[index] = b
+    next[target] = a
+    onChange(next)
   }
 
-  const update = (index: number, patch: Partial<Item>) => {
-    setFieldErrors({})
-    setItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, ...patch } : item)),
-    )
-  }
+  const update = (index: number, patch: Partial<NavigationItem>) =>
+    onChange(items.map((item, i) => (i === index ? { ...item, ...patch } : item)))
+
+  const remove = (index: number) =>
+    onChange(items.filter((_, i) => i !== index))
 
   const remaining = suggestions.filter(
-    (s) => !items.some((item) => item.href === s.href),
+    (s) => !items.some((item) => anchorId(item.href) === anchorId(s.href)),
   )
 
   return (
     <div className="space-y-5">
-      <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
+      <ol className="space-y-3">
         {items.length === 0 && (
-          <li className="px-4 py-10 text-center text-[13px] text-muted-foreground">
+          <li className="rounded-xl border border-dashed border-border bg-white px-4 py-10 text-center text-[13px] text-muted-foreground">
             Votre menu est vide pour l’instant — ajoutez des sections
             ci-dessous.
           </li>
         )}
-        {items.map((item, i) => (
-          <li key={i} className="flex items-center gap-2 px-4 py-3">
-            <div className="flex shrink-0 flex-col">
-              <button
-                type="button"
-                disabled={i === 0}
-                onClick={() => move(i, -1)}
-                aria-label="Monter"
-                className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20"
-              >
-                <ArrowUp className="h-3 w-3" />
-              </button>
-              <button
-                type="button"
-                disabled={i === items.length - 1}
-                onClick={() => move(i, 1)}
-                aria-label="Descendre"
-                className="rounded p-0.5 text-muted-foreground hover:text-foreground disabled:opacity-20"
-              >
-                <ArrowDown className="h-3 w-3" />
-              </button>
-            </div>
-            <div className="w-36 shrink-0">
-              <Input
-                value={item.label}
-                placeholder="Libellé"
-                aria-invalid={errorOf(i, 'label') ? true : undefined}
-                onChange={(e) => update(i, { label: e.target.value })}
-                className="h-8 text-[0.8rem]"
-              />
-              {errorOf(i, 'label') && (
-                <p role="alert" className="mt-1 text-xs text-destructive">
-                  {errorOf(i, 'label')}
-                </p>
-              )}
-            </div>
-            <div className="min-w-0 flex-1">
-              <Input
-                value={item.href}
-                placeholder="contact, /#contact ou https://…"
-                aria-invalid={errorOf(i, 'href') ? true : undefined}
-                onChange={(e) => update(i, { href: e.target.value })}
-                className="h-8 font-mono text-[0.74rem]"
-              />
-              {errorOf(i, 'href') && (
-                <p role="alert" className="mt-1 text-xs text-destructive">
-                  {errorOf(i, 'href')}
-                </p>
-              )}
-            </div>
-            <button
-              type="button"
-              aria-label="Retirer"
-              onClick={() => {
-                setFieldErrors({})
-                setItems((prev) => prev.filter((_, idx) => idx !== i))
-              }}
-              className="shrink-0 rounded p-1.5 text-muted-foreground hover:bg-red-50 hover:text-red-600"
+        {items.map((item, i) => {
+          const nom = item.label.trim() || `Lien ${i + 1}`
+          return (
+            <li
+              key={i}
+              className="rounded-xl border border-border bg-white px-[18px] py-4"
             >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </li>
-        ))}
-      </ul>
+              <div className="mb-3 flex items-center justify-between gap-3">
+                <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+                  {i + 1}. {nom}
+                </p>
+                <ActionMenu
+                  label={`Actions de « ${nom} »`}
+                  items={[
+                    {
+                      label: 'Monter',
+                      icon: <ArrowUp />,
+                      disabled: i === 0,
+                      onSelect: () => move(i, -1),
+                    },
+                    {
+                      label: 'Descendre',
+                      icon: <ArrowDown />,
+                      disabled: i === items.length - 1,
+                      onSelect: () => move(i, 1),
+                    },
+                    {
+                      label: 'Supprimer',
+                      icon: <Trash2 />,
+                      danger: true,
+                      hint: 'Le lien disparaît du menu à l’enregistrement.',
+                      onSelect: () => remove(i),
+                    },
+                  ]}
+                />
+              </div>
 
-      {/* Suggestions : les ancres des sections de l'accueil */}
-      {remaining.length > 0 && (
-        <div>
-          <p className="mb-2 text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-            Ajouter au menu
-          </p>
-          <div className="flex flex-wrap gap-1.5">
-            {remaining.map((s) => (
-              <button
-                key={s.href}
-                type="button"
-                title={s.hint}
-                onClick={() =>
-                  setItems((prev) => [...prev, { label: s.label, href: s.href }])
-                }
-                className="flex items-center gap-1 rounded-full border border-border px-2.5 py-1 text-[0.72rem] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-              >
-                <Plus className="h-3 w-3" />
-                {s.label}
-                <span className="text-muted-foreground/60">{s.hint}</span>
-              </button>
-            ))}
-            <button
-              type="button"
-              onClick={() =>
-                setItems((prev) => [...prev, { label: '', href: '' }])
-              }
-              className="flex items-center gap-1 rounded-full border border-dashed border-border px-2.5 py-1 text-[0.72rem] text-muted-foreground transition-colors hover:border-foreground/30 hover:text-foreground"
-            >
-              <Plus className="h-3 w-3" />
-              Lien personnalisé
-            </button>
-          </div>
-        </div>
-      )}
+              <div className="grid gap-4 sm:grid-cols-2">
+                <div>
+                  <Label
+                    htmlFor={`menu-${i}-texte`}
+                    className="mb-[5px] block text-[12px] font-normal text-ink-soft"
+                  >
+                    Texte du lien
+                  </Label>
+                  <Input
+                    id={`menu-${i}-texte`}
+                    value={item.label}
+                    placeholder="Contact"
+                    aria-invalid={errorOf(i, 'label') ? true : undefined}
+                    onChange={(e) => update(i, { label: e.target.value })}
+                  />
+                  {errorOf(i, 'label') && (
+                    <p role="alert" className="mt-1.5 text-xs text-destructive">
+                      {errorOf(i, 'label')}
+                    </p>
+                  )}
+                </div>
+                <div>
+                  <Destination
+                    id={`menu-${i}`}
+                    value={item.href}
+                    sections={sections}
+                    onChange={(href) => update(i, { href })}
+                  />
+                  {errorOf(i, 'href') && (
+                    <p role="alert" className="mt-1.5 text-xs text-destructive">
+                      {errorOf(i, 'href')}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </li>
+          )
+        })}
+      </ol>
 
-      <div className="flex items-center gap-3">
-        <Button
-          className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
-          disabled={pending || items.some((i) => !i.label.trim() || !i.href.trim())}
-          onClick={() =>
-            start(async () => {
-              const result = await updateNavigation(items)
-              if (result.ok) {
-                setFieldErrors({})
-                toast.success('Menu enregistré — le site est à jour.')
-                router.refresh()
-              } else {
-                setFieldErrors(result.fieldErrors ?? {})
-                toast.error(result.error)
-              }
-            })
-          }
-        >
-          {pending ? 'Enregistrement…' : 'Enregistrer le menu'}
-        </Button>
-        <p className="text-[0.72rem] text-muted-foreground">
-          Un lien mène vers une section de l’accueil (« contact », « /#contact »)
-          ou vers une adresse https://…
+      {/* Ajouter : les sections de l'accueil pas encore dans le menu, et
+          un lien libre. */}
+      <div>
+        <p className="mb-2 text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
+          Ajouter au menu
         </p>
+        <div className="flex flex-wrap gap-2">
+          {remaining.map((s) => (
+            <Button
+              key={s.href}
+              type="button"
+              variant="outline"
+              size="sm"
+              onClick={() =>
+                onChange([...items, { label: s.label, href: s.href }])
+              }
+            >
+              <Plus />
+              {s.label}
+            </Button>
+          ))}
+          <Button
+            type="button"
+            variant="secondary"
+            size="sm"
+            onClick={() => onChange([...items, { label: '', href: '' }])}
+          >
+            <Plus />
+            Un autre lien
+          </Button>
+        </div>
+        {items.length >= 12 && (
+          <p className="mt-2 text-xs text-muted-foreground">
+            Le menu accepte 12 liens au plus.
+          </p>
+        )}
       </div>
+    </div>
+  )
+}
+
+/* ══════════════════════════════════════════════════════════════════════
+   La destination d'un lien — choisie, jamais tapée en jargon
+   ══════════════════════════════════════════════════════════════════════ */
+
+type Mode = 'section' | 'page' | 'web'
+
+function lire(value: string): { mode: Mode; reste: string } {
+  const v = value.trim()
+  if (/^https?:\/\//i.test(v)) return { mode: 'web', reste: v }
+  if (v.startsWith('/#')) return { mode: 'section', reste: v.slice(2) }
+  if (v.startsWith('#')) return { mode: 'section', reste: v.slice(1) }
+  if (v.startsWith('/')) return { mode: 'page', reste: v }
+  /* Une ancre nue (« contact ») ou rien du tout. */
+  return { mode: 'section', reste: v }
+}
+
+function Destination({
+  id,
+  value,
+  sections,
+  onChange,
+}: {
+  id: string
+  value: string
+  sections: { anchor: string; label: string }[]
+  onChange: (next: string) => void
+}) {
+  const { mode, reste } = lire(value)
+
+  /* Une ancre absente de la page (section supprimée, renommée) reste
+     proposée telle quelle, marquée : on ne la perd pas en silence. */
+  const options = sections.map((s) => ({ value: s.anchor, label: s.label }))
+  if (mode === 'section' && reste && !sections.some((s) => s.anchor === reste)) {
+    options.push({ value: reste, label: `${reste} (section introuvable)` })
+  }
+
+  const changerDeMode = (m: Mode) => {
+    if (m === 'section') onChange(options[0] ? `/#${options[0].value}` : '')
+    else if (m === 'page') onChange('/')
+    else onChange('https://')
+  }
+
+  return (
+    <div className="grid gap-2">
+      <Choice
+        id={`${id}-mode`}
+        label="Où mène ce lien ?"
+        value={mode}
+        onChange={changerDeMode}
+        options={[
+          { value: 'section', label: 'Vers une section de la page d’accueil' },
+          { value: 'page', label: 'Vers une autre page du site' },
+          { value: 'web', label: 'Vers une adresse web' },
+        ]}
+      />
+      {mode === 'section' &&
+        (options.length > 0 ? (
+          <Choice
+            id={`${id}-section`}
+            label="Quelle section ?"
+            hideLabel
+            value={reste || options[0]!.value}
+            onChange={(a) => onChange(`/#${a}`)}
+            options={options}
+          />
+        ) : (
+          <p className="text-xs leading-[1.5] text-muted-foreground">
+            Aucune section de la page d’accueil ne peut encore recevoir un
+            lien. Donnez un nom d’ancre à une section (Options avancées de
+            la section) dans l’éditeur du site.
+          </p>
+        ))}
+      {mode === 'page' && (
+        <Input
+          id={`${id}-page`}
+          value={reste}
+          placeholder="/mentions-legales"
+          aria-label="Adresse de la page"
+          onChange={(e) => {
+            const v = e.target.value.trim()
+            onChange(v.startsWith('/') ? v : `/${v}`)
+          }}
+        />
+      )}
+      {mode === 'web' && (
+        <Input
+          id={`${id}-web`}
+          type="url"
+          value={reste}
+          placeholder="https://…"
+          aria-label="Adresse web"
+          onChange={(e) => onChange(e.target.value)}
+        />
+      )}
     </div>
   )
 }

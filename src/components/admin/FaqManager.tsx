@@ -28,6 +28,7 @@ import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
+  DialogDescription,
   DialogFooter,
   DialogHeader,
   DialogTitle,
@@ -67,6 +68,8 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
   const router = useRouter()
   const [items, setItems] = useState(initial)
   const [draft, setDraft] = useState<Draft | null>(null)
+  /* Erreurs du serveur, champ par champ, affichées sous le champ fautif. */
+  const [erreurs, setErreurs] = useState<Record<string, string[]>>({})
   const [pending, start] = useTransition()
 
   const sensors = useSensors(
@@ -86,7 +89,8 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
 
     start(async () => {
       const result = await reorderFaq(next.map((i) => i.id))
-      if (!result.ok) {
+      if (result.ok) toast.success('Ordre enregistré.')
+      else {
         setItems(items)
         toast.error(result.error)
       }
@@ -113,9 +117,11 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
        * et la question modifiée gardait son ancien texte. La notification
        * confirmait pourtant, ce qui est la pire des combinaisons.
        */
+      setErreurs({})
       if (draft.id) {
         const result = await updateFaq(draft.id, payload)
         if (!result.ok) {
+          setErreurs(result.fieldErrors ?? {})
           toast.error(result.error)
           return
         }
@@ -129,6 +135,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
       } else {
         const result = await createFaq(payload)
         if (!result.ok) {
+          setErreurs(result.fieldErrors ?? {})
           toast.error(result.error)
           return
         }
@@ -154,30 +161,29 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
 
   return (
     <>
-      <div className="mb-4 flex items-center justify-between gap-4">
-        <p className="text-[12.5px] text-muted-foreground">
+      <p className="mb-4 rounded-lg border border-blue-deep/20 bg-blue-mist/30 px-3.5 py-2.5 text-[12.5px] leading-[1.5] text-foreground">
+        Les modifications sont visibles sur le site dès que vous enregistrez.
+      </p>
+
+      {/* Sur téléphone, le texte et le bouton passent l'un sous l'autre. */}
+      <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <p className="text-[12.5px] leading-[1.5] text-muted-foreground">
           Les questions visibles aident aussi Google à mieux présenter votre
           site.
         </p>
-        <Button
-          className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
-          onClick={() => setDraft(emptyDraft)}
-        >
+        <Button className="shrink-0" onClick={() => setDraft(emptyDraft)}>
           <Plus />
           Nouvelle question
         </Button>
       </div>
 
       {items.length === 0 ? (
-        <div className="rounded-xl border border-border bg-white px-6 py-14 text-center">
-          <p className="text-[13px] text-muted-foreground">
-            Aucune question pour l’instant — commencez par celles qu’on vous
+        <div className="rounded-lg border border-border bg-white px-6 py-14 text-center">
+          <p className="text-[13px] leading-[1.6] text-muted-foreground">
+            Aucune question pour l’instant. Commencez par celles qu’on vous
             pose le plus souvent.
           </p>
-          <Button
-            className="mt-4 rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
-            onClick={() => setDraft(emptyDraft)}
-          >
+          <Button className="mt-4" onClick={() => setDraft(emptyDraft)}>
             <Plus />
             Ajouter une question
           </Button>
@@ -197,7 +203,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
             items={items.map((i) => i.id)}
             strategy={verticalListSortingStrategy}
           >
-            <ul className="divide-y divide-border overflow-hidden rounded-xl border border-border bg-white">
+            <ul className="divide-y divide-border overflow-hidden rounded-lg border border-border bg-white">
               {items.map((item) => (
                 <FaqRow
                   key={item.id}
@@ -220,6 +226,11 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
                             i.id === item.id ? { ...i, isActive: checked } : i,
                           ),
                         )
+                        toast.success(
+                          checked
+                            ? 'Question affichée sur le site.'
+                            : 'Question masquée du site.',
+                        )
                       } else toast.error(result.error)
                     })
                   }
@@ -241,11 +252,16 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
         open={draft !== null}
         onOpenChange={(open) => !open && setDraft(null)}
       >
-        <DialogContent className="max-w-2xl">
+        <DialogContent className="max-h-[88vh] max-w-2xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {draft?.id ? 'Modifier la question' : 'Nouvelle question'}
             </DialogTitle>
+            <DialogDescription>
+              {draft?.id
+                ? 'Vos changements seront visibles sur le site dès l’enregistrement.'
+                : 'Écrivez la question comme vos visiteurs la posent, puis votre réponse.'}
+            </DialogDescription>
           </DialogHeader>
 
           {draft && (
@@ -257,10 +273,14 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
                 <Input
                   id="f-question"
                   value={draft.question}
+                  placeholder="Combien de temps dure une séance ?"
+                  aria-invalid={erreurs.question ? true : undefined}
+                  aria-describedby={erreurs.question ? 'f-question-erreur' : undefined}
                   onChange={(e) =>
                     setDraft({ ...draft, question: e.target.value })
                   }
                 />
+                <ErreurChamp id="f-question-erreur" messages={erreurs.question} />
               </div>
 
               <div>
@@ -271,14 +291,21 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
                   id="f-answer"
                   rows={6}
                   value={draft.answer}
+                  aria-invalid={erreurs.answer ? true : undefined}
+                  aria-describedby={erreurs.answer ? 'f-answer-erreur' : undefined}
                   onChange={(e) =>
                     setDraft({ ...draft, answer: e.target.value })
                   }
                 />
+                <ErreurChamp id="f-answer-erreur" messages={erreurs.answer} />
+                <p className="mt-1.5 text-xs leading-[1.5] text-muted-foreground">
+                  Quelques phrases suffisent. Ce texte apparaît tel quel sur
+                  le site.
+                </p>
               </div>
 
-              <div className="flex items-center justify-between rounded-md border border-border px-3.5 py-2.5">
-                <Label htmlFor="f-active" className="cursor-pointer">
+              <div className="flex items-center justify-between gap-3 rounded-lg border border-border px-3.5 py-2.5">
+                <Label htmlFor="f-active" className="cursor-pointer text-[13px] text-foreground">
                   Visible sur le site
                 </Label>
                 <Switch
@@ -292,7 +319,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
             </div>
           )}
 
-          <DialogFooter>
+          <DialogFooter className="gap-2 sm:gap-0">
             <Button
               variant="outline"
               onClick={() => setDraft(null)}
@@ -301,11 +328,11 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
               Annuler
             </Button>
             <Button
-              className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
               onClick={save}
               disabled={
                 pending || !draft?.question.trim() || !draft?.answer.trim()
               }
+              aria-busy={pending}
             >
               {pending ? 'Enregistrement…' : 'Enregistrer'}
             </Button>
@@ -335,23 +362,34 @@ function FaqRow({
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition }}
       className={cn(
-        'group flex items-center gap-3 bg-white px-4 py-3 transition-colors duration-150 hover:bg-ivory/50',
+        /* `flex-wrap` : sur téléphone, les commandes passent sous le texte
+           plutôt que de l'écraser. */
+        'flex flex-wrap items-center gap-x-3 gap-y-2 bg-white px-3 py-3 transition-colors duration-150 hover:bg-ivory/50 sm:px-4',
         isDragging && 'relative z-10 rounded-lg border border-border shadow-sm',
         !item.isActive && 'opacity-60',
       )}
     >
+      {/* Poignée toujours visible — rien n'apparaît seulement au survol,
+          qui n'existe pas au doigt. */}
       <button
         type="button"
         {...attributes}
         {...listeners}
         aria-label={`Déplacer « ${item.question} »`}
-        className="cursor-grab touch-none text-muted-foreground/50 opacity-0 transition-opacity active:cursor-grabbing group-focus-within:opacity-100 group-hover:opacity-100"
+        className="flex h-9 w-7 shrink-0 cursor-grab touch-none items-center justify-center rounded-lg text-muted-foreground/60 transition-colors hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50 active:cursor-grabbing"
       >
         <GripVertical className="h-4 w-4" />
       </button>
 
-      <div className="min-w-0 flex-1">
-        <p className="truncate text-sm font-medium">{item.question}</p>
+      <div className="min-w-[9rem] flex-1">
+        <p className="flex items-center gap-2 truncate text-sm font-medium">
+          {item.question}
+          {!item.isActive && (
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              Masquée
+            </span>
+          )}
+        </p>
         <p className="truncate text-xs text-muted-foreground">
           {truncate(item.answer, 110)}
         </p>
@@ -361,24 +399,47 @@ function FaqRow({
           cette question » répétés à l'identique sur dix lignes ne disent
           rien à qui navigue au lecteur d'écran : il entend dix fois le
           même libellé sans savoir lequel agit sur quoi. */}
-      <Switch
-        checked={item.isActive}
-        onCheckedChange={onToggle}
-        aria-label={`Afficher « ${item.question} »`}
-      />
+      <span className="ml-auto flex shrink-0 items-center gap-1">
+        <span className="mr-1 flex items-center gap-2">
+          <span
+            aria-hidden="true"
+            className="hidden text-xs text-muted-foreground sm:inline"
+          >
+            Visible
+          </span>
+          <Switch
+            checked={item.isActive}
+            onCheckedChange={onToggle}
+            aria-label={`Afficher « ${item.question} »`}
+          />
+        </span>
 
-      <span className="flex items-center gap-0.5 opacity-0 transition-opacity group-focus-within:opacity-100 group-hover:opacity-100">
         <Button
           variant="ghost"
           size="icon"
           onClick={onEdit}
           aria-label={`Modifier « ${item.question} »`}
+          title="Modifier"
         >
           <Pencil />
         </Button>
 
-        <ConfirmDelete label={item.question} onConfirm={onDeleted} />
+        <ConfirmDelete
+          label={item.question}
+          description="Cette question disparaîtra du site immédiatement. Cette action est définitive."
+          onConfirm={onDeleted}
+        />
       </span>
     </li>
+  )
+}
+
+/** Message d'erreur sous un champ — annoncé au lecteur d'écran. */
+function ErreurChamp({ id, messages }: { id: string; messages?: string[] }) {
+  if (!messages || messages.length === 0) return null
+  return (
+    <p id={id} role="alert" className="mt-1.5 text-xs leading-[1.5] text-red-700">
+      {messages[0]}
+    </p>
   )
 }
