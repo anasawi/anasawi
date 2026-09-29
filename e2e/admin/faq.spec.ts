@@ -74,7 +74,7 @@ test.describe('FAQ — création', () => {
     await dialogue.getByLabel('Réponse').fill(NOUVELLE.reponse)
     await dialogue.getByRole('button', { name: 'Enregistrer' }).click()
 
-    await attendreNotification(page, 'Question enregistrée.')
+    await attendreNotification(page, 'Question ajoutée.')
     await expect(ligne(page, NOUVELLE.question)).toHaveCount(1)
 
     await persisteApresRechargement(page, async () => {
@@ -121,7 +121,7 @@ test.describe('FAQ — création', () => {
     await dialogue.getByLabel('Question').fill(NOUVELLE.question)
     await dialogue.getByLabel('Réponse').fill(CARACTERES_SPECIAUX)
     await dialogue.getByRole('button', { name: 'Enregistrer' }).click()
-    await attendreNotification(page, 'Question enregistrée.')
+    await attendreNotification(page, 'Question ajoutée.')
 
     /* Une balise doit rester du TEXTE, sur le site comme dans le CMS :
        ni exécutée, ni échappée deux fois. */
@@ -156,7 +156,7 @@ test.describe('FAQ — modification, visibilité, suppression', () => {
     await dialogue.getByLabel('Question').fill(NOUVELLE.question)
     await dialogue.getByLabel('Réponse').fill(NOUVELLE.reponse)
     await dialogue.getByRole('button', { name: 'Enregistrer' }).click()
-    await attendreNotification(page, 'Question enregistrée.')
+    await attendreNotification(page, 'Question ajoutée.')
   })
 
   test.afterEach(async ({ page }) => {
@@ -172,7 +172,7 @@ test.describe('FAQ — modification, visibilité, suppression', () => {
     const dialogue = page.getByRole('dialog')
     await dialogue.getByLabel('Question').fill(MODIFIEE)
     await dialogue.getByRole('button', { name: 'Enregistrer' }).click()
-    await attendreNotification(page, 'Question enregistrée.')
+    await attendreNotification(page, 'Question modifiée.')
 
     await persisteApresRechargement(page, async () => {
       await expect(ligne(page, MODIFIEE)).toHaveCount(1)

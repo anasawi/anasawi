@@ -310,7 +310,7 @@ export function SettingsWorkbench({
 
   const [dirtySeo, setDirtySeo] = useState(false)
   const [seo, setSeo] = useState<SeoDraft>(() =>
-    seoDraftFrom(referencement?.seo ?? null),
+    seoDraftFrom(referencement?.seo ?? null, settings),
   )
   const [seoErrors, setSeoErrors] = useState<Record<string, string[]>>({})
 

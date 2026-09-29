@@ -70,6 +70,19 @@ export function ActionMenu({
     })
   }, [open])
 
+  /* Pas de place en dessous (ligne en bas de l'écran) : le menu s'ouvre
+     AU-DESSUS du bouton. Mesuré une fois le menu rendu — sa hauteur
+     dépend de ses entrées. */
+  useLayoutEffect(() => {
+    if (!open || !position || !menu.current || !button.current) return
+    const hauteur = menu.current.offsetHeight
+    if (position.top + hauteur > window.innerHeight - 8) {
+      const r = button.current.getBoundingClientRect()
+      const top = Math.max(8, r.top - 4 - hauteur)
+      if (top !== position.top) setPosition({ ...position, top })
+    }
+  }, [open, position])
+
   /* Focus sur le premier élément (une fois le menu POSÉ : il n'est rendu
      qu'avec sa position), clic ailleurs, Échap. */
   useEffect(() => {

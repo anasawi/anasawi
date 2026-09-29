@@ -171,14 +171,29 @@ test.describe('Réglages — écriture et propagation', () => {
     await page.getByLabel('Nom du site', { exact: true }).fill(TROP_LONG)
     await enregistrer(page).click()
 
-    await attendreNotification(page, /invalide/i)
+    /* Refus en français courant, et la raison sous le champ. */
+    await attendreNotification(page, 'Certains champs sont à corriger.')
+    const champ = page.getByLabel('Nom du site', { exact: true })
+    await expect(champ).toHaveAttribute('aria-invalid', 'true')
+    await expect(page.getByText('Le nom du site est trop long (120 caractères maximum).')).toBeVisible()
   })
 
-  test('quitter sans enregistrer ne change rien', async ({ page }) => {
+  test('quitter sans enregistrer prévient, puis ne change rien', async ({ page }) => {
     await ouvrirReglages(page)
     await page.getByLabel('Nom du site', { exact: true }).fill('NOM JAMAIS ENREGISTRÉ')
 
+    /* Une saisie non enregistrée : le navigateur demande confirmation
+       avant de quitter — c'est la garde contre le travail perdu. On
+       confirme le départ (sans elle, Playwright « annulerait » le
+       rechargement et le test attendrait pour rien). */
+    const avertissements: string[] = []
+    page.on('dialog', (dialogue) => {
+      avertissements.push(dialogue.type())
+      void dialogue.accept()
+    })
+
     await persisteApresRechargement(page, async () => {
+      expect(avertissements).toContain('beforeunload')
       await expect(page.getByLabel('Nom du site', { exact: true })).toHaveValue(
         REGLAGES.nomDuSite,
       )

@@ -126,7 +126,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
           return
         }
 
-        toast.success('Question enregistrée.')
+        toast.success('Question modifiée.')
         setItems((prev) =>
           prev.map((i) =>
             i.id === draft.id ? { ...i, ...payload, updatedAt: new Date() } : i,
@@ -140,7 +140,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
           return
         }
 
-        toast.success('Question enregistrée.')
+        toast.success('Question ajoutée.')
         const maintenant = new Date()
         setItems((prev) => [
           ...prev,

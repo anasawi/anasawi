@@ -62,9 +62,11 @@ export default async function AdminLayout({
 
         <AdminSidebar userName={userName} nonLus={nonLus} />
 
-        <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
+        {/* Repère « contenu principal » pour les lecteurs d'écran : la
+            barre latérale est la navigation, ceci est l'écran. */}
+        <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           {children}
-        </div>
+        </main>
 
         <Toaster position="bottom-right" richColors closeButton />
       </div>

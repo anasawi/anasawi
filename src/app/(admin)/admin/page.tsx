@@ -1,5 +1,6 @@
 import { and, count, eq, isNull } from 'drizzle-orm'
 import {
+  Eye,
   HelpCircle,
   Image as ImageIcon,
   Mail,
@@ -132,6 +133,15 @@ export default async function DashboardPage() {
       <PageHeader
         title={prenom ? `Bonjour ${prenom}` : 'Bonjour'}
         description="Votre site se modifie ici, à votre rythme — voici où il en est aujourd’hui."
+        action={
+          <Link
+            href="/"
+            className="inline-flex h-9 items-center gap-2 rounded-lg border border-border bg-white px-3.5 text-[13px] text-foreground transition-colors hover:bg-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+          >
+            <Eye className="h-4 w-4" strokeWidth={1.7} />
+            Voir le site
+          </Link>
+        }
       />
 
       <div className="grid grid-cols-1 gap-3.5 sm:grid-cols-2">

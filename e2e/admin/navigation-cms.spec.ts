@@ -64,10 +64,8 @@ test.describe('Navigation dans le CMS', () => {
     ).toBeVisible({ timeout: 20_000 })
 
     const ongletsAvant = context.pages().length
-    await page
-      .getByRole('navigation', { name: 'Raccourcis d’administration' })
-      .getByRole('link', { name: 'Voir le site' })
-      .click()
+    /* « Voir le site » vit dans la barre latérale de l'administration. */
+    await rail(page).getByRole('link', { name: 'Voir le site' }).click()
 
     /* Le site, ICI — pas dans un nouvel onglet. */
     await expect(page).toHaveURL(/\/$/, { timeout: 20_000 })
@@ -91,11 +89,13 @@ test.describe('Navigation dans le CMS', () => {
     context,
   }) => {
     await page.goto('/admin', { waitUntil: 'domcontentloaded' })
-    const carte = page.getByRole('link', { name: /Aperçu/ })
-    await expect(carte).toBeVisible({ timeout: 20_000 })
+    /* Le lien du tableau de bord lui-même — pas celui de la barre
+       latérale, qui a le même nom. */
+    const lien = page.getByRole('main').getByRole('link', { name: 'Voir le site' })
+    await expect(lien).toBeVisible({ timeout: 20_000 })
 
     const ongletsAvant = context.pages().length
-    await carte.click()
+    await lien.click()
     await expect(page).toHaveURL(/\/$/, { timeout: 20_000 })
     expect(context.pages().length).toBe(ongletsAvant)
   })
@@ -110,10 +110,7 @@ test.describe('Navigation dans le CMS', () => {
     })
 
     const ongletsAvant = context.pages().length
-    await page
-      .getByRole('navigation', { name: 'Raccourcis d’administration' })
-      .getByRole('link', { name: 'Voir le site' })
-      .click()
+    await rail(page).getByRole('link', { name: 'Voir le site' }).click()
     await expect(page).toHaveURL(/\/$/, { timeout: 20_000 })
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible()
     expect(context.pages().length).toBe(ongletsAvant)

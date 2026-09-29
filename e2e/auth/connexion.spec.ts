@@ -165,13 +165,12 @@ test.describe('Déconnexion', () => {
     await page.getByRole('button', { name: 'Se connecter' }).click()
     await page.waitForURL(/\/admin/, { timeout: 20_000 })
 
-    /* La déconnexion vit dans le menu de compte du rail, qu'il faut ouvrir :
-       un test qui cliquerait directement sur « Se déconnecter » échouerait
-       sans que rien ne soit cassé. */
+    /* « Se déconnecter » est un bouton nommé de la barre latérale — pas
+       un menu à ouvrir d'abord. */
     await page
-      .getByRole('button', { name: new RegExp(`^Compte — ${COMPTE.nom}`) })
+      .getByRole('navigation', { name: 'Administration' })
+      .getByRole('button', { name: 'Se déconnecter' })
       .click()
-    await page.getByRole('menuitem', { name: 'Se déconnecter' }).click()
 
     await page.waitForURL(/\/login/, { timeout: 20_000 })
 

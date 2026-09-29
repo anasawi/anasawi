@@ -46,12 +46,26 @@ export type SeoDraft = {
   robotsFollow: boolean
 }
 
-export function seoDraftFrom(seo: SeoMeta | null): SeoDraft {
+/**
+ * Le brouillon montre ce que le site AFFICHE : le titre propre à la page
+ * s'il existe, sinon le titre par défaut des réglages (c'est celui que
+ * lit `lib/seo.ts` pour l'accueil). Sans ce repli, le champ se présentait
+ * vide alors que Google affichait bien un titre — et enregistrer le
+ * formulaire vidait ce titre pour de bon.
+ */
+export function seoDraftFrom(
+  seo: SeoMeta | null,
+  defauts?: {
+    defaultSeoTitle: string | null
+    defaultSeoDescription: string | null
+    defaultOgMediaId: string | null
+  },
+): SeoDraft {
   return {
-    title: seo?.title ?? '',
-    description: seo?.description ?? '',
+    title: seo?.title ?? defauts?.defaultSeoTitle ?? '',
+    description: seo?.description ?? defauts?.defaultSeoDescription ?? '',
     canonical: seo?.canonical ?? '',
-    ogMediaId: seo?.ogMediaId ?? null,
+    ogMediaId: seo?.ogMediaId ?? defauts?.defaultOgMediaId ?? null,
     robotsIndex: seo?.robotsIndex ?? true,
     robotsFollow: seo?.robotsFollow ?? true,
   }
