@@ -173,3 +173,12 @@ export async function ouvrirAdmin(page: Page, chemin: string, titre: string | Re
     timeout: 20_000,
   })
 }
+
+/**
+ * La page telle que l'éditeur la montre : elle vit dans un CADRE à la
+ * largeur de l'écran simulé (voir `StageFrame`), pas dans le document de
+ * l'admin — tout ce qui se cherche « dans la page » passe par ici.
+ */
+export function scene(page: Page) {
+  return page.frameLocator('iframe[title="Page en cours d’édition"]')
+}

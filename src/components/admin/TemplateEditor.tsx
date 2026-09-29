@@ -26,6 +26,7 @@ import { toast } from 'sonner'
 
 import type { HistoryEntry } from './history'
 import { SectionInspector, type SectionDraft } from './SectionInspector'
+import { StageFrame, versLaFenetre, type StageFrameHandle } from './StageFrame'
 import { SectionRail } from './SectionRail'
 import { TemplateLibrary } from './TemplateLibrary'
 import { getBlock } from '@/blocks/registry'
@@ -285,7 +286,13 @@ export function TemplateEditor({
     if (wide || !selectedId) setRailOverlay(false)
   }, [wide, selectedId])
 
-  const stageRef = useRef<HTMLDivElement>(null)
+  /* Le cadre de la scène : `frameRef.current.stage` est le conteneur du
+     contenu DANS le cadre (mesures, `querySelector`), `.frame` le cadre
+     dans la fenêtre parente (conversion de coordonnées). */
+  const frameRef = useRef<StageFrameHandle>(null)
+  const stage = () => frameRef.current?.stage ?? null
+  /* Incrémenté quand le cadre est prêt : les mesures repartent. */
+  const [frameVersion, setFrameVersion] = useState(0)
   const paneRef = useRef<HTMLDivElement>(null)
   const [paneWidth, setPaneWidth] = useState(1280)
   const [stageHeight, setStageHeight] = useState(800)
@@ -588,37 +595,42 @@ export function TemplateEditor({
     selectedIdRef.current = selectedId
   }, [scale, selectedId])
 
+  /*
+   * Mesures DANS le cadre : ses coordonnées ne sont pas réduites (la
+   * réduction s'applique au cadre lui-même, dans le document parent), il
+   * n'y a donc plus d'échelle à défaire ici. Les rectangles obtenus sont
+   * en px de la scène, comme avant.
+   */
   const remeasure = useCallback(() => {
-    const stage = stageRef.current
-    if (!stage) return
-    const currentScale = scaleRef.current
+    const scene = stage()
+    if (!scene) return
     const currentSelectedId = selectedIdRef.current
-    setStageHeight(stage.offsetHeight)
+    setStageHeight(scene.offsetHeight)
 
-    const stageBox = stage.getBoundingClientRect()
+    const stageBox = scene.getBoundingClientRect()
     const rects = Array.from(
-      stage.querySelectorAll<HTMLElement>('[data-block-root]'),
+      scene.querySelectorAll<HTMLElement>('[data-block-root]'),
     )
       .map((el) => {
         const r = el.getBoundingClientRect()
         return {
           id: el.dataset.blockId ?? '',
-          top: (r.top - stageBox.top) / currentScale,
-          height: r.height / currentScale,
+          top: r.top - stageBox.top,
+          height: r.height,
         }
       })
       .sort((a, b) => a.top - b.top)
     setSectionRects(rects)
 
     if (currentSelectedId) {
-      const el = stage.querySelector<HTMLElement>(
+      const el = scene.querySelector<HTMLElement>(
         `[data-block-id="${currentSelectedId}"]`,
       )
       if (el) {
         const r = el.getBoundingClientRect()
         setSelectionRect({
-          top: (r.top - stageBox.top) / currentScale,
-          height: r.height / currentScale,
+          top: r.top - stageBox.top,
+          height: r.height,
         })
         return
       }
@@ -630,16 +642,20 @@ export function TemplateEditor({
      (cadre de sélection), sans toucher à l'observateur. */
   useLayoutEffect(() => {
     remeasure()
-  }, [remeasure, scale, selectedId])
+  }, [remeasure, scale, selectedId, frameVersion])
 
   useLayoutEffect(() => {
     remeasure()
-    const stage = stageRef.current
-    if (!stage) return
-    const ro = new ResizeObserver(() => remeasure())
-    ro.observe(stage)
+    const scene = stage()
+    if (!scene) return
+    /* L'observateur du document DU CADRE : celui du parent ne suit pas
+       un élément d'un autre document. */
+    const Observer = scene.ownerDocument.defaultView?.ResizeObserver
+    if (!Observer) return
+    const ro = new Observer(() => remeasure())
+    ro.observe(scene)
     return () => ro.disconnect()
-  }, [remeasure, sections, viewport, mode])
+  }, [remeasure, sections, viewport, mode, frameVersion])
 
   /**
    * Amène une section au centre du canvas.
@@ -651,11 +667,11 @@ export function TemplateEditor({
    */
   const scrollStageTo = useCallback((id: string) => {
     const scroller = paneRef.current
-    const el = stageRef.current?.querySelector<HTMLElement>(
-      `[data-block-id="${id}"]`,
-    )
-    if (!scroller || !el) return
-    const rect = el.getBoundingClientRect()
+    const frame = frameRef.current?.frame
+    const el = stage()?.querySelector<HTMLElement>(`[data-block-id="${id}"]`)
+    if (!scroller || !frame || !el) return
+    /* Le rectangle est dans le cadre : ramené à la fenêtre. */
+    const rect = versLaFenetre(frame, el.getBoundingClientRect(), scaleRef.current)
     const box = scroller.getBoundingClientRect()
     const wanted =
       scroller.scrollTop +
@@ -674,7 +690,7 @@ export function TemplateEditor({
   useLayoutEffect(() => {
     const id = scrollToRef.current
     if (!id) return
-    const el = stageRef.current?.querySelector(`[data-block-id="${id}"]`)
+    const el = stage()?.querySelector(`[data-block-id="${id}"]`)
     if (!el) return
     scrollToRef.current = null
     requestAnimationFrame(() => scrollStageTo(id))
@@ -1366,9 +1382,12 @@ export function TemplateEditor({
       editEl.addEventListener('blur', onBlur)
       editEl.addEventListener('keydown', onKeyDown)
 
-      const range = document.createRange()
+      /* Le champ vit dans le document du cadre : sélection de CE
+         document, pas de celui de l'admin. */
+      const doc = editEl.ownerDocument
+      const range = doc.createRange()
       range.selectNodeContents(editEl)
-      const sel = window.getSelection()
+      const sel = doc.defaultView?.getSelection()
       sel?.removeAllRanges()
       sel?.addRange(range)
     },
@@ -1380,20 +1399,24 @@ export function TemplateEditor({
   const onPaneMove = useCallback(
     (e: React.PointerEvent) => {
       if (!editing) return
-      const stage = stageRef.current
-      if (!stage) return
-      const box = stage.getBoundingClientRect()
-      if (e.clientX < box.left || e.clientX > box.right) {
+      const scene = stage()
+      if (!scene) return
+      /* Le pointeur n'est dans la page que s'il vient du document du
+         cadre ; ses coordonnées sont alors celles du cadre, non réduites
+         — comme les rectangles mesurés. Ailleurs dans le volet (marges
+         grises), rien n'est survolé. */
+      if ((e.target as Node).ownerDocument !== scene.ownerDocument) {
         setHoverId(null)
         return
       }
-      const y = (e.clientY - box.top) / scale
+      const box = scene.getBoundingClientRect()
+      const y = e.clientY - box.top
       const found = sectionRects.find(
         (r) => y >= r.top && y <= r.top + r.height,
       )
       setHoverId((cur) => ((found?.id ?? null) === cur ? cur : (found?.id ?? null)))
     },
-    [editing, scale, sectionRects],
+    [editing, sectionRects],
   )
 
   /* ── Publication ─────────────────────────────────────────────────── */
@@ -1826,31 +1849,45 @@ export function TemplateEditor({
             className="relative mx-auto"
             style={{ width: vw * scale, height: stageHeight * scale }}
           >
+            {/* La page vit dans un cadre à la largeur exacte de l'écran
+                simulé (voir `StageFrame`) : media queries, `vw` et
+                `clamp()` s'y calculent comme sur l'appareil. Les
+                gestionnaires restent sur un élément de l'arbre React :
+                les événements du portail remontent jusqu'ici. */}
             <div
-              ref={stageRef}
               onClickCapture={onStageClick}
               onDoubleClick={onStageDoubleClick}
-              className="origin-top-left rounded-[4px] bg-ivory shadow-[0_2px_14px_rgba(28,32,30,0.09)]"
-              style={{ width: vw, transform: `scale(${scale})` }}
+              className="origin-top-left overflow-hidden rounded-[4px] bg-ivory shadow-[0_2px_14px_rgba(28,32,30,0.09)]"
+              style={{ width: vw * scale, height: stageHeight * scale }}
             >
-              {/* L'identité globale s'applique aussi dans l'éditeur : ce
-                  que l'admin règle dans « Apparence » se voit ici. */}
-              {identityStyles && (
-                <style dangerouslySetInnerHTML={{ __html: identityStyles }} />
-              )}
-              <MotionProvider>
-                {/* Animations coupées : dans l'éditeur, chaque section est
-                    rendue dans son état final, immédiatement visible. */}
-                <AnimProvider enabled={false}>
-                  <SectionsView
-                    key={`${viewport}-${mode}`}
-                    sections={sections}
-                    data={data}
-                    editable={editing}
-                    breakpoint={viewport}
-                  />
-                </AnimProvider>
-              </MotionProvider>
+              <StageFrame
+                ref={frameRef}
+                title="Page en cours d’édition"
+                width={vw}
+                height={stageHeight}
+                scale={scale}
+                onReady={() => setFrameVersion((v) => v + 1)}
+              >
+                {/* L'identité globale s'applique aussi dans l'éditeur : ce
+                    que l'admin règle dans « Apparence » se voit ici. */}
+                {identityStyles && (
+                  <style dangerouslySetInnerHTML={{ __html: identityStyles }} />
+                )}
+                <MotionProvider>
+                  {/* Animations coupées : dans l'éditeur, chaque section
+                      est rendue dans son état final, immédiatement
+                      visible. */}
+                  <AnimProvider enabled={false}>
+                    <SectionsView
+                      key={`${viewport}-${mode}`}
+                      sections={sections}
+                      data={data}
+                      editable={editing}
+                      breakpoint={viewport}
+                    />
+                  </AnimProvider>
+                </MotionProvider>
+              </StageFrame>
             </div>
 
             {/* Cadre de la section sélectionnée */}

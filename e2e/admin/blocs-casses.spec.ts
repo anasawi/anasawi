@@ -1,5 +1,6 @@
 import { expect, test } from '@playwright/test'
 
+import { scene } from '../support/aides'
 import { PAGE_CASSEE } from '../support/fixtures'
 
 /*
@@ -31,27 +32,28 @@ test.describe('Éditeur — diagnostic des blocs cassés', () => {
     await ouvrirLaPageCassee(page)
 
     /* Une section par accident : type inconnu, puis payload invalide. */
-    await expect(page.locator('[data-block-error]')).toHaveCount(2, {
+    const page_ = scene(page)
+    await expect(page_.locator('[data-block-error]')).toHaveCount(2, {
       timeout: 20_000,
     })
 
     /* Le type fautif est écrit noir sur blanc : sans lui, le cartouche
        signale un problème sans dire QUOI réparer. */
     await expect(
-      page.locator(`[data-block-error="${PAGE_CASSEE.typeInconnu}"]`),
+      page_.locator(`[data-block-error="${PAGE_CASSEE.typeInconnu}"]`),
     ).toHaveCount(1)
 
     await expect(
-      page.getByText('Type inconnu au registre').first(),
+      page_.getByText('Type inconnu au registre').first(),
     ).toBeVisible()
-    await expect(page.getByText('Contenu invalide').first()).toBeVisible()
+    await expect(page_.getByText('Contenu invalide').first()).toBeVisible()
   })
 
   test('la section saine de la même page reste affichée', async ({ page }) => {
     await ouvrirLaPageCassee(page)
 
-    await expect(page.getByText(PAGE_CASSEE.texteValide).first()).toBeVisible({
-      timeout: 20_000,
-    })
+    await expect(
+      scene(page).getByText(PAGE_CASSEE.texteValide).first(),
+    ).toBeVisible({ timeout: 20_000 })
   })
 })
