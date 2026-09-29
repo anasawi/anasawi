@@ -32,25 +32,16 @@ test.describe('Médias — vidéo', () => {
     await champ.setInputFiles('e2e/support/fichiers/boucle.webm')
     await page.getByLabel(/^Description/).fill(DESCRIPTION)
 
-    const envois: Promise<number>[] = []
+    let envois = 0
     page.on('request', (r) => {
-      if (r.url().endsWith('/api/upload') && r.method() === 'POST') {
-        /* La taille réelle du corps (multipart binaire), pas
-           `postDataBuffer`, vide pour un envoi de fichier. */
-        envois.push(r.sizes().then((s) => s.requestBodySize))
-      }
+      if (r.url().endsWith('/api/upload') && r.method() === 'POST') envois += 1
     })
 
     await page.getByRole('button', { name: 'Ajouter' }).click()
     /* La recompression est en temps réel : trois secondes de vidéo,
        trois secondes d'attente, plus l'envoi. */
     await attendreNotification(page, 'Vidéo ajoutée.')
-
-    /* Ce qui est parti au serveur tient sous la limite d'envoi. */
-    expect(envois.length).toBe(1)
-    const taille = await envois[0]!
-    expect(taille).toBeLessThan(4 * 1024 * 1024)
-    expect(taille).toBeGreaterThan(1000)
+    expect(envois, 'Un seul envoi.').toBe(1)
 
     /* Dans la médiathèque, c'est une VIDÉO : un lecteur muet, pas une
        image cassée. */
@@ -61,11 +52,16 @@ test.describe('Médias — vidéo', () => {
     await expect(video).toHaveAttribute('src', /\/api\/media\/.+\.(webm|mp4)$/)
     expect(await video.evaluate((v: HTMLVideoElement) => v.muted)).toBe(true)
 
-    /* Et le fichier servi est bien une vidéo, par plages d'octets. */
+    /* Et le fichier servi est bien une vidéo, par plages d'octets — et
+       ce qui est stocké (donc ce qui est parti) tient sous la limite
+       d'envoi, sans être vide. */
     const src = (await video.getAttribute('src'))!
     const reponse = await page.request.get(src, { headers: { Range: 'bytes=0-1' } })
     expect(reponse.status()).toBe(206)
     expect(reponse.headers()['content-type']).toMatch(/^video\//)
+    const total = Number(reponse.headers()['content-range']?.split('/')[1])
+    expect(total).toBeLessThan(4 * 1024 * 1024)
+    expect(total).toBeGreaterThan(1000)
 
     /* Rangement : on la supprime, et elle disparaît. */
     await vignette.hover()

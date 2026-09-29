@@ -226,10 +226,15 @@ async function renommerLAncre(page: Page, valeur: string) {
   if ((await champ.inputValue()) === valeur) return false
   await champ.fill(valeur)
   /* L'écriture est automatique, après une courte accalmie de frappe :
-     l'état de la page en témoigne. */
+     l'état de la page en témoigne — et on attend qu'elle soit ÉCRITE
+     (« Enregistré automatiquement »), pas seulement appliquée à l'écran,
+     avant de quitter la page : partir pendant « Enregistrement… », c'est
+     partir avec un brouillon pas encore parti. */
   await expect(etat(page)).toHaveText('Modifications à publier', {
     timeout: 10_000,
   })
+  await expect(page.getByText('Enregistrement…')).toHaveCount(0, { timeout: 15_000 })
+  await expect(page.getByText('Enregistré automatiquement')).toBeVisible()
   return true
 }
 

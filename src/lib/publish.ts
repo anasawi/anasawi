@@ -1,3 +1,4 @@
+import { getBlock } from '@/blocks/registry'
 import { parseNodeStyles } from '@/lib/node-styles'
 import { parseSectionSettings } from '@/lib/section-settings'
 import type { Section } from '@/server/db/schema'
@@ -88,6 +89,22 @@ function comparableStyles(styles: unknown): unknown {
 }
 
 /**
+ * Contenu ramené à sa forme rendue : passé par le schéma de son bloc,
+ * qui pose les valeurs par défaut des champs absents. Un contenu
+ * enregistré avant l'ajout d'un champ (ou semé sans lui) et le même
+ * contenu relu par « Annuler » — qui, lui, porte les défauts — se
+ * RENDENT pareil : ils doivent se comparer égaux, sinon la page se dit
+ * « à publier » juste après un retour en arrière. Type inconnu ou contenu
+ * invalide : tel quel.
+ */
+function comparablePayload(type: string, payload: unknown): unknown {
+  const block = getBlock(type)
+  if (!block) return payload
+  const parsed = block.schema.safeParse(payload)
+  return parsed.success ? parsed.data : payload
+}
+
+/**
  * Sérialisation stable pour comparaison.
  *
  * Deux états qui se RENDENT pareil doivent se comparer égaux :
@@ -118,6 +135,7 @@ function serialize(rows: SnapshotRow[]): string {
       navLabel: row.navLabel || null,
       settings: parseSectionSettings(row.settings),
       styles: comparableStyles(row.styles),
+      payload: comparablePayload(row.type, row.payload),
     }
   })
   return JSON.stringify(canonical(comparable))
