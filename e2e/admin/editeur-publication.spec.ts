@@ -234,7 +234,10 @@ async function renommerLAncre(page: Page, valeur: string) {
     timeout: 10_000,
   })
   await expect(page.getByText('Enregistrement…')).toHaveCount(0, { timeout: 15_000 })
-  await expect(page.getByText('Enregistré automatiquement')).toBeVisible()
+  /* La barre du haut ET l'inspecteur le disent : on lit la barre. */
+  await expect(
+    page.getByRole('banner').getByText('Enregistré automatiquement'),
+  ).toBeVisible()
   return true
 }
 
