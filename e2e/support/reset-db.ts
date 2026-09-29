@@ -1,4 +1,6 @@
 import { config } from 'dotenv'
+import { copyFile, mkdir } from 'node:fs/promises'
+import path from 'node:path'
 
 import {
   COMPTE,
@@ -8,6 +10,7 @@ import {
   PAGE_ACCUEIL,
   QUESTIONS,
   SERVICES,
+  VIDEO_CINEMA,
 } from './fixtures'
 
 /*
@@ -120,6 +123,31 @@ async function main() {
     socialLinks: [],
   })
 
+  /* ── La vidéo de test, dans le stockage local ───────────────────── */
+  /* Le serveur de test lit ses médias dans `.storage/` (MEDIA_STORAGE=local,
+     voir playwright.config.ts) : la vidéo y est copiée sous sa clé, et
+     la ligne `media` pointe sur la route qui la sert. */
+  await mkdir(path.join(process.cwd(), '.storage'), { recursive: true })
+  await copyFile(
+    path.join(process.cwd(), 'e2e/support/fichiers/boucle.webm'),
+    path.join(process.cwd(), '.storage', VIDEO_CINEMA.cle),
+  )
+  const [video] = await db
+    .insert(media)
+    .values({
+      url: `/api/media/${VIDEO_CINEMA.cle}`,
+      pathname: VIDEO_CINEMA.cle,
+      filename: 'boucle.webm',
+      alt: VIDEO_CINEMA.description,
+      width: 320,
+      height: 180,
+      blurDataUrl: null,
+      mimeType: 'video/webm',
+      size: 0,
+    })
+    .returning()
+  if (!video) throw new Error('Vidéo de test non créée.')
+
   /* ── Page d'accueil, publiée — la seule page du site ────────────── */
   const [accueil] = await db
     .insert(pages)
@@ -217,6 +245,20 @@ async function main() {
         showInNav: false,
         sortOrder: 4,
         payload: { statement: BLOCS_CASSES.texteValide },
+      },
+      {
+        pageId: accueil.id,
+        type: 'videoCinema',
+        anchor: VIDEO_CINEMA.ancre,
+        navLabel: 'En mouvement',
+        showInNav: false,
+        sortOrder: 7,
+        payload: {
+          mediaId: video.id,
+          eyebrow: 'Le cabinet, en mouvement',
+          caption: '',
+          ratio: 'cinema',
+        },
       },
       {
         /* Type absent du registre : ce que devient une section dont le

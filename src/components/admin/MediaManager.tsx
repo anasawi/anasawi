@@ -1,12 +1,12 @@
 'use client'
 
-import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { ConfirmDelete } from './ConfirmDelete'
-import { UploadField } from './MediaPicker'
+import { type MediaKind, UploadField } from './MediaPicker'
+import { MediaThumb } from './MediaThumb'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -28,6 +28,8 @@ export function MediaManager({ items: initial }: { items: Media[] }) {
   const [alt, setAlt] = useState('')
   const [caption, setCaption] = useState('')
   const [pending, start] = useTransition()
+  /** Ce qu'on ajoute : une image, ou une vidéo. */
+  const [genre, setGenre] = useState<MediaKind>('image')
 
   function openEditor(media: Media) {
     setEditing(media)
@@ -62,11 +64,42 @@ export function MediaManager({ items: initial }: { items: Media[] }) {
 
   return (
     <>
-      <UploadField onUploaded={(media) => setItems((prev) => [media, ...prev])} />
+      {/* Image ou vidéo : deux genres, un seul champ d'envoi à la fois. */}
+      <div
+        role="group"
+        aria-label="Genre de média"
+        className="mb-3 flex w-fit overflow-hidden rounded-[8px] border border-line-strong"
+      >
+        {(
+          [
+            ['image', 'Une image'],
+            ['video', 'Une vidéo'],
+          ] as const
+        ).map(([valeur, libelle], index) => (
+          <button
+            key={valeur}
+            type="button"
+            aria-pressed={genre === valeur}
+            onClick={() => setGenre(valeur)}
+            className={`px-3.5 py-[7px] text-[12px] transition-colors ${index > 0 ? 'border-l border-line' : ''} ${
+              genre === valeur
+                ? 'bg-blue-mist font-medium text-blue-deep'
+                : 'bg-white text-ink-soft hover:text-foreground'
+            }`}
+          >
+            {libelle}
+          </button>
+        ))}
+      </div>
+      <UploadField
+        key={genre}
+        kind={genre}
+        onUploaded={(media) => setItems((prev) => [media, ...prev])}
+      />
 
       {items.length === 0 ? (
         <p className="mt-6 rounded-[14px] border-[1.5px] border-dashed border-foreground/20 px-4 py-14 text-center text-[13px] text-muted-foreground">
-          Aucune image pour l’instant — ajoutez-en une ci-dessus.
+          Aucun média pour l’instant — ajoutez-en un ci-dessus.
         </p>
       ) : (
         <ul className="mt-6 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
@@ -76,13 +109,7 @@ export function MediaManager({ items: initial }: { items: Media[] }) {
               className="group relative aspect-4/3 overflow-hidden rounded-[10px] border border-border bg-muted"
               title={media.alt}
             >
-              <Image
-                src={media.url}
-                alt={media.alt}
-                fill
-                sizes="(max-width: 640px) 50vw, 240px"
-                className="object-cover"
-              />
+              <MediaThumb media={media} sizes="(max-width: 640px) 50vw, 240px" />
 
               {/* Voile sombre + actions, au survol seulement. */}
               <span className="absolute inset-0 hidden items-end gap-1.5 bg-[rgba(28,32,30,0.42)] p-2 group-hover:flex">
@@ -140,8 +167,8 @@ export function MediaManager({ items: initial }: { items: Media[] }) {
                 onChange={(e) => setAlt(e.target.value)}
               />
               <p className="mt-1.5 text-xs text-muted-foreground">
-                Décrit l’image pour les lecteurs d’écran et pour Google. Il
-                s’applique partout où l’image est utilisée.
+                Décrit le média pour les lecteurs d’écran et pour Google. Il
+                s’applique partout où il est utilisé.
               </p>
             </div>
 

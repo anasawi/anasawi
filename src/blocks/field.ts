@@ -27,6 +27,8 @@ export type FieldDescriptor = {
   placeholder?: string
   /** Pour `select`. */
   options?: readonly { value: string; label: string }[]
+  /** Pour `media` : images (par défaut) ou vidéos. */
+  mediaKind?: 'image' | 'video'
   /** Pour `list` — champs de chaque élément de la liste. */
   itemFields?: readonly FieldDescriptor[]
   /** Étiquette du bouton d'ajout d'un élément de liste. */

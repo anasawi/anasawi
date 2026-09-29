@@ -44,6 +44,9 @@ const CONTENT_SECURITY_POLICY_REPORT_ONLY = [
   "font-src 'self' https://fonts.gstatic.com data:",
   "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos",
   "connect-src 'self'",
+  /* Vidéos : servies par /api/media ; `blob:` pour la recompression dans
+     l'admin (la source lue depuis un objet blob) et l'aperçu. */
+  "media-src 'self' blob:",
   "frame-src 'self' https://www.youtube-nocookie.com https://player.vimeo.com https://www.google.com",
   "frame-ancestors 'self'",
   "object-src 'none'",

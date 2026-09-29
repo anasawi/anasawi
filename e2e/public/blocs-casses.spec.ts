@@ -66,8 +66,8 @@ test.describe('Accueil portant des blocs cassés', () => {
   }) => {
     await page.goto('/')
 
-    /* Sept sections en base, cinq rendables : le DOM doit en compter
-       cinq, pas sept dont deux vides qui trouent la mise en page. */
+    /* Huit sections en base, six rendables : le DOM doit en compter
+       six, pas huit dont deux vides qui trouent la mise en page. */
     const sections = page.locator('main > section')
     await expect(sections).toHaveCount(BLOCS_CASSES.sectionsRendues)
   })

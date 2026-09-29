@@ -5,6 +5,7 @@ import { field } from '../field'
 import { toParagraphs, type BlockDefinition, type BlockProps } from '../types'
 import { Marquee, Reveal } from '@/components/site/anim'
 import { BlockImage } from '@/components/site/BlockImage'
+import { CinemaVideo } from '@/components/site/CinemaVideo'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { GalleryRail } from '@/components/site/GalleryRail'
@@ -465,6 +466,94 @@ export const listeAtoutsBlock: BlockDefinition<typeof listeAtoutsSchema> = {
     ],
   },
   Component: ListeAtouts,
+}
+
+/* ════════════════════════════════════════════════════════════════════
+   Vidéo — Cinéma
+   Une vidéo à soi, muette, en boucle, sans commande : une image qui
+   bouge. Elle arrive resserrée et s'ouvre jusqu'aux bords en descendant.
+   ════════════════════════════════════════════════════════════════════ */
+
+export const videoCinemaSchema = z.object({
+  mediaId: z.string().uuid().nullable().default(null),
+  eyebrow: z.string().default(''),
+  caption: z.string().default(''),
+  ratio: z.enum(['cinema', 'ecran']).catch('cinema'),
+})
+
+function VideoCinema({
+  data,
+  ctx,
+}: BlockProps<z.output<typeof videoCinemaSchema>>) {
+  const media = ctx.resolveMedia(data.mediaId)
+
+  return (
+    <div className="relative">
+      <SectionIndex index={ctx.index} label="en mouvement" />
+
+      {data.eyebrow && (
+        <div className="container-editorial">
+          <Reveal>
+            <Eyebrow className="justify-center">{data.eyebrow}</Eyebrow>
+          </Reveal>
+        </div>
+      )}
+
+      <figure className={cn(data.eyebrow && 'mt-10 md:mt-12')}>
+        {media ? (
+          <CinemaVideo media={media} ratio={data.ratio} />
+        ) : (
+          /* Sans vidéo choisie : le cadre, vide, avec l'astérisque — pour
+             voir où elle ira, dans l'éditeur comme en ligne. */
+          <div className="container-editorial">
+            <div
+              className={cn(
+                'mx-auto grid w-full max-w-[56rem] place-items-center rounded-[28px] bg-night',
+                data.ratio === 'cinema' ? 'aspect-[21/9]' : 'aspect-video',
+              )}
+            >
+              <Aster className="text-[28px] text-blue" />
+            </div>
+          </div>
+        )}
+        {data.caption && (
+          <Reveal delay={0.12}>
+            <figcaption className="container-editorial mt-4 text-center text-[11px] font-semibold uppercase tracking-[0.24em] text-stone">
+              {data.caption}
+            </figcaption>
+          </Reveal>
+        )}
+      </figure>
+    </div>
+  )
+}
+
+export const videoCinemaBlock: BlockDefinition<typeof videoCinemaSchema> = {
+  label: 'Vidéo — Cinéma',
+  description:
+    'Votre vidéo, muette et en boucle, sans lecteur : elle s’ouvre jusqu’aux bords de l’écran quand on descend.',
+  group: 'Sections',
+  schema: videoCinemaSchema,
+  suggestedAnchor: 'en-mouvement',
+  fields: [
+    field.media('mediaId', 'Vidéo', {
+      mediaKind: 'video',
+      help: 'Depuis votre téléphone ou votre ordinateur. Vingt secondes au plus, sans son : une boucle, pas un film.',
+    }),
+    field.select('ratio', 'Format', [
+      { value: 'cinema', label: 'Cinéma (21:9)' },
+      { value: 'ecran', label: 'Écran (16:9)' },
+    ]),
+    field.text('eyebrow', 'Label supérieur', { placeholder: 'Le cabinet, en mouvement' }),
+    field.text('caption', 'Légende', { full: true }),
+  ],
+  defaults: {
+    mediaId: null,
+    eyebrow: 'Le cabinet, en mouvement',
+    caption: '',
+    ratio: 'cinema',
+  },
+  Component: VideoCinema,
 }
 
 /* ════════════════════════════════════════════════════════════════════

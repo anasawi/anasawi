@@ -5,6 +5,7 @@ import Image from 'next/image'
 import { useState } from 'react'
 
 import { MediaLibraryDialog } from './MediaPicker'
+import { MediaThumb } from './MediaThumb'
 import type { FieldDescriptor } from '@/blocks/field'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -280,19 +281,15 @@ function ImagePickField({
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState(library)
   const selected = items.find((m) => m.id === value) ?? null
+  const kind = field.mediaKind ?? 'image'
+  const nom = kind === 'video' ? 'la vidéo' : 'l’image'
 
   return (
     <Wrapper id={`field-${field.name}`} field={field}>
       <div className="flex items-center gap-2.5">
         {selected ? (
           <span className="relative block h-[42px] w-14 shrink-0 overflow-hidden rounded-[7px] bg-muted">
-            <Image
-              src={selected.url}
-              alt={selected.alt}
-              fill
-              sizes="56px"
-              className="object-cover"
-            />
+            <MediaThumb media={selected} sizes="56px" />
           </span>
         ) : (
           <span
@@ -306,7 +303,7 @@ function ImagePickField({
           onClick={() => setOpen(true)}
           className="text-[12px] text-blue-deep hover:underline"
         >
-          {selected ? 'Changer l’image' : 'Choisir une image'}
+          {selected ? `Changer ${nom}` : `Choisir ${nom.replace('l’', 'une ').replace('la ', 'une ')}`}
         </button>
 
         {selected && (
@@ -323,6 +320,7 @@ function ImagePickField({
       <MediaLibraryDialog
         open={open}
         onOpenChange={setOpen}
+        kind={kind}
         items={items}
         onAdd={(media) => setItems((prev) => [media, ...prev])}
         onSelect={(mediaId) => {

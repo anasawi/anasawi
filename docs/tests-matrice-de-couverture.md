@@ -25,6 +25,7 @@ rien de plus.
 | Menu sous 1024 px | le bouton ouvre et referme le panneau, Échap le referme, un clic sur une entrée le referme | `public/accueil.spec.ts` |
 | Routes | `/`, `/templates`, `/login` en 200 avec le bon titre ; cinq chemins inexistants en **vrai 404** ; chemins de l'application (`/admin`, `/api`, `/login`, `/preview`) jamais servis comme contenu ; retour arrière, avance et rechargement du navigateur | `public/routes.spec.ts` |
 | Blocs irrécupérables | page à 200 malgré deux sections cassées, section saine affichée, en-tête et pied intacts, aucun message technique au visiteur, aucune coquille vide | `public/blocs-casses.spec.ts` |
+| Vidéo — Cinéma | muette, en boucle, sans commande, clic traversant ; joue réellement (`currentTime` avance) ; servie par plages d'octets (206) ; le cadre s'ouvre de 64 % aux bords de l'écran en descendant, coins doux puis droits | `public/video-cinema.spec.ts` |
 | Formulaire de contact | validation locale sans appel serveur, erreurs rattachées à leur champ (`aria-invalid` / `aria-describedby`), adresse invalide, message trop court, consentement, réponses 429 et 500 du serveur, coupure réseau, double clic, envoi réel puis remise à zéro, piège à robots hors écran et hors tabulation | `public/formulaire-contact.spec.ts` |
 | Référencement | `robots.txt` (administration fermée, plan du site désigné), `sitemap.xml` (XML valide, l'accueil et rien d'autre — site à page unique), titre, description, canonique absolue, métadonnées de partage, indexabilité | `public/referencement.spec.ts` |
 | JSON-LD | JSON valide en un seul graphe, coordonnées réelles du cabinet, praticienne, questions fréquentes, `@type` et `@id` sur chaque nœud | `public/referencement.spec.ts` |
@@ -41,6 +42,7 @@ rien de plus.
 | Questions fréquentes | création, question sans réponse, question démesurée, caractères spéciaux conservés tels quels, annulation, modification, visibilité propagée, suppression, et **chaque commande nomme sa question** | `admin/faq.spec.ts` |
 | Brouillon / publication | état « En ligne », une modification bascule l'état **sans toucher au site**, publication, annulation du brouillon, survie au rechargement, menu inerte quand tout est en ligne, aperçu qui ne publie rien | `admin/editeur-publication.spec.ts` |
 | Blocs cassés côté éditeur | cartouche nommant le type fautif et son motif, sections saines toujours affichées — sur l'accueil, dans le cadre de la scène | `admin/blocs-casses.spec.ts` |
+| Médias — vidéo | fichier vidéo recompressé dans le navigateur puis envoyé (< 4 Mo), rangé comme vidéo (lecteur muet, servi en 206), supprimé ensuite ; sans description, rien ne part | `admin/medias-video.spec.ts` |
 | Réglages | valeurs affichées, téléphone modifié **jusqu'au JSON-LD**, adresse jusqu'au pied de page, e-mail invalide, nom démesuré, abandon sans enregistrement | `admin/reglages.spec.ts` |
 | Messages | arrivée depuis le formulaire public, marquage lu / non lu persistant, coordonnées actionnables, confirmation nommée, suppression, ordre antichronologique | `admin/messages.spec.ts` |
 

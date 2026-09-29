@@ -21,12 +21,19 @@ import path from 'node:path'
 const STORE_NAME = 'media'
 const LOCAL_DIR = path.join(process.cwd(), '.storage')
 
-/** Types acceptés à l'envoi. Pas de SVG : un SVG public peut porter du script. */
+/**
+ * Types acceptés à l'envoi. Pas de SVG : un SVG public peut porter du
+ * script. Deux formats vidéo, ceux que le navigateur produit lui-même en
+ * recompressant (voir `lib/video-compression.ts`) : un `.mov` d'iPhone
+ * n'arrive jamais tel quel, il est réencodé avant l'envoi.
+ */
 export const ALLOWED_MIME_TYPES = [
   'image/jpeg',
   'image/png',
   'image/webp',
   'image/avif',
+  'video/mp4',
+  'video/webm',
 ] as const
 
 export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number]
@@ -39,6 +46,8 @@ const EXTENSION_BY_MIME: Record<AllowedMimeType, string> = {
   'image/png': 'png',
   'image/webp': 'webp',
   'image/avif': 'avif',
+  'video/mp4': 'mp4',
+  'video/webm': 'webm',
 }
 
 const MIME_BY_EXTENSION: Record<string, AllowedMimeType> = {
@@ -47,7 +56,11 @@ const MIME_BY_EXTENSION: Record<string, AllowedMimeType> = {
   png: 'image/png',
   webp: 'image/webp',
   avif: 'image/avif',
+  mp4: 'video/mp4',
+  webm: 'video/webm',
 }
+
+export { isVideoMimeType } from './media-kind'
 
 export function isAllowedMimeType(value: string): value is AllowedMimeType {
   return (ALLOWED_MIME_TYPES as readonly string[]).includes(value)

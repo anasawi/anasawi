@@ -65,13 +65,25 @@ export const HERO_ARCHE = {
  * exigent désormais que le reste de la page tienne debout, et que
  * l'éditeur dise clairement laquelle est cassée.
  */
+/**
+ * La vidéo « cinéma » de l'accueil du jeu de test : un fichier de trois
+ * secondes (`fichiers/boucle.webm`, VP9 — le Chromium des tests n'a pas
+ * de décodeur H.264), copié dans le stockage local par `reset-db.ts`
+ * sous cette clé, et une section « Vidéo — Cinéma » qui l'utilise.
+ */
+export const VIDEO_CINEMA = {
+  cle: 'boucle-e2e.webm',
+  description: 'Le cabinet, en mouvement — boucle de test',
+  ancre: 'en-mouvement',
+} as const
+
 export const BLOCS_CASSES = {
   /** Type qui n'existe pas au registre — et qui ne doit jamais y entrer. */
   typeInconnu: 'blocQuiNExistePasAuRegistre',
   /** Texte d'une section valide voisine : elle, doit s'afficher. */
   texteValide: 'Cette section-ci doit rester visible.',
   /** Sections de l'accueil que le visiteur doit voir rendues. */
-  sectionsRendues: 5,
+  sectionsRendues: 6,
   /** Sections cassées, que l'éditeur seul signale. */
   sectionsCassees: 2,
 } as const

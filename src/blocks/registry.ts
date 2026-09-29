@@ -74,6 +74,7 @@ import {
   separateurAsterisqueBlock,
   texteDeuxColonnesBlock,
   videoArcheBlock,
+  videoCinemaBlock,
 } from './templates/contenu'
 import { ctaImageBlock, ctaImmersifBlock } from './templates/cta'
 import {
@@ -178,6 +179,7 @@ export const blockRegistry = {
   texteDeuxColonnes: texteDeuxColonnesBlock,
   listeAtouts: listeAtoutsBlock,
   videoArche: videoArcheBlock,
+  videoCinema: videoCinemaBlock,
   separateurAsterisque: separateurAsterisqueBlock,
 
   /* Être contactée. */
@@ -339,6 +341,7 @@ const CATEGORY_OF: Partial<Record<BlockType, TemplateCategory>> = {
   texteDeuxColonnes: 'Contenu',
   listeAtouts: 'Contenu',
   videoArche: 'Contenu',
+  videoCinema: 'Contenu',
   separateurAsterisque: 'Contenu',
 
   /* Être contactée — le contact ET les invitations à l'action. */

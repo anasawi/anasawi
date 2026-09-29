@@ -1,10 +1,10 @@
 'use client'
 
-import { ImagePlus, Loader2, X } from 'lucide-react'
-import Image from 'next/image'
+import { Clapperboard, ImagePlus, Loader2, X } from 'lucide-react'
 import { useRef, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
+import { MediaThumb } from './MediaThumb'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -16,7 +16,9 @@ import {
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { isVideoMimeType } from '@/lib/media-kind'
 import { cn } from '@/lib/utils'
+import { estUneVideo, preparerLaVideo } from '@/lib/video-compression'
 import { registerMedia } from '@/server/actions/media'
 import type { Media } from '@/server/db/schema'
 
@@ -25,6 +27,22 @@ const MAX_DIMENSION = 2400
 
 /** Doit rester sous la limite de la route d'envoi (4 Mo). */
 const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
+
+/**
+ * Vidéo : une boucle « cinéma » de vingt secondes au plus, en 1280 px au
+ * plus — le débit se calcule pour tenir dans les 4 Mo (voir
+ * `lib/video-compression.ts`).
+ */
+const VIDEO_MAX_SECONDS = 20
+const VIDEO_MAX_EDGE = 1280
+
+/** Ce qu'un sélecteur ou un champ d'envoi accepte. */
+export type MediaKind = 'image' | 'video'
+
+/** Le média est-il du genre demandé ? */
+export function estDuGenre(media: Media, kind: MediaKind): boolean {
+  return isVideoMimeType(media.mimeType) === (kind === 'video')
+}
 
 type PreparedImage = {
   data: Blob
@@ -115,36 +133,35 @@ type Props = {
   library: Media[]
   label?: string
   className?: string
+  /** Images (par défaut) ou vidéos : le sélecteur ne montre que le genre
+      demandé, et l'envoi ne prend que ce genre. */
+  kind?: MediaKind
 }
 
 export function MediaPicker({
   value,
   onChange,
   library,
-  label = 'Image',
+  label,
   className,
+  kind = 'image',
 }: Props) {
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState(library)
   const selected = items.find((m) => m.id === value) ?? null
+  const nom = kind === 'video' ? 'vidéo' : 'image'
 
   return (
     <div className={className}>
-      <Label className="mb-2 block">{label}</Label>
+      <Label className="mb-2 block">{label ?? (kind === 'video' ? 'Vidéo' : 'Image')}</Label>
 
       {selected ? (
         <div className="group relative aspect-4/3 overflow-hidden rounded-md border border-border bg-muted">
-          <Image
-            src={selected.url}
-            alt={selected.alt}
-            fill
-            sizes="280px"
-            className="object-cover"
-          />
+          <MediaThumb media={selected} sizes="280px" />
           <button
             type="button"
             onClick={() => onChange(null)}
-            aria-label="Retirer l’image"
+            aria-label={`Retirer l’${nom}`}
             className="absolute right-2 top-2 rounded-full bg-background/90 p-1.5 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
           >
             <X className="h-3.5 w-3.5" />
@@ -163,14 +180,19 @@ export function MediaPicker({
           onClick={() => setOpen(true)}
           className="flex aspect-4/3 w-full flex-col items-center justify-center gap-2 rounded-md border border-dashed border-border text-sm text-muted-foreground transition-colors hover:border-ring hover:text-foreground"
         >
-          <ImagePlus className="h-5 w-5" />
-          Choisir une image
+          {kind === 'video' ? (
+            <Clapperboard className="h-5 w-5" />
+          ) : (
+            <ImagePlus className="h-5 w-5" />
+          )}
+          Choisir une {nom}
         </button>
       )}
 
       <MediaLibraryDialog
         open={open}
         onOpenChange={setOpen}
+        kind={kind}
         items={items}
         onAdd={(media) => setItems((prev) => [media, ...prev])}
         onSelect={(id) => {
@@ -189,6 +211,7 @@ export function MediaLibraryDialog({
   onAdd,
   onSelect,
   trigger,
+  kind = 'image',
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -196,7 +219,11 @@ export function MediaLibraryDialog({
   onAdd: (media: Media) => void
   onSelect: (id: string) => void
   trigger?: React.ReactNode
+  kind?: MediaKind
 }) {
+  const visibles = items.filter((media) => estDuGenre(media, kind))
+  const nom = kind === 'video' ? 'vidéo' : 'image'
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       {trigger && <DialogTrigger asChild>{trigger}</DialogTrigger>}
@@ -205,21 +232,21 @@ export function MediaLibraryDialog({
         <DialogHeader>
           <DialogTitle>Médiathèque</DialogTitle>
           <DialogDescription>
-            Une image peut être réutilisée dans plusieurs sections. Son texte
-            alternatif se corrige alors à un seul endroit.
+            Une {nom} peut être réutilisée dans plusieurs sections. Sa
+            description se corrige alors à un seul endroit.
           </DialogDescription>
         </DialogHeader>
 
-        <UploadField onUploaded={onAdd} />
+        <UploadField onUploaded={onAdd} kind={kind} />
 
         <div className="max-h-[52vh] overflow-y-auto">
-          {items.length === 0 ? (
+          {visibles.length === 0 ? (
             <p className="py-10 text-center text-sm text-muted-foreground">
-              Aucune image pour l’instant.
+              Aucune {nom} pour l’instant.
             </p>
           ) : (
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-              {items.map((media) => (
+              {visibles.map((media) => (
                 <button
                   key={media.id}
                   type="button"
@@ -227,13 +254,7 @@ export function MediaLibraryDialog({
                   className="group overflow-hidden rounded-md border border-border text-left transition-colors hover:border-ring"
                 >
                   <span className="relative block aspect-square bg-muted">
-                    <Image
-                      src={media.url}
-                      alt={media.alt}
-                      fill
-                      sizes="180px"
-                      className="object-cover"
-                    />
+                    <MediaThumb media={media} sizes="180px" />
                   </span>
                   <span className="block truncate px-2 py-1.5 text-xs text-muted-foreground">
                     {media.filename}
@@ -250,33 +271,60 @@ export function MediaLibraryDialog({
 
 export function UploadField({
   onUploaded,
+  kind = 'image',
 }: {
   onUploaded: (media: Media) => void
+  /** Images (par défaut) ou vidéos — le champ n'accepte qu'un genre à la
+      fois, et prépare le fichier en conséquence. */
+  kind?: MediaKind
 }) {
   const [file, setFile] = useState<File | null>(null)
   const [alt, setAlt] = useState('')
   const [pending, start] = useTransition()
+  /** Avancement de la recompression vidéo (0 à 1), null sinon. */
+  const [progression, setProgression] = useState<number | null>(null)
   const inputRef = useRef<HTMLInputElement>(null)
+  const video = kind === 'video'
 
   function reset() {
     setFile(null)
     setAlt('')
+    setProgression(null)
     if (inputRef.current) inputRef.current.value = ''
   }
 
   function submit() {
     if (!file) return
     if (!alt.trim()) {
-      toast.error('Le texte alternatif est obligatoire.')
+      toast.error(
+        video
+          ? 'La description de la vidéo est obligatoire.'
+          : 'Le texte alternatif est obligatoire.',
+      )
+      return
+    }
+    if (video && !estUneVideo(file)) {
+      toast.error('Ce fichier n’est pas une vidéo.')
       return
     }
 
     start(async () => {
       try {
-        const prepared = await prepareImage(file)
+        const prepared = video
+          ? await preparerLaVideo(file, {
+              maxBytes: MAX_UPLOAD_BYTES,
+              maxSeconds: VIDEO_MAX_SECONDS,
+              maxEdge: VIDEO_MAX_EDGE,
+              onProgress: setProgression,
+            })
+          : await prepareImage(file)
 
         if (prepared.data.size > MAX_UPLOAD_BYTES) {
-          toast.error('Image trop lourde, même après compression.')
+          toast.error(
+            video
+              ? 'Vidéo trop lourde, même après compression.'
+              : 'Image trop lourde, même après compression.',
+          )
           return
         }
 
@@ -322,41 +370,57 @@ export function UploadField({
         }
 
         onUploaded(result.data)
-        toast.success('Image ajoutée.')
+        toast.success(video ? 'Vidéo ajoutée.' : 'Image ajoutée.')
         reset()
       } catch (error) {
         console.error(error)
-        toast.error('Upload impossible.')
+        toast.error(
+          error instanceof Error && video ? error.message : 'Upload impossible.',
+        )
+        setProgression(null)
       }
     })
   }
+
+  const etat = !pending
+    ? 'Ajouter'
+    : progression !== null && progression < 1
+      ? `Compression… ${Math.round(progression * 100)} %`
+      : 'Envoi…'
 
   return (
     <div className="rounded-md border border-dashed border-border p-4">
       <div className="grid gap-3 sm:grid-cols-[1fr_1fr_auto] sm:items-end">
         <div>
-          <Label htmlFor="upload-file" className="mb-1.5 block text-xs">
+          <Label htmlFor={`upload-file-${kind}`} className="mb-1.5 block text-xs">
             Fichier
           </Label>
           <Input
-            id="upload-file"
+            id={`upload-file-${kind}`}
             ref={inputRef}
             type="file"
-            accept="image/jpeg,image/png,image/webp,image/avif"
+            /* `video/*` : sur un téléphone, la pellicule ET la caméra sont
+               proposées ; un `.mov` d'iPhone est accepté puis réencodé. */
+            accept={
+              video ? 'video/*,.mov,.mp4,.m4v,.webm' : 'image/jpeg,image/png,image/webp,image/avif'
+            }
             onChange={(e) => setFile(e.target.files?.[0] ?? null)}
             className="cursor-pointer text-xs file:mr-3 file:cursor-pointer"
           />
         </div>
 
         <div>
-          <Label htmlFor="upload-alt" className="mb-1.5 block text-xs">
-            Texte alternatif <span className="text-destructive">*</span>
+          <Label htmlFor={`upload-alt-${kind}`} className="mb-1.5 block text-xs">
+            {video ? 'Description' : 'Texte alternatif'}{' '}
+            <span className="text-destructive">*</span>
           </Label>
           <Input
-            id="upload-alt"
+            id={`upload-alt-${kind}`}
             value={alt}
             onChange={(e) => setAlt(e.target.value)}
-            placeholder="Décrivez l’image en une phrase"
+            placeholder={
+              video ? 'Décrivez la vidéo en une phrase' : 'Décrivez l’image en une phrase'
+            }
           />
         </div>
 
@@ -367,13 +431,14 @@ export function UploadField({
           className={cn(pending && 'pointer-events-none')}
         >
           {pending ? <Loader2 className="animate-spin" /> : null}
-          {pending ? 'Envoi…' : 'Ajouter'}
+          {etat}
         </Button>
       </div>
 
       <p className="mt-2.5 text-xs text-muted-foreground">
-        JPEG, PNG, WebP ou AVIF. L’image est redimensionnée et compressée
-        automatiquement avant l’envoi — inutile de la préparer vous-même.
+        {video
+          ? `Depuis votre téléphone ou votre ordinateur, n’importe quel format. La vidéo est recompressée ici même avant l’envoi — sans son, ${VIDEO_MAX_SECONDS} secondes au plus, ${VIDEO_MAX_EDGE} px de large : une boucle, pas un film.`
+          : 'JPEG, PNG, WebP ou AVIF. L’image est redimensionnée et compressée automatiquement avant l’envoi — inutile de la préparer vous-même.'}
       </p>
     </div>
   )
