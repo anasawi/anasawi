@@ -185,8 +185,11 @@
   html {
     -webkit-text-size-adjust: 100%;
     scroll-behavior: smooth;
-    /* Compense la hauteur du header quand on saute vers une ancre */
-    scroll-padding-top: 6rem;
+    /* Ce que le NAVIGATEUR laisse sous la capsule quand c'est lui qui
+       défile — tabulation vers un champ, ⌘F, `scrollIntoView`. Les
+       ancres du menu ne passent plus par là : SmoothScroll les pose
+       lui-même (voir `positionDe`), avec la même hauteur de capsule. */
+    scroll-padding-top: 80px;
   }
 
   body {

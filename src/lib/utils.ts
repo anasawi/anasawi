@@ -5,34 +5,38 @@ export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs))
 }
 
-/** Slugifie une chaîne : accents retirés, minuscules, tirets. */
 /**
- * Lien d'une entrée de menu : ancre nue (`contact`) → `#contact` ;
- * chemin interne (`/approche`) ou URL complète → tel quel.
+ * Lien de navigation à partir d'une valeur du CMS.
+ *
+ * Les entrées peuvent être écrites de quatre façons — `a-propos`,
+ * `#a-propos`, `/#a-propos` ou `/une-page` — selon qu'elles viennent d'une
+ * section de l'accueil, d'un ancien enregistrement, de la page Navigation
+ * ou d'un lien externe. Une ancre désigne TOUJOURS une section de
+ * l'accueil : le lien produit est donc `/#a-propos`, jamais `#a-propos`.
+ * La différence ne se voit pas depuis l'accueil (même page, même ancre) ;
+ * depuis une autre page — mentions légales, page d'un accompagnement —
+ * `#a-propos` cherchait la section DANS CETTE PAGE, ne la trouvait pas, et
+ * le menu ne menait nulle part.
+ *
  * Module neutre : utilisable côté serveur (Footer) comme côté client
  * (Header) — une fonction exportée d'un module `use client` ne peut pas
  * être appelée depuis un composant serveur.
  */
-/**
- * Lien de navigation à partir d'une valeur du CMS.
- *
- * Les entrées peuvent être écrites de trois façons — `a-propos`, `#a-propos`
- * ou `/une-page` — selon qu'elles viennent d'un ancien enregistrement, de la
- * page Navigation ou d'un lien externe. La fonction est idempotente : elle
- * n'ajoute un `#` que s'il manque, sans quoi on obtient `##a-propos`, qui ne
- * correspond à aucune ancre.
- */
 export function navHref(anchor: string): string {
-  return anchor.startsWith('/') ||
-    anchor.startsWith('http') ||
-    anchor.startsWith('#')
-    ? anchor
-    : `#${anchor}`
+  if (anchor.startsWith('/') || anchor.startsWith('http')) return anchor
+  return `/#${anchorId(anchor)}`
 }
 
-/** Identifiant de section correspondant à une entrée de navigation. */
+/**
+ * Identifiant de section correspondant à une entrée de navigation —
+ * `a-propos` pour `a-propos`, `#a-propos` et `/#a-propos`. Vide pour un
+ * lien qui n'est pas une ancre de l'accueil.
+ */
 export function anchorId(anchor: string): string {
-  return anchor.startsWith('#') ? anchor.slice(1) : anchor
+  if (anchor.startsWith('/#')) return anchor.slice(2)
+  if (anchor.startsWith('#')) return anchor.slice(1)
+  if (anchor.startsWith('/') || anchor.startsWith('http')) return ''
+  return anchor
 }
 
 export function slugify(input: string): string {

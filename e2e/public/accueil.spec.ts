@@ -1,4 +1,4 @@
-import { expect, test } from '@playwright/test'
+import { expect, test, type Locator } from '@playwright/test'
 
 import {
   collecterErreursConsole,
@@ -7,6 +7,25 @@ import {
   pasDeDebordementHorizontal,
 } from '../support/aides'
 import { REGLAGES, SERVICES } from '../support/fixtures'
+
+/**
+ * `#contact` pour un lien `#contact` ou `/#contact` — les ancres du menu
+ * mènent toutes à l'accueil, donc s'écrivent `/#…` ; `null` pour un lien
+ * qui n'est pas une ancre (`/mentions-legales`, `https://…`).
+ */
+function ancreDe(href: string | null): string | null {
+  if (!href) return null
+  const hash = href.startsWith('/#') ? href.slice(1) : href
+  return hash.startsWith('#') && hash.length > 1 ? hash : null
+}
+
+/** Les `href` du menu qui sont des ancres, tels qu'écrits dans le DOM. */
+async function ancresDuMenu(nav: Locator): Promise<string[]> {
+  const hrefs = await Promise.all(
+    (await nav.getByRole('link').all()).map((l) => l.getAttribute('href')),
+  )
+  return hrefs.filter((h): h is string => ancreDe(h) !== null)
+}
 
 /*
  * Page d'accueil — ce que voit un visiteur qui arrive.
@@ -133,12 +152,13 @@ test.describe('Ancres de navigation', () => {
 
     for (const lien of liens) {
       const href = await lien.getAttribute('href')
-      if (!href?.startsWith('#') || href === '#') continue
+      const ancre = ancreDe(href)
+      if (!ancre) continue
 
       /* Sélecteur par attribut : `CSS.escape` n'existe que dans le
          navigateur, pas dans le processus de test qui construit le
          localisateur. Un identifiant ne contient jamais de guillemet. */
-      const cible = page.locator(`[id="${href.slice(1)}"]`)
+      const cible = page.locator(`[id="${ancre.slice(1)}"]`)
       await expect(
         cible,
         `L'ancre ${href} du menu ne désigne aucune section.`,
@@ -146,38 +166,100 @@ test.describe('Ancres de navigation', () => {
     }
   })
 
-  test('un clic sur une entrée du menu amène à la section', async ({ page }) => {
+  test('chaque entrée du menu pose sa section pile à son bord haut', async ({
+    page,
+  }) => {
     await page.goto('/')
 
     const nav = await ouvrirLeMenu(page)
-    const lien = nav.getByRole('link').first()
-    const href = await lien.getAttribute('href')
-    test.skip(!href?.startsWith('#'), 'Le menu ne contient pas d’ancre.')
+    const hrefs = await ancresDuMenu(nav)
+    test.skip(hrefs.length === 0, 'Le menu ne contient pas d’ancre.')
 
     /*
-     * Point de départ : le HAUT de la section est sous la ligne de
-     * flottaison. Le hero laisse volontairement dépasser le bord de la
-     * section suivante — c'est le signe qu'il y a une suite — donc
-     * « pas un pixel visible » serait une garde fausse. Ce qui compte,
-     * c'est que le défilement ait réellement du chemin à faire.
+     * TOUTES les entrées, pas la première : la première suit le hero, qui
+     * est la seule partie de la page dont la hauteur dépend de l'écran.
+     * Une erreur d'arrivée qui ne se voit que sur la troisième section
+     * — c'est ce qu'a vu Valentin — passerait sinon entre les mailles.
+     *
+     * Et depuis le HAUT de la page à chaque fois : un trajet long, qui
+     * traverse des images encore en chargement, est le plus exposé.
      */
-    const cible = page.locator(`[id="${href!.slice(1)}"]`)
-    const hauteurFenetre = page.viewportSize()?.height ?? 900
-    const avant = await cible.boundingBox()
+    for (const href of hrefs) {
+      await page.evaluate(() => window.scrollTo({ top: 0, behavior: 'instant' }))
+      await page.waitForTimeout(150)
+
+      const menu = await ouvrirLeMenu(page)
+      const lien = menu.locator(`a[href="${href}"]`)
+      const ancre = ancreDe(href)!
+      const cible = page.locator(`[id="${ancre.slice(1)}"]`)
+      const hauteurFenetre = page.viewportSize()?.height ?? 900
+
+      /* Point de départ : le haut de la section est sous la ligne de
+         flottaison, sinon le défilement n'aurait pas de chemin à faire
+         et le test ne prouverait rien. */
+      const avant = await cible.boundingBox()
+      expect(
+        avant?.y ?? 0,
+        `${href} : le haut de la section est déjà dans l'écran.`,
+      ).toBeGreaterThan(hauteurFenetre * 0.5)
+
+      await lien.click()
+      /* Le défilement inertiel met environ une seconde à se poser. */
+      await page.waitForTimeout(1200)
+
+      /*
+       * LA règle d'arrivée, celle de SmoothScroll : une section se pose à
+       * son bord haut ; si sa marge intérieure ne suffit pas à passer sous
+       * la capsule (80 px), elle descend juste de la différence. Le test
+       * recalcule la même valeur plutôt que d'admettre une fourchette :
+       * « à peu près là » est exactement ce qui a été signalé.
+       */
+      const attendu = await cible.evaluate((section) => {
+        const marge = parseFloat(getComputedStyle(section).paddingTop) || 0
+        return Math.max(0, 80 - marge)
+      })
+      const apres = await cible.boundingBox()
+      expect(
+        Math.abs((apres?.y ?? 9999) - attendu),
+        `${href} : arrivée à ${apres?.y}px, attendu ${attendu}px.`,
+      ).toBeLessThanOrEqual(2)
+
+      /* L'adresse suit, pour que le lien se partage et que « retour »
+         ramène où on était. */
+      expect(new URL(page.url()).hash).toBe(ancre)
+    }
+  })
+
+  test('l’ancre d’arrivée tient une fois la page entièrement chargée', async ({
+    page,
+  }) => {
+    /*
+     * Arriver sur `/#…` (lien partagé, retour depuis une autre page) : le
+     * navigateur saute AVANT que polices et images aient donné à la page
+     * sa hauteur finale, et se trompe d'autant. SmoothScroll doit reposer
+     * la page une fois tout chargé.
+     */
+    await page.goto('/')
+    const nav = await ouvrirLeMenu(page)
+    const hrefs = await ancresDuMenu(nav)
+    test.skip(hrefs.length === 0, 'Le menu ne contient pas d’ancre.')
+
+    /* La dernière ancre : le plus long trajet, donc le plus exposé aux
+       décalages de chargement. */
+    const ancre = ancreDe(hrefs[hrefs.length - 1]!)!
+    await page.goto(`/${ancre}`, { waitUntil: 'load' })
+    await page.waitForTimeout(1500)
+
+    const cible = page.locator(`[id="${ancre.slice(1)}"]`)
+    const attendu = await cible.evaluate((section) => {
+      const marge = parseFloat(getComputedStyle(section).paddingTop) || 0
+      return Math.max(0, 80 - marge)
+    })
+    const position = await cible.boundingBox()
     expect(
-      avant?.y ?? 0,
-      'Le haut de la section est déjà dans l’écran : le test ne prouverait rien.',
-    ).toBeGreaterThan(hauteurFenetre * 0.5)
-
-    await lien.click()
-    /* Le défilement inertiel met environ une seconde à se poser. */
-    await page.waitForTimeout(1200)
-
-    /* Arrivée : le haut de la section est posé sous la capsule de
-       navigation (`scroll-mt-24`, 96 px), à quelques pixels près. */
-    const apres = await cible.boundingBox()
-    expect(apres?.y ?? 9999).toBeLessThan(130)
-    expect(apres?.y ?? -9999).toBeGreaterThan(-4)
+      Math.abs((position?.y ?? 9999) - attendu),
+      `${ancre} : posée à ${position?.y}px, attendu ${attendu}px.`,
+    ).toBeLessThanOrEqual(2)
   })
 
   test('le lien d’évitement donne le focus au contenu', async ({ page }) => {

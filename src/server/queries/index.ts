@@ -383,27 +383,43 @@ export const getNavigationItems = cache(
       }
 
       const [home] = await db
-        .select({ id: pages.id })
+        .select({ id: pages.id, publishedSnapshot: pages.publishedSnapshot })
         .from(pages)
         .where(and(eq(pages.isHome, true), eq(pages.status, 'published')))
         .limit(1)
 
       if (!home) return []
 
-      const rows = await db
-        .select({
-          navLabel: sections.navLabel,
-          anchor: sections.anchor,
-        })
-        .from(sections)
-        .where(
-          and(
-            eq(sections.pageId, home.id),
-            eq(sections.showInNav, true),
-            eq(sections.isActive, true),
-          ),
-        )
-        .orderBy(asc(sections.sortOrder))
+      /*
+       * Les MÊMES sections que celles que le visiteur a sous les yeux :
+       * l'instantané publié. Lire les sections vivantes ici, comme avant,
+       * faisait pointer le menu vers l'ancre d'un brouillon (« approche »
+       * renommée en « ma-methode » dans l'admin, pas encore publiée)
+       * alors que la page servait encore `id="approche"` — un lien mort
+       * pour les visiteurs, jusqu'à la publication. Sans instantané (page
+       * publiée avant l'ère brouillon→publier), les sections vivantes
+       * restent la seule source.
+       */
+      const snapshot = sectionsFromSnapshot(home.publishedSnapshot)
+      const rows = snapshot
+        ? snapshot
+            .filter((s) => !s.parentId && s.showInNav && s.isActive)
+            .sort((a, b) => a.sortOrder - b.sortOrder)
+            .map((s) => ({ navLabel: s.navLabel, anchor: s.anchor }))
+        : await db
+            .select({
+              navLabel: sections.navLabel,
+              anchor: sections.anchor,
+            })
+            .from(sections)
+            .where(
+              and(
+                eq(sections.pageId, home.id),
+                eq(sections.showInNav, true),
+                eq(sections.isActive, true),
+              ),
+            )
+            .orderBy(asc(sections.sortOrder))
 
       return rows
         .filter((r) => r.navLabel && r.anchor)

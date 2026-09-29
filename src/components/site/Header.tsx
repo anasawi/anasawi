@@ -112,11 +112,11 @@ export function Header({
     if (items.length === 0) return
 
     const targets = items
-      /* Seules les ancres de la page courante sont concernées. */
-      .filter(
-        (item) => !item.anchor.startsWith('/') && !item.anchor.startsWith('http'),
-      )
-      .map((item) => document.getElementById(anchorId(item.anchor)))
+      /* Seules les ancres présentes dans la page courante sont
+         concernées : `getElementById` ne trouve rien pour les autres. */
+      .map((item) => anchorId(item.anchor))
+      .filter((id) => id !== '')
+      .map((id) => document.getElementById(id))
       .filter((el): el is HTMLElement => el !== null)
 
     if (targets.length === 0) return

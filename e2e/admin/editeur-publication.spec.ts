@@ -1,6 +1,6 @@
 import { expect, test, type Page } from '@playwright/test'
 
-import { attendreNotification } from '../support/aides'
+import { attendreNotification, ouvrirLeMenu } from '../support/aides'
 import { SERVICES } from '../support/fixtures'
 
 /*
@@ -194,6 +194,98 @@ test.describe('Brouillon et publication', () => {
     await expect(
       page.getByText('Le brouillon est identique à la version en ligne.'),
     ).toBeVisible()
+  })
+})
+
+/*
+ * L'ancre d'une section, changée depuis l'admin.
+ *
+ * Le menu du site est dérivé des sections : renommer « accompagnements »
+ * en « nos-accompagnements » doit déplacer l'entrée du menu — mais SEULEMENT
+ * quand c'est publié. Avant, le menu lisait les sections vivantes pendant
+ * que la page servait l'instantané : un lien du menu visait un `id` qui
+ * n'existait plus dans la page — mort, jusqu'à la publication.
+ */
+const ANCRE_ORIGINE = 'accompagnements'
+const ANCRE_ESSAI = 'nos-accompagnements'
+
+/** Ouvre l'inspecteur de la section et son groupe « Options avancées ». */
+async function ouvrirLesOptionsAvancees(page: Page, nom: string) {
+  await rangee(page, nom).click()
+  const avancees = page.getByRole('button', { name: 'Options avancées' })
+  await expect(avancees).toBeVisible()
+  if ((await avancees.getAttribute('aria-expanded')) !== 'true') {
+    await avancees.click()
+  }
+  return page.getByLabel('Lien d’ancrage')
+}
+
+/** Donne à l'ancre la valeur voulue et attend qu'elle soit écrite. */
+async function renommerLAncre(page: Page, valeur: string) {
+  const champ = await ouvrirLesOptionsAvancees(page, SECTION_ACCOMPAGNEMENTS)
+  if ((await champ.inputValue()) === valeur) return false
+  await champ.fill(valeur)
+  /* L'écriture est automatique, après une courte accalmie de frappe :
+     l'état de la page en témoigne. */
+  await expect(etat(page)).toHaveText('Modifications à publier', {
+    timeout: 10_000,
+  })
+  return true
+}
+
+test.describe('Ancre modifiée depuis l’admin', () => {
+  test.afterEach(async ({ page }) => {
+    /* Quoi qu'il soit arrivé : l'ancre d'origine, en ligne. */
+    await ouvrirEditeur(page)
+    const changee = await renommerLAncre(page, ANCRE_ORIGINE)
+    if (changee || (await etat(page).textContent()) !== 'En ligne') {
+      await publier(page).click()
+      await attendreNotification(page, 'En ligne ✓')
+    }
+    await expect(etat(page)).toHaveText('En ligne')
+  })
+
+  test('le menu suit l’ancre renommée — après publication seulement', async ({
+    page,
+  }) => {
+    await ouvrirEditeur(page)
+    await renommerLAncre(page, ANCRE_ESSAI)
+
+    /* Pas encore publié : le site — menu COMPRIS — est celui d'avant.
+       Un menu qui pointerait déjà vers la nouvelle ancre viserait un
+       identifiant absent de la page servie. */
+    await page.goto('/')
+    const menuAvant = await ouvrirLeMenu(page)
+    await expect(menuAvant.locator(`a[href$="#${ANCRE_ORIGINE}"]`)).toHaveCount(1)
+    await expect(menuAvant.locator(`a[href$="#${ANCRE_ESSAI}"]`)).toHaveCount(0)
+    await expect(page.locator(`[id="${ANCRE_ORIGINE}"]`)).toHaveCount(1)
+
+    await ouvrirEditeur(page)
+    await publier(page).click()
+    await attendreNotification(page, 'En ligne ✓')
+
+    /* Publié : menu et page ont changé ENSEMBLE. */
+    await page.goto('/')
+    const menu = await ouvrirLeMenu(page)
+    await expect(menu.locator(`a[href$="#${ANCRE_ORIGINE}"]`)).toHaveCount(0)
+    const lien = menu.locator(`a[href$="#${ANCRE_ESSAI}"]`)
+    await expect(lien).toHaveCount(1)
+    const cible = page.locator(`[id="${ANCRE_ESSAI}"]`)
+    await expect(cible).toHaveCount(1)
+
+    /* Et le lien fait son travail, pile au bord haut de la section — la
+       même règle que pour les ancres d'origine (voir accueil.spec). */
+    await lien.click()
+    await page.waitForTimeout(1200)
+    const attendu = await cible.evaluate((section) => {
+      const marge = parseFloat(getComputedStyle(section).paddingTop) || 0
+      return Math.max(0, 80 - marge)
+    })
+    const position = await cible.boundingBox()
+    expect(
+      Math.abs((position?.y ?? 9999) - attendu),
+      `Arrivée à ${position?.y}px, attendu ${attendu}px.`,
+    ).toBeLessThanOrEqual(2)
   })
 })
 
