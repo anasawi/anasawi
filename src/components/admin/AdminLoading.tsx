@@ -5,13 +5,12 @@ import { AdminContent } from '@/components/admin/AdminContent'
  * segments qui chargent leurs données depuis Neon (`force-dynamic`).
  *
  * Sobre : la place de l'en-tête, puis trois cartes grises qui pulsent.
- * Volontairement posé segment par segment (réglages, médias, messages…)
- * et NON à la racine `/admin` : un `loading.tsx` racine envelopperait aussi
- * l'éditeur de page (`/admin/accueil`, `/admin/pages/[id]`) dans un
- * `Suspense`, et l'éditeur conserve un état local important (brouillon,
- * historique, sélection). Tant que le comportement au `router.refresh()`
- * (Publier / Annuler) n'a pas été vérifié en navigateur, on ne prend pas
- * ce risque.
+ * Posé sur chaque segment du CMS, éditeur de page compris : un
+ * `router.refresh()` (Publier / Annuler) ne repasse PAS par ce squelette
+ * — Next garde l'écran en place le temps de la transition — et l'état
+ * local de l'éditeur (brouillon, historique, sélection) survit. Le fil
+ * de progression en haut (`NavigationProgress`) complète : lui part dès
+ * le clic, avant même que Next ait résolu le segment.
  */
 export function AdminLoading({
   width = 'default',

@@ -1,9 +1,11 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { Suspense } from 'react'
 import { Toaster } from 'sonner'
 
 import { AdminRail } from '@/components/admin/AdminRail'
 import { AdminShellPill } from '@/components/admin/AdminShellPill'
+import { NavigationProgress } from '@/components/admin/NavigationProgress'
 import { PaletteProvider } from '@/components/admin/PaletteProvider'
 import { auth } from '@/lib/auth'
 import { paletteFromIdentity } from '@/lib/palette'
@@ -37,6 +39,13 @@ export default async function AdminLayout({
   return (
     <PaletteProvider palette={paletteFromIdentity(settings.identity)}>
       <div className="admin-shell flex h-svh overflow-hidden bg-background text-foreground antialiased">
+        {/* Le fil de progression lit l'adresse (`useSearchParams`) : la
+            frontière Suspense est exigée par Next, même sur un layout
+            déjà dynamique. */}
+        <Suspense fallback={null}>
+          <NavigationProgress />
+        </Suspense>
+
         <AdminRail userName={userName} />
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
