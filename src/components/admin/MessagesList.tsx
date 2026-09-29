@@ -72,7 +72,7 @@ export function MessagesList({ messages }: { messages: ContactMessage[] }) {
 
               <time
                 dateTime={message.createdAt.toISOString()}
-                className="shrink-0 text-[11.5px] text-muted-foreground"
+                className="shrink-0 text-[12.5px] text-muted-foreground"
               >
                 {formatDate(message.createdAt)}
               </time>

@@ -61,7 +61,7 @@ export function Choice<T extends string>({
           ))}
         </SelectContent>
       </Select>
-      {help && <p className="mt-1.5 text-[11.5px] leading-[1.5] text-stone">{help}</p>}
+      {help && <p className="mt-1.5 text-[12.5px] leading-[1.5] text-stone">{help}</p>}
     </div>
   )
 }

@@ -25,7 +25,7 @@ export function LogoPreview({ url }: { url?: string | null }) {
 
   return (
     <div className="mt-3">
-      <p className="mb-2 text-[11px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="mb-2 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         Ce que verront vos visiteurs
       </p>
 
@@ -48,7 +48,7 @@ export function LogoPreview({ url }: { url?: string | null }) {
                 className="h-full w-full object-contain"
               />
             </span>
-            <span className="text-[10px] leading-none text-muted-foreground">
+            <span className="text-[11px] leading-none text-muted-foreground">
               {legende}
             </span>
           </span>

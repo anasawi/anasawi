@@ -354,7 +354,7 @@ function Group({
 }) {
   return (
     <fieldset>
-      <legend className="mb-2.5 text-[0.65rem] font-medium uppercase tracking-[0.1em] text-muted-foreground">
+      <legend className="mb-2.5 text-[11.5px] font-medium uppercase tracking-[0.1em] text-muted-foreground">
         {title}
       </legend>
       <div className="space-y-2.5">{children}</div>

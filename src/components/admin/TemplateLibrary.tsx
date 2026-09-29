@@ -258,7 +258,7 @@ export function TemplateLibrary({
           {/* Catégories */}
           {!searching && (
             <nav className="w-44 shrink-0 space-y-0.5 overflow-y-auto border-r border-border p-2.5">
-              <p className="px-2.5 pb-1 pt-2 text-[0.66rem] uppercase tracking-[0.09em] text-muted-foreground">
+              <p className="px-2.5 pb-1 pt-2 text-[11.5px] uppercase tracking-[0.09em] text-muted-foreground">
                 Une section pour…
               </p>
               {templateLibrary.map((group) => (
@@ -274,14 +274,14 @@ export function TemplateLibrary({
                   )}
                 >
                   {group.category}
-                  <span className="text-[0.65rem] text-muted-foreground">
+                  <span className="text-[11.5px] text-muted-foreground">
                     {group.options.length}
                   </span>
                 </button>
               ))}
               {saved.length > 0 && (
                 <>
-                  <p className="px-2.5 pb-1 pt-3 text-[0.66rem] uppercase tracking-[0.09em] text-muted-foreground">
+                  <p className="px-2.5 pb-1 pt-3 text-[11.5px] uppercase tracking-[0.09em] text-muted-foreground">
                     Personnel
                   </p>
                   <button
@@ -298,7 +298,7 @@ export function TemplateLibrary({
                       <Bookmark className="h-3 w-3" />
                       Mes modèles
                     </span>
-                    <span className="text-[0.65rem] text-muted-foreground">
+                    <span className="text-[11.5px] text-muted-foreground">
                       {saved.length}
                     </span>
                   </button>

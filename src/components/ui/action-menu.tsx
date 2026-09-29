@@ -161,7 +161,7 @@ export function ActionMenu({
       <span className="min-w-0 flex-1">
         <span className="block truncate">{item.label}</span>
         {item.hint && (
-          <span id={`${id}-aide-${index}`} className="block text-[11.5px] leading-snug text-muted-foreground">
+          <span id={`${id}-aide-${index}`} className="block text-[12.5px] leading-snug text-muted-foreground">
             {item.hint}
           </span>
         )}

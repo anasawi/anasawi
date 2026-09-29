@@ -192,7 +192,7 @@ export function SectionRail({
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-4">
         <div className="flex items-center justify-between px-2 pb-2.5">
-          <h3 className="text-[11px] font-medium uppercase tracking-[0.1em] text-stone">
+          <h3 className="text-[11.5px] font-medium uppercase tracking-[0.1em] text-stone">
             Sections de la page
           </h3>
           {floating && onCollapse && (
@@ -285,7 +285,7 @@ export function SectionRail({
                     >
                       <span className="min-w-0 flex-1 truncate">{nom}</span>
                       {!section.isActive && (
-                        <span className="shrink-0 rounded-full bg-stone/15 px-1.5 py-px text-[10.5px] font-medium text-stone">
+                        <span className="shrink-0 rounded-full bg-stone/15 px-1.5 py-px text-[11px] font-medium text-stone">
                           masquée
                         </span>
                       )}
@@ -340,7 +340,7 @@ export function SectionRail({
                     role="alertdialog"
                     aria-label="Confirmer la suppression"
                     onClick={(e) => e.stopPropagation()}
-                    className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-2.5 pb-2 pt-1.5 text-[11.5px] text-foreground"
+                    className="flex flex-wrap items-center gap-1.5 border-t border-border/70 px-2.5 pb-2 pt-1.5 text-[12.5px] text-foreground"
                   >
                     <span className="mr-auto basis-full leading-snug">
                       Supprimer « {nom} » ? Elle disparaîtra du site à la

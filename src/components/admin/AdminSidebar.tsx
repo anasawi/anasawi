@@ -111,7 +111,7 @@ export function AdminSidebar({
               {entree.href === '/admin/messages' && nonLus > 0 && (
                 <span
                   aria-label={`${nonLus} non lu${nonLus > 1 ? 's' : ''}`}
-                  className="rounded-full bg-primary px-1.5 py-px text-[10.5px] font-semibold text-white"
+                  className="rounded-full bg-primary px-1.5 py-px text-[11px] font-semibold text-white"
                 >
                   {nonLus}
                 </span>
@@ -141,7 +141,7 @@ export function AdminSidebar({
           <span className="flex-1 truncate">Se déconnecter</span>
         </button>
       </form>
-      <p className="truncate px-2.5 pt-1 text-[11.5px] text-muted-foreground" title={userName}>
+      <p className="truncate px-2.5 pt-1 text-[12.5px] text-muted-foreground" title={userName}>
         {userName}
       </p>
     </div>

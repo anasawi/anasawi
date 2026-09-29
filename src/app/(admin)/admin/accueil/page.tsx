@@ -17,8 +17,8 @@ export const dynamic = 'force-dynamic'
  *
  * L'admin choisit un template dans la bibliothèque, remplit ses
  * informations, réordonne ses sections. L'aperçu central est le vrai
- * rendu du site, et chaque modification est enregistrée automatiquement —
- * publier n'existe pas, la page EST la donnée.
+ * rendu du site, et chaque modification est enregistrée automatiquement
+ * en brouillon ; « Publier » la met en ligne.
  */
 export default async function HomeBuilderPage() {
   const [page, media, services, faqItems, settings, saved] =
@@ -36,7 +36,8 @@ export default async function HomeBuilderPage() {
       <AdminContent>
         <PageHeader title="Page d’accueil" />
         <p className="text-[13px] text-muted-foreground">
-          Page d’accueil introuvable. Lancez <code>npm run db:seed</code>.
+          La page d’accueil n’a pas été trouvée dans la base de données.
+          Contactez la personne qui gère le site : elle saura la rétablir.
         </p>
       </AdminContent>
     )

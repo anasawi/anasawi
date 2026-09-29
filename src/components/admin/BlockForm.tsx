@@ -27,7 +27,7 @@ type Payload = Record<string, unknown>
 
 /* Les valeurs exactes de la maquette (`.f`) : label 11,5 px encre douce,
    champ blanc bordé, rayon 8, texte 12,5 px, focus bleu profond. */
-const LABEL_CLASS = 'mb-[5px] block text-[11.5px] font-normal text-ink-soft'
+const LABEL_CLASS = 'mb-[5px] block text-[12.5px] font-normal text-ink-soft'
 const FIELD_CLASS =
   'h-auto min-h-0 rounded-[8px] border-line-strong bg-white px-2.5 py-2 text-[12.5px] focus-visible:border-blue-deep focus-visible:ring-0'
 
@@ -134,7 +134,7 @@ function FieldControl({
         <div className="flex items-center justify-between gap-3 py-0.5">
           <Label
             htmlFor={id}
-            className="cursor-pointer text-[11.5px] font-normal text-ink-soft"
+            className="cursor-pointer text-[12.5px] font-normal text-ink-soft"
           >
             {field.label}
           </Label>
@@ -168,7 +168,7 @@ function FieldControl({
                     aria-pressed={selected}
                     onClick={() => onChange(option.value)}
                     className={cn(
-                      'flex-1 py-[7px] text-[11.5px] transition-colors',
+                      'flex-1 py-[7px] text-[12.5px] transition-colors',
                       index > 0 && 'border-l border-line',
                       selected
                         ? 'bg-blue-mist font-medium text-blue-deep'
@@ -395,7 +395,7 @@ function ListField({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <Label className="text-[11.5px] font-normal text-ink-soft">
+        <Label className="text-[12.5px] font-normal text-ink-soft">
           {field.label}
         </Label>
         <Button
@@ -426,7 +426,7 @@ function ListField({
             if (!sub) return null
             return (
               <li key={index} className="flex items-center gap-1.5">
-                <span className="w-3.5 shrink-0 text-right text-[0.68rem] tabular-nums text-muted-foreground">
+                <span className="w-3.5 shrink-0 text-right text-[12px] tabular-nums text-muted-foreground">
                   {index + 1}
                 </span>
                 <input
@@ -461,7 +461,7 @@ function ListField({
               className="rounded-[8px] border border-border bg-card p-2.5"
             >
               <div className="mb-2 flex items-center justify-between">
-                <span className="text-[0.68rem] tabular-nums text-muted-foreground">
+                <span className="text-[12px] tabular-nums text-muted-foreground">
                   {index + 1}
                 </span>
                 <RowControls
@@ -562,7 +562,7 @@ function MediaListField({
   return (
     <div>
       <div className="mb-2 flex items-center justify-between">
-        <Label className="text-[11.5px] font-normal text-ink-soft">
+        <Label className="text-[12.5px] font-normal text-ink-soft">
           {field.label}
         </Label>
         <Button

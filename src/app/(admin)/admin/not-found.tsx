@@ -27,13 +27,13 @@ export default function AdminNotFound() {
           <div className="mt-5 flex flex-wrap items-center gap-2">
             <Link
               href="/admin"
-              className="inline-flex h-9 items-center rounded-lg bg-foreground px-4 text-[13px] text-ivory transition-colors hover:bg-foreground/90"
+              className="inline-flex h-9 items-center rounded-lg bg-blue-deep px-4 text-[13px] text-white transition-colors hover:bg-blue-deep/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50"
             >
               Tableau de bord
             </Link>
             <Link
               href="/admin/accueil"
-              className="inline-flex h-9 items-center rounded-lg border border-border bg-white px-4 text-[13px] transition-colors hover:bg-ivory"
+              className="inline-flex h-9 items-center rounded-lg border border-border bg-white px-4 text-[13px] transition-colors hover:bg-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50"
             >
               Mon site
             </Link>

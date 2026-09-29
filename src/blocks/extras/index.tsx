@@ -486,7 +486,7 @@ function Acces({ data, ctx }: BlockProps<z.output<typeof accesSchema>>) {
     if (!ctx.editable) return null
     return (
       <div className="flex h-full min-h-24 items-center justify-center rounded-[3px] border border-dashed border-line-strong p-4 text-center text-[0.78rem] text-stone">
-        Renseignez l’adresse du cabinet dans Paramètres.
+        Renseignez l’adresse du cabinet dans Réglages › Coordonnées.
       </div>
     )
   }
@@ -503,7 +503,7 @@ function Acces({ data, ctx }: BlockProps<z.output<typeof accesSchema>>) {
 
 export const accesBlock: BlockDefinition<typeof accesSchema> = {
   label: 'Plan d’accès',
-  description: 'La carte du cabinet — adresse tirée des Paramètres.',
+  description: 'La carte du cabinet — adresse tirée des Réglages.',
   group: 'Contenu',
   inline: true,
   schema: accesSchema,
@@ -576,7 +576,7 @@ function Coordonnees({ data, ctx }: BlockProps<z.output<typeof coordonneesSchema
 
 export const coordonneesBlock: BlockDefinition<typeof coordonneesSchema> = {
   label: 'Coordonnées',
-  description: 'Téléphone, e-mail, adresse — tirés des Paramètres du site.',
+  description: 'Téléphone, e-mail, adresse — tirés des Réglages du site.',
   group: 'Contenu',
   inline: true,
   schema: coordonneesSchema,
@@ -606,7 +606,7 @@ function Horaires({ data, ctx }: BlockProps<z.output<typeof horairesSchema>>) {
     if (!ctx.editable) return null
     return (
       <p className="rounded-[3px] border border-dashed border-line-strong p-4 text-center text-[0.78rem] text-stone">
-        Renseignez les horaires dans Paramètres.
+        Renseignez les horaires dans Réglages › Coordonnées.
       </p>
     )
   }
@@ -633,7 +633,7 @@ function Horaires({ data, ctx }: BlockProps<z.output<typeof horairesSchema>>) {
 
 export const horairesBlock: BlockDefinition<typeof horairesSchema> = {
   label: 'Horaires',
-  description: 'Les horaires d’ouverture — tirés des Paramètres du site.',
+  description: 'Les horaires d’ouverture — tirés des Réglages du site.',
   group: 'Contenu',
   inline: true,
   schema: horairesSchema,
@@ -658,7 +658,7 @@ function Reseaux({ data, ctx }: BlockProps<z.output<typeof reseauxSchema>>) {
     if (!ctx.editable) return null
     return (
       <p className="rounded-[3px] border border-dashed border-line-strong p-3 text-center text-[0.75rem] text-stone">
-        Ajoutez des liens dans Paramètres → Réseaux.
+        Ajoutez des liens dans Réglages › Coordonnées.
       </p>
     )
   }
@@ -690,7 +690,7 @@ function Reseaux({ data, ctx }: BlockProps<z.output<typeof reseauxSchema>>) {
 
 export const reseauxBlock: BlockDefinition<typeof reseauxSchema> = {
   label: 'Réseaux',
-  description: 'Les liens sociaux — tirés des Paramètres du site.',
+  description: 'Les liens sociaux — tirés des Réglages du site.',
   group: 'Contenu',
   inline: true,
   schema: reseauxSchema,

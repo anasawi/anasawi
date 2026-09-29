@@ -78,7 +78,7 @@ export function LinkField({
             options={options}
           />
         ) : (
-          <p className="text-[11.5px] leading-[1.5] text-stone">
+          <p className="text-[12.5px] leading-[1.5] text-stone">
             Aucune section de la page n’a encore de nom d’ancre (Options
             avancées de la section).
           </p>

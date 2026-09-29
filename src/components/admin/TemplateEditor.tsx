@@ -1449,7 +1449,7 @@ export function TemplateEditor({
           <span className="max-w-48 truncate font-serif text-[15px]">{pageTitle}</span>
           <span
             className={cn(
-              'flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[11.5px]',
+              'flex shrink-0 items-center gap-1.5 rounded-full px-2.5 py-[3px] text-[12.5px]',
               status.pill,
             )}
           >
@@ -1457,7 +1457,7 @@ export function TemplateEditor({
             {status.label}
           </span>
           <span
-            className="hidden text-[11.5px] leading-none text-stone xl:block"
+            className="hidden text-[12.5px] leading-none text-stone xl:block"
             aria-live="polite"
           >
             {saveState !== 'saved'
@@ -1605,7 +1605,7 @@ export function TemplateEditor({
             >
               <PanelLeft className="h-4 w-4" strokeWidth={1.6} />
             </button>
-            <span className="mt-1 text-[10.5px] tabular-nums text-stone">
+            <span className="mt-1 text-[11px] tabular-nums text-stone">
               {roots.length}
             </span>
           </div>
@@ -1762,7 +1762,7 @@ export function TemplateEditor({
                       {active && (
                         <>
                           {/* Étiquette de la section */}
-                          <div className="absolute left-2.5 top-2.5 rounded-[5px] bg-[rgba(28,32,30,0.82)] px-2 py-[3px] text-[10px] text-white">
+                          <div className="absolute left-2.5 top-2.5 rounded-[5px] bg-[rgba(28,32,30,0.82)] px-2 py-[3px] text-[11px] text-white">
                             {section.name ??
                               getBlock(section.type)?.label ??
                               section.type}

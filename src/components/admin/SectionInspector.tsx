@@ -438,7 +438,7 @@ export function SectionInspector({
               à Anne qu'elle est en train de modifier son ouverture. */}
           <h2 className="truncate font-serif text-[15px]">{section.name ?? block.label}</h2>
           {section.name && (
-            <p className="truncate text-[11.5px] text-muted-foreground">Modèle : {block.label}</p>
+            <p className="truncate text-[12.5px] text-muted-foreground">Modèle : {block.label}</p>
           )}
         </div>
         <button
@@ -454,7 +454,7 @@ export function SectionInspector({
       <div className="min-h-0 flex-1 overflow-y-auto px-4 pb-4 pt-1.5">
         {/* ── Contenu venu d'un autre écran ───────────────────────── */}
         {block.dataSource && (
-          <p className="mt-2.5 rounded-md border border-border bg-muted/50 px-3 py-2.5 text-[11.5px] leading-[1.6] text-ink-soft">
+          <p className="mt-2.5 rounded-md border border-border bg-muted/50 px-3 py-2.5 text-[12.5px] leading-[1.6] text-ink-soft">
             {block.dataSource.label} se modifient dans{' '}
             <Link
               href={block.dataSource.href}
@@ -669,7 +669,7 @@ export function SectionInspector({
               <div>
                 <Label
                   htmlFor="anchor"
-                  className="mb-[5px] block text-[11.5px] font-normal text-ink-soft"
+                  className="mb-[5px] block text-[12.5px] font-normal text-ink-soft"
                 >
                   Lien d’ancrage
                 </Label>
@@ -682,7 +682,7 @@ export function SectionInspector({
                   }
                   className="h-auto rounded-[8px] border-line-strong bg-white px-2.5 py-2 text-[12.5px] focus-visible:border-blue-deep focus-visible:ring-0"
                 />
-                <p className="mt-1.5 text-[0.68rem] leading-relaxed text-muted-foreground">
+                <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
                   Le mot après le # dans l’adresse de la section (ex.
                   anasawi.com/#contact). Il sert au menu du site et aux
                   boutons qui mènent ici. Pour ajouter cette section au
@@ -696,7 +696,7 @@ export function SectionInspector({
                   <button
                     type="button"
                     onClick={() => setModelName(section.name ?? '')}
-                    className="flex items-center gap-1.5 text-[11.5px] text-blue-deep hover:underline"
+                    className="flex items-center gap-1.5 text-[12.5px] text-blue-deep hover:underline"
                   >
                     <Bookmark className="h-3 w-3" />
                     Enregistrer comme modèle personnel
@@ -744,7 +744,7 @@ export function SectionInspector({
                     </Button>
                   </form>
                 )}
-                <p className="mt-1.5 text-[0.68rem] leading-relaxed text-muted-foreground">
+                <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
                   Cette section, avec son contenu, deviendra réutilisable sur
                   toutes vos pages depuis « Ajouter une section ».
                 </p>
@@ -759,7 +759,7 @@ export function SectionInspector({
           information : l'état d'enregistrement. */}
       <div className="shrink-0 border-t border-border">
         <p
-          className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-[11.5px] text-stone"
+          className="flex items-center justify-center gap-1.5 px-4 py-2.5 text-[12.5px] text-stone"
           aria-live="polite"
         >
           {saveState === 'saving' && 'Enregistrement…'}

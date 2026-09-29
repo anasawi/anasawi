@@ -42,7 +42,7 @@ export default function AdminError({
             tableau de bord.
           </p>
           {error.digest && (
-            <p className="mt-3 text-[11px] text-muted-foreground">
+            <p className="mt-3 text-[12px] text-muted-foreground">
               Référence : <code>{error.digest}</code>
             </p>
           )}
@@ -51,13 +51,13 @@ export default function AdminError({
             <button
               type="button"
               onClick={() => reset()}
-              className="inline-flex h-9 items-center rounded-lg bg-foreground px-4 text-[13px] text-ivory transition-colors hover:bg-foreground/90"
+              className="inline-flex h-9 items-center rounded-lg bg-blue-deep px-4 text-[13px] text-white transition-colors hover:bg-blue-deep/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50"
             >
               Réessayer
             </button>
             <Link
               href="/admin"
-              className="inline-flex h-9 items-center rounded-lg border border-border bg-white px-4 text-[13px] transition-colors hover:bg-ivory"
+              className="inline-flex h-9 items-center rounded-lg border border-border bg-white px-4 text-[13px] transition-colors hover:bg-ivory focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50"
             >
               Tableau de bord
             </Link>
