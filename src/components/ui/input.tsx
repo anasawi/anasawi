@@ -8,7 +8,7 @@ const Input = React.forwardRef<HTMLInputElement, React.ComponentProps<'input'>>(
       type={type}
       ref={ref}
       className={cn(
-        'flex h-[32px] w-full rounded-[5px] border border-input bg-card px-2.5 text-[0.82rem] text-foreground transition-[border-color,box-shadow] duration-150',
+        'flex h-9 w-full rounded-lg border border-input bg-card px-3 text-[13px] text-foreground transition-[border-color,box-shadow] duration-150',
         'placeholder:text-muted-foreground/70',
         /* Anneau fin plutôt qu'un halo : le champ se distingue sans que la
            mise en page bouge. */

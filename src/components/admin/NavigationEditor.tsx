@@ -19,13 +19,12 @@ type Suggestion = { label: string; href: string; hint: string }
  * l'accueil, ou liens externes. Le site (en-tête et pied de page) suit
  * immédiatement l'enregistrement.
  */
-export function NavigationEditor({
-  initial,
-  suggestions,
-}: {
+export type NavigationEditorProps = {
   initial: Item[]
   suggestions: Suggestion[]
-}) {
+}
+
+export function NavigationEditor({ initial, suggestions }: NavigationEditorProps) {
   const router = useRouter()
   const [items, setItems] = useState<Item[]>(initial)
   const [pending, start] = useTransition()

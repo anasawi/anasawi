@@ -104,8 +104,9 @@
 /* ── shadcn/ui — utilisé uniquement dans /admin ───────────────────── */
 
 :root {
-  /* Rayon serré : au-delà de 6px, une interface dense paraît molle. */
-  --radius: 0.375rem;
+  /* Le rayon de TOUS les contrôles de l'administration (boutons, champs,
+     cartes) — une seule valeur, pour que rien ne jure. */
+  --radius: 0.5rem;
 
   /* Trois plans, du plus chaud au plus clair : la colonne latérale porte
      l'ivoire de la marque, le contenu s'éclaircit, les surfaces sont
@@ -120,8 +121,11 @@
   --card-foreground: #1c201e;
   --popover: #ffffff;
   --popover-foreground: #1c201e;
-  --primary: #1c201e;
-  --primary-foreground: #fcfaf7;
+  /* L'action principale porte le bleu profond du site : le même bleu que
+     les boutons qu'Anne voit sur sa page. Avant, l'admin mélangeait un
+     noir « primaire » et dix boutons bleus refaits à la main. */
+  --primary: #46728a;
+  --primary-foreground: #ffffff;
   --secondary: #f2f0ec;
   --secondary-foreground: #1c201e;
   --muted: #f4f2ee;

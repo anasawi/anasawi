@@ -3,12 +3,15 @@ import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Toaster } from 'sonner'
 
-import { AdminRail } from '@/components/admin/AdminRail'
-import { AdminShellPill } from '@/components/admin/AdminShellPill'
+import { count, eq } from 'drizzle-orm'
+
+import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { NavigationProgress } from '@/components/admin/NavigationProgress'
 import { PaletteProvider } from '@/components/admin/PaletteProvider'
 import { auth } from '@/lib/auth'
 import { paletteFromIdentity } from '@/lib/palette'
+import { db } from '@/server/db'
+import { contactMessages } from '@/server/db/schema'
 import { getSettings } from '@/server/queries'
 
 export const metadata: Metadata = {
@@ -34,11 +37,22 @@ export default async function AdminLayout({
   /* La palette du site est chargée ici, une fois : tous les sélecteurs de
      couleur du CMS — inspecteur de section, éditeur de page, réglages — y
      puisent leurs nuances au lieu d'une liste figée dans le code. */
-  const settings = await getSettings()
+  const [settings, nonLus] = await Promise.all([
+    getSettings(),
+    /* La pastille « messages non lus » de la navigation : une requête
+       légère, sur chaque écran — c'est ce qui fait qu'Anne ne rate pas un
+       message reçu pendant qu'elle travaille ailleurs. */
+    db
+      .select({ n: count() })
+      .from(contactMessages)
+      .where(eq(contactMessages.isRead, false))
+      .then((rows) => rows[0]?.n ?? 0)
+      .catch(() => 0),
+  ])
 
   return (
     <PaletteProvider palette={paletteFromIdentity(settings.identity)}>
-      <div className="admin-shell flex h-svh overflow-hidden bg-background text-foreground antialiased">
+      <div className="admin-shell relative flex h-svh flex-col overflow-hidden bg-background text-foreground antialiased lg:flex-row">
         {/* Le fil de progression lit l'adresse (`useSearchParams`) : la
             frontière Suspense est exigée par Next, même sur un layout
             déjà dynamique. */}
@@ -46,16 +60,11 @@ export default async function AdminLayout({
           <NavigationProgress />
         </Suspense>
 
-        <AdminRail userName={userName} />
+        <AdminSidebar userName={userName} nonLus={nonLus} />
 
         <div className="flex min-w-0 flex-1 flex-col overflow-hidden">
           {children}
         </div>
-
-        {/* Ici la session est déjà connue côté serveur : la pastille est rendue
-            directement, sans l'aller-retour nécessaire sur le site public.
-            L'éditeur de page affiche la sienne (état de publication). */}
-        <AdminShellPill userName={userName} />
 
         <Toaster position="bottom-right" richColors closeButton />
       </div>

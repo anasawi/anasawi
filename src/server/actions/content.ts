@@ -432,6 +432,10 @@ export async function updateSettings(
       bookingUrl: parsed.data.bookingUrl || null,
       updatedAt: new Date(),
     }
+    /* Un champ absent n'écrase rien (référencement, réglé ailleurs). */
+    for (const cle of Object.keys(values) as (keyof typeof values)[]) {
+      if (values[cle] === undefined) delete values[cle]
+    }
 
     await db
       .insert(settings)

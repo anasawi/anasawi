@@ -17,17 +17,14 @@ import type { Media, Page, SeoMeta } from '@/server/db/schema'
 const TITLE_MAX = 60
 const DESCRIPTION_MAX = 155
 
-export function SeoEditor({
-  page,
-  seo,
-  library,
-  siteName,
-}: {
+export type SeoEditorProps = {
   page: Page
   seo: SeoMeta | null
   library: Media[]
   siteName: string
-}) {
+}
+
+export function SeoEditor({ page, seo, library, siteName }: SeoEditorProps) {
   const router = useRouter()
   const [title, setTitle] = useState(seo?.title ?? '')
   const [description, setDescription] = useState(seo?.description ?? '')

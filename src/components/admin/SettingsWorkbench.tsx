@@ -1,14 +1,16 @@
 'use client'
 
 import { Check, Plus, RotateCcw, X } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useTransition } from 'react'
 import { toast } from 'sonner'
 
 import { LogoPreview } from './LogoPreview'
 import { MediaPicker } from './MediaPicker'
+import { NavigationEditor, type NavigationEditorProps } from './NavigationEditor'
+import { PageHeader } from './PageHeader'
 import { PaletteProvider } from './PaletteProvider'
+import { SeoEditor, type SeoEditorProps } from './SeoEditor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -35,34 +37,48 @@ import type {
 } from '@/server/db/schema'
 
 /**
- * Les réglages du site — une seule page.
+ * Les réglages du site — un écran, quatre onglets.
  *
- * Tout ce qui vaut pour le site entier se règle ici : ce que vous êtes,
- * comment on vous joint, vos couleurs, vos formes, ce que Google affiche.
- * Le sommaire de gauche ne fait que déplacer le regard ; rien n'est caché
- * derrière un écran de plus.
+ *   Coordonnées   qui vous êtes, comment on vous joint, vos horaires
+ *   Apparence     vos couleurs et vos formes
+ *   Menu du site  les entrées du menu, dans l'ordre
+ *   Référencement ce que Google affiche
  *
- * Deux actions serveur distinctes vivent derrière un seul bouton : les
- * coordonnées (table `settings`) et l'identité (`settings.identity`). Elles
- * partent ensemble et le site en aperçu se rafraîchit après coup.
+ * Les deux premiers onglets forment UN formulaire (les mêmes réglages,
+ * simplement triés) : un seul bouton « Enregistrer », dans une barre qui
+ * reste visible, et un état lisible — « Modifications non enregistrées »
+ * tant qu'on n'a pas enregistré, avec un garde-fou si l'on quitte la page.
+ * Les deux autres onglets ont leur propre bouton : ce sont d'autres
+ * données, enregistrées à part.
+ *
+ * Les onglets sont dans l'adresse (`#apparence`) : un lien y mène
+ * directement, et l'état du formulaire survit au passage d'un onglet à
+ * l'autre — on ne perd pas ce qu'on a tapé en allant voir l'autre.
  */
 
-const SECTIONS = [
-  { id: 'identite', label: 'Identité' },
+export const ONGLETS = [
   { id: 'coordonnees', label: 'Coordonnées' },
-  { id: 'horaires', label: 'Horaires' },
-  { id: 'palette', label: 'Palette' },
-  { id: 'formes', label: 'Formes' },
-  { id: 'seo', label: 'Référencement' },
+  { id: 'apparence', label: 'Apparence' },
+  { id: 'menu', label: 'Menu du site' },
+  { id: 'referencement', label: 'Référencement' },
 ] as const
+export type Onglet = (typeof ONGLETS)[number]['id']
 
-const ELSEWHERE = [
-  { href: '/admin/navigation', label: 'Menu du site' },
-  { href: '/admin/messages', label: 'Messages reçus' },
-  { href: '/admin/accompagnements', label: 'Accompagnements' },
-  { href: '/admin/faq', label: 'Questions fréquentes' },
-  { href: '/admin/medias', label: 'Médias' },
-] as const
+function ongletDepuisAdresse(): Onglet {
+  if (typeof window === 'undefined') return 'coordonnees'
+  const hash = window.location.hash.replace('#', '')
+  /* Anciennes ancres : identite, horaires → coordonnées ; palette, formes → apparence ; seo → référencement. */
+  const correspondances: Record<string, Onglet> = {
+    identite: 'coordonnees',
+    horaires: 'coordonnees',
+    palette: 'apparence',
+    formes: 'apparence',
+    seo: 'referencement',
+    navigation: 'menu',
+  }
+  const cible = correspondances[hash] ?? hash
+  return ONGLETS.some((o) => o.id === cible) ? (cible as Onglet) : 'coordonnees'
+}
 
 const DEFAULT_RADIUS = 2
 
@@ -70,14 +86,43 @@ export function SettingsWorkbench({
   settings,
   identity: initialIdentity,
   library,
+  menu,
+  referencement,
 }: {
   settings: Settings
   identity: Identity
   library: Media[]
+  menu: NavigationEditorProps
+  referencement: SeoEditorProps | null
 }) {
   const router = useRouter()
   const [pending, start] = useTransition()
-  const [saved, setSaved] = useState(false)
+  /** Vrai dès qu'un réglage diffère de ce qui est enregistré. */
+  const [dirty, setDirty] = useState(false)
+  const [onglet, setOnglet] = useState<Onglet>('coordonnees')
+
+  /* L'onglet suit l'adresse, et l'adresse suit l'onglet. */
+  useEffect(() => {
+    setOnglet(ongletDepuisAdresse())
+    const onHash = () => setOnglet(ongletDepuisAdresse())
+    window.addEventListener('hashchange', onHash)
+    return () => window.removeEventListener('hashchange', onHash)
+  }, [])
+  const choisir = (id: Onglet) => {
+    setOnglet(id)
+    window.history.replaceState(null, '', `#${id}`)
+  }
+
+  /* Quitter avec des modifications non enregistrées : le navigateur
+     demande confirmation. */
+  useEffect(() => {
+    if (!dirty) return
+    const garde = (event: BeforeUnloadEvent) => {
+      event.preventDefault()
+    }
+    window.addEventListener('beforeunload', garde)
+    return () => window.removeEventListener('beforeunload', garde)
+  }, [dirty])
 
   const [form, setForm] = useState({
     siteName: settings.siteName,
@@ -94,8 +139,6 @@ export function SettingsWorkbench({
     longitude: settings.longitude ?? '',
     practicalInfo: settings.practicalInfo ?? '',
     bookingUrl: settings.bookingUrl ?? '',
-    defaultSeoTitle: settings.defaultSeoTitle ?? '',
-    defaultSeoDescription: settings.defaultSeoDescription ?? '',
   })
 
   const [hours, setHours] = useState<OpeningHour[]>(
@@ -104,7 +147,6 @@ export function SettingsWorkbench({
   const [socials, setSocials] = useState<SocialLink[]>(
     (settings.socialLinks as SocialLink[]) ?? [],
   )
-  const [ogMediaId, setOgMediaId] = useState(settings.defaultOgMediaId)
   const [logoMediaId, setLogoMediaId] = useState(settings.logoMediaId)
 
   /** Erreurs de validation renvoyées par l'action, par champ — affichées
@@ -127,7 +169,7 @@ export function SettingsWorkbench({
   )
 
   const set = (key: keyof typeof form, value: string) => {
-    setSaved(false)
+    setDirty(true)
     setForm((f) => ({ ...f, [key]: value }))
     if (fieldErrors[key]) {
       setFieldErrors((prev) => {
@@ -139,7 +181,7 @@ export function SettingsWorkbench({
   }
 
   const setRole = (key: PaletteRole, hex: string) => {
-    setSaved(false)
+    setDirty(true)
     setPalette((p) => ({ ...p, [key]: hex }))
   }
 
@@ -157,11 +199,8 @@ export function SettingsWorkbench({
           latitude: form.latitude || null,
           longitude: form.longitude || null,
           practicalInfo: form.practicalInfo || null,
-          defaultSeoTitle: form.defaultSeoTitle || null,
-          defaultSeoDescription: form.defaultSeoDescription || null,
           openingHours: hours.filter((h) => h.day && h.hours),
           socialLinks: socials.filter((s) => s.label && s.url),
-          defaultOgMediaId: ogMediaId,
           logoMediaId,
         }),
         updateIdentity({ palette, buttonRadius, spacing }),
@@ -178,30 +217,61 @@ export function SettingsWorkbench({
       }
 
       setFieldErrors({})
-      setSaved(true)
-      toast.success('Réglages enregistrés — tout le site est à jour.')
+      setDirty(false)
+      toast.success('Réglages enregistrés — le site est à jour.')
       router.refresh()
     })
   }
 
+  const formulaire = onglet === 'coordonnees' || onglet === 'apparence'
+
   return (
     <PaletteProvider palette={palette}>
       <div className="min-h-0 flex-1 overflow-y-auto bg-ivory">
-        <div className="mx-auto max-w-[1000px] px-8 py-11">
-          <header className="mb-7">
-            <h1 className="font-serif text-2xl font-normal leading-tight tracking-[-0.01em]">
-              Réglages
-            </h1>
-            <p className="mt-1.5 max-w-[70ch] text-[13px] text-muted-foreground">
-              Tout ce qui vaut pour le site entier : qui vous êtes, comment on
-              vous joint, vos couleurs et ce que Google affiche de vous.
-            </p>
-          </header>
+        <div className="mx-auto max-w-[960px] px-5 py-8 sm:px-8 sm:py-11">
+          <PageHeader
+            title="Réglages"
+            description="Tout ce qui vaut pour le site entier : qui vous êtes, comment on vous joint, vos couleurs, votre menu et ce que Google affiche."
+          />
 
-          <div className="grid gap-8 lg:grid-cols-[164px_minmax(0,1fr)] lg:gap-10">
-            <Summary />
+          {/* Onglets */}
+          <div
+            role="tablist"
+            aria-label="Réglages"
+            className="mb-6 flex gap-1 overflow-x-auto border-b border-border"
+          >
+            {ONGLETS.map((o) => (
+              <button
+                key={o.id}
+                type="button"
+                role="tab"
+                id={`onglet-${o.id}`}
+                aria-selected={onglet === o.id}
+                aria-controls={`panneau-${o.id}`}
+                onClick={() => choisir(o.id)}
+                className={cn(
+                  '-mb-px whitespace-nowrap border-b-2 px-3 py-2.5 text-[13px] transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40',
+                  onglet === o.id
+                    ? 'border-primary font-medium text-primary'
+                    : 'border-transparent text-ink-soft hover:text-foreground',
+                )}
+              >
+                {o.label}
+                {formulaire && dirty && (o.id === 'coordonnees' || o.id === 'apparence') && onglet !== o.id ? (
+                  <span aria-hidden="true" className="ml-1.5 inline-block h-1.5 w-1.5 rounded-full bg-[#c98a2d] align-middle" />
+                ) : null}
+              </button>
+            ))}
+          </div>
 
-            <div className="min-w-0 space-y-[22px]">
+          <div
+            role="tabpanel"
+            id={`panneau-${onglet}`}
+            aria-labelledby={`onglet-${onglet}`}
+            className="min-w-0 space-y-[22px]"
+          >
+            {onglet === 'coordonnees' && (
+              <>
               <Card
                 id="identite"
                 title="Identité"
@@ -239,7 +309,7 @@ export function SettingsWorkbench({
                   label="Logo du site"
                   value={logoMediaId}
                   onChange={(id) => {
-                    setSaved(false)
+                    setDirty(true)
                     setLogoMediaId(id)
                   }}
                   library={library}
@@ -255,7 +325,7 @@ export function SettingsWorkbench({
                     url={library.find((m) => m.id === logoMediaId)?.url}
                   />
                 </div>
-</Card>
+              </Card>
 
               <Card
                 id="coordonnees"
@@ -336,7 +406,7 @@ export function SettingsWorkbench({
                   <RepeatableList
                     items={socials}
                     onChange={(next) => {
-                      setSaved(false)
+                      setDirty(true)
                       setSocials(next)
                     }}
                     blank={{ label: '', url: '' }}
@@ -362,7 +432,111 @@ export function SettingsWorkbench({
                   />
                 </div>
               </Card>
+              <Card
+                id="coordonnees"
+                title="Coordonnées"
+                note="Utilisées par la section Contact et le pied de page. Un champ vide est simplement omis — rien n’est inventé."
+              >
+                <Field
+                  label="Téléphone"
+                  value={form.contactPhone}
+                  onChange={(v) => set('contactPhone', v)}
+                  error={errorOf('contactPhone')}
+                />
+                <Field
+                  label="Adresse e-mail"
+                  value={form.contactEmail}
+                  onChange={(v) => set('contactEmail', v)}
+                  error={errorOf('contactEmail')}
+                />
+                <Field
+                  label="Rue"
+                  value={form.addressStreet}
+                  onChange={(v) => set('addressStreet', v)}
+                  full
+                  error={errorOf('addressStreet')}
+                />
+                <Field
+                  label="Code postal"
+                  value={form.addressPostalCode}
+                  onChange={(v) => set('addressPostalCode', v)}
+                  error={errorOf('addressPostalCode')}
+                />
+                <Field
+                  label="Ville"
+                  value={form.addressCity}
+                  onChange={(v) => set('addressCity', v)}
+                  error={errorOf('addressCity')}
+                />
+                <Field
+                  label="Latitude"
+                  value={form.latitude}
+                  onChange={(v) => set('latitude', v)}
+                  placeholder="48.1213"
+                  help="Facultatif — situe le cabinet sur les cartes."
+                  error={errorOf('latitude')}
+                />
+                <Field
+                  label="Longitude"
+                  value={form.longitude}
+                  onChange={(v) => set('longitude', v)}
+                  placeholder="-1.6033"
+                  error={errorOf('longitude')}
+                />
+                <Field
+                  label="Lien de prise de rendez-vous"
+                  value={form.bookingUrl}
+                  onChange={(v) => set('bookingUrl', v)}
+                  placeholder="https://…"
+                  help="Si vide, le bouton « Prendre rendez-vous » mène vers la section Contact."
+                  full
+                  error={errorOf('bookingUrl')}
+                />
 
+                <div className="sm:col-span-2">
+                  <Label className="mb-2 block">Informations pratiques</Label>
+                  <Textarea
+                    rows={4}
+                    value={form.practicalInfo}
+                    aria-invalid={errorOf('practicalInfo') ? true : undefined}
+                    onChange={(e) => set('practicalInfo', e.target.value)}
+                  />
+                  {errorOf('practicalInfo') && (
+                    <FieldError>{errorOf('practicalInfo')}</FieldError>
+                  )}
+                </div>
+
+                <div className="sm:col-span-2">
+                  <Label className="mb-2 block">Réseaux sociaux</Label>
+                  <RepeatableList
+                    items={socials}
+                    onChange={(next) => {
+                      setDirty(true)
+                      setSocials(next)
+                    }}
+                    blank={{ label: '', url: '' }}
+                    addLabel="Ajouter un réseau"
+                    render={(item, update) => (
+                      <>
+                        <Input
+                          value={item.label}
+                          placeholder="Instagram"
+                          onChange={(e) =>
+                            update({ ...item, label: e.target.value })
+                          }
+                        />
+                        <Input
+                          value={item.url}
+                          placeholder="https://…"
+                          onChange={(e) =>
+                            update({ ...item, url: e.target.value })
+                          }
+                        />
+                      </>
+                    )}
+                  />
+                </div>
+              </Card>
               <Card
                 id="horaires"
                 title="Horaires"
@@ -371,7 +545,7 @@ export function SettingsWorkbench({
                 <RepeatableList
                   items={hours}
                   onChange={(next) => {
-                    setSaved(false)
+                    setDirty(true)
                     setHours(next)
                   }}
                   blank={{ day: '', hours: '' }}
@@ -394,17 +568,20 @@ export function SettingsWorkbench({
                   )}
                 />
               </Card>
+              </>
+            )}
 
+            {onglet === 'apparence' && (
+              <>
               <PaletteCard
                 palette={palette}
                 buttonRadius={buttonRadius}
                 onChange={setRole}
                 onReset={() => {
-                  setSaved(false)
+                  setDirty(true)
                   setPalette({ ...DEFAULT_PALETTE })
                 }}
               />
-
               <Card
                 id="formes"
                 title="Formes et respiration"
@@ -421,7 +598,7 @@ export function SettingsWorkbench({
                     step={1}
                     value={buttonRadius}
                     onChange={(e) => {
-                      setSaved(false)
+                      setDirty(true)
                       setButtonRadius(Number(e.target.value))
                     }}
                     className="w-full accent-[#46728a]"
@@ -446,7 +623,7 @@ export function SettingsWorkbench({
                         type="button"
                         aria-pressed={spacing === key}
                         onClick={() => {
-                          setSaved(false)
+                          setDirty(true)
                           setSpacing(key)
                         }}
                         className={cn(
@@ -462,149 +639,55 @@ export function SettingsWorkbench({
                   </div>
                 </div>
               </Card>
-
-              <Card
-                id="seo"
-                title="Référencement"
-                note="Ce que Google affiche. Le titre sert à la page d’accueil ; la description, à toute page qui ne définit pas la sienne."
-              >
-                <Field
-                  label="Titre pour Google"
-                  value={form.defaultSeoTitle}
-                  onChange={(v) => set('defaultSeoTitle', v)}
-                  full
-                  error={errorOf('defaultSeoTitle')}
-                />
-                <div className="sm:col-span-2">
-                  <Label className="mb-2 block">Description pour Google</Label>
-                  <Textarea
-                    rows={3}
-                    value={form.defaultSeoDescription}
-                    aria-invalid={
-                      errorOf('defaultSeoDescription') ? true : undefined
-                    }
-                    onChange={(e) => set('defaultSeoDescription', e.target.value)}
-                  />
-                  {errorOf('defaultSeoDescription') && (
-                    <FieldError>{errorOf('defaultSeoDescription')}</FieldError>
-                  )}
-                </div>
-                <MediaPicker
-                  label="Image de partage"
-                  value={ogMediaId}
-                  onChange={(id) => {
-                    setSaved(false)
-                    setOgMediaId(id)
-                  }}
-                  library={library}
-                  className="max-w-xs"
-                />
-                <p className="self-end text-[12px] leading-[1.6] text-muted-foreground">
-                  Le titre et la description propres à la page d’accueil se
-                  règlent dans{' '}
-                  <Link
-                    href="/admin/seo"
-                    className="underline underline-offset-2 hover:text-foreground"
-                  >
-                    Référencement de la page d’accueil
-                  </Link>
-                  .
-                </p>
-              </Card>
-
-              <section className="rounded-xl border border-border bg-white px-[22px] py-5">
-                <h2 className="text-[12px] font-medium uppercase tracking-[0.08em] text-muted-foreground">
-                  Le reste se règle ailleurs
-                </h2>
-                <div className="mt-3 flex flex-wrap gap-2">
-                  {ELSEWHERE.map((item) => (
-                    <Link
-                      key={item.href}
-                      href={item.href}
-                      className="rounded-md border border-border px-3 py-1.5 text-[12.5px] text-muted-foreground transition-colors hover:border-blue-deep hover:text-foreground"
-                    >
-                      {item.label}
-                    </Link>
-                  ))}
-                </div>
-              </section>
-            </div>
-          </div>
-
-          {/* La barre d'enregistrement colle au bas de la zone qui défile :
-              elle reste sous la main quelle que soit la section lue. */}
-          <div className="sticky bottom-0 z-10 -mx-8 mt-7 flex items-center justify-end gap-3 border-t border-border bg-ivory/90 px-8 py-3.5 backdrop-blur">
-            {saved && !pending && (
-              <span className="flex items-center gap-1.5 text-[12.5px] text-muted-foreground">
-                <Check className="h-[14px] w-[14px] text-blue-deep" />
-                Enregistré
-              </span>
+              </>
             )}
-            <Button
-              className="rounded-md bg-blue-deep text-white hover:bg-blue-deep/90"
-              onClick={save}
-              disabled={pending}
-            >
-              {pending ? 'Enregistrement…' : 'Enregistrer'}
-            </Button>
+
+            {onglet === 'menu' && <NavigationEditor {...menu} />}
+
+            {onglet === 'referencement' &&
+              (referencement ? (
+                <SeoEditor {...referencement} />
+              ) : (
+                <p className="text-[13px] text-muted-foreground">
+                  Le référencement se règle une fois la page d’accueil créée.
+                </p>
+              ))}
           </div>
+
+          {/* La barre d'enregistrement du formulaire (coordonnées et
+              apparence) colle au bas de la zone qui défile : elle reste
+              sous la main, et dit toujours où l'on en est. */}
+          {formulaire && (
+            <div className="sticky bottom-0 z-10 -mx-5 mt-7 flex items-center justify-end gap-3 border-t border-border bg-ivory/90 px-5 py-3.5 backdrop-blur sm:-mx-8 sm:px-8">
+              <span
+                aria-live="polite"
+                className={cn(
+                  'flex items-center gap-1.5 text-[12.5px]',
+                  dirty ? 'text-[#8a5f1e]' : 'text-muted-foreground',
+                )}
+              >
+                {pending ? (
+                  'Enregistrement…'
+                ) : dirty ? (
+                  <>
+                    <span aria-hidden="true" className="h-1.5 w-1.5 rounded-full bg-[#c98a2d]" />
+                    Modifications non enregistrées
+                  </>
+                ) : (
+                  <>
+                    <Check className="h-[14px] w-[14px] text-primary" />
+                    Tout est enregistré
+                  </>
+                )}
+              </span>
+              <Button onClick={save} disabled={pending || !dirty}>
+                {pending ? 'Enregistrement…' : 'Enregistrer'}
+              </Button>
+            </div>
+          )}
         </div>
       </div>
     </PaletteProvider>
-  )
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   Sommaire
-   ══════════════════════════════════════════════════════════════════════ */
-
-function Summary() {
-  const [active, setActive] = useState<string>('identite')
-
-  useEffect(() => {
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const visible = entries.filter((entry) => entry.isIntersecting)
-        if (visible.length === 0) return
-        const first = visible.reduce((a, b) =>
-          a.boundingClientRect.top <= b.boundingClientRect.top ? a : b,
-        )
-        setActive(first.target.id)
-      },
-      { rootMargin: '-12% 0px -70% 0px' },
-    )
-
-    for (const section of SECTIONS) {
-      const element = document.getElementById(section.id)
-      if (element) observer.observe(element)
-    }
-
-    return () => observer.disconnect()
-  }, [])
-
-  return (
-    <nav
-      aria-label="Sommaire des réglages"
-      className="hidden lg:sticky lg:top-0 lg:block lg:self-start lg:pt-1"
-    >
-      <ul className="space-y-0.5 border-l border-border">
-        {SECTIONS.map((section) => (
-          <li key={section.id}>
-            <a
-              href={`#${section.id}`}
-              className={cn(
-                '-ml-px block border-l py-1.5 pl-3 text-[12.5px] transition-colors',
-                active === section.id
-                  ? 'border-blue-deep text-foreground'
-                  : 'border-transparent text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {section.label}
-            </a>
-          </li>
-        ))}
-      </ul>
-    </nav>
   )
 }
 

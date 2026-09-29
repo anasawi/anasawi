@@ -112,10 +112,13 @@ export const settingsFormSchema = z.object({
     .array(z.object({ label: z.string().trim(), url: z.string().trim().url() }))
     .default([]),
 
-  defaultSeoTitle: z.string().trim().max(120).nullable().default(null),
-  defaultSeoDescription: z.string().trim().max(320).nullable().default(null),
+  /* Le référencement se règle dans son onglet (voir `updateSeo`, qui
+     tient ces valeurs à jour) : absents ici, ces champs ne sont pas
+     touchés. */
+  defaultSeoTitle: z.string().trim().max(120).nullable().optional(),
+  defaultSeoDescription: z.string().trim().max(320).nullable().optional(),
   logoMediaId: z.string().uuid().nullable().default(null),
-  defaultOgMediaId: z.string().uuid().nullable().default(null),
+  defaultOgMediaId: z.string().uuid().nullable().optional(),
 })
 
 export const mediaFormSchema = z.object({

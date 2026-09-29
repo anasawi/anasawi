@@ -25,6 +25,7 @@ import {
   savedSections,
   sections,
   seoMeta,
+  settings,
   type SavedSection,
   type Section,
 } from '@/server/db/schema'
@@ -961,6 +962,21 @@ export async function updateSeo(
       .insert(seoMeta)
       .values({ pageId, ...values })
       .onConflictDoUpdate({ target: seoMeta.pageId, set: values })
+
+    /* UNE seule source : les réglages « par défaut » du site (titre,
+       description, image de partage) suivent ce qui vient d'être saisi.
+       Avant, deux écrans proposaient « Titre pour Google » pour une seule
+       page, et l'un pouvait contredire l'autre. */
+    await db
+      .update(settings)
+      .set({
+        defaultSeoTitle: values.title ?? null,
+        defaultSeoDescription: values.description ?? null,
+        defaultOgMediaId: values.ogMediaId ?? null,
+        updatedAt: new Date(),
+      })
+      .where(eq(settings.id, 'singleton'))
+    revalidateTag(tags.settings)
 
     revalidatePage(await slugOf(pageId))
     return ok()
