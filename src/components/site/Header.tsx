@@ -84,7 +84,7 @@ export function Header({
     }
 
     window.addEventListener(PRELOADER_DONE_EVENT, show)
-    const failsafe = window.setTimeout(show, 1900)
+    const failsafe = window.setTimeout(show, 1200)
 
     return () => {
       window.removeEventListener(PRELOADER_DONE_EVENT, show)
@@ -405,7 +405,7 @@ export function Header({
                       }
                       transition={
                         open
-                          ? { duration: 0.9, ease: EASE, delay: 0.12 + i * 0.07 }
+                          ? { duration: 0.6, ease: EASE, delay: 0.06 + i * 0.05 }
                           : { duration: 0.35, ease: EASE }
                       }
                     >

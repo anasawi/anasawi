@@ -68,8 +68,8 @@ function useIsWide(): boolean {
 type Phase = 'closed' | 'open' | 'closing'
 
 /** Durées, en secondes — la sortie plus vive que l'entrée. */
-const ENTER_S = 0.72
-const EXIT_S = 0.42
+const ENTER_S = 0.55
+const EXIT_S = 0.32
 const EXIT_MS = EXIT_S * 1000
 
 export function ServicePanel({
@@ -398,7 +398,10 @@ function Stagger({
     <m.div
       initial={{ opacity: 0, y: 18, filter: 'blur(4px)' }}
       animate={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
-      transition={{ duration: 0.9, ease: EASE, delay }}
+      /* Les délais des fiches sont écrits en absolu (0.2, 0.48, 0.54…) :
+         ramenés de moitié, l'ordre reste, le bouton arrive avant qu'on
+         ne le cherche. */
+      transition={{ duration: 0.6, ease: EASE, delay: delay * 0.55 }}
     >
       {children}
     </m.div>

@@ -75,7 +75,7 @@ export function BlockImage({
    * compte du découpage (`clip-path`) pour décider qu'une image est « à
    * l'écran », et une image entièrement rognée par le rideau fermé n'y
    * est jamais — elle ne se chargeait pas, le rideau attendait, et rien
-   * ne se passait. On décide donc nous-mêmes : à 800 px de l'écran, en
+   * ne se passait. On décide donc nous-mêmes : à 1 400 px de l'écran, en
    * observant le CADRE (jamais rogné), l'image passe en chargement
    * immédiat. Le hero, lui, est `priority` dès le départ.
    */
@@ -91,7 +91,7 @@ export function BlockImage({
           observer.disconnect()
         }
       },
-      { rootMargin: '800px 0px 800px 0px' },
+      { rootMargin: '1400px 0px 1400px 0px' },
     )
     observer.observe(cadre)
     return () => observer.disconnect()

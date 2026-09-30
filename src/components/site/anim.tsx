@@ -32,8 +32,24 @@ import { cn } from '@/lib/utils'
 /** Courbe signature de la maquette — cubic-bezier(.22,1,.36,1). */
 export const EASE: [number, number, number, number] = [0.22, 1, 0.36, 1]
 
-/** Déclenchement standard : une fois, ~20 % visible, un peu avant le bas. */
-const VIEWPORT = { once: true, amount: 0.2, margin: '0px 0px -10% 0px' } as const
+/** Déclenchement standard : une fois, dès ~12 % visible, à peine sous
+    le bord bas. Avant (20 %, -10 %), une section commençait à s'animer
+    alors qu'elle était déjà bien entrée dans l'écran : on la voyait
+    vide, puis arriver — une lenteur, pas une élégance. */
+const VIEWPORT = { once: true, amount: 0.12, margin: '0px 0px -4% 0px' } as const
+
+/**
+ * Tempo des délais d'échelonnement.
+ *
+ * Les modèles échelonnent leurs éléments (titre, texte, boutons) par des
+ * délais absolus, écrits à la main : 0.5 s, 0.62 s, 0.7 s… Additionnés à
+ * la durée du mouvement, un bouton n'était cliquable qu'une bonne seconde
+ * et demie après l'entrée de sa section. Plutôt que de retoucher chaque
+ * modèle, le tempo réduit tous les délais d'un même facteur : l'ordre et
+ * le rythme relatif restent, l'attente tombe.
+ */
+const TEMPO = 0.55
+const tempo = (delay: number) => delay * TEMPO
 
 /* ── AnimProvider ──────────────────────────────────────────────────── */
 
@@ -65,8 +81,9 @@ export function useAnimEnabled(): boolean {
 }
 
 /* ── Reveal ────────────────────────────────────────────────────────────
-   Révélation de la maquette : 26px plus bas, flou de 5px, opacité 0 →
-   net en 1s sur la courbe signature. */
+   Révélation de la maquette : 18px plus bas, flou de 4px, opacité 0 →
+   net en 0.7s sur la courbe signature (1 s et 26 px à l'origine : le
+   même geste, plus vif). */
 
 export function Reveal({
   children,
@@ -85,10 +102,10 @@ export function Reveal({
   return (
     <m.div
       className={className}
-      initial={{ opacity: 0, y: 26, filter: 'blur(5px)' }}
+      initial={{ opacity: 0, y: 18, filter: 'blur(4px)' }}
       whileInView={{ opacity: 1, y: 0, filter: 'blur(0px)' }}
       viewport={VIEWPORT}
-      transition={{ duration: 1, ease: EASE, delay }}
+      transition={{ duration: 0.7, ease: EASE, delay: tempo(delay) }}
     >
       {children}
     </m.div>
@@ -144,7 +161,7 @@ export function MaskLines({
             className="will-change-transform"
             initial={{ y: '110%' }}
             animate={inView ? { y: '0%' } : { y: '110%' }}
-            transition={{ duration: 1.1, ease: EASE, delay: delay + i * step }}
+            transition={{ duration: 0.8, ease: EASE, delay: tempo(delay) + i * step * 0.7 }}
           >
             {line}
           </m.div>
@@ -156,7 +173,7 @@ export function MaskLines({
 
 /* ── SplitChars ────────────────────────────────────────────────────────
    Le texte du hero : chaque lettre monte de 115 % depuis un masque,
-   28 ms d'écart entre deux lettres. Texte brut uniquement — pour un
+   20 ms d'écart entre deux lettres. Texte brut uniquement — pour un
    passage en italique, la prop `italic` couvre tout le texte. */
 
 export function SplitChars({
@@ -224,7 +241,7 @@ export function SplitChars({
                     className="inline-block will-change-transform"
                     initial={{ y: '115%' }}
                     animate={inView ? { y: '0%' } : { y: '115%' }}
-                    transition={{ duration: 1, ease: EASE, delay: delay + i * 0.028 }}
+                    transition={{ duration: 0.75, ease: EASE, delay: tempo(delay) + i * 0.02 }}
                   >
                     {char}
                   </m.span>
@@ -244,7 +261,7 @@ export function SplitChars({
 
 export function Counter({
   value,
-  duration = 1.3,
+  duration = 1,
   className,
 }: {
   value: number
@@ -282,8 +299,8 @@ export function Counter({
 }
 
 /* ── ImageVeil ─────────────────────────────────────────────────────────
-   Rideau qui se retire (scaleY 1 → 0 depuis le haut, 1.2s) pendant que
-   l'image dézoome (scale 1.1 → 1, 1.4s). Le rideau prend la couleur du
+   Rideau qui se retire (découpage du bas vers le haut, 0.85s) pendant
+   que l'image dézoome (scale 1.1 → 1.02, 1.05s). Le rideau prend la couleur du
    fond de la section via `tone`. Le conteneur porte l'arrondi (arche…) :
    le rideau en hérite. */
 
@@ -355,12 +372,12 @@ export function ImageVeil({
           hidden: { clipPath: 'inset(100% 0% 0% 0%)' },
           visible: { clipPath: 'inset(0% 0% 0% 0%)' },
         }}
-        transition={{ duration: 1.2, ease: EASE, delay: delay + 0.1 }}
+        transition={{ duration: 0.85, ease: EASE, delay: tempo(delay) }}
       >
         <m.div
           className="absolute inset-0 rounded-[inherit] will-change-transform"
-          variants={{ hidden: { scale: 1.12 }, visible: { scale: 1.02 } }}
-          transition={{ duration: 1.4, ease: EASE, delay: delay + 0.1 }}
+          variants={{ hidden: { scale: 1.1 }, visible: { scale: 1.02 } }}
+          transition={{ duration: 1.05, ease: EASE, delay: tempo(delay) }}
         >
           {children}
         </m.div>
@@ -483,13 +500,13 @@ export function CircleText({
 }
 
 /* ── WordsIgnite ───────────────────────────────────────────────────────
-   Le manifeste : les mots passent d'opacité .14 à 1 un à un, 65 ms
+   Le manifeste : les mots passent d'opacité .14 à 1 un à un, 45 ms
    d'écart, à l'entrée dans le viewport. */
 
 export function WordsIgnite({
   text,
-  delay = 0.18,
-  step = 0.065,
+  delay = 0.1,
+  step = 0.045,
   className,
   as,
 }: {
@@ -519,7 +536,7 @@ export function WordsIgnite({
             initial={{ opacity: 0.14 }}
             whileInView={{ opacity: 1 }}
             viewport={VIEWPORT}
-            transition={{ duration: 0.45, delay: delay + i * step }}
+            transition={{ duration: 0.3, delay: tempo(delay) + i * step }}
           >
             {word}
           </m.span>

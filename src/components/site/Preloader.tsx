@@ -39,9 +39,9 @@ function comesFromAdmin(): boolean {
 
 /**
  * Rideau ivoire plein écran : le wordmark ANASAWI se lève depuis un masque,
- * l'astérisque ✳︎ tourne en bas, puis tout le rideau monte (~1.1s) et se
- * retire du DOM. Joue à chaque chargement complet de page — comme la
- * maquette validée ; jamais sous prefers-reduced-motion.
+ * l'astérisque ✳︎ tourne en bas, puis tout le rideau monte (~0.7s) et se
+ * retire du DOM. Joue au premier chargement de la visite — comme la
+ * maquette validée, en plus bref ; jamais sous prefers-reduced-motion.
  *
  * Exception : quand on vient de l'administration. Anne fait l'aller-retour
  * éditeur ↔ aperçu des dizaines de fois par séance ; lui imposer les deux
@@ -62,7 +62,18 @@ export function Preloader() {
       '(prefers-reduced-motion: reduce)',
     ).matches
 
-    if (reduced || comesFromAdmin()) {
+    /* Une fois par visite : la signature se joue au premier chargement,
+       pas à chaque page ni à chaque retour arrière — une seconde de
+       rideau à chaque fois, c'est un site qui paraît lent. */
+    let dejaVu = false
+    try {
+      dejaVu = window.sessionStorage.getItem('anasawi:rideau') === '1'
+      window.sessionStorage.setItem('anasawi:rideau', '1')
+    } catch {
+      /* Stockage indisponible : le rideau joue, comme avant. */
+    }
+
+    if (reduced || dejaVu || comesFromAdmin()) {
       setPhase('done')
       window.dispatchEvent(new Event(PRELOADER_DONE_EVENT))
       return
@@ -74,9 +85,9 @@ export function Preloader() {
     const lift = window.setTimeout(() => {
       setPhase('lifting')
       window.dispatchEvent(new Event(PRELOADER_DONE_EVENT))
-    }, 1150)
+    }, 750)
 
-    const remove = window.setTimeout(() => setPhase('done'), 2300)
+    const remove = window.setTimeout(() => setPhase('done'), 1500)
 
     return () => {
       cancelAnimationFrame(raf)
@@ -93,7 +104,7 @@ export function Preloader() {
       data-anasawi-preloader=""
       className={cn(
         'fixed inset-0 z-[200] grid place-items-center bg-ivory',
-        'transition-transform duration-1000 ease-[cubic-bezier(.76,0,.24,1)]',
+        'transition-transform duration-700 ease-[cubic-bezier(.76,0,.24,1)]',
         phase === 'lifting' && '-translate-y-full',
       )}
     >
@@ -101,7 +112,7 @@ export function Preloader() {
         <span
           className={cn(
             'block pl-[0.3em] font-serif text-[clamp(30px,4.5vw,58px)] font-light tracking-[0.3em] text-ink',
-            'transition-transform delay-[50ms] duration-[900ms] ease-[var(--ease)]',
+            'transition-transform delay-[30ms] duration-[650ms] ease-[var(--ease)]',
             revealed ? 'translate-y-0' : 'translate-y-[110%]',
           )}
         >

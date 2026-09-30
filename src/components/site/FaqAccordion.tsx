@@ -68,7 +68,7 @@ export function FaqAccordion({ items }: { items: FaqItem[] }) {
                   initial={{ height: 0, opacity: 0 }}
                   animate={{ height: 'auto', opacity: 1 }}
                   exit={{ height: 0, opacity: 0 }}
-                  transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+                  transition={{ duration: 0.35, ease: [0.22, 1, 0.36, 1] }}
                   className="overflow-hidden"
                 >
                   <p className="max-w-[62ch] pb-6 pr-6 text-[0.95rem] leading-[1.8] text-ink-soft sm:pb-8 sm:pr-10">
