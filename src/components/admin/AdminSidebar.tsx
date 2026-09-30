@@ -113,7 +113,7 @@ export function AdminSidebar({
               {entree.href === '/admin/messages' && nonLus > 0 && (
                 <span
                   aria-label={`${nonLus} non lu${nonLus > 1 ? 's' : ''}`}
-                  className="rounded-full bg-primary px-1.5 py-px text-[11px] font-semibold text-white"
+                  className="rounded-full bg-primary px-1.5 py-px text-[12px] font-semibold text-white"
                 >
                   {nonLus}
                 </span>

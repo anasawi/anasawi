@@ -31,8 +31,9 @@ import {
   SectionsView,
   type SectionsViewData,
 } from '@/components/site/SectionsView'
+import { makeSectionRow } from '@/lib/snapshot'
 import { cn } from '@/lib/utils'
-import type { Media, SavedSection, Section } from '@/server/db/schema'
+import type { Media, SavedSection } from '@/server/db/schema'
 
 const MINE = '__mine__'
 
@@ -258,7 +259,7 @@ export function TemplateLibrary({
           {/* Catégories */}
           {!searching && (
             <nav className="w-44 shrink-0 space-y-0.5 overflow-y-auto border-r border-border p-2.5">
-              <p className="px-2.5 pb-1 pt-2 text-[11.5px] uppercase tracking-[0.09em] text-muted-foreground">
+              <p className="px-2.5 pb-1 pt-2 text-[12px] uppercase tracking-[0.09em] text-muted-foreground">
                 Une section pour…
               </p>
               {templateLibrary.map((group) => (
@@ -274,14 +275,14 @@ export function TemplateLibrary({
                   )}
                 >
                   {group.category}
-                  <span className="text-[11.5px] text-muted-foreground">
+                  <span className="text-[12px] text-muted-foreground">
                     {group.options.length}
                   </span>
                 </button>
               ))}
               {saved.length > 0 && (
                 <>
-                  <p className="px-2.5 pb-1 pt-3 text-[11.5px] uppercase tracking-[0.09em] text-muted-foreground">
+                  <p className="px-2.5 pb-1 pt-3 text-[12px] uppercase tracking-[0.09em] text-muted-foreground">
                     Personnel
                   </p>
                   <button
@@ -298,7 +299,7 @@ export function TemplateLibrary({
                       <Bookmark className="h-3 w-3" />
                       Mes modèles
                     </span>
-                    <span className="text-[11.5px] text-muted-foreground">
+                    <span className="text-[12px] text-muted-foreground">
                       {saved.length}
                     </span>
                   </button>
@@ -421,7 +422,7 @@ function previewPayload(type: BlockType, media: Media[]): unknown {
   return payload
 }
 
-export function TemplatePreview({
+function TemplatePreview({
   type,
   data,
   payloadOverride,
@@ -437,26 +438,13 @@ export function TemplatePreview({
      faire tourner le moteur de rendu réel. */
   const section = useMemo(
     () =>
-      ({
+      makeSectionRow({
         id: `apercu-${type}`,
         pageId: 'apercu',
-        parentId: null,
-        columnIndex: 0,
-        placement: null,
-        styles: null,
-        settings: null,
-        name: null,
         type,
-        anchor: null,
-        navLabel: null,
-        showInNav: false,
-        sortOrder: 0,
-        isActive: true,
         backgroundColor,
         payload: payloadOverride ?? previewPayload(type, data.media),
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      }) as Section,
+      }),
     [type, data.media, payloadOverride, backgroundColor],
   )
   /* Les cadres gris doivent se résoudre comme des médias : on les ajoute

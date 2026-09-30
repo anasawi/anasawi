@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
 
+/** Même nom que dans `actions/auth.ts` — un module `'use server'` ne
+    peut exporter que des fonctions asynchrones, d'où la copie. */
+const ADMIN_HINT_COOKIE = 'anasawi_admin'
+
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
 
@@ -19,7 +23,7 @@ export const dynamic = 'force-dynamic'
 export async function GET() {
   const session = await auth()
 
-  return NextResponse.json(
+  const response = NextResponse.json(
     session?.user
       ? {
           admin: true,
@@ -29,4 +33,22 @@ export async function GET() {
       : { admin: false },
     { headers: { 'Cache-Control': 'no-store' } },
   )
+
+  /* En secours du cookie-témoin posé à la connexion (`actions/auth.ts`) :
+     une session encore valable après l'expiration du témoin le repose,
+     une session disparue le retire — le script du site ne demandera plus
+     avant l'inactivité du navigateur. */
+  if (session?.user) {
+    response.cookies.set(ADMIN_HINT_COOKIE, '1', {
+      path: '/',
+      sameSite: 'lax',
+      secure: process.env.NODE_ENV === 'production',
+      httpOnly: false,
+      maxAge: 60 * 60 * 24 * 30,
+    })
+  } else {
+    response.cookies.delete(ADMIN_HINT_COOKIE)
+  }
+
+  return response
 }

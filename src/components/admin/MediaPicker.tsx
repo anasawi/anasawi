@@ -53,7 +53,7 @@ const VIDEO_FORMATS_LISIBLES = 'MP4, MOV ou WebM'
 export type MediaKind = 'image' | 'video'
 
 /** Le média est-il du genre demandé ? */
-export function estDuGenre(media: Media, kind: MediaKind): boolean {
+function estDuGenre(media: Media, kind: MediaKind): boolean {
   return isVideoMimeType(media.mimeType) === (kind === 'video')
 }
 

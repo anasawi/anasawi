@@ -1,29 +1,23 @@
 'use client'
 
-import {
-  closestCenter,
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from '@dnd-kit/core'
+import { closestCenter, DndContext, type DragEndEvent } from '@dnd-kit/core'
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers'
 import {
   arrayMove,
   SortableContext,
-  sortableKeyboardCoordinates,
   useSortable,
   verticalListSortingStrategy,
 } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { GripVertical, Pencil, Plus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { ConfirmDelete } from './ConfirmDelete'
+import { FieldError } from './form/FieldError'
+import { useActionForm } from './hooks/useActionForm'
+import { useSortableSensors } from './hooks/useSortableSensors'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -69,13 +63,9 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
   const [items, setItems] = useState(initial)
   const [draft, setDraft] = useState<Draft | null>(null)
   /* Erreurs du serveur, champ par champ, affichées sous le champ fautif. */
-  const [erreurs, setErreurs] = useState<Record<string, string[]>>({})
-  const [pending, start] = useTransition()
+  const { pending, start, fieldErrors: erreurs, run } = useActionForm()
 
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 6 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates }),
-  )
+  const sensors = useSortableSensors()
 
   function handleDragEnd({ active, over }: DragEndEvent) {
     if (!over || active.id === over.id) return
@@ -100,63 +90,56 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
   function save() {
     if (!draft) return
 
-    start(async () => {
-      const payload = {
-        question: draft.question,
-        answer: draft.answer,
-        category: draft.category || null,
-        isActive: draft.isActive,
-      }
+    const payload = {
+      question: draft.question,
+      answer: draft.answer,
+      category: draft.category || null,
+      isActive: draft.isActive,
+    }
 
-      /*
-       * L'état local fait foi — comme dans l'écran des accompagnements, et
-       * pour la même raison : un effet qui recopierait les props écraserait
-       * l'ordre obtenu au glisser-déposer. Il faut donc écrire ici ce que
-       * le serveur vient d'enregistrer. Sans cela, `router.refresh()` seul
-       * ne changeait RIEN à l'écran : la question créée n'apparaissait pas,
-       * et la question modifiée gardait son ancien texte. La notification
-       * confirmait pourtant, ce qui est la pire des combinaisons.
-       */
-      setErreurs({})
-      if (draft.id) {
-        const result = await updateFaq(draft.id, payload)
-        if (!result.ok) {
-          setErreurs(result.fieldErrors ?? {})
-          toast.error(result.error)
-          return
-        }
-
-        toast.success('Question modifiée.')
-        setItems((prev) =>
-          prev.map((i) =>
-            i.id === draft.id ? { ...i, ...payload, updatedAt: new Date() } : i,
-          ),
-        )
-      } else {
-        const result = await createFaq(payload)
-        if (!result.ok) {
-          setErreurs(result.fieldErrors ?? {})
-          toast.error(result.error)
-          return
-        }
-
-        toast.success('Question ajoutée.')
-        const maintenant = new Date()
-        setItems((prev) => [
-          ...prev,
-          {
-            ...payload,
-            id: result.data.id,
-            sortOrder: prev.length,
-            createdAt: maintenant,
-            updatedAt: maintenant,
-          },
-        ])
-      }
-
-      setDraft(null)
-      router.refresh()
-    })
+    /*
+     * L'état local fait foi — comme dans l'écran des accompagnements, et
+     * pour la même raison : un effet qui recopierait les props écraserait
+     * l'ordre obtenu au glisser-déposer. Il faut donc écrire ici ce que
+     * le serveur vient d'enregistrer. Sans cela, `router.refresh()` seul
+     * ne changeait RIEN à l'écran : la question créée n'apparaissait pas,
+     * et la question modifiée gardait son ancien texte. La notification
+     * confirmait pourtant, ce qui est la pire des combinaisons.
+     */
+    if (draft.id) {
+      const id = draft.id
+      run(() => updateFaq(id, payload), {
+        success: 'Question modifiée.',
+        onSuccess: () => {
+          setItems((prev) =>
+            prev.map((i) =>
+              i.id === id ? { ...i, ...payload, updatedAt: new Date() } : i,
+            ),
+          )
+          setDraft(null)
+          router.refresh()
+        },
+      })
+    } else {
+      run(() => createFaq(payload), {
+        success: 'Question ajoutée.',
+        onSuccess: (data) => {
+          const maintenant = new Date()
+          setItems((prev) => [
+            ...prev,
+            {
+              ...payload,
+              id: data.id,
+              sortOrder: prev.length,
+              createdAt: maintenant,
+              updatedAt: maintenant,
+            },
+          ])
+          setDraft(null)
+          router.refresh()
+        },
+      })
+    }
   }
 
   return (
@@ -218,20 +201,16 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
                     })
                   }
                   onToggle={(checked) =>
-                    start(async () => {
-                      const result = await toggleFaq(item.id, checked)
-                      if (result.ok) {
+                    run(() => toggleFaq(item.id, checked), {
+                      success: checked
+                        ? 'Question affichée sur le site.'
+                        : 'Question masquée du site.',
+                      onSuccess: () =>
                         setItems((prev) =>
                           prev.map((i) =>
                             i.id === item.id ? { ...i, isActive: checked } : i,
                           ),
-                        )
-                        toast.success(
-                          checked
-                            ? 'Question affichée sur le site.'
-                            : 'Question masquée du site.',
-                        )
-                      } else toast.error(result.error)
+                        ),
                     })
                   }
                   onDeleted={async () => {
@@ -264,6 +243,16 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
             </DialogDescription>
           </DialogHeader>
 
+          {/* Un vrai formulaire : Entrée dans la question vaut
+              « Enregistrer », et reste sans effet tant qu'il manque la
+              question ou la réponse — comme le bouton. */}
+          <form
+            className="grid gap-4"
+            onSubmit={(e) => {
+              e.preventDefault()
+              save()
+            }}
+          >
           {draft && (
             <div className="space-y-4">
               <div>
@@ -280,7 +269,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
                     setDraft({ ...draft, question: e.target.value })
                   }
                 />
-                <ErreurChamp id="f-question-erreur" messages={erreurs.question} />
+                <FieldError id="f-question-erreur" messages={erreurs.question} />
               </div>
 
               <div>
@@ -297,7 +286,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
                     setDraft({ ...draft, answer: e.target.value })
                   }
                 />
-                <ErreurChamp id="f-answer-erreur" messages={erreurs.answer} />
+                <FieldError id="f-answer-erreur" messages={erreurs.answer} />
                 <p className="mt-1.5 text-xs leading-[1.5] text-muted-foreground">
                   Quelques phrases suffisent. Ce texte apparaît tel quel sur
                   le site.
@@ -321,6 +310,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
 
           <DialogFooter className="gap-2 sm:gap-0">
             <Button
+              type="button"
               variant="outline"
               onClick={() => setDraft(null)}
               disabled={pending}
@@ -328,7 +318,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
               Annuler
             </Button>
             <Button
-              onClick={save}
+              type="submit"
               disabled={
                 pending || !draft?.question.trim() || !draft?.answer.trim()
               }
@@ -337,6 +327,7 @@ export function FaqManager({ items: initial }: { items: FaqItem[] }) {
               {pending ? 'Enregistrement…' : 'Enregistrer'}
             </Button>
           </DialogFooter>
+          </form>
         </DialogContent>
       </Dialog>
     </>
@@ -385,7 +376,7 @@ function FaqRow({
         <p className="flex items-center gap-2 truncate text-sm font-medium">
           {item.question}
           {!item.isActive && (
-            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[12px] font-medium text-muted-foreground">
               Masquée
             </span>
           )}
@@ -431,15 +422,5 @@ function FaqRow({
         />
       </span>
     </li>
-  )
-}
-
-/** Message d'erreur sous un champ — annoncé au lecteur d'écran. */
-function ErreurChamp({ id, messages }: { id: string; messages?: string[] }) {
-  if (!messages || messages.length === 0) return null
-  return (
-    <p id={id} role="alert" className="mt-1.5 text-xs leading-[1.5] text-red-700">
-      {messages[0]}
-    </p>
   )
 }

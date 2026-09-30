@@ -25,7 +25,7 @@ export function LogoPreview({ url }: { url?: string | null }) {
 
   return (
     <div className="mt-3">
-      <p className="mb-2 text-[11.5px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
+      <p className="mb-2 text-[12px] font-semibold uppercase tracking-[0.14em] text-muted-foreground">
         Ce que verront vos visiteurs
       </p>
 
@@ -48,13 +48,13 @@ export function LogoPreview({ url }: { url?: string | null }) {
                 className="h-full w-full object-contain"
               />
             </span>
-            <span className="text-[11px] leading-none text-muted-foreground">
+            <span className="text-[12px] leading-none text-muted-foreground">
               {legende}
             </span>
           </span>
         ))}
 
-        <span className="ml-auto max-w-[24ch] text-[11px] leading-[1.5] text-muted-foreground">
+        <span className="ml-auto max-w-[24ch] text-[12px] leading-[1.5] text-muted-foreground">
           Si le dessin paraît minuscule, c’est que l’image a des marges
           vides : recadrez-la au plus près.
         </span>

@@ -8,7 +8,6 @@ import { toast } from 'sonner'
 
 import { BlockForm } from './BlockForm'
 import { ColorPicker } from './ColorPicker'
-import { StylePanel, type StyleBreakpoint } from './StylePanel'
 import type { FieldDescriptor } from '@/blocks/field'
 import { getBlock } from '@/blocks/registry'
 import { Button } from '@/components/ui/button'
@@ -23,18 +22,10 @@ import {
 } from '@/lib/section-settings'
 import { saveSectionAsTemplate } from '@/server/actions/saved-sections'
 import { updateSection, updateSectionSettings } from '@/server/actions/sections'
+import type { RunAction } from './editor/useActionQueue'
 import type { HistoryEntry } from './history'
-import type { ActionResult } from '@/server/actions/types'
+import { useLatest } from './hooks/useLatest'
 import type { Media, SavedSection, Section } from '@/server/db/schema'
-
-/** File d'actions : chaque écriture y passe, et un rejet (réseau) en
-    ressort comme un résultat en échec. */
-type RunAction = <T extends ActionResult<unknown>>(
-  fn: () => Promise<T>,
-) => Promise<T>
-
-/** Sans file d'actions fournie, l'action part directement. */
-const runDirectly: RunAction = (fn) => fn()
 
 /** Brouillon complet du panneau — la forme que reçoit le constructeur à
     chaque frappe pour mettre le canvas à jour immédiatement. */
@@ -97,25 +88,15 @@ type SectionInspectorProps = {
   section: Section
   library: Media[]
   onClose: () => void
-  /** Signale une écriture réussie — le constructeur recharge l'aperçu. */
-  onMutated?: () => void
   /** Enregistre l'inverse d'un enregistrement pour le ⌘Z du constructeur. */
   pushHistory?: (entry: HistoryEntry) => void
-  /** Breakpoint d'édition des styles — suit le sélecteur de viewport. */
-  styleBreakpoint?: StyleBreakpoint
-  /** Suppression avec instantané — non utilisée ici : la suppression vit
-      dans la liste des sections, à gauche. Conservée pour compatibilité. */
-  onDelete?: (id: string) => Promise<ActionResult<unknown>>
   /** Application immédiate du brouillon sur le canvas, à chaque frappe. */
   onDraft?: (id: string, draft: SectionDraft) => void
   /** Remonte l'état d'écriture — l'indicateur « Enregistré » du haut. */
   onSaveStateChange?: (state: 'saved' | 'dirty' | 'saving') => void
-  /** Mode CMS à modèles : pas de réglages de style avancés — l'apparence
-      est l'affaire du modèle. Seule la couleur de fond reste réglable. */
-  simple?: boolean
   /** File d'actions du constructeur : chaque écriture y passe pour ne
       jamais partir pendant qu'une autre est en vol. */
-  runAction?: RunAction
+  runAction: RunAction
   /** Réglages (animation, bord, décor) appliqués au canvas sans
       rechargement — l'équivalent d'`onDraft` pour `settings`. */
   onSettings?: (id: string, settings: SectionSettings) => void
@@ -138,13 +119,10 @@ export function SectionInspector({
   section,
   library,
   onClose,
-  onMutated,
   pushHistory,
-  styleBreakpoint = 'base',
   onDraft,
   onSaveStateChange,
-  simple = false,
-  runAction,
+  runAction: run,
   onSettings,
   onSaved,
   initialOpen,
@@ -152,7 +130,6 @@ export function SectionInspector({
 }: SectionInspectorProps) {
   const router = useRouter()
   const block = getBlock(section.type)
-  const run: RunAction = runAction ?? runDirectly
 
   const [payload, setPayload] = useState<Record<string, unknown>>(
     (section.payload as Record<string, unknown>) ?? {},
@@ -164,7 +141,10 @@ export function SectionInspector({
     isActive: section.isActive,
     backgroundColor: section.backgroundColor,
   })
-  const [styles, setStyles] = useState<NodeStyles | null>(
+  /* Les styles fins ne se règlent plus dans le panneau (l'apparence est
+     l'affaire du modèle) : la valeur reste celle de la ligne, stable
+     d'un rendu à l'autre pour la garde du brouillon ci-dessous. */
+  const [styles] = useState<NodeStyles | null>(
     parseNodeStyles(section.styles),
   )
   const [pending, start] = useTransition()
@@ -215,8 +195,6 @@ export function SectionInspector({
         setAnim(prev)
         onSettings?.(section.id, prev)
         toast.error(r.error)
-      } else {
-        onMutated?.()
       }
     })
   }
@@ -303,7 +281,12 @@ export function SectionInspector({
 
   /* Chaque changement : rendu immédiat sur le canvas, puis écriture après
      600 ms d'accalmie — une rafale de frappe = un enregistrement, une
-     entrée d'historique. */
+     entrée d'historique. Déclenché par les seules données du brouillon :
+     `onDraft` et `saveNow` sont lus à l'exécution via des refs — les
+     mettre en dépendance ferait repartir un enregistrement à chaque rendu
+     du parent. */
+  const onDraftRef = useLatest(onDraft)
+  const saveNowRef = useLatest(saveNow)
   useEffect(() => {
     /* Rien n'a changé (montage, ou double exécution des effets en mode
        strict) : ni brouillon ni écriture. Un drapeau « premier rendu »
@@ -320,7 +303,7 @@ export function SectionInspector({
     latest.current = { payload, meta, styles }
     dirty.current = true
     setSaveState('dirty')
-    onDraft?.(section.id, {
+    onDraftRef.current?.(section.id, {
       payload,
       meta: {
         anchor: meta.anchor.trim() || null,
@@ -331,13 +314,9 @@ export function SectionInspector({
       },
       styles,
     })
-    const timer = setTimeout(() => void saveNow(), 600)
+    const timer = setTimeout(() => void saveNowRef.current(), 600)
     return () => clearTimeout(timer)
-    /* Déclenché par les seules données du brouillon : `onDraft`, `saveNow`
-       et `section.id` sont stables ou lus à l'exécution — les ajouter
-       ferait repartir un enregistrement à chaque rendu du parent. */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [payload, meta, styles])
+  }, [payload, meta, styles, section.id, onDraftRef, saveNowRef])
 
   /* Fermer le panneau ou changer de bloc n'avale jamais une frappe : le
      reliquat part immédiatement. */
@@ -424,7 +403,10 @@ export function SectionInspector({
       ? 'Boutons'
       : 'Bouton'
 
-  const hasStyleGroup = isRoot || !simple || layoutFields.length > 0
+  /* L'apparence est l'affaire du modèle : pas de réglages de style fins
+     ici, seulement les champs de disposition du bloc et, pour une
+     racine, le fond, l'animation, le bord et le décor. */
+  const hasStyleGroup = isRoot || layoutFields.length > 0
 
   return (
     <>
@@ -581,7 +563,7 @@ export function SectionInspector({
                         { value: 'oblique', label: 'Oblique' },
                       ]}
                     />
-                    <p className="mt-1.5 text-[11px] leading-[1.5] text-stone">
+                    <p className="mt-1.5 text-[12px] leading-[1.5] text-stone">
                       Visible si la section suivante a un fond différent.
                     </p>
                   </div>
@@ -639,17 +621,6 @@ export function SectionInspector({
                     </div>
                   </div>
                 </>
-              )}
-
-              {/* Hors mode simple, l'accès aux réglages fins reste là. */}
-              {!simple && (
-                <StylePanel
-                  value={styles}
-                  onChange={setStyles}
-                  nodeType={section.type}
-                  isRoot={isRoot}
-                  breakpoint={styleBreakpoint}
-                />
               )}
             </div>
           </Group>
@@ -763,7 +734,7 @@ export function SectionInspector({
           {saveState === 'dirty' && 'Modifications en attente…'}
           {saveState === 'saved' && (
             <>
-              <Check className="h-3 w-3 text-[#3e9e6f]" />
+              <Check className="h-3 w-3 text-success" />
               Enregistré automatiquement
             </>
           )}

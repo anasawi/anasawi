@@ -192,7 +192,7 @@ export function SectionRail({
     >
       <div className="min-h-0 flex-1 overflow-y-auto px-3 pb-4 pt-4">
         <div className="flex items-center justify-between px-2 pb-2.5">
-          <h3 className="text-[11.5px] font-medium uppercase tracking-[0.1em] text-stone">
+          <h3 className="text-[12px] font-medium uppercase tracking-[0.1em] text-stone">
             Sections de la page
           </h3>
           {floating && onCollapse && (
@@ -285,7 +285,7 @@ export function SectionRail({
                     >
                       <span className="min-w-0 flex-1 truncate">{nom}</span>
                       {!section.isActive && (
-                        <span className="shrink-0 rounded-full bg-stone/15 px-1.5 py-px text-[11px] font-medium text-stone">
+                        <span className="shrink-0 rounded-full bg-stone/15 px-1.5 py-px text-[12px] font-medium text-stone">
                           masquée
                         </span>
                       )}
@@ -353,7 +353,7 @@ export function SectionRail({
                         setConfirmId(null)
                         void onDelete(section.id)
                       }}
-                      className="rounded-[6px] bg-red-600 px-2 py-[3px] text-[11px] font-medium text-white transition-colors hover:bg-red-700"
+                      className="rounded-[6px] bg-red-600 px-2 py-[3px] text-[12px] font-medium text-white transition-colors hover:bg-red-700"
                     >
                       Supprimer
                     </button>
@@ -363,7 +363,7 @@ export function SectionRail({
                       onKeyDown={(e) => {
                         if (e.key === 'Escape') setConfirmId(null)
                       }}
-                      className="rounded-[6px] border border-line-strong bg-white px-2 py-[3px] text-[11px] text-ink-soft transition-colors hover:text-foreground"
+                      className="rounded-[6px] border border-line-strong bg-white px-2 py-[3px] text-[12px] text-ink-soft transition-colors hover:text-foreground"
                     >
                       Annuler
                     </button>

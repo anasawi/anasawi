@@ -17,7 +17,7 @@ const hex = z
   .regex(/^#[0-9a-fA-F]{6}$/)
   .transform((value) => value.toLowerCase())
 
-export const stylePropsSchema = z
+const stylePropsSchema = z
   .object({
     /* ── Boîte ─────────────────────────────────────────────────── */
     /** Espacement interne [haut, droite, bas, gauche] en px. */
@@ -62,7 +62,7 @@ export const nodeStylesSchema = z
   })
   .strict()
 
-export type StyleProps = z.infer<typeof stylePropsSchema>
+type StyleProps = z.infer<typeof stylePropsSchema>
 export type NodeStyles = z.infer<typeof nodeStylesSchema>
 
 export function parseNodeStyles(input: unknown): NodeStyles | null {

@@ -125,22 +125,3 @@ export function ColorPicker({
     </div>
   )
 }
-
-export function Swatch({
-  color,
-  className,
-}: {
-  color: string
-  className?: string
-}) {
-  return (
-    <span
-      aria-hidden="true"
-      className={cn(
-        'inline-block shrink-0 rounded-[3px] ring-1 ring-inset ring-black/12',
-        className,
-      )}
-      style={{ backgroundColor: normalizeHex(color) }}
-    />
-  )
-}

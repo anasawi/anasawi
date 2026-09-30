@@ -39,8 +39,8 @@ export default async function DashboardPage() {
   const etatSite = !home?.publishedAt
     ? { texte: 'Jamais publié', classe: 'bg-muted text-muted-foreground' }
     : hasUnpublishedChanges(home.sections, home.publishedSnapshot)
-      ? { texte: 'Modifications à publier', classe: 'bg-[#fdf4e4] text-[#8a5f1e]' }
-      : { texte: 'En ligne', classe: 'bg-[#e8f4ec] text-[#256b47]' }
+      ? { texte: 'Modifications à publier', classe: 'bg-warning-soft text-warning-ink' }
+      : { texte: 'En ligne', classe: 'bg-success-soft text-success-ink' }
 
   const manque = [
     !settings.practitionerName && 'votre nom',
@@ -135,7 +135,7 @@ export default async function DashboardPage() {
                 </span>
                 {carte.badge && (
                   <span
-                    className={`ml-auto shrink-0 rounded-full px-2 py-px text-[11px] font-medium ${carte.badge.classe}`}
+                    className={`ml-auto shrink-0 rounded-full px-2 py-px text-[12px] font-medium ${carte.badge.classe}`}
                   >
                     {carte.badge.texte}
                   </span>
@@ -149,17 +149,17 @@ export default async function DashboardPage() {
       </div>
 
       {manque.length > 0 && (
-        <div className="mt-[22px] rounded-xl border border-[#e8dcbe] bg-[#fcf8ee] px-[22px] py-5">
-          <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-[#6b551f]">
+        <div className="mt-[22px] rounded-xl border border-warning/30 bg-warning-soft px-[22px] py-5">
+          <p className="text-[12px] font-medium uppercase tracking-[0.08em] text-warning-ink">
             À compléter quand vous aurez un moment
           </p>
-          <p className="mt-2 text-[12.5px] leading-[1.6] text-[#6b551f]/90">
+          <p className="mt-2 text-[12.5px] leading-[1.6] text-warning-ink/90">
             Il manque encore {manque.join(', ')}. Renseigner ces informations aide
             Google à bien présenter votre site.
           </p>
           <Link
             href="/admin/reglages"
-            className="mt-2.5 inline-block text-[12.5px] font-medium text-[#6b551f] underline underline-offset-2"
+            className="mt-2.5 inline-block text-[12.5px] font-medium text-warning-ink underline underline-offset-2"
           >
             Compléter mes informations
           </Link>

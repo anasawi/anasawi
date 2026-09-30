@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 import { Choice } from '@/components/ui/choice'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { parseHref, type HrefMode } from '@/lib/links'
 import { anchorId } from '@/lib/utils'
 
 export type NavigationItem = { label: string; href: string }
@@ -213,17 +214,8 @@ export function NavigationEditor({
    La destination d'un lien — choisie, jamais tapée en jargon
    ══════════════════════════════════════════════════════════════════════ */
 
-type Mode = 'section' | 'page' | 'web'
-
-function lire(value: string): { mode: Mode; reste: string } {
-  const v = value.trim()
-  if (/^https?:\/\//i.test(v)) return { mode: 'web', reste: v }
-  if (v.startsWith('/#')) return { mode: 'section', reste: v.slice(2) }
-  if (v.startsWith('#')) return { mode: 'section', reste: v.slice(1) }
-  if (v.startsWith('/')) return { mode: 'page', reste: v }
-  /* Une ancre nue (« contact ») ou rien du tout. */
-  return { mode: 'section', reste: v }
-}
+/* Les cinq destinations que `parseHref` sait lire — le schéma serveur
+   (`safeHrefSchema`) accepte aussi `tel:` et `mailto:` dans le menu. */
 
 function Destination({
   id,
@@ -236,7 +228,7 @@ function Destination({
   sections: { anchor: string; label: string }[]
   onChange: (next: string) => void
 }) {
-  const { mode, reste } = lire(value)
+  const { mode, rest: reste } = parseHref(value)
 
   /* Une ancre absente de la page (section supprimée, renommée) reste
      proposée telle quelle, marquée : on ne la perd pas en silence. */
@@ -245,9 +237,11 @@ function Destination({
     options.push({ value: reste, label: `${reste} (section introuvable)` })
   }
 
-  const changerDeMode = (m: Mode) => {
+  const changerDeMode = (m: HrefMode) => {
     if (m === 'section') onChange(options[0] ? `/#${options[0].value}` : '')
     else if (m === 'page') onChange('/')
+    else if (m === 'tel') onChange('tel:')
+    else if (m === 'mail') onChange('mailto:')
     else onChange('https://')
   }
 
@@ -261,6 +255,8 @@ function Destination({
         options={[
           { value: 'section', label: 'Vers une section de la page d’accueil' },
           { value: 'page', label: 'Vers une autre page du site' },
+          { value: 'tel', label: 'Appeler un numéro' },
+          { value: 'mail', label: 'Écrire un e-mail' },
           { value: 'web', label: 'Vers une adresse web' },
         ]}
       />
@@ -291,6 +287,26 @@ function Destination({
             const v = e.target.value.trim()
             onChange(v.startsWith('/') ? v : `/${v}`)
           }}
+        />
+      )}
+      {mode === 'tel' && (
+        <Input
+          id={`${id}-tel`}
+          type="tel"
+          value={reste}
+          placeholder="06 12 34 56 78"
+          aria-label="Numéro de téléphone"
+          onChange={(e) => onChange(`tel:${e.target.value.replace(/\s+/g, '')}`)}
+        />
+      )}
+      {mode === 'mail' && (
+        <Input
+          id={`${id}-mail`}
+          type="email"
+          value={reste}
+          placeholder="nom@exemple.fr"
+          aria-label="Adresse e-mail"
+          onChange={(e) => onChange(`mailto:${e.target.value.trim()}`)}
         />
       )}
       {mode === 'web' && (

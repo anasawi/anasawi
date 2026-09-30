@@ -1,8 +1,9 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 
+import { useActionForm } from './hooks/useActionForm'
 import { setPasswordFromInvitation } from '@/server/actions/users'
 
 /**
@@ -11,11 +12,13 @@ import { setPasswordFromInvitation } from '@/server/actions/users'
  */
 export function InvitationForm({ token, email }: { token: string; email: string }) {
   const router = useRouter()
-  const [pending, start] = useTransition()
+  /* Pas de notification ici (page publique, sans centre de messages) :
+     l'erreur générale s'affiche sous le formulaire, les erreurs de champ
+     sous leur champ. */
+  const { pending, fieldErrors: erreurs, run } = useActionForm()
   const [password, setPassword] = useState('')
   const [confirmation, setConfirmation] = useState('')
   const [erreur, setErreur] = useState<string | null>(null)
-  const [erreurs, setErreurs] = useState<Record<string, string[]>>({})
   const [fait, setFait] = useState(false)
 
   const champ =
@@ -45,15 +48,9 @@ export function InvitationForm({ token, email }: { token: string; email: string 
       onSubmit={(e) => {
         e.preventDefault()
         setErreur(null)
-        setErreurs({})
-        start(async () => {
-          const result = await setPasswordFromInvitation(token, { password, confirmation })
-          if (!result.ok) {
-            setErreurs(result.fieldErrors ?? {})
-            setErreur(result.fieldErrors ? null : result.error)
-            return
-          }
-          setFait(true)
+        run(() => setPasswordFromInvitation(token, { password, confirmation }), {
+          onSuccess: () => setFait(true),
+          onError: (r) => setErreur(r.fieldErrors ? null : r.error),
         })
       }}
     >
@@ -78,7 +75,7 @@ export function InvitationForm({ token, email }: { token: string; email: string 
           onChange={(e) => setPassword(e.target.value)}
           className={champ}
         />
-        <p id="password-aide" className={`mt-2 text-[0.78rem] ${erreurs.password ? 'text-[#b4342c]' : 'text-stone'}`} role={erreurs.password ? 'alert' : undefined}>
+        <p id="password-aide" className={`mt-2 text-[0.78rem] ${erreurs.password ? 'text-danger' : 'text-stone'}`} role={erreurs.password ? 'alert' : undefined}>
           {erreurs.password?.[0] ?? 'Au moins 10 caractères. Une phrase facile à retenir fait un bon mot de passe.'}
         </p>
       </div>
@@ -100,14 +97,14 @@ export function InvitationForm({ token, email }: { token: string; email: string 
           className={champ}
         />
         {erreurs.confirmation && (
-          <p id="confirmation-erreur" role="alert" className="mt-2 text-[0.78rem] text-[#b4342c]">
+          <p id="confirmation-erreur" role="alert" className="mt-2 text-[0.78rem] text-danger">
             {erreurs.confirmation[0]}
           </p>
         )}
       </div>
 
       {erreur && (
-        <p role="alert" className="text-[0.82rem] text-[#b4342c]">
+        <p role="alert" className="text-[0.82rem] text-danger">
           {erreur}
         </p>
       )}

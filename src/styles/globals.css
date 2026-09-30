@@ -40,6 +40,7 @@
   --color-blue-deep: #46728a; /* CTA, labels, survols */
   --color-blue-ink: #2f5a70; /* texte sur fond bleu clair */
   --color-blue-mist: #eaf1f4; /* aplat très doux, pastilles actives */
+  /* États de l'admin (en ligne / à publier / erreur) : pastille, encre lisible sur le fond doux, fond doux. */ --color-success: #3e9e6f; --color-success-ink: #256b47; --color-success-soft: #e8f4ec; --color-warning: #c98a2d; --color-warning-ink: #8a5f1e; --color-warning-soft: #fdf4e4; --color-danger: #b4342c; --color-danger-soft: #fbf0ee;
 
   /* Typographie — Cormorant Garamond (light, italiques) + Karla */
   --font-serif:

@@ -99,7 +99,7 @@ export function formatTaille(octets: number): string {
 }
 
 /** Dimensions lisibles : « 1200 × 800 » — ou rien si on ne les connaît pas. */
-export function formatDimensions(media: Pick<Media, 'width' | 'height'>): string {
+function formatDimensions(media: Pick<Media, 'width' | 'height'>): string {
   if (!media.width || !media.height) return ''
   return `${media.width} × ${media.height}`
 }

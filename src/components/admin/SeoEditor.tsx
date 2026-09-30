@@ -3,6 +3,7 @@
 import { ChevronDown } from 'lucide-react'
 import { useState } from 'react'
 
+import { FieldError } from './form/FieldError'
 import { MediaPicker } from './MediaPicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -120,7 +121,7 @@ export function SeoEditor({
         </div>
 
         {(!value.robotsIndex || !value.robotsFollow) && (
-          <p className="rounded-md bg-[#fbf6e9] px-3.5 py-2.5 text-xs leading-relaxed text-[#6b551f]">
+          <p className="rounded-md bg-warning-soft px-3.5 py-2.5 text-xs leading-relaxed text-warning-ink">
             Les moteurs de recherche sont bridés sur cette page : elle
             n’apparaîtra normalement pas dans les résultats.
           </p>
@@ -138,10 +139,10 @@ export function SeoEditor({
             value={value.title}
             placeholder={titreParDefaut}
             aria-invalid={errorOf('title') ? true : undefined}
-            aria-describedby="seo-title-aide"
+            aria-describedby={cn('seo-title-aide', errorOf('title') && 'seo-title-erreur')}
             onChange={(e) => set('title', e.target.value)}
           />
-          <FieldError message={errorOf('title')} />
+          <FieldError id="seo-title-erreur" messages={errorOf('title')} />
           <p id="seo-title-aide" className="mt-1.5 text-xs text-muted-foreground">
             C’est la ligne bleue du résultat. 50 à 60 caractères, c’est
             l’idéal — au-delà, Google coupe la fin. Vide, le site utilise
@@ -162,10 +163,13 @@ export function SeoEditor({
             rows={3}
             value={value.description}
             aria-invalid={errorOf('description') ? true : undefined}
-            aria-describedby="seo-description-aide"
+            aria-describedby={cn(
+              'seo-description-aide',
+              errorOf('description') && 'seo-description-erreur',
+            )}
             onChange={(e) => set('description', e.target.value)}
           />
-          <FieldError message={errorOf('description')} />
+          <FieldError id="seo-description-erreur" messages={errorOf('description')} />
           <p
             id="seo-description-aide"
             className="mt-1.5 text-xs text-muted-foreground"
@@ -238,9 +242,10 @@ export function SeoEditor({
               value={value.canonical}
               placeholder={url}
               aria-invalid={errorOf('canonical') ? true : undefined}
+              aria-describedby={errorOf('canonical') ? 'seo-canonical-erreur' : undefined}
               onChange={(e) => set('canonical', e.target.value)}
             />
-            <FieldError message={errorOf('canonical')} />
+            <FieldError id="seo-canonical-erreur" messages={errorOf('canonical')} />
             <p className="mt-1.5 text-xs text-muted-foreground">
               À laisser vide dans la plupart des cas ({url}). Utile seulement
               si ce contenu existe déjà à une autre adresse.
@@ -276,16 +281,6 @@ function Card({
   )
 }
 
-/** Message d'erreur sous un champ — rien si le champ est valide. */
-function FieldError({ message }: { message?: string }) {
-  if (!message) return null
-  return (
-    <p role="alert" className="mt-1.5 text-xs text-destructive">
-      {message}
-    </p>
-  )
-}
-
 /** Le compteur dit où l'on en est par rapport à la fourchette idéale,
     sans jargon : « 34 caractères », « 62 caractères — un peu long ». */
 function Counter({ value, ideal }: { value: number; ideal: [number, number] }) {
@@ -296,7 +291,7 @@ function Counter({ value, ideal }: { value: number; ideal: [number, number] }) {
     <span
       className={cn(
         'text-xs tabular-nums',
-        long ? 'text-[#8a5f1e]' : 'text-muted-foreground',
+        long ? 'text-warning-ink' : 'text-muted-foreground',
       )}
     >
       {value} caractère{value > 1 ? 's' : ''}

@@ -3,6 +3,7 @@
 import { useAnchors } from './anchors-context'
 import { Choice } from '@/components/ui/choice'
 import { Input } from '@/components/ui/input'
+import { parseHref } from '@/lib/links'
 
 /**
  * Le lien d'un bouton, sans rien taper de technique.
@@ -16,14 +17,11 @@ import { Input } from '@/components/ui/input'
 
 type Mode = 'section' | 'tel' | 'mail' | 'web'
 
+/** Un bouton n'a pas de mode « autre page du site » : un chemin interne
+    (`/approche`) s'édite comme une adresse web, tel quel. */
 function lire(value: string): { mode: Mode; reste: string } {
-  const v = value.trim()
-  if (v.startsWith('tel:')) return { mode: 'tel', reste: v.slice(4) }
-  if (v.startsWith('mailto:')) return { mode: 'mail', reste: v.slice(7) }
-  if (/^https?:\/\//i.test(v)) return { mode: 'web', reste: v }
-  if (v.startsWith('/#')) return { mode: 'section', reste: v.slice(2) }
-  if (v.startsWith('#')) return { mode: 'section', reste: v.slice(1) }
-  return { mode: v ? 'web' : 'section', reste: v }
+  const { mode, rest } = parseHref(value)
+  return { mode: mode === 'page' ? 'web' : mode, reste: rest }
 }
 
 export function LinkField({

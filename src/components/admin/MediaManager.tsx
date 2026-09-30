@@ -176,7 +176,7 @@ export function MediaManager({ items: initial }: { items: Media[] }) {
                 <div className="relative aspect-4/3 bg-muted">
                   <MediaThumb media={media} sizes="(max-width: 640px) 50vw, 240px" />
                   {estVideo && (
-                    <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-foreground">
+                    <span className="absolute left-2 top-2 rounded-full bg-white/90 px-2 py-0.5 text-[12px] font-medium text-foreground">
                       Vidéo
                     </span>
                   )}

@@ -2,10 +2,12 @@
 
 import { Check, Copy, Link2, Plus, UserPlus } from 'lucide-react'
 import { useRouter } from 'next/navigation'
-import { useState, useTransition } from 'react'
+import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { ConfirmDelete } from './ConfirmDelete'
+import { FieldError } from './form/FieldError'
+import { useActionForm } from './hooks/useActionForm'
 import { Button } from '@/components/ui/button'
 import {
   Dialog,
@@ -33,9 +35,10 @@ import {
  * elle choisit son mot de passe — personne d'autre ne le connaît. Tant
  * qu'elle ne l'a pas fait, la ligne le dit : « Invitation en attente ».
  *
- * Le lien n'est montré qu'une fois, au moment où il est créé : la base ne
- * garde que son empreinte. « Nouveau lien » en refait un, et périme le
- * précédent.
+ * Le lien est montré à sa création, et reste recopiable depuis la liste
+ * tant qu'il vaut : le jeton est stocké CHIFFRÉ (pas seulement haché),
+ * la base peut donc le rendre à nouveau. « Nouveau lien » en refait un,
+ * et périme le précédent.
  */
 
 type Draft = { name: string; email: string }
@@ -43,9 +46,8 @@ const VIDE: Draft = { name: '', email: '' }
 
 export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
   const router = useRouter()
-  const [pending, start] = useTransition()
+  const { pending, fieldErrors: erreurs, run } = useActionForm()
   const [draft, setDraft] = useState<Draft | null>(null)
-  const [erreurs, setErreurs] = useState<Record<string, string[]>>({})
   /* Le lien tout juste créé — pour cette personne, à copier. */
   const [lien, setLien] = useState<{ nom: string; url: string } | null>(null)
 
@@ -53,30 +55,22 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
 
   function creer() {
     if (!draft) return
-    setErreurs({})
-    start(async () => {
-      const result = await createUser(draft)
-      if (!result.ok) {
-        setErreurs(result.fieldErrors ?? {})
-        toast.error(result.error)
-        return
-      }
-      toast.success(`${draft.name} a été ajouté·e — transmettez-lui le lien.`)
-      setLien({ nom: draft.name, url: `${origine}${result.data.lien}` })
-      setDraft(null)
-      router.refresh()
+    run(() => createUser(draft), {
+      success: `${draft.name} a été ajouté·e — transmettez-lui le lien.`,
+      onSuccess: (data) => {
+        setLien({ nom: draft.name, url: `${origine}${data.lien}` })
+        setDraft(null)
+        router.refresh()
+      },
     })
   }
 
   function nouveauLien(u: UtilisateurListe) {
-    start(async () => {
-      const result = await renewInvitation(u.id)
-      if (!result.ok) {
-        toast.error(result.error)
-        return
-      }
-      setLien({ nom: u.name, url: `${origine}${result.data.lien}` })
-      router.refresh()
+    run(() => renewInvitation(u.id), {
+      onSuccess: (data) => {
+        setLien({ nom: u.name, url: `${origine}${data.lien}` })
+        router.refresh()
+      },
     })
   }
 
@@ -120,7 +114,7 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
               </div>
               <div className="basis-[180px] text-[12.5px]">
                 {u.actif ? (
-                  <span className="inline-flex items-center gap-1.5 text-[#256b47]">
+                  <span className="inline-flex items-center gap-1.5 text-success-ink">
                     <Check className="h-3.5 w-3.5" strokeWidth={2} />
                     Actif
                     {u.lastLoginAt && (
@@ -128,14 +122,14 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
                     )}
                   </span>
                 ) : u.invitation?.valable ? (
-                  <span className="text-[#8a5f1e]">
+                  <span className="text-warning-ink">
                     Invitation en attente
                     <span className="block text-muted-foreground">
                       Le lien expire {delaiRestant(u.invitation.expiresAt)}
                     </span>
                   </span>
                 ) : u.invitation ? (
-                  <span className="text-[#b4342c]">
+                  <span className="text-danger">
                     Lien expiré
                     <span className="block text-muted-foreground">
                       le {formatDate(u.invitation.expiresAt)} — faites-en un nouveau
@@ -211,7 +205,7 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
                   aria-describedby={erreurs.name ? 'u-name-erreur' : undefined}
                   onChange={(e) => setDraft({ ...draft, name: e.target.value })}
                 />
-                <ErreurChamp id="u-name-erreur" messages={erreurs.name} />
+                <FieldError id="u-name-erreur" messages={erreurs.name} />
               </div>
               <div>
                 <Label htmlFor="u-email" className="mb-2 block">
@@ -226,7 +220,7 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
                   aria-describedby={erreurs.email ? 'u-email-erreur' : undefined}
                   onChange={(e) => setDraft({ ...draft, email: e.target.value })}
                 />
-                <ErreurChamp id="u-email-erreur" messages={erreurs.email} />
+                <FieldError id="u-email-erreur" messages={erreurs.email} />
               </div>
               <DialogFooter className="gap-2">
                 <Button type="button" variant="outline" onClick={() => setDraft(null)}>
@@ -328,14 +322,5 @@ function LienACopier({ url }: { url: string }) {
         </Button>
       </div>
     </div>
-  )
-}
-
-function ErreurChamp({ id, messages }: { id: string; messages?: string[] }) {
-  if (!messages || messages.length === 0) return null
-  return (
-    <p id={id} role="alert" className="mt-1.5 text-xs leading-[1.5] text-red-700">
-      {messages[0]}
-    </p>
   )
 }

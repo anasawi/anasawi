@@ -159,9 +159,11 @@ export function ActionMenu({
       }}
       className={cn(
         'flex w-full items-center gap-2.5 rounded-md px-2.5 py-2 text-left text-[13px] transition-colors',
-        'focus-visible:outline-none focus-visible:bg-blue-mist/60',
+        /* Au clavier : le fond ET un anneau — le fond seul se confond
+           avec le survol, et l'on ne voit plus où l'on est. */
+        'focus-visible:outline-none focus-visible:bg-blue-mist/60 focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-blue-deep/60',
         item.danger
-          ? 'text-red-700 hover:bg-red-50 focus-visible:bg-red-50'
+          ? 'text-red-700 hover:bg-red-50 focus-visible:bg-red-50 focus-visible:ring-destructive/50'
           : 'text-foreground hover:bg-blue-mist/60',
         item.disabled && 'cursor-default opacity-40 hover:bg-transparent',
       )}

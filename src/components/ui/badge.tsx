@@ -11,10 +11,10 @@ const badgeVariants = cva(
         default: 'border-transparent bg-primary text-primary-foreground',
         secondary: 'border-transparent bg-secondary text-secondary-foreground',
         outline: 'border-border text-muted-foreground',
-        /* Vert et ambre légèrement désaturés, choisis dans la même famille
-           chaude que le reste : un vert vif jurerait avec l'ivoire. */
-        success: 'border-transparent bg-[#e4efe6] text-[#38614a]',
-        warning: 'border-transparent bg-[#f7eeda] text-[#7a6224]',
+        /* Les mêmes verts et ambres que les pastilles d'état de
+           l'éditeur (tokens `success` / `warning` de globals.css). */
+        success: 'border-transparent bg-success-soft text-success-ink',
+        warning: 'border-transparent bg-warning-soft text-warning-ink',
         muted: 'border-transparent bg-secondary text-muted-foreground',
       },
     },

@@ -41,7 +41,7 @@ function lightness(hex: string): number {
   return relativeLuminance(hex) ** (1 / 2.2)
 }
 
-export const SHADE_KEYS = [
+const SHADE_KEYS = [
   'lightest',
   'light',
   'base',
@@ -49,7 +49,7 @@ export const SHADE_KEYS = [
   'deep',
 ] as const
 
-export type ShadeKey = (typeof SHADE_KEYS)[number]
+type ShadeKey = (typeof SHADE_KEYS)[number]
 
 const SHADE_LABELS: Record<ShadeKey, string> = {
   lightest: 'Très clair',
@@ -102,7 +102,7 @@ function readableTint(ink: string, part: number): string {
   return mix(normalizeHex(ink), WHITE, part)
 }
 
-export type Shade = { key: ShadeKey; label: string; hex: string }
+type Shade = { key: ShadeKey; label: string; hex: string }
 
 /** Les cinq paliers d'une couleur, du plus clair au plus profond. */
 export function shadesOf(hex: string): Shade[] {
@@ -117,7 +117,7 @@ export function shadesOf(hex: string): Shade[] {
    Les cinq rôles
    ══════════════════════════════════════════════════════════════════════ */
 
-export const PALETTE_DEFAULTS = {
+const PALETTE_DEFAULTS = {
   /** Le fond principal du site — `--color-ivory`. */
   surface: '#fbf8f2',
   /** Le fond alterné des sections — `--color-sand`. */
@@ -203,10 +203,10 @@ export const paletteSchema = z
   })
   .strict()
 
-export type PaletteInput = z.infer<typeof paletteSchema>
+type PaletteInput = z.infer<typeof paletteSchema>
 
 /** Complète une palette partielle avec les valeurs de la charte. */
-export function parsePalette(input: unknown): Palette {
+function parsePalette(input: unknown): Palette {
   const parsed = paletteSchema.safeParse(input ?? {})
   const value: PaletteInput = parsed.success ? parsed.data : {}
 
@@ -250,7 +250,7 @@ export function paletteFromIdentity(input: unknown): Palette {
 }
 
 /** L'ancien `mist` — surcharge explicite de `--color-blue-mist` si présent. */
-export function paletteMistOverride(input: unknown): string | undefined {
+function paletteMistOverride(input: unknown): string | undefined {
   const parsed = identityColorsSchema.safeParse(input ?? {})
   return parsed.success ? parsed.data.mist : undefined
 }
@@ -265,7 +265,7 @@ export function paletteMistOverride(input: unknown): string | undefined {
  * Chaque valeur est soit un rôle brut, soit un palier de ce rôle : aucune
  * teinte n'est inventée, et rien n'est un gris neutre.
  */
-export function paletteVars(palette: Palette): Record<string, string> {
+function paletteVars(palette: Palette): Record<string, string> {
   const { r, g, b } = hexToRgb(palette.ink)
   const line = (alpha: number) => `rgba(${r}, ${g}, ${b}, ${alpha})`
 

@@ -10,6 +10,8 @@ import {
 } from 'react'
 import { createPortal } from 'react-dom'
 
+import { useLatest } from './hooks/useLatest'
+
 /**
  * La scène de l'éditeur, dans un cadre à la largeur exacte de l'écran
  * simulé.
@@ -84,6 +86,9 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
 ) {
   const frameRef = useRef<HTMLIFrameElement>(null)
   const [mount, setMount] = useState<HTMLDivElement | null>(null)
+  /* `onReady` change d'identité à chaque rendu de l'éditeur ; ce n'est
+     pas une raison de reconstruire le cadre : on lit la dernière valeur. */
+  const onReadyRef = useLatest(onReady)
 
   useImperativeHandle(
     ref,
@@ -146,7 +151,7 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
       racine = doc.createElement('div')
       doc.body.appendChild(racine)
       setMount(racine)
-      onReady?.()
+      onReadyRef.current?.()
     }
 
     /* Selon le moment, le document `srcdoc` est déjà là (second passage
@@ -159,10 +164,7 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
       frame.removeEventListener('load', onLoad)
       observateur?.disconnect()
     }
-    /* `onReady` change d'identité à chaque rendu de l'éditeur ; ce
-       n'est pas une raison de reconstruire le cadre. */
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [onReadyRef])
 
   /* ── Ce qui doit traverser le cadre ───────────────────────────────── */
   useEffect(() => {

@@ -1,7 +1,12 @@
 import { z } from 'zod'
 
 /**
- * Moteur de grille du constructeur visuel.
+ * Moteur de grille des sections-canevas (placement libre).
+ *
+ * Le constructeur « grille » n'existe plus dans l'admin, mais des sections
+ * en base peuvent encore porter un `placement` : la lecture, la dérivation
+ * responsive et la génération CSS restent — seules les fonctions d'ÉDITION
+ * (dépose depuis une palette, écriture d'une surcharge) ont été retirées.
  *
  * Chaque section-canevas est une grille : 12 colonnes en desktop, 8 en
  * tablette, 4 en mobile. Un élément n'est jamais positionné en pixels ni en
@@ -20,34 +25,25 @@ import { z } from 'zod'
 
 export type Breakpoint = 'desktop' | 'tablet' | 'mobile'
 
-export const BREAKPOINTS: readonly Breakpoint[] = ['desktop', 'tablet', 'mobile']
-
 /** Nombre de colonnes par breakpoint — grille fine, cellules quasi
     carrées : la liberté de placement vient de la densité. */
-export const GRID_COLS: Record<Breakpoint, number> = {
+const GRID_COLS: Record<Breakpoint, number> = {
   desktop: 48,
   tablet: 24,
   mobile: 12,
 }
 
-/** Facteurs d'échelle pour les compositions écrites « en base 12 »
-    (conversions héritées, modèles) : une colonne d'auteur = 4 colonnes
-    réelles, une ligne d'auteur (48 px) = 2 lignes réelles. Changer la
-    densité de la grille ne demande plus de réécrire une seule valeur. */
-export const AUTHOR_COL_FACTOR = GRID_COLS.desktop / 12
-export const AUTHOR_ROW_FACTOR = 2
-
 /** Pas de gouttière : le quadrillage est une vraie feuille — toutes les
     cellules sont identiques, et l'espacement se compose en laissant des
     cellules vides. */
-export const GRID_GAP: Record<Breakpoint, number> = {
+const GRID_GAP: Record<Breakpoint, number> = {
   desktop: 0,
   tablet: 0,
   mobile: 0,
 }
 
 /** Hauteur minimale d'une ligne de grille, en px. */
-export const ROW_UNIT = 24
+const ROW_UNIT = 24
 
 /** Largeurs de composition de l'éditeur — le canvas est rendu à taille
     fixe puis mis à l'échelle, pour que desktop reste desktop quel que
@@ -59,14 +55,14 @@ export const GRID_VIEWPORTS: Record<Breakpoint, number> = {
 }
 
 /** Bornes des media queries du CSS public. */
-export const TABLET_MAX = 1023
-export const MOBILE_MAX = 639
+const TABLET_MAX = 1023
+const MOBILE_MAX = 639
 
 const MAX_ROWS = 200
 
 /* ── Modèle ─────────────────────────────────────────────────────────── */
 
-export const gridPlacementSchema = z.object({
+const gridPlacementSchema = z.object({
   /** Colonne de départ (1 = première). */
   col: z.number().int().min(1).max(48),
   /** Ligne de départ (1 = première). */
@@ -92,7 +88,7 @@ export const gridPositionSchema = z
   })
   .strict()
 
-export type GridPlacement = z.infer<typeof gridPlacementSchema>
+type GridPlacement = z.infer<typeof gridPlacementSchema>
 export type GridPosition = z.infer<typeof gridPositionSchema>
 
 /* ── Lecture, avec compatibilité ascendante ─────────────────────────── */
@@ -105,7 +101,7 @@ const legacySchema = z.object({
 })
 
 /** Ramène un placement dans les bornes d'une grille de `cols` colonnes. */
-export function clampPlacement(p: GridPlacement, cols: number): GridPlacement {
+function clampPlacement(p: GridPlacement, cols: number): GridPlacement {
   const col = Math.min(Math.max(1, Math.round(p.col)), cols)
   const colSpan = Math.min(Math.max(1, Math.round(p.colSpan)), cols - col + 1)
   const row = Math.min(Math.max(1, Math.round(p.row)), MAX_ROWS)
@@ -146,7 +142,7 @@ export function parseGridPosition(value: unknown): GridPosition | null {
 /* ── Dérivation responsive ──────────────────────────────────────────── */
 
 /** Remap proportionnel 12 → 8 colonnes : la composition tient, plus étroite. */
-export function deriveTablet(d: GridPlacement): GridPlacement {
+function deriveTablet(d: GridPlacement): GridPlacement {
   const cols = GRID_COLS.tablet
   const col = Math.round(((d.col - 1) * cols) / GRID_COLS.desktop) + 1
   const colSpan = Math.round((d.colSpan * cols) / GRID_COLS.desktop)
@@ -160,78 +156,13 @@ export function deriveTablet(d: GridPlacement): GridPlacement {
  * l'ordre de lecture — le défaut sain sur 4 colonnes, tant que l'admin n'a
  * pas placé l'élément à la main dans la vue mobile.
  */
-export function resolvePlacement(
+function resolvePlacement(
   position: GridPosition,
   bp: Breakpoint,
 ): GridPlacement | null {
   if (bp === 'desktop') return position.desktop
   if (bp === 'tablet') return position.tablet ?? deriveTablet(position.desktop)
   return position.mobile ?? null
-}
-
-/** Écrit la position d'un breakpoint (surcharge pour tablette/mobile). */
-export function withPlacement(
-  position: GridPosition,
-  bp: Breakpoint,
-  placement: GridPlacement,
-): GridPosition {
-  const clamped = clampPlacement(placement, GRID_COLS[bp])
-  if (bp === 'desktop') return { ...position, desktop: clamped }
-  return { ...position, [bp]: clamped }
-}
-
-/* ── Défauts par type de bloc ───────────────────────────────────────── */
-
-/** Empreinte initiale d'un élément déposé depuis la palette — écrite en
-    base 12, mise à l'échelle de la grille réelle. */
-const DEFAULT_SPANS: Record<string, { colSpan: number; rowSpan: number }> = {
-  heading: { colSpan: 6, rowSpan: 2 },
-  text: { colSpan: 5, rowSpan: 3 },
-  image: { colSpan: 4, rowSpan: 5 },
-  /* 1,5 ligne d'auteur = 3 lignes réelles (72 px) : un bouton fait ~52 px,
-     il tient avec de l'air — jamais en débordement dès la pose. */
-  button: { colSpan: 3, rowSpan: 1.5 },
-  list: { colSpan: 5, rowSpan: 5 },
-  divider: { colSpan: 6, rowSpan: 1 },
-  spacer: { colSpan: 2, rowSpan: 2 },
-  badge: { colSpan: 2, rowSpan: 1.5 },
-  citation: { colSpan: 5, rowSpan: 3 },
-  stat: { colSpan: 3, rowSpan: 2 },
-  carte: { colSpan: 4, rowSpan: 7 },
-  atout: { colSpan: 4, rowSpan: 3 },
-  video: { colSpan: 6, rowSpan: 6 },
-  accordeon: { colSpan: 6, rowSpan: 6 },
-  onglets: { colSpan: 6, rowSpan: 4 },
-  tableau: { colSpan: 6, rowSpan: 4 },
-  tarif: { colSpan: 4, rowSpan: 8 },
-  galerie: { colSpan: 8, rowSpan: 6 },
-  avatar: { colSpan: 3, rowSpan: 2 },
-  encart: { colSpan: 5, rowSpan: 3 },
-  barre: { colSpan: 4, rowSpan: 1.5 },
-  acces: { colSpan: 5, rowSpan: 6 },
-  coordonnees: { colSpan: 4, rowSpan: 4 },
-  horaires: { colSpan: 4, rowSpan: 4 },
-  reseaux: { colSpan: 3, rowSpan: 1.5 },
-}
-
-export function defaultSpan(type: string): { colSpan: number; rowSpan: number } {
-  const s = DEFAULT_SPANS[type] ?? { colSpan: 4, rowSpan: 3 }
-  return {
-    colSpan: Math.round(s.colSpan * AUTHOR_COL_FACTOR),
-    rowSpan: Math.round(s.rowSpan * AUTHOR_ROW_FACTOR),
-  }
-}
-
-/** Position par défaut quand un bloc entre dans un canevas sans point de
-    dépôt connu (déplacement via les calques, par exemple). */
-export function defaultPosition(type: string): GridPosition {
-  const span = defaultSpan(type)
-  return {
-    desktop: clampPlacement(
-      { col: 1, row: 1, colSpan: span.colSpan, rowSpan: span.rowSpan },
-      GRID_COLS.desktop,
-    ),
-  }
 }
 
 /* ── Ordre de lecture ───────────────────────────────────────────────── */
@@ -258,8 +189,8 @@ export function readingOrder<T>(
 const HEIGHT_ROWS = { petit: 14, moyen: 20, grand: 28, ecran: 32 } as const
 
 /** Bornes du nombre de lignes d'un canevas. */
-export const MIN_CANVAS_ROWS = 8
-export const MAX_CANVAS_ROWS = 120
+const MIN_CANVAS_ROWS = 8
+const MAX_CANVAS_ROWS = 120
 
 /** Nombre de lignes garanties d'un canevas (sa hauteur minimale). */
 export function canvasRows(payload: unknown): number {
