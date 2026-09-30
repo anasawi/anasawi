@@ -44,9 +44,27 @@ export function CustomCursor() {
     /* Amplitude du jeu : fraction du décalage souris / centre du bouton. */
     const PLAY = 0.12
 
+    /* La boucle ne tourne que lorsqu'il y a quelque chose à rattraper :
+       l'anneau qui suit la souris avec retard, ou qui colle à un bouton.
+       Souris immobile et anneau posé, elle s'endort — et se réveille au
+       prochain mouvement. Avant, elle tournait à chaque image, sans
+       relâche, même sur une page qu'on lisait sans toucher la souris. */
+    let frame = 0
+    let actif = false
+    const reveiller = () => {
+      if (actif || document.hidden) return
+      actif = true
+      frame = requestAnimationFrame(loop)
+    }
+    const endormir = () => {
+      actif = false
+      cancelAnimationFrame(frame)
+    }
+
     const onMove = (event: MouseEvent) => {
       mx = event.clientX
       my = event.clientY
+      reveiller()
     }
 
     /* Ton du fond sous la souris : premier ancêtre qui peint un fond
@@ -129,13 +147,20 @@ export function CustomCursor() {
         ring.style.height = ''
         ring.style.borderRadius = ''
       }
+      reveiller()
+    }
+
+    const onVisibility = () => {
+      if (document.hidden) endormir()
+      else reveiller()
     }
 
     window.addEventListener('mousemove', onMove, { passive: true })
     document.addEventListener('mouseover', onOver)
+    document.addEventListener('visibilitychange', onVisibility)
 
-    let frame = 0
     const loop = () => {
+      if (!actif) return
       const dot = dotRef.current
       const ring = ringRef.current
 
@@ -176,14 +201,24 @@ export function CustomCursor() {
       if (ring) {
         ring.style.transform = `translate3d(${rx}px, ${ry}px, 0) translate(-50%, -50%)`
       }
+
+      /* Anneau posé (à un dixième de pixel près) et rien à suivre : on
+         s'arrête là. Accroché à un bouton, on continue — le bouton peut
+         bouger (capsule qui glisse, page qui défile). */
+      const pose = Math.abs(tx - rx) < 0.1 && Math.abs(ty - ry) < 0.1
+      if (pose && !stuck) {
+        actif = false
+        return
+      }
       frame = requestAnimationFrame(loop)
     }
-    frame = requestAnimationFrame(loop)
+    reveiller()
 
     return () => {
-      cancelAnimationFrame(frame)
+      endormir()
       window.removeEventListener('mousemove', onMove)
       document.removeEventListener('mouseover', onOver)
+      document.removeEventListener('visibilitychange', onVisibility)
       document.documentElement.classList.remove('anasawi-cursor')
       setActive(false)
     }

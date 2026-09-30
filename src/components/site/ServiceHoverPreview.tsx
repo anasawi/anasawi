@@ -13,6 +13,7 @@ import { createPortal } from 'react-dom'
 
 import { EASE, useAnimEnabled } from '@/components/site/anim'
 import type { ServiceWithMedia } from '@/server/db/schema'
+import { numberWordFr } from '@/lib/format'
 
 /*
  * Carte flottante au survol d'un accompagnement.
@@ -39,18 +40,6 @@ const CARD_MIN_H = 220
 const OFFSET_X = 32
 const MARGIN = 14
 
-const NUMBER_WORDS = [
-  'un',
-  'deux',
-  'trois',
-  'quatre',
-  'cinq',
-  'six',
-  'sept',
-  'huit',
-  'neuf',
-  'dix',
-] as const
 
 /** Vrai quand un survol a un sens : pointeur fin, qui sait survoler. */
 export function useCanHover(): boolean {
@@ -211,7 +200,7 @@ export function ServiceHoverPreview({
               ✳︎
             </span>
             {shown.service.group?.label.trim() ||
-              `Accompagnement · ${NUMBER_WORDS[shown.index] ?? String(shown.index + 1)}`}
+              `Accompagnement · ${numberWordFr(shown.index)}`}
             {shown.service.method && (
               <span className="text-blue-deep">· {shown.service.method}</span>
             )}

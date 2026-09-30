@@ -24,7 +24,10 @@ export default async function Image() {
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
-          background: '#F7F4EF',
+          /* L'ivoire du site (`--color-ivory`), pas un blanc cassé voisin :
+             la vignette partagée et la page derrière le lien sont du
+             même papier. */
+          background: '#fbf8f2',
           padding: '84px 92px',
           fontFamily: 'serif',
         }}

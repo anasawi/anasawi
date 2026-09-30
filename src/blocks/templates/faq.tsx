@@ -5,7 +5,7 @@ import type { BlockDefinition, BlockProps } from '../types'
 import { Reveal } from '@/components/site/anim'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { SectionIndex } from '@/components/site/ornaments'
+import { SectionIndex } from '@/components/site/SectionMarks'
 
 /* ════════════════════════════════════════════════════════════════════
    FAQ — Éditoriale (proposition N de la planche)

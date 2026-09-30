@@ -12,8 +12,11 @@ import { cn } from '@/lib/utils'
  * des vitesses opposées « respirent » l'une contre l'autre.
  *
  * Calculé image par image à partir de la position réelle à l'écran
- * (compatible avec le défilement inertiel), lissé, et coupé hors écran.
- * Animations désactivées ou reduced-motion : rendu statique.
+ * (compatible avec le défilement inertiel), lissé. La boucle ne TOURNE
+ * que lorsque l'élément approche de l'écran : un observateur la lance et
+ * l'arrête — avant, chaque parallaxe de la page réclamait une image par
+ * seconde de vie, même à trois écrans de là. Animations désactivées ou
+ * reduced-motion : rendu statique.
  */
 export function Parallax({
   children,
@@ -35,21 +38,40 @@ export function Parallax({
 
     let y = 0
     let frame = 0
+    let actif = false
     const loop = () => {
+      if (!actif) return
       frame = requestAnimationFrame(loop)
       const r = el.getBoundingClientRect()
       const vh = window.innerHeight
-      if (r.bottom < -300 || r.top > vh + 300) return
       /* Position « neutre » : sans transform, où serait l'élément. */
       const center = r.top - y + r.height / 2 - vh / 2
       const target = center * speed
       y += (target - y) * 0.14
       el.style.transform = `translate3d(0, ${y.toFixed(2)}px, 0)`
     }
-    frame = requestAnimationFrame(loop)
+
+    /* Marge de 300 px : la boucle démarre un peu avant l'entrée, pour que
+       le décalage soit déjà en place quand l'élément paraît. */
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry?.isIntersecting ?? false
+        if (visible && !actif) {
+          actif = true
+          frame = requestAnimationFrame(loop)
+        } else if (!visible && actif) {
+          actif = false
+          cancelAnimationFrame(frame)
+        }
+      },
+      { rootMargin: '300px 0px' },
+    )
+    observer.observe(el)
 
     return () => {
+      actif = false
       cancelAnimationFrame(frame)
+      observer.disconnect()
       el.style.transform = ''
     }
   }, [on, speed])

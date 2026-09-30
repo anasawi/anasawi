@@ -1,7 +1,4 @@
-'use client'
-
 import Image from 'next/image'
-import { useState } from 'react'
 import { ChevronDown } from 'lucide-react'
 import { z } from 'zod'
 
@@ -9,7 +6,9 @@ import { field } from '../field'
 import type { BlockDefinition, BlockProps } from '../types'
 import { ActionLink } from '@/components/site/ActionLink'
 import { Reveal } from '@/components/site/anim'
+import { Onglets as OngletsInteractifs } from '@/components/site/Onglets'
 import { cn } from '@/lib/utils'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /**
  * Composants composés — l'équivalent shadcn, traduit dans la charte ANASAWI.
@@ -18,8 +17,9 @@ import { cn } from '@/lib/utils'
  * de progression : tout ce qui fait un site complet, posable sur la grille
  * et personnalisable (contenu ici, apparence dans l'onglet Style).
  *
- * Fichier client : l'accordéon repose sur `<details>` natif, mais les
- * onglets ont besoin d'un état local.
+ * Rendu côté serveur : l'accordéon repose sur `<details>` natif ; les
+ * onglets, qui ont besoin d'un état local, vivent dans leur propre
+ * composant client (`components/site/Onglets`).
  */
 
 /* ── Accordéon ─────────────────────────────────────────────────────── */
@@ -95,38 +95,7 @@ export const ongletsSchema = z.object({
 })
 
 function Onglets({ data }: BlockProps<z.output<typeof ongletsSchema>>) {
-  const [active, setActive] = useState(0)
-  if (data.tabs.length === 0) return null
-  const current = data.tabs[Math.min(active, data.tabs.length - 1)]
-
-  return (
-    <Reveal>
-      <div role="tablist" className="flex flex-wrap gap-x-6 border-b border-line">
-        {data.tabs.map((tab, i) => (
-          <button
-            key={i}
-            role="tab"
-            type="button"
-            aria-selected={i === active}
-            onClick={() => setActive(i)}
-            className={cn(
-              'relative -mb-px pb-3 text-[0.8rem] uppercase tracking-[0.1em] transition-colors',
-              i === active
-                ? 'border-b border-ink text-ink'
-                : 'text-stone hover:text-ink-soft',
-            )}
-          >
-            {tab.label}
-          </button>
-        ))}
-      </div>
-      {current && (
-        <p className="pt-5 text-[0.9rem] leading-[1.75] text-ink-soft">
-          {current.text}
-        </p>
-      )}
-    </Reveal>
-  )
+  return <OngletsInteractifs tabs={data.tabs} />
 }
 
 export const ongletsBlock: BlockDefinition<typeof ongletsSchema> = {
@@ -305,7 +274,7 @@ export const tarifSchema = z.object({
   period: z.string().default(''),
   features: z.array(z.object({ text: z.string() })).default([]),
   ctaLabel: z.string().default(''),
-  ctaHref: z.string().default('#contact'),
+  ctaHref: optionalSafeHrefSchema.default('#contact'),
   highlight: z.boolean().default(false),
 })
 

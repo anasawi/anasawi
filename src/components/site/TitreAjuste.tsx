@@ -20,12 +20,16 @@ import { useLayoutEffect, useRef } from 'react'
  * de 4 vw a besoin de 8 vw de marge.
  *
  * La taille de police du titre DOIT multiplier par `var(--ajustement, 1)`.
+ *
+ * `as` : `h1` en tête de page, `h2` pour un héros placé plus bas — la
+ * mesure est la même, seul le niveau du titre change.
  */
 export function TitreAjuste({
+  as: Balise = 'h1',
   className,
   children,
   ...rest
-}: React.ComponentPropsWithoutRef<'h1'>) {
+}: React.ComponentPropsWithoutRef<'h1'> & { as?: 'h1' | 'h2' }) {
   const ref = useRef<HTMLHeadingElement>(null)
 
   useLayoutEffect(() => {
@@ -70,8 +74,8 @@ export function TitreAjuste({
   }, [children])
 
   return (
-    <h1 ref={ref} className={className} {...rest}>
+    <Balise ref={ref} className={className} {...rest}>
       {children}
-    </h1>
+    </Balise>
   )
 }

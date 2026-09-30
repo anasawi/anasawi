@@ -5,7 +5,7 @@ import { m, useReducedMotion } from 'motion/react'
 import { useCallback, useEffect, useId, useRef, useState } from 'react'
 
 import { LogoMark } from './Logo'
-import { PRELOADER_DONE_EVENT } from './Preloader'
+import { PRELOADER_DONE_EVENT, PRELOADER_HTML_ATTRIBUTE } from './preloader-boot'
 import { ANCRE_EN_COURS } from './SmoothScroll'
 import { anchorId, cn, navHref, toE164 } from '@/lib/utils'
 
@@ -78,7 +78,13 @@ export function Header({
       }
     }
 
-    if (!document.querySelector('[data-anasawi-preloader]')) {
+    /* Le rideau ne joue que si le script d'amorçage l'a demandé
+       (`html[data-rideau]`) : sinon la capsule entre tout de suite, sans
+       attendre un signal ni son garde-fou. */
+    if (
+      document.documentElement.getAttribute(PRELOADER_HTML_ATTRIBUTE) !== '1' ||
+      !document.querySelector('[data-anasawi-preloader]')
+    ) {
       show()
       return
     }
@@ -244,6 +250,10 @@ export function Header({
           /* Sous `lg`, la capsule ne dépasse jamais l'écran. */
           'max-lg:max-w-[calc(100vw-24px)] max-lg:pl-4',
           showCapsule ? 'translate-y-0' : 'translate-y-[-140%]',
+          /* Cachée à la descente, la capsule revient dès qu'un de ses
+             liens reçoit le focus : sinon la tabulation atterrissait
+             sur un lien hors écran, invisible. */
+          'focus-within:translate-y-0',
         )}
       >
         <Link
@@ -256,7 +266,7 @@ export function Header({
               qui en tenait lieu. Pas de rotation au survol : un
               astérisque qui tourne est un clin d'œil, une ombelle qui
               tourne est une image à l'envers. */}
-          <LogoMark src={logoUrl} className="h-7 w-7" />
+          <LogoMark src={logoUrl} priority className="h-7 w-7" />
           <span className="font-serif text-[16.5px] font-light tracking-[0.26em]">
             ANASAWI
           </span>
@@ -352,6 +362,32 @@ export function Header({
               : 'invisible -translate-y-3 opacity-0',
           )}
         >
+          {/* Une croix DANS le panneau : celle de la capsule reste, mais
+              un dialogue doit porter sa propre fermeture — au clavier,
+              on ne devine pas qu'il faut ressortir vers la capsule. Nom
+              distinct de « Fermer le menu » (le bouton de la capsule),
+              pour que les deux ne se confondent pas. */}
+          <button
+            type="button"
+            onClick={close}
+            aria-label="Fermer"
+            /* Sous la capsule (qui occupe le haut, jusqu'à ~70 px) : les
+               deux croix ne se recouvrent pas. */
+            className="absolute right-[var(--spacing-gutter)] top-20 grid size-11 place-items-center rounded-full border border-ivory/25 text-ivory transition-colors duration-300 hover:bg-ivory/10"
+          >
+            <svg
+              aria-hidden="true"
+              viewBox="0 0 16 16"
+              className="size-[13px]"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="1.25"
+              strokeLinecap="round"
+            >
+              <path d="M3 3l10 10M13 3L3 13" />
+            </svg>
+          </button>
+
           <nav
             aria-label="Navigation principale (mobile)"
             className="flex flex-1 flex-col justify-center px-[var(--spacing-gutter)] pb-10 pt-28"
@@ -372,7 +408,7 @@ export function Header({
                   >
                     <span
                       aria-hidden="true"
-                      className="w-7 shrink-0 font-sans text-[11px] font-semibold tracking-[0.24em] text-ivory/45"
+                      className="w-7 shrink-0 font-sans text-[11px] font-semibold tracking-[0.24em] text-ivory/70"
                     >
                       {String(i + 1).padStart(2, '0')}
                     </span>
@@ -419,7 +455,7 @@ export function Header({
 
           {(phone || email) && (
             <div className="border-t border-ivory/12 px-[var(--spacing-gutter)] pb-[max(28px,env(safe-area-inset-bottom))] pt-6">
-              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/45">
+              <p className="text-[11px] font-semibold uppercase tracking-[0.24em] text-ivory/70">
                 <span aria-hidden="true" className="font-serif text-[1.2em] font-normal normal-case tracking-normal">
                   ✳︎
                 </span>

@@ -6,7 +6,8 @@ import { MaskLines, Reveal } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
 import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
-import { Aster } from '@/components/site/ornaments'
+import { Aster } from '@/components/site/SectionMarks'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /*
  * Les invitations à l'action — toujours sobres : le fond fonce, la
@@ -25,7 +26,7 @@ export const ctaImageSchema = z.object({
   title: z.string().default(''),
   text: z.string().default(''),
   label: z.string().default(''),
-  href: z.string().default('#contact'),
+  href: optionalSafeHrefSchema.default('#contact'),
   mediaId: z.string().uuid().nullable().default(null),
 })
 
@@ -120,7 +121,7 @@ export const ctaImageBlock: BlockDefinition<typeof ctaImageSchema> = {
 export const ctaImmersifSchema = z.object({
   lines: z.array(z.object({ text: z.string() })).default([]),
   label: z.string().default(''),
-  href: z.string().default('#contact'),
+  href: optionalSafeHrefSchema.default('#contact'),
   mediaId: z.string().uuid().nullable().default(null),
 })
 

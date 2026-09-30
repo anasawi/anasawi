@@ -1,8 +1,10 @@
+import { toRoman } from '@/lib/format'
 import { cn } from '@/lib/utils'
 
 /**
- * Ornements de la charte (planche V8) — l'astérisque signature, les
- * méta-textes, l'index de section en chiffres romains, les trois points.
+ * Marques de section de la charte (planche V8) — l'astérisque signature,
+ * les méta-textes, l'index de section en chiffres romains, les trois
+ * points. (Le décor au trait, lui, est `Ornament.tsx`.)
  *
  * Aucun état, aucun JavaScript : de purs composants serveur que chaque
  * template consomme pour parler la même langue.
@@ -37,7 +39,7 @@ export function MetaLabel({
         'font-sans text-[11px] font-semibold uppercase tracking-[0.24em]',
         tone === 'accent' && 'text-blue-deep',
         tone === 'muted' && 'text-stone',
-        tone === 'light' && 'text-ivory/55',
+        tone === 'light' && 'text-ivory/70',
         className,
       )}
     >
@@ -46,27 +48,6 @@ export function MetaLabel({
       <span>{children}</span>
     </p>
   )
-}
-
-const ROMANS: readonly [number, string][] = [
-  [10, 'x'],
-  [9, 'ix'],
-  [5, 'v'],
-  [4, 'iv'],
-  [1, 'i'],
-]
-
-/** Chiffre romain minuscule — pour l'index de section (« iv — conviction »). */
-export function toRoman(value: number): string {
-  let n = Math.max(1, Math.min(Math.round(value), 40))
-  let out = ''
-  for (const [num, glyph] of ROMANS) {
-    while (n >= num) {
-      out += glyph
-      n -= num
-    }
-  }
-  return out
 }
 
 /**
@@ -97,7 +78,7 @@ export function SectionIndex({
         /* Masqué sous `md` : à 360px il chevaucherait le label supérieur
            ou la capsule de navigation. */
         'section-index pointer-events-none hidden font-serif text-[14.5px] italic md:inline',
-        light ? 'text-ivory/40' : 'text-stone',
+        light ? 'text-ivory/55' : 'text-stone',
         className,
       )}
     >

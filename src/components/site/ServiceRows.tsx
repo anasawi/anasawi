@@ -10,6 +10,7 @@ import {
 } from '@/components/site/ServiceHoverPreview'
 import { ServicePanel } from '@/components/site/ServicePanel'
 import type { ServiceWithMedia } from '@/server/db/schema'
+import { numberWordFr } from '@/lib/format'
 
 /*
  * Liste des accompagnements — les rangées et la fiche qu'elles ouvrent.
@@ -26,22 +27,7 @@ import type { ServiceWithMedia } from '@/server/db/schema'
 
 const PARAM = 'accompagnement'
 
-const NUMBER_WORDS = [
-  'un',
-  'deux',
-  'trois',
-  'quatre',
-  'cinq',
-  'six',
-  'sept',
-  'huit',
-  'neuf',
-  'dix',
-] as const
 
-function numberWord(i: number): string {
-  return NUMBER_WORDS[i] ?? String(i + 1)
-}
 
 function slugFromLocation(): string | null {
   return new URLSearchParams(window.location.search).get(PARAM)
@@ -122,6 +108,14 @@ export function ServiceRows({
     setOpenSlug(null)
   }, [])
 
+  /* Départ vers le rendez-vous (ancre ou agenda) : on nettoie l'adresse
+     SUR PLACE. Un `history.back()` ici entrerait en concurrence avec la
+     navigation qui suit, et le `popstate` tardif rouvrirait la fiche. */
+  const leave = useCallback(() => {
+    writeLocation(null, 'replace')
+    setOpenSlug(null)
+  }, [])
+
   const showPreview = interactive && canHover && openSlug === null
   const hovered = hoverIndex !== null ? (items[hoverIndex] ?? null) : null
 
@@ -158,7 +152,7 @@ export function ServiceRows({
           const inner = (
             <>
               <span className="font-serif text-[16px] font-light italic text-blue-deep transition-colors duration-[450ms] group-hover:text-blue lg:col-span-1">
-                {numberWord(i)}
+                {numberWordFr(i)}
               </span>
 
               {/* Plus petit que l'intitulé de famille : la hiérarchie se lit
@@ -255,7 +249,7 @@ export function ServiceRows({
                   }
                   aria-haspopup="dialog"
                   aria-expanded={openSlug === service.slug}
-                  className={`${rowClass} cursor-pointer no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue focus-visible:ring-offset-2 focus-visible:ring-offset-ivory`}
+                  className={`${rowClass} cursor-pointer no-underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep focus-visible:ring-offset-2 focus-visible:ring-offset-ivory`}
                 >
                   {inner}
                 </a>
@@ -282,6 +276,7 @@ export function ServiceRows({
           service={openService}
           index={Math.max(openIndex, 0)}
           onClose={close}
+          onLeave={leave}
           bookingHref={bookingHref}
           ctaLabel={ctaLabel}
         />

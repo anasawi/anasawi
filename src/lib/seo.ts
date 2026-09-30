@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 
-import { absoluteUrl, stripHtml, toE164, truncate } from './utils'
-import type { FaqItem, Media, Settings } from '@/server/db/schema'
+import { SITE_URL, absoluteUrl, stripHtml, toE164, truncate } from './utils'
+import type { FaqItem, Media, OpeningHour, Settings } from '@/server/db/schema'
 import type { PageWithSections } from '@/server/queries'
 
 /**
@@ -49,7 +49,7 @@ export function buildMetadata({
     300,
   )
 
-  const canonical = seo?.canonical?.trim() || absoluteUrl(path)
+  const canonical = canonicalUrl(seo?.canonical, path)
 
   const images = ogImage
     ? [
@@ -96,6 +96,28 @@ export function buildMetadata({
   }
 }
 
+/**
+ * URL canonique : celle saisie dans l'admin si c'est une adresse ABSOLUE
+ * DU MÊME DOMAINE, sinon celle de la page. Une canonique vers un autre
+ * domaine dit à Google « la vraie page est ailleurs » — et la page sort
+ * de l'index ; un chemin relatif ou une faute de frappe donnaient une
+ * balise invalide, ignorée au mieux.
+ */
+export function canonicalUrl(saisie: string | null | undefined, path: string): string {
+  const repli = absoluteUrl(path)
+  const brut = saisie?.trim()
+  if (!brut) return repli
+  try {
+    const url = new URL(brut)
+    const site = new URL(SITE_URL)
+    if (url.protocol !== site.protocol && url.protocol !== 'https:') return repli
+    if (url.host !== site.host) return repli
+    return url.toString()
+  } catch {
+    return repli
+  }
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    Données structurées
 
@@ -138,9 +160,81 @@ function buildAddress(settings: Settings): Json | null {
   })
 }
 
+/* ── Horaires ────────────────────────────────────────────────────────
+   Les horaires sont saisis en français libre dans les Réglages
+   (« 9 h – 19 h », « 9h-12h / 14h-18h », « Le matin, sur demande »).
+   Google attend des `OpeningHoursSpecification` : jour Schema.org,
+   heures `HH:MM`. On traduit ce qui se lit sans ambiguïté et on IGNORE
+   le reste — un horaire inventé (« sur demande » devenu 9 h – 18 h)
+   ferait venir quelqu'un devant une porte close. */
+
+const JOURS: Record<string, string> = {
+  lundi: 'Monday',
+  mardi: 'Tuesday',
+  mercredi: 'Wednesday',
+  jeudi: 'Thursday',
+  vendredi: 'Friday',
+  samedi: 'Saturday',
+  dimanche: 'Sunday',
+}
+
+/** « 9 h », « 9h30 », « 09:00 », « 14 h 15 » → « HH:MM », sinon null. */
+function heure(brut: string): string | null {
+  const m = /^\s*(\d{1,2})\s*(?:h|:)?\s*(\d{2})?\s*$/i.exec(brut)
+  if (!m) return null
+  const h = Number(m[1])
+  const mn = Number(m[2] ?? '0')
+  if (h > 24 || mn > 59) return null
+  return `${String(h).padStart(2, '0')}:${String(mn).padStart(2, '0')}`
+}
+
+/**
+ * Les plages d'une ligne d'horaires : « 9 h – 12 h / 14 h – 18 h » donne
+ * deux plages ; « Fermé » ou « Sur demande » n'en donne aucune (et la
+ * ligne est passée sous silence — pas de fermeture déclarée non plus).
+ */
+function plages(hours: string): { opens: string; closes: string }[] {
+  const out: { opens: string; closes: string }[] = []
+  const motif = /(\d{1,2}\s*(?:h|:)?\s*(?:\d{2})?)\s*(?:–|—|-|à|a|au)\s*(\d{1,2}\s*(?:h|:)?\s*(?:\d{2})?)/gi
+  for (const m of hours.matchAll(motif)) {
+    const opens = heure(m[1] ?? '')
+    const closes = heure(m[2] ?? '')
+    if (opens && closes && opens < closes) out.push({ opens, closes })
+  }
+  return out
+}
+
+/** Les horaires analysables, au format Schema.org — vide si rien ne l'est. */
+export function buildOpeningHoursSpecification(hours: OpeningHour[]): Json[] {
+  const out: Json[] = []
+  for (const ligne of hours) {
+    const jour = JOURS[ligne.day.trim().toLowerCase()]
+    if (!jour) continue
+    for (const plage of plages(ligne.hours)) {
+      out.push({
+        '@type': 'OpeningHoursSpecification',
+        dayOfWeek: jour,
+        opens: plage.opens,
+        closes: plage.closes,
+      })
+    }
+  }
+  return out
+}
+
+/** Le logo du cabinet, tel que Google le demande : carré, 180 px, PNG. */
+function buildLogo(): Json {
+  return {
+    '@type': 'ImageObject',
+    url: absoluteUrl('/apple-icon'),
+    width: 180,
+    height: 180,
+  }
+}
+
 export function buildOrganizationJsonLd(
   settings: Settings,
-  logoUrl?: string,
+  imageUrl?: string,
 ): Json {
   const address = buildAddress(settings)
 
@@ -150,7 +244,8 @@ export function buildOrganizationJsonLd(
     name: settings.siteName,
     url: absoluteUrl('/'),
     description: settings.defaultSeoDescription,
-    image: logoUrl,
+    image: imageUrl,
+    logo: buildLogo(),
     telephone: settings.contactPhone ? toE164(settings.contactPhone) : null,
     email: settings.contactEmail,
     address,
@@ -162,10 +257,14 @@ export function buildOrganizationJsonLd(
             longitude: settings.longitude,
           }
         : null,
-    openingHours: (
-      (settings.openingHours as { day: string; hours: string }[]) ?? []
-    ).map((h) => `${h.day} ${h.hours}`),
+    openingHoursSpecification: buildOpeningHoursSpecification(
+      (settings.openingHours as OpeningHour[]) ?? [],
+    ),
     areaServed: settings.addressCity,
+    /* Le graphe se lit dans les deux sens : le cabinet a une fondatrice,
+       la praticienne travaille pour le cabinet — par référence, pas par
+       copie. */
+    founder: settings.practitionerName ? { '@id': absoluteUrl('/#person') } : null,
   })
 }
 
@@ -182,7 +281,7 @@ export function buildPersonJsonLd(settings: Settings, image?: string): Json {
     telephone: settings.contactPhone ? toE164(settings.contactPhone) : null,
     email: settings.contactEmail,
     address: buildAddress(settings),
-    worksFor: { '@type': 'Organization', name: settings.siteName },
+    worksFor: { '@id': absoluteUrl('/#business') },
   })
 }
 
@@ -217,7 +316,10 @@ export function buildWebPageJsonLd(page: PageWithSections, path: string): Json {
     name: page.seo?.title || page.title,
     description: page.seo?.description,
     inLanguage: 'fr-FR',
-    isPartOf: { '@type': 'WebSite', '@id': absoluteUrl('/#website') },
+    isPartOf: { '@id': absoluteUrl('/#website') },
+    /* De quoi parle la page : du cabinet — c'est lui que Google doit
+       rattacher à cette adresse. */
+    about: { '@id': absoluteUrl('/#business') },
   })
 }
 

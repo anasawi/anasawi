@@ -6,7 +6,7 @@ import { MaskLines, Reveal } from '@/components/site/anim'
 import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { SectionIndex } from '@/components/site/ornaments'
+import { SectionIndex } from '@/components/site/SectionMarks'
 import { cn } from '@/lib/utils'
 
 export const gallerySchema = z.object({

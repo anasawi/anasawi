@@ -28,6 +28,7 @@ export const metadata: Metadata = {
   metadataBase: new URL(SITE_URL),
   title: { default: 'ANASAWI', template: '%s' },
   formatDetection: { telephone: false, address: false, email: false },
+  manifest: '/manifest.webmanifest',
 }
 
 export const viewport: Viewport = {

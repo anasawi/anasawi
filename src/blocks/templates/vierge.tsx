@@ -9,6 +9,7 @@ import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
 import { cn } from '@/lib/utils'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /**
  * Section vierge — le point de départ neutre.
@@ -27,7 +28,7 @@ export const viergeSchema = z.object({
   imageSide: z.enum(['aucune', 'gauche', 'droite']).default('aucune'),
   align: z.enum(['left', 'center']).default('left'),
   buttonLabel: z.string().default(''),
-  buttonHref: z.string().default('#contact'),
+  buttonHref: optionalSafeHrefSchema.default('#contact'),
 })
 
 function Vierge({ data, ctx }: BlockProps<z.output<typeof viergeSchema>>) {

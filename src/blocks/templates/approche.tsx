@@ -6,26 +6,14 @@ import { MaskLines, Reveal } from '@/components/site/anim'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
-import { SectionIndex } from '@/components/site/ornaments'
+import { SectionIndex } from '@/components/site/SectionMarks'
+import { numberWordFr } from '@/lib/format'
 
 /*
  * L'approche — principes et déroulés.
  */
 
-const NUMBER_WORDS = [
-  'un',
-  'deux',
-  'trois',
-  'quatre',
-  'cinq',
-  'six',
-  'sept',
-  'huit',
-] as const
 
-function numberWord(i: number): string {
-  return NUMBER_WORDS[i] ?? String(i + 1)
-}
 
 /* ════════════════════════════════════════════════════════════════════
    Approche — Principes
@@ -83,7 +71,7 @@ function ApprocheColonnes({
             <Reveal key={i} delay={Math.min(0.1 + i * 0.08, 0.45)}>
               <div className="h-full border-t border-line-strong pt-7">
                 <span className="font-serif text-[1.2rem] font-light italic text-blue-deep">
-                  {numberWord(i)}
+                  {numberWordFr(i)}
                 </span>
                 {item.title && (
                   <h3 className="mt-3 text-[length:var(--text-h3)]">
@@ -211,7 +199,7 @@ function ProcessusVertical({
                       }
                     >
                       <span className="font-serif text-[2.2rem] font-light italic leading-none text-blue-deep">
-                        {numberWord(i)}
+                        {numberWordFr(i)}
                       </span>
                       {step.title && (
                         <h3 className="mt-4 text-[length:var(--text-h3)]">

@@ -72,16 +72,16 @@ export function GalleryRail({
     let drifted = 0 // dérive accumulée
     let last = performance.now()
     let frame = 0
+    let actif = false
 
     const loop = (now: number) => {
+      if (!actif) return
       frame = requestAnimationFrame(loop)
       const dt = Math.min((now - last) / 1000, 0.05)
       last = now
       if (copyWidth <= 0) return
 
       const r = section.getBoundingClientRect()
-      /* Rien à faire hors écran — on économise le calcul. */
-      if (r.bottom < -200 || r.top > window.innerHeight + 200) return
 
       drifted += drift * dt
 
@@ -99,11 +99,32 @@ export function GalleryRail({
       const wrapped = -(((-x) % copyWidth + copyWidth) % copyWidth)
       track.style.transform = `translate3d(${wrapped}px, 0, 0)`
     }
-    frame = requestAnimationFrame(loop)
+
+    /* La boucle ne tourne qu'à l'approche de l'écran : hors champ, un
+       rail qui dérive ne se voit pas mais coûte une image par seconde
+       de vie. Reprise : l'horloge repart d'ici, sinon le premier `dt`
+       engloberait tout le temps passé hors écran. */
+    const presence = new IntersectionObserver(
+      ([entry]) => {
+        const visible = entry?.isIntersecting ?? false
+        if (visible && !actif) {
+          actif = true
+          last = performance.now()
+          frame = requestAnimationFrame(loop)
+        } else if (!visible && actif) {
+          actif = false
+          cancelAnimationFrame(frame)
+        }
+      },
+      { rootMargin: '200px 0px' },
+    )
+    presence.observe(section)
 
     return () => {
+      actif = false
       cancelAnimationFrame(frame)
       observer.disconnect()
+      presence.disconnect()
     }
   }, [on, speed, drift])
 

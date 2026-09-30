@@ -6,14 +6,15 @@ import { MaskLines, Reveal } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { Aster, SectionIndex } from '@/components/site/ornaments'
+import { Aster, SectionIndex } from '@/components/site/SectionMarks'
 import {
   addressLines,
-  bookingHref as sharedBookingHref,
+  bookingHref,
   directContactHref,
 } from '@/lib/settings-helpers'
 import { toE164 } from '@/lib/utils'
 import type { OpeningHour, Settings } from '@/server/db/schema'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /*
  * Être contactée. Toutes les coordonnées viennent des Réglages
@@ -21,9 +22,10 @@ import type { OpeningHour, Settings } from '@/server/db/schema'
  */
 
 /** URL de rendez-vous, sinon téléphone, sinon e-mail — jamais une ancre :
-    dans un bloc Contact, le bouton doit mener à un contact direct. */
-function bookingHref(s: Settings): string {
-  return sharedBookingHref(s, directContactHref(s))
+    dans un bloc Contact, le bouton doit mener à un contact direct. (Nom
+    distinct de `bookingHref`, le dérivé partagé qu'il spécialise.) */
+function contactDirectHref(s: Settings): string {
+  return bookingHref(s, directContactHref(s))
 }
 
 /* ════════════════════════════════════════════════════════════════════
@@ -160,7 +162,7 @@ function ContactMinimal({
             <Reveal delay={0.28}>
               <div className="mt-8 flex justify-center">
                 <ActionLink
-                  href={bookingHref(s)}
+                  href={contactDirectHref(s)}
                   variant="primary"
                   external={Boolean(s.bookingUrl?.trim())}
                   className="bg-ivory text-night"
@@ -390,7 +392,7 @@ function ContactCarte({
             {data.bookingLabel && (
               <div className="py-6">
                 <ActionLink
-                  href={bookingHref(s)}
+                  href={contactDirectHref(s)}
                   variant="primary"
                   external={Boolean(s.bookingUrl?.trim())}
                   className="max-sm:w-full"
@@ -440,7 +442,7 @@ export const appelDouxSchema = z.object({
   title: z.string().default(''),
   text: z.string().default(''),
   label: z.string().default(''),
-  href: z.string().default('#contact'),
+  href: optionalSafeHrefSchema.default('#contact'),
 })
 
 function AppelDoux({ data }: BlockProps<z.output<typeof appelDouxSchema>>) {

@@ -19,6 +19,7 @@ import type { BlockDefinition, BlockProps } from '../types'
 import { ActionLink } from '@/components/site/ActionLink'
 import { Reveal } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /**
  * Bibliothèque étendue de blocs de contenu.
@@ -182,7 +183,7 @@ export const carteSchema = z.object({
   title: z.string().default(''),
   text: z.string().default(''),
   linkLabel: z.string().default(''),
-  href: z.string().default('#contact'),
+  href: optionalSafeHrefSchema.default('#contact'),
 })
 
 const carteRatios = {

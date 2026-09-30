@@ -8,7 +8,8 @@ import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Parallax } from '@/components/site/Parallax'
-import { Aster, SectionIndex } from '@/components/site/ornaments'
+import { Aster, SectionIndex } from '@/components/site/SectionMarks'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /*
  * Sections éditoriales — les respirations typographiques du site.
@@ -68,7 +69,7 @@ export const texteCentreSchema = z.object({
   statement: z.string().default(''),
   text: z.string().default(''),
   label: z.string().default(''),
-  href: z.string().default('#contact'),
+  href: optionalSafeHrefSchema.default('#contact'),
 })
 
 function TexteCentre({
@@ -231,7 +232,7 @@ export const lieuArchesSchema = z.object({
   text: z.string().default(''),
   caption: z.string().default(''),
   linkLabel: z.string().default(''),
-  linkHref: z.string().default('#contact'),
+  linkHref: optionalSafeHrefSchema.default('#contact'),
   mediaId: z.string().uuid().nullable().default(null),
   secondMediaId: z.string().uuid().nullable().default(null),
 })

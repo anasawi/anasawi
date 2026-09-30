@@ -10,6 +10,7 @@ import { BlockImage } from '@/components/site/BlockImage'
 import { Prose } from '@/components/site/Prose'
 import { Reveal } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /**
  * Blocs de contenu fins — ceux qu'on dépose dans une colonne.
@@ -235,7 +236,7 @@ export const imageBlock: BlockDefinition<typeof imageSchema> = {
 
 export const buttonSchema = z.object({
   label: z.string().default(''),
-  href: z.string().default('#contact'),
+  href: optionalSafeHrefSchema.default('#contact'),
   variant: z.enum(['primary', 'outline', 'ghost']).default('primary'),
   align: z.enum(['left', 'center', 'right']).default('left'),
   external: z.boolean().default(false),

@@ -1,7 +1,5 @@
 @import 'tailwindcss';
 
-@custom-variant dark (&:is(.dark *));
-
 /* ══════════════════════════════════════════════════════════════════════
    ANASAWI — Design tokens (ADN « sanctuaire », planche V8)
    Ivoire sable, bleu brume, encre végétale. Arches, serif italique,
@@ -25,9 +23,9 @@
   /* Ces valeurs sont calées sur le contraste, pas sur l'harmonie : elles
      portent du texte courant. La palette du CMS les recalcule de la même
      façon (voir `readableTint` dans lib/palette.ts). */
-  --color-ink-soft: #454945; /* texte courant — 9,3:1 sur l'ivoire */
+  --color-ink-soft: #454945; /* texte courant — 8,6:1 sur l'ivoire */
   --color-soft: #454945; /* alias maquette */
-  --color-stone: #6d716c; /* labels, méta — 5,4:1, jamais sous 14px */
+  --color-stone: #5f635e; /* labels, méta — 5,8:1 sur l'ivoire, 5,3:1 sur le sable : AA même en 10-11px */
 
   /* ── Fond nuit — sections sombres, citations, contact ───────────── */
   --color-night: #2e424f;
@@ -50,8 +48,6 @@
   --font-sans: var(--font-karla), 'Karla', ui-sans-serif, system-ui, sans-serif;
 
   /* ── Échelle fluide — aucun breakpoint, croissance continue ─────── */
-  --text-label: 0.72rem;
-  --text-display: clamp(2.6rem, 5vw, 5.6rem);
   --text-h2: clamp(1.9rem, 3.4vw, 3.25rem);
   --text-h3: clamp(1.2rem, 1.6vw, 1.55rem);
   --text-lead: clamp(1.05rem, 1.2vw, 1.22rem);
@@ -80,21 +76,19 @@
   /* ── Arche signature — pilule en haut, presque droite en bas ────── */
   --radius-arch: 999px 999px 20px 20px;
 
-  /* Courbes — une seule, partout */
+  /* Courbe — une seule, partout */
   --ease-out-soft: cubic-bezier(0.22, 1, 0.36, 1);
-  --ease-in-out-soft: cubic-bezier(0.65, 0, 0.35, 1);
 }
 
 /* ── Alias maquette + défauts d'identité ──────────────────────────────
-   Les noms courts (`--arch`, `--gutter`, `--sp`, `--ease`) sont ceux de la
-   planche V8 : les templates les consomment tels quels. Ils pointent vers
-   les tokens du thème pour que les surcharges d'identité (`identityCss`)
-   se propagent mécaniquement. */
+   Les noms courts (`--gutter`, `--ease`) sont ceux de la planche V8 : les
+   templates les consomment tels quels. Ils pointent vers les tokens du
+   thème pour que les surcharges d'identité (`identityCss`) se propagent
+   mécaniquement. (L'arche se lit via `rounded-arch`, la respiration via
+   `--spacing-section` : leurs alias courts n'avaient plus de lecteur.) */
 
 :root {
-  --arch: 999px 999px 20px 20px;
   --gutter: var(--spacing-gutter);
-  --sp: var(--spacing-section);
   --ease: var(--ease-out-soft);
 
   /* Boutons en pilule par défaut — l'identité admin peut le réduire. */
@@ -129,7 +123,9 @@
   --secondary: #f2f0ec;
   --secondary-foreground: #1c201e;
   --muted: #f4f2ee;
-  --muted-foreground: #85817a;
+  /* 5,5:1 sur le fond de l'admin : avec l'ancien gris (#85817a, 3,8:1),
+     les libellés secondaires en 12-13px passaient sous le seuil AA. */
+  --muted-foreground: #6b675f;
   --accent: #eef1f0;
   --accent-foreground: #1c201e;
   --destructive: #a8352d;
@@ -245,6 +241,14 @@
     color: var(--color-blue-deep);
   }
 
+  /* Rideau d'ouverture : rendu par le serveur, mais INVISIBLE tant que le
+     script d'amorçage (voir `preloader-boot.ts`) n'a pas décidé qu'il
+     doit jouer. La page se lit donc dès le premier octet, JavaScript ou
+     non — le rideau n'est plus une condition d'accès au site. */
+  html:not([data-rideau]) [data-anasawi-preloader] {
+    display: none;
+  }
+
   /* Curseur personnalisé — la classe est posée par <CustomCursor> quand
      le pointeur est fin et que le mouvement n'est pas réduit. */
   @media (hover: hover) and (pointer: fine) {
@@ -337,9 +341,9 @@
 
 /* ══════════════════════════════════════════════════════════════════════
    Animations continues — tempo constant, jamais liées au scroll.
-   Consommées par les primitives (<Marquee>, <CircleText>) et par les
-   templates (halo qui respire). Neutralisées par prefers-reduced-motion
-   via le bloc global ci-dessous.
+   Consommées par les primitives (<Marquee>, <CircleText>) et par le
+   rideau d'ouverture. Neutralisées par prefers-reduced-motion via le
+   bloc global ci-dessous.
    ══════════════════════════════════════════════════════════════════════ */
 
 @keyframes anasawi-spin {
@@ -357,28 +361,12 @@
   }
 }
 
-@keyframes anasawi-breathe {
-  0%,
-  100% {
-    transform: scale(1);
-    opacity: 0.14;
-  }
-  50% {
-    transform: scale(1.04);
-    opacity: 0.2;
-  }
-}
-
 .anasawi-spin {
   animation: anasawi-spin 26s linear infinite;
 }
 
 .anasawi-marquee {
   animation: anasawi-marquee 38s linear infinite;
-}
-
-.anasawi-breathe {
-  animation: anasawi-breathe 9s ease-in-out infinite;
 }
 
 /* ══════════════════════════════════════════════════════════════════════

@@ -1,22 +1,23 @@
 import { z } from 'zod'
 
 import { field } from '../field'
-import type { BlockDefinition, BlockProps } from '../types'
+import { heroHeading, type BlockDefinition, type BlockProps } from '../types'
 import { MaskLines, Reveal } from '@/components/site/anim'
 import { ActionLink } from '@/components/site/ActionLink'
 import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { SectionIndex } from '@/components/site/ornaments'
+import { SectionIndex } from '@/components/site/SectionMarks'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 export const heroSchema = z.object({
   eyebrow: z.string().default(''),
   titleLines: z.array(z.object({ text: z.string() })).default([]),
   intro: z.string().default(''),
   primaryLabel: z.string().default(''),
-  primaryHref: z.string().default('#contact'),
+  primaryHref: optionalSafeHrefSchema.default('#contact'),
   secondaryLabel: z.string().default(''),
-  secondaryHref: z.string().default('#a-propos'),
+  secondaryHref: optionalSafeHrefSchema.default('#a-propos'),
   mediaId: z.string().uuid().nullable().default(null),
 })
 
@@ -30,6 +31,7 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
   const image = ctx.resolveMedia(data.mediaId)
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
   const first = ctx.index === 0
+  const Titre = heroHeading(ctx.index)
 
   return (
     /* `bleed` : hero en première position — padding haut `hero-top`
@@ -46,9 +48,9 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
             </Reveal>
           )}
 
-          {/* H1 unique du site — jamais rendu vide. */}
+          {/* H1 du site quand le héros ouvre la page — jamais rendu vide. */}
           {lines.length > 0 && (
-            <h1 className="mt-5 font-serif text-[clamp(2.7rem,5.4vw,5.8rem)] font-light leading-[1.05] text-ink">
+            <Titre className="mt-5 font-serif text-[clamp(2.7rem,5.4vw,5.8rem)] font-light leading-[1.05] text-ink">
               <MaskLines delay={0.15} lineClassName="lg:whitespace-nowrap">
                 {lines.map((line, i) => (
                   <span key={i}>
@@ -56,7 +58,7 @@ function Hero({ data, ctx }: BlockProps<HeroPayload>) {
                   </span>
                 ))}
               </MaskLines>
-            </h1>
+            </Titre>
           )}
 
           {data.intro && (

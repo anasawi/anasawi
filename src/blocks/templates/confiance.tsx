@@ -6,7 +6,7 @@ import type { BlockDefinition, BlockProps } from '../types'
 import { Counter, Reveal } from '@/components/site/anim'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
-import { Aster, SectionIndex } from '@/components/site/ornaments'
+import { Aster, SectionIndex } from '@/components/site/SectionMarks'
 
 /*
  * Inspirer confiance — chiffres, engagements, reconnaissances.

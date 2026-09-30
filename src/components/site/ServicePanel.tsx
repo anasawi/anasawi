@@ -1,7 +1,14 @@
 'use client'
 
 import { animate, m, useMotionValue } from 'motion/react'
-import { useCallback, useEffect, useId, useRef, useState } from 'react'
+import {
+  useCallback,
+  useEffect,
+  useId,
+  useRef,
+  useState,
+  useSyncExternalStore,
+} from 'react'
 import { createPortal } from 'react-dom'
 
 import { ActionLink } from '@/components/site/ActionLink'
@@ -11,6 +18,7 @@ import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
 import { cn } from '@/lib/utils'
 import type { ServiceWithMedia } from '@/server/db/schema'
+import { numberWordFr } from '@/lib/format'
 
 /*
  * Fiche d'un accompagnement — le panneau qui s'ouvre depuis une liste.
@@ -36,33 +44,45 @@ import type { ServiceWithMedia } from '@/server/db/schema'
  * l'affranchit du contexte d'empilement de la section qui l'a ouvert.
  */
 
-const NUMBER_WORDS = [
-  'un',
-  'deux',
-  'trois',
-  'quatre',
-  'cinq',
-  'six',
-  'sept',
-  'huit',
-  'neuf',
-  'dix',
-] as const
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), textarea, input, select, [tabindex]:not([tabindex="-1"])'
 
-/** Vrai au-dessus du point de rupture `md` de Tailwind (768px). */
+const WIDE_QUERY = '(min-width: 768px)'
+
+function subscribeWide(onChange: () => void) {
+  const media = window.matchMedia(WIDE_QUERY)
+  media.addEventListener('change', onChange)
+  return () => media.removeEventListener('change', onChange)
+}
+
+/**
+ * Vrai au-dessus du point de rupture `md` de Tailwind (768px).
+ *
+ * Lu comme un magasin externe plutôt que posé dans un état par effet :
+ * la valeur est juste dès le premier rendu client, sans un rendu « faux
+ * puis vrai » qui faisait partir la carte du bas de l'écran avant de la
+ * rattraper à droite. Le serveur, lui, ne rend rien (voir `monte`).
+ */
 function useIsWide(): boolean {
-  const [wide, setWide] = useState(false)
-  useEffect(() => {
-    const media = window.matchMedia('(min-width: 768px)')
-    setWide(media.matches)
-    const onChange = (event: MediaQueryListEvent) => setWide(event.matches)
-    media.addEventListener('change', onChange)
-    return () => media.removeEventListener('change', onChange)
-  }, [])
-  return wide
+  return useSyncExternalStore(
+    subscribeWide,
+    () => window.matchMedia(WIDE_QUERY).matches,
+    () => false,
+  )
+}
+
+/**
+ * Vrai une fois hydraté — le portail vers <body> n'existe qu'alors.
+ * Même mécanisme : `useSyncExternalStore` rend `false` pour le serveur
+ * et l'hydratation, `true` ensuite, sans effet ni re-rendu superflu.
+ */
+function useMonte(): boolean {
+  return useSyncExternalStore(
+    () => () => undefined,
+    () => true,
+    () => false,
+  )
 }
 
 type Phase = 'closed' | 'open' | 'closing'
@@ -76,6 +96,7 @@ export function ServicePanel({
   service,
   index,
   onClose,
+  onLeave = onClose,
   bookingHref,
   ctaLabel = 'Prendre rendez-vous',
 }: {
@@ -84,6 +105,13 @@ export function ServicePanel({
   /** Position dans la liste, pour l'index en toutes lettres. */
   index: number
   onClose: () => void
+  /**
+   * Fermeture quand on QUITTE la fiche par son bouton d'action : le
+   * parent peut y nettoyer l'adresse sans remonter l'historique — un
+   * `history.back()` en concurrence avec la navigation qui suit
+   * rouvrirait la fiche au hasard des délais.
+   */
+  onLeave?: () => void
   bookingHref: string
   ctaLabel?: string
 }) {
@@ -96,8 +124,7 @@ export function ServicePanel({
   const open = service !== null
 
   /* Portail : n'existe qu'après montage, le serveur ne rend rien. */
-  const [mounted, setMounted] = useState(false)
-  useEffect(() => setMounted(true), [])
+  const mounted = useMonte()
 
   /* ── Cycle de vie ─────────────────────────────────────────────────────
      `shown` garde la dernière fiche affichée pour continuer à la rendre
@@ -315,7 +342,7 @@ export function ServicePanel({
           >
             <Stagger on={on} delay={0.18}>
               <Eyebrow>
-                Accompagnement · {NUMBER_WORDS[rang] ?? String(rang + 1)}
+                Accompagnement · {numberWordFr(rang)}
               </Eyebrow>
             </Stagger>
 
@@ -363,7 +390,16 @@ export function ServicePanel({
 
             <Stagger on={on} delay={0.54}>
               <div className="mt-10 flex flex-wrap items-center gap-4">
-                <ActionLink href={bookingHref} variant="primary">
+                {/* La fiche se referme AVANT de suivre le lien : vers
+                    l'ancre `#contact`, on doit voir la section arriver,
+                    pas la deviner derrière un voile ; vers l'agenda en
+                    ligne, revenir sur le site ne doit pas rouvrir la
+                    fiche. */}
+                <ActionLink
+                  href={bookingHref}
+                  variant="primary"
+                  onClick={onLeave}
+                >
                   {ctaLabel}
                 </ActionLink>
                 <button

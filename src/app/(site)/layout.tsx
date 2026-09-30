@@ -4,6 +4,7 @@ import { Footer } from '@/components/site/Footer'
 import { Grain } from '@/components/site/Grain'
 import { Header } from '@/components/site/Header'
 import { Preloader } from '@/components/site/Preloader'
+import { PRELOADER_BOOT_SCRIPT } from '@/components/site/preloader-boot'
 import { SmoothScroll } from '@/components/site/SmoothScroll'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { identityCss } from '@/lib/identity'
@@ -46,6 +47,17 @@ export default async function SiteLayout({
       {identityStyles && (
         <style dangerouslySetInnerHTML={{ __html: identityStyles }} />
       )}
+      {/* Le script d'amorçage PRÉCÈDE le rideau dans le flux : le
+          navigateur l'exécute avant de peindre ce qui suit, donc le rideau
+          n'apparaît que s'il doit jouer, sans clignotement. Texte
+          constant, jamais de donnée interpolée. Sans JavaScript, le
+          `<noscript>` masque le rideau à coup sûr. */}
+      <script dangerouslySetInnerHTML={{ __html: PRELOADER_BOOT_SCRIPT }} />
+      <noscript
+        dangerouslySetInnerHTML={{
+          __html: '<style>[data-anasawi-preloader]{display:none}</style>',
+        }}
+      />
       <Preloader />
       <Grain />
       <CustomCursor />

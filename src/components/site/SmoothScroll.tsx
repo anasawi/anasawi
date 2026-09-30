@@ -95,6 +95,32 @@ function positionDe(element: HTMLElement): number {
   return Math.min(Math.max(0, haut - decalage), Math.max(0, maximum))
 }
 
+/**
+ * La cible de la molette, ou l'un de ses ancêtres, défile-t-elle
+ * elle-même dans le sens du geste ? On ne s'arrête qu'aux éléments qui
+ * ont VRAIMENT du chemin à faire : une zone `overflow-y: auto` déjà en
+ * butée rend la main à la page, comme le ferait le navigateur.
+ */
+function zoneDefilable(cible: EventTarget | null, deltaY: number): boolean {
+  let noeud = cible instanceof Element ? cible : null
+  while (noeud && noeud !== document.documentElement && noeud !== document.body) {
+    if (noeud instanceof HTMLElement) {
+      const { overflowY } = getComputedStyle(noeud)
+      if (
+        (overflowY === 'auto' || overflowY === 'scroll') &&
+        noeud.scrollHeight > noeud.clientHeight
+      ) {
+        const enHaut = noeud.scrollTop <= 0
+        const enBas =
+          noeud.scrollTop + noeud.clientHeight >= noeud.scrollHeight - 1
+        if ((deltaY < 0 && !enHaut) || (deltaY > 0 && !enBas)) return true
+      }
+    }
+    noeud = noeud.parentElement
+  }
+  return false
+}
+
 /** L'élément désigné par `#quelque-chose`, s'il existe dans la page. */
 function cibleDe(hash: string): HTMLElement | null {
   const id = decodeURIComponent(hash.replace(/^#/, ''))
@@ -227,6 +253,26 @@ export function SmoothScroll({ children }: { children: React.ReactNode }) {
       /* Zoom du navigateur, défilement d'une zone interne (un menu, une
          carte) : ce n'est pas à nous. */
       if (event.ctrlKey || event.metaKey || event.defaultPrevented) return
+
+      /* Un geste horizontal (pavé tactile, rail d'images défilable à la
+         main) n'a rien à voir avec la page : on le laisse passer tel quel,
+         sinon il est avalé et le rail ne bouge pas. */
+      if (Math.abs(event.deltaX) > Math.abs(event.deltaY)) return
+
+      /* Une fiche (`overflow: hidden` sur <html>) ou le menu mobile (sur
+         <body>) bloque la page : le navigateur ne défilerait rien, et nous
+         non plus — on ne doit surtout pas continuer d'empiler des deltas
+         sur une cible que la page rattraperait d'un bond à la fermeture. */
+      if (
+        document.documentElement.style.overflow === 'hidden' ||
+        document.body.style.overflow === 'hidden'
+      ) {
+        return
+      }
+
+      /* Une zone défilable sous le pointeur, qui peut encore bouger dans
+         ce sens (un panneau, une liste), garde son propre défilement. */
+      if (zoneDefilable(event.target, event.deltaY)) return
 
       const delta =
         event.deltaMode === 1

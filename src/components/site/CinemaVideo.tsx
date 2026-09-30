@@ -1,7 +1,7 @@
 'use client'
 
 import { m, useReducedMotion, useScroll, useTransform } from 'motion/react'
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 import { useAnimEnabled } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
@@ -15,8 +15,12 @@ import type { Media } from '@/server/db/schema'
  * agrandie, se pose. Comme un rideau qu'on écarte.
  *
  * Ce qu'il n'y a PAS, et pourquoi :
- *   — pas de commandes ni de pause : `controls` absent, clics ignorés
- *     (`pointer-events-none`), image-dans-l'image désactivée ;
+ *   — pas de commandes natives : `controls` absent, clics sur l'image
+ *     ignorés (`pointer-events-none`), image-dans-l'image désactivée.
+ *     Une seule commande, discrète : « Mettre en pause / Reprendre »,
+ *     qui n'apparaît qu'au survol du cadre ou au focus clavier — une
+ *     image qui bouge sans qu'on puisse l'arrêter est un critère
+ *     d'accessibilité manqué (WCAG 2.2.2), pas un choix esthétique ;
  *   — pas de son : `muted`, et c'est aussi ce qui autorise la lecture
  *     automatique sur mobile ;
  *   — pas de lecture hors écran : la vidéo joue quand on la voit, se met
@@ -42,6 +46,12 @@ export function CinemaVideo({
   const reduced = useReducedMotion()
   const cadre = useRef<HTMLDivElement>(null)
   const video = useRef<HTMLVideoElement>(null)
+  /* Arrêt demandé par la personne : l'entrée à l'écran ne relance plus
+     la lecture tant qu'elle n'a pas repris elle-même. L'état AFFICHÉ,
+     lui, suit les événements de l'élément : il dit toujours vrai, même
+     quand le mouvement réduit a empêché la lecture automatique. */
+  const pauseVoulue = useRef(false)
+  const [enPause, setEnPause] = useState(false)
 
   /* Progression : 0 quand le haut du cadre entre par le bas de l'écran,
      1 quand son centre atteint le centre de l'écran. */
@@ -53,15 +63,19 @@ export function CinemaVideo({
   const rayon = useTransform(scrollYProgress, [0, 1], [32, 0])
   const zoom = useTransform(scrollYProgress, [0, 1], [1.18, 1])
 
-  /* Lecture seulement à l'écran. */
+  /* Lecture seulement à l'écran — et jamais contre la volonté de la
+     personne qui a mis en pause. */
   useEffect(() => {
     const element = video.current
     if (!element || reduced) return
     const observer = new IntersectionObserver(
       ([entry]) => {
         if (!entry) return
-        if (entry.isIntersecting) void element.play().catch(() => undefined)
-        else element.pause()
+        if (entry.isIntersecting && !pauseVoulue.current) {
+          void element.play().catch(() => undefined)
+        } else {
+          element.pause()
+        }
       },
       { threshold: 0.15 },
     )
@@ -69,13 +83,25 @@ export function CinemaVideo({
     return () => observer.disconnect()
   }, [reduced])
 
+  const basculer = () => {
+    const element = video.current
+    if (!element) return
+    if (element.paused) {
+      pauseVoulue.current = false
+      void element.play().catch(() => undefined)
+    } else {
+      pauseVoulue.current = true
+      element.pause()
+    }
+  }
+
   const aspect = ratio === 'cinema' ? 'aspect-[21/9]' : 'aspect-video'
 
   return (
     <div ref={cadre} className={cn('flex justify-center', className)}>
       <m.div
         style={on ? { width: largeur, borderRadius: rayon } : { width: '100%' }}
-        className="relative overflow-hidden bg-night"
+        className="group/cinema relative overflow-hidden bg-night"
       >
         <div className={cn('relative w-full', aspect)}>
           <m.video
@@ -91,9 +117,42 @@ export function CinemaVideo({
             disablePictureInPicture
             disableRemotePlayback
             aria-label={media.alt}
+            onPlay={() => setEnPause(false)}
+            onPause={() => setEnPause(true)}
+            /* Sans lecture automatique (mouvement réduit), aucun événement
+               ne dit l'état initial : on le lit à l'arrivée des données. */
+            onLoadedMetadata={(event) => setEnPause(event.currentTarget.paused)}
             className="pointer-events-none absolute inset-0 h-full w-full object-cover"
           />
         </div>
+
+        {/* Frère du cadre de la vidéo, pas parent : la structure
+            cadre > format > vidéo reste celle que mesure l'ouverture au
+            défilement. Invisible au repos, révélé au survol du cadre ou au
+            focus clavier ; `aria-pressed` dit l'état, le libellé le geste. */}
+        <button
+          type="button"
+          onClick={basculer}
+          aria-pressed={enPause}
+          aria-label={enPause ? 'Reprendre la vidéo' : 'Mettre la vidéo en pause'}
+          className={cn(
+            'absolute bottom-4 right-4 z-[1] grid size-11 place-items-center rounded-full border border-ivory/40 bg-night/60 text-ivory backdrop-blur',
+            'opacity-0 transition-opacity duration-300 focus-visible:opacity-100 group-hover/cinema:opacity-100',
+            /* À l'arrêt (pause demandée, ou mouvement réduit) : le bouton
+               reste visible, sinon on ne saurait plus où reprendre. */
+            enPause && 'opacity-100',
+          )}
+        >
+          {enPause ? (
+            <svg aria-hidden="true" viewBox="0 0 16 16" className="size-[12px] translate-x-px" fill="currentColor">
+              <path d="M4 2.5v11l9-5.5z" />
+            </svg>
+          ) : (
+            <svg aria-hidden="true" viewBox="0 0 16 16" className="size-[12px]" fill="currentColor">
+              <path d="M4 2.5h3v11H4zM9 2.5h3v11H9z" />
+            </svg>
+          )}
+        </button>
       </m.div>
     </div>
   )

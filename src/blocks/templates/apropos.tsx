@@ -7,7 +7,8 @@ import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
-import { SectionIndex } from '@/components/site/ornaments'
+import { SectionIndex } from '@/components/site/SectionMarks'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /*
  * Se présenter — les compositions « qui je suis » de la bibliothèque.
@@ -36,7 +37,7 @@ export const aproposPortraitSchema = z.object({
     )
     .default([]),
   linkLabel: z.string().default(''),
-  linkHref: z.string().default('#contact'),
+  linkHref: optionalSafeHrefSchema.default('#contact'),
 })
 
 function AproposPortrait({

@@ -157,3 +157,23 @@ export function toParagraphs(input: string): string[] {
     .map((p) => p.trim())
     .filter(Boolean)
 }
+
+/** Types de blocs qui ouvrent une page — ceux qui portent le H1. */
+export const HERO_TYPES: ReadonlySet<string> = new Set([
+  'heroPleinEcran',
+  'hero',
+  'heroEditorial',
+  'heroMinimal',
+  'heroBandeau',
+])
+
+/**
+ * Niveau du titre d'un héros : `h1` seulement en TÊTE de page. Un héros
+ * placé plus bas (deuxième ouverture, bandeau intermédiaire) rendait un
+ * second H1 — deux titres principaux brouillent le plan de lecture des
+ * lecteurs d'écran comme des moteurs. Le H1 unique reste garanti par la
+ * page elle-même (titre SEO masqué si aucun héros n'ouvre la page).
+ */
+export function heroHeading(index: number): 'h1' | 'h2' {
+  return index === 0 ? 'h1' : 'h2'
+}

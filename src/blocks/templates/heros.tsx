@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
 import { field } from '../field'
-import type { BlockDefinition, BlockProps } from '../types'
+import { heroHeading, type BlockDefinition, type BlockProps } from '../types'
 import {
   CircleText,
   Marquee,
@@ -14,8 +14,9 @@ import { BlockImage } from '@/components/site/BlockImage'
 import { Emphasis, stripEmphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { TitreAjuste } from '@/components/site/TitreAjuste'
-import { Aster, SectionIndex } from '@/components/site/ornaments'
+import { Aster, SectionIndex } from '@/components/site/SectionMarks'
 import type { Settings } from '@/server/db/schema'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /*
  * Les héros de la bibliothèque — les ouvertures de page.
@@ -89,9 +90,9 @@ export const heroPleinEcranSchema = z.object({
   titleSize: z.number().default(100),
   intro: z.string().default(''),
   primaryLabel: z.string().default(''),
-  primaryHref: z.string().default('#contact'),
+  primaryHref: optionalSafeHrefSchema.default('#contact'),
   secondaryLabel: z.string().default(''),
-  secondaryHref: z.string().default('#a-propos'),
+  secondaryHref: optionalSafeHrefSchema.default('#a-propos'),
   mediaId: z.string().uuid().nullable().default(null),
 })
 
@@ -134,7 +135,7 @@ function HeroPleinEcran({
             les valeurs validées de la maquette — multipliées par l'échelle
             choisie dans l'admin (`--echelle-titre`, 1 par défaut). */}
         {lines.length > 0 && (
-          <TitreAjuste className="text-invert pointer-events-none absolute inset-0 grid content-center justify-items-center font-serif text-[calc(clamp(52px,16vw,76px)*var(--echelle-titre,1)*var(--ajustement,1))] font-light leading-[0.98] md:text-[calc(clamp(56px,9vw,150px)*var(--echelle-titre,1)*var(--ajustement,1))] md:leading-none">
+          <TitreAjuste as={first ? 'h1' : 'h2'} className="text-invert pointer-events-none absolute inset-0 grid content-center justify-items-center font-serif text-[calc(clamp(52px,16vw,76px)*var(--echelle-titre,1)*var(--ajustement,1))] font-light leading-[0.98] md:text-[calc(clamp(56px,9vw,150px)*var(--echelle-titre,1)*var(--ajustement,1))] md:leading-none">
             {lines.map((line, i) => {
               const { text, italic } = splitLine(line.text)
               return (
@@ -287,6 +288,7 @@ function HeroEditorial({
   const image = ctx.resolveMedia(data.mediaId)
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
   const first = ctx.index === 0
+  const Titre = heroHeading(ctx.index)
 
   return (
     <div className="relative flex min-h-[78svh] flex-col justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)]">
@@ -300,7 +302,7 @@ function HeroEditorial({
         )}
 
         {lines.length > 0 && (
-          <h1 className="mt-5 font-serif text-[clamp(2.8rem,7vw,7.4rem)] font-light leading-[1.04] text-ink lg:max-w-[84%]">
+          <Titre className="mt-5 font-serif text-[clamp(2.8rem,7vw,7.4rem)] font-light leading-[1.04] text-ink lg:max-w-[84%]">
             <MaskLines delay={0.15}>
               {lines.map((line, i) => (
                 <span key={i}>
@@ -308,7 +310,7 @@ function HeroEditorial({
                 </span>
               ))}
             </MaskLines>
-          </h1>
+          </Titre>
         )}
 
         <div className="mt-10 grid grid-cols-1 gap-10 md:mt-12 md:gap-12 lg:grid-cols-12 lg:gap-x-12">
@@ -409,7 +411,7 @@ export const heroMinimalSchema = z.object({
   titleLines: z.array(z.object({ text: z.string() })).default([]),
   intro: z.string().default(''),
   linkLabel: z.string().default(''),
-  linkHref: z.string().default('#contact'),
+  linkHref: optionalSafeHrefSchema.default('#contact'),
 })
 
 function HeroMinimal({
@@ -417,6 +419,7 @@ function HeroMinimal({
   ctx,
 }: BlockProps<z.output<typeof heroMinimalSchema>>) {
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
+  const Titre = heroHeading(ctx.index)
 
   return (
     <div className="relative flex min-h-[76svh] flex-col items-center justify-center px-[var(--spacing-gutter)] pb-[var(--spacing-section)] pt-[var(--spacing-hero-top)] text-center">
@@ -429,7 +432,7 @@ function HeroMinimal({
       )}
 
       {lines.length > 0 && (
-        <h1 className="mt-5 max-w-[62rem] font-serif text-[clamp(2.9rem,7.5vw,7.8rem)] font-light leading-[1.05] text-ink">
+        <Titre className="mt-5 max-w-[62rem] font-serif text-[clamp(2.9rem,7.5vw,7.8rem)] font-light leading-[1.05] text-ink">
           {lines.map((line, i) => {
             const { text, italic } = splitLine(line)
             return (
@@ -441,7 +444,7 @@ function HeroMinimal({
               />
             )
           })}
-        </h1>
+        </Titre>
       )}
 
       {data.intro && (
@@ -516,7 +519,7 @@ export const heroBandeauSchema = z.object({
   titleLines: z.array(z.object({ text: z.string() })).default([]),
   intro: z.string().default(''),
   primaryLabel: z.string().default(''),
-  primaryHref: z.string().default('#contact'),
+  primaryHref: optionalSafeHrefSchema.default('#contact'),
   marqueeWords: z.string().default(''),
 })
 
@@ -525,6 +528,7 @@ function HeroBandeau({
   ctx,
 }: BlockProps<z.output<typeof heroBandeauSchema>>) {
   const lines = data.titleLines.map((l) => l.text).filter(Boolean)
+  const Titre = heroHeading(ctx.index)
   const words = data.marqueeWords
     .split(/[,;·]/)
     .map((w) => w.trim())
@@ -542,7 +546,7 @@ function HeroBandeau({
         )}
 
         {lines.length > 0 && (
-          <h1 className="mt-5 max-w-[58rem] font-serif text-[clamp(2.8rem,6.8vw,7rem)] font-light leading-[1.06] text-ink">
+          <Titre className="mt-5 max-w-[58rem] font-serif text-[clamp(2.8rem,6.8vw,7rem)] font-light leading-[1.06] text-ink">
             <MaskLines delay={0.15}>
               {lines.map((line, i) => (
                 <span key={i}>
@@ -550,7 +554,7 @@ function HeroBandeau({
                 </span>
               ))}
             </MaskLines>
-          </h1>
+          </Titre>
         )}
 
         {data.intro && (

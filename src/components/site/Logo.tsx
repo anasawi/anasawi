@@ -20,10 +20,18 @@ import { cn } from '@/lib/utils'
 export function LogoMark({
   className,
   src,
+  priority = false,
 }: {
   className?: string
   /** Logo choisi dans les Réglages. Absent : celui livré avec le site. */
   src?: string | null
+  /**
+   * Préchargé (`<link rel=preload>`) : réservé à l'en-tête du site, la
+   * seule marque visible dès le premier écran. Partout ailleurs (404,
+   * connexion, barre latérale de l'admin) le préchargement concurrençait
+   * les vraies ressources critiques.
+   */
+  priority?: boolean
 }) {
   return (
     <Image
@@ -32,7 +40,7 @@ export function LogoMark({
       height={72}
       alt=""
       aria-hidden="true"
-      priority
+      priority={priority}
       /* 72px : le double de la plus grande taille d'affichage (36px dans
          l'en-tête), pour rester net sur écran à haute densité. */
       sizes="72px"

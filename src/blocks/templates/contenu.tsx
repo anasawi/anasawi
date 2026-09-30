@@ -9,7 +9,7 @@ import { CinemaVideo } from '@/components/site/CinemaVideo'
 import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { GalleryRail } from '@/components/site/GalleryRail'
-import { Aster, Dots, SectionIndex } from '@/components/site/ornaments'
+import { Aster, Dots, SectionIndex } from '@/components/site/SectionMarks'
 import { cn } from '@/lib/utils'
 
 /*

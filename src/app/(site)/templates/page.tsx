@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 
+import { illustratePayload } from '@/blocks/media-fields'
 import { blockRegistry, templateLibrary } from '@/blocks/registry'
 import { isVideoMimeType } from '@/lib/media-kind'
 import { SectionsView } from '@/components/site/SectionsView'
@@ -23,27 +24,6 @@ export const dynamic = 'force-dynamic'
 export const metadata: Metadata = {
   title: 'Bibliothèque de templates — ANASAWI',
   robots: { index: false, follow: false },
-}
-
-/** Remplit récursivement tout champ image du payload par défaut. */
-function illustrate(value: unknown, ids: string[]): unknown {
-  if (ids.length === 0) return value
-  if (Array.isArray(value)) return value.map((item) => illustrate(item, ids))
-  if (value && typeof value === 'object') {
-    const out: Record<string, unknown> = {}
-    let n = 0
-    for (const [key, v] of Object.entries(value)) {
-      if (key === 'mediaId' || key.endsWith('MediaId')) {
-        out[key] = ids[n++ % ids.length] ?? null
-      } else if (key === 'mediaIds' && Array.isArray(v)) {
-        out[key] = ids.slice(0, 5)
-      } else {
-        out[key] = illustrate(v, ids)
-      }
-    }
-    return out
-  }
-  return value
 }
 
 export default async function TemplatesPage() {
@@ -82,7 +62,11 @@ export default async function TemplatesPage() {
         sortOrder: position++,
         isActive: true,
         backgroundColor: '#fbf8f2',
-        payload: illustrate(block.defaults, ids) as Record<string, unknown>,
+        payload: illustratePayload(
+          option.type,
+          block.defaults as Record<string, unknown>,
+          ids,
+        ),
         createdAt: now,
         updatedAt: now,
       }

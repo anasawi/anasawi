@@ -3,39 +3,14 @@
 import { useEffect, useState } from 'react'
 
 import { cn } from '@/lib/utils'
+import {
+  PRELOADER_DONE_EVENT,
+  PRELOADER_HTML_ATTRIBUTE,
+  PRELOADER_SESSION_KEY,
+} from './preloader-boot'
 
-/** Événement écouté par le Header pour déclencher son entrée. */
-export const PRELOADER_DONE_EVENT = 'anasawi:ready'
-
-/**
- * Vrai si l'on arrive de l'administration.
- *
- * Deux chemins possibles, tous deux synchrones : l'entrée de navigation
- * (l'URL sur laquelle CE document a été chargé — elle reste `/admin`
- * quand on passe à l'aperçu par une transition client, puisqu'aucun
- * nouveau document n'est créé) et, en repli, le référent (rechargement
- * complet depuis l'admin).
- */
-function comesFromAdmin(): boolean {
-  const isAdminPath = (href: string) => {
-    try {
-      const url = new URL(href, window.location.origin)
-      return (
-        url.origin === window.location.origin &&
-        /^\/(admin|login)(\/|$|\?)/.test(url.pathname)
-      )
-    } catch {
-      return false
-    }
-  }
-
-  const [entry] = performance.getEntriesByType('navigation')
-  if (entry instanceof PerformanceNavigationTiming && isAdminPath(entry.name)) {
-    return true
-  }
-
-  return document.referrer ? isAdminPath(document.referrer) : false
-}
+/* Ré-exporté pour les composants clients qui l'écoutent (Header). */
+export { PRELOADER_DONE_EVENT }
 
 /**
  * Rideau ivoire plein écran : le wordmark ANASAWI se lève depuis un masque,
@@ -43,13 +18,11 @@ function comesFromAdmin(): boolean {
  * retire du DOM. Joue au premier chargement de la visite — comme la
  * maquette validée, en plus bref ; jamais sous prefers-reduced-motion.
  *
- * Exception : quand on vient de l'administration. Anne fait l'aller-retour
- * éditeur ↔ aperçu des dizaines de fois par séance ; lui imposer les deux
- * secondes du rideau à chaque fois transformerait une signature en attente.
- * Le visiteur, lui, ne voit jamais l'admin : pour lui, rien ne change.
- *
- * Le rendu serveur affiche le rideau couvrant — c'est lui qui masque la
- * page pendant l'hydratation du premier chargement.
+ * Le rendu serveur contient toujours le rideau, mais masqué par CSS tant
+ * que `<html>` ne porte pas `data-rideau` : c'est le script d'amorçage
+ * qui le pose, avant le premier rendu, quand le rideau doit jouer. Le
+ * composant, lui, ne fait que lire cette décision — et signale TOUJOURS
+ * sa fin au Header, qu'il ait joué ou non.
  */
 export function Preloader() {
   const [phase, setPhase] = useState<'covering' | 'lifting' | 'done'>(
@@ -58,25 +31,29 @@ export function Preloader() {
   const [revealed, setRevealed] = useState(false)
 
   useEffect(() => {
-    const reduced = window.matchMedia(
-      '(prefers-reduced-motion: reduce)',
-    ).matches
+    const root = document.documentElement
+    const joue = root.getAttribute(PRELOADER_HTML_ATTRIBUTE) === '1'
 
     /* Une fois par visite : la signature se joue au premier chargement,
        pas à chaque page ni à chaque retour arrière — une seconde de
-       rideau à chaque fois, c'est un site qui paraît lent. */
-    let dejaVu = false
+       rideau à chaque fois, c'est un site qui paraît lent. La clé est
+       posée quel que soit le verdict, comme avant : revenir de l'admin
+       puis recharger ne doit pas faire jouer le rideau. */
     try {
-      dejaVu = window.sessionStorage.getItem('anasawi:rideau') === '1'
-      window.sessionStorage.setItem('anasawi:rideau', '1')
+      window.sessionStorage.setItem(PRELOADER_SESSION_KEY, '1')
     } catch {
-      /* Stockage indisponible : le rideau joue, comme avant. */
+      /* Stockage indisponible : rien à retenir. */
     }
 
-    if (reduced || dejaVu || comesFromAdmin()) {
+    if (!joue) {
       setPhase('done')
-      window.dispatchEvent(new Event(PRELOADER_DONE_EVENT))
-      return
+      /* Signal différé d'un tour : le Header, monté juste après, doit
+         avoir posé son écouteur — sinon il attendait son garde-fou. */
+      const signal = window.setTimeout(
+        () => window.dispatchEvent(new Event(PRELOADER_DONE_EVENT)),
+        0,
+      )
+      return () => window.clearTimeout(signal)
     }
 
     /* Lève le wordmark une frame après le premier rendu. */
@@ -87,7 +64,10 @@ export function Preloader() {
       window.dispatchEvent(new Event(PRELOADER_DONE_EVENT))
     }, 750)
 
-    const remove = window.setTimeout(() => setPhase('done'), 1500)
+    const remove = window.setTimeout(() => {
+      setPhase('done')
+      root.removeAttribute(PRELOADER_HTML_ATTRIBUTE)
+    }, 1500)
 
     return () => {
       cancelAnimationFrame(raf)

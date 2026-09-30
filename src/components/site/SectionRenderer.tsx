@@ -1,4 +1,5 @@
 import { SectionsView } from './SectionsView'
+import { collectMediaIds } from '@/blocks/media-fields'
 import {
   getActiveFaq,
   getActiveServices,
@@ -6,37 +7,6 @@ import {
   getSettings,
 } from '@/server/queries'
 import type { Section } from '@/server/db/schema'
-
-/**
- * Collecte tous les identifiants de médias référencés dans les payloads.
- * Inspection récursive du JSON plutôt qu'une déclaration par bloc : ajouter
- * un champ image à un bloc ne demande aucune mise à jour ici.
- */
-function collectMediaIds(payload: unknown, found: Set<string> = new Set()) {
-  if (Array.isArray(payload)) {
-    for (const item of payload) collectMediaIds(item, found)
-    return found
-  }
-
-  if (payload && typeof payload === 'object') {
-    for (const [key, value] of Object.entries(payload)) {
-      /* `mediaId`, `ogMediaId`, `secondMediaId`… — tout champ image se
-         termine par « MediaId » ou est exactement `mediaId`. */
-      if (
-        (key === 'mediaId' || key.endsWith('MediaId')) &&
-        typeof value === 'string'
-      ) {
-        found.add(value)
-      } else if (key === 'mediaIds' && Array.isArray(value)) {
-        for (const id of value) if (typeof id === 'string') found.add(id)
-      } else {
-        collectMediaIds(value, found)
-      }
-    }
-  }
-
-  return found
-}
 
 /**
  * Wrapper serveur du rendu de page : charge une fois les données partagées
@@ -55,7 +25,9 @@ export async function SectionRenderer({
   if (visible.length === 0) return null
 
   const mediaIds = new Set<string>()
-  for (const section of visible) collectMediaIds(section.payload, mediaIds)
+  for (const section of visible) {
+    collectMediaIds(section.type, section.payload, mediaIds)
+  }
 
   const [settings, services, faqItems, media] = await Promise.all([
     getSettings(),
@@ -64,9 +36,13 @@ export async function SectionRenderer({
     getMediaByIds([...mediaIds]),
   ])
 
+  /* Les sections désactivées ne sont pas transmises au rendu public : le
+     composant les filtrait déjà, mais elles voyageaient jusqu'au
+     navigateur — un brouillon retiré du site restait lisible dans le
+     HTML. Dans l'éditeur, elles sont voulues (rendues estompées). */
   return (
     <SectionsView
-      sections={sections}
+      sections={editable ? sections : visible}
       data={{ services, faqItems, settings, media }}
       editable={editable}
     />

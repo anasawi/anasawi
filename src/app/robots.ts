@@ -19,6 +19,10 @@ export default function robots(): MetadataRoute.Robots {
     return { rules: [{ userAgent: '*', disallow: '/' }] }
   }
 
+  /* `/login` reste fermé ici en plus de son `noindex` : la page porte
+     déjà la consigne, mais un formulaire de connexion n'a rien à faire
+     dans un rapport d'exploration. Pas de directive `Host` : elle n'est
+     lue que par Yandex et fait tiquer les validateurs. */
   return {
     rules: [
       {
@@ -28,6 +32,5 @@ export default function robots(): MetadataRoute.Robots {
       },
     ],
     sitemap: absoluteUrl('/sitemap.xml'),
-    host: absoluteUrl('/'),
   }
 }

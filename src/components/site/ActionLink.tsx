@@ -36,6 +36,7 @@ export function ActionLink({
   withArrow = true,
   external = false,
   ink,
+  onClick,
 }: {
   href: string
   children: React.ReactNode
@@ -43,6 +44,8 @@ export function ActionLink({
   className?: string
   withArrow?: boolean
   external?: boolean
+  /** Réagir au clic sans empêcher la navigation (fermer une fiche…). */
+  onClick?: React.MouseEventHandler<HTMLAnchorElement>
   /** Classe de couleur de l'encre, pour un bouton dont le fond est
       personnalisé (ex. bouton ivoire sur l'arche bleue → `bg-blue-mist`). */
   ink?: string
@@ -71,6 +74,7 @@ export function ActionLink({
         className={classes}
         target="_blank"
         rel="noopener noreferrer"
+        onClick={onClick}
       >
         {content}
       </a>
@@ -78,7 +82,7 @@ export function ActionLink({
   }
 
   return (
-    <Link href={href} className={classes}>
+    <Link href={href} className={classes} onClick={onClick}>
       {content}
     </Link>
   )

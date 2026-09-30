@@ -1,10 +1,18 @@
+import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { LogoMark } from '@/components/site/Logo'
 
+/* Une page d'erreur indexée serait une page de plus offerte à Google —
+   avec un titre qui n'a rien à voir avec le cabinet. */
+export const metadata: Metadata = {
+  title: 'Page introuvable — ANASAWI',
+  robots: { index: false, follow: false },
+}
+
 export default function NotFound() {
   return (
-    <div className="grain flex min-h-svh flex-col items-center justify-center px-6 text-center">
+    <main className="grain flex min-h-svh flex-col items-center justify-center px-6 text-center">
       <LogoMark className="h-12 w-12 text-stone" />
 
       <p className="label-eyebrow mt-12 text-stone">Erreur 404</p>
@@ -30,6 +38,6 @@ export default function NotFound() {
           →
         </span>
       </Link>
-    </div>
+    </main>
   )
 }

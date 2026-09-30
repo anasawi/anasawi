@@ -9,8 +9,10 @@ import { Emphasis } from '@/components/site/Emphasis'
 import { Eyebrow } from '@/components/site/Eyebrow'
 import { Prose } from '@/components/site/Prose'
 import { ServiceRows } from '@/components/site/ServiceRows'
-import { SectionIndex } from '@/components/site/ornaments'
+import { SectionIndex } from '@/components/site/SectionMarks'
 import { bookingHref } from '@/lib/settings-helpers'
+import { numberWordFr } from '@/lib/format'
+import { optionalSafeHrefSchema } from '@/lib/links'
 
 /*
  * Présenter son offre. Les blocs connectés lisent `ctx.services` (table
@@ -18,22 +20,7 @@ import { bookingHref } from '@/lib/settings-helpers'
  * porte que la présentation, jamais le contenu.
  */
 
-const NUMBER_WORDS = [
-  'un',
-  'deux',
-  'trois',
-  'quatre',
-  'cinq',
-  'six',
-  'sept',
-  'huit',
-  'neuf',
-  'dix',
-] as const
 
-function numberWord(i: number): string {
-  return NUMBER_WORDS[i] ?? String(i + 1)
-}
 
 /* Ces blocs n'ont pas de champs pour les accompagnements : ils lisent la
    table du CMS. L'inspecteur l'annonce et renvoie à l'écran dédié. */
@@ -191,7 +178,7 @@ function ServicesNumerotes({
                 }`}
               >
                 <span className="font-serif text-[1.35rem] font-light italic text-blue-deep">
-                  {numberWord(i)}
+                  {numberWordFr(i)}
                 </span>
 
                 <h3 className="mt-4 text-[length:var(--text-h3)]">
@@ -329,7 +316,7 @@ function ServicesImmersifs({
                 >
                   <Reveal delay={0.1}>
                     <span className="font-serif text-[1.2rem] font-light italic text-blue-deep">
-                      {numberWord(i)}
+                      {numberWordFr(i)}
                     </span>
                     <h3 className="mt-3 text-[length:var(--text-h3)]">
                       {service.title}
@@ -509,7 +496,7 @@ export const servicesDetailSchema = z.object({
   position: z.number().default(1),
   extra: z.string().default(''),
   linkLabel: z.string().default(''),
-  linkHref: z.string().default('#contact'),
+  linkHref: optionalSafeHrefSchema.default('#contact'),
 })
 
 function ServicesDetail({
@@ -813,7 +800,7 @@ function SeanceDeroule({
                       className="absolute -left-1 top-1 block h-[7px] w-[7px] rounded-full bg-blue-deep"
                     />
                     <span className="font-serif text-[1.1rem] font-light italic text-blue-deep">
-                      {numberWord(i)}
+                      {numberWordFr(i)}
                     </span>
                     {step.title && (
                       <h3 className="mt-2 text-[length:var(--text-h3)]">
