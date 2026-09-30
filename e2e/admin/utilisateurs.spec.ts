@@ -109,12 +109,12 @@ test.describe('Utilisateurs', () => {
       await invitee.getByLabel('Mot de passe', { exact: true }).fill('court')
       await invitee.getByLabel('Le même, une seconde fois').fill('court')
       await invitee.getByRole('button', { name: 'Enregistrer mon mot de passe' }).click()
-      await expect(invitee.getByRole('alert')).toContainText('au moins 10 caractères')
+      await expect(invitee.getByRole('alert').filter({ hasText: /./ })).toContainText('au moins 10 caractères')
 
       await invitee.getByLabel('Mot de passe', { exact: true }).fill(MOT_DE_PASSE)
       await invitee.getByLabel('Le même, une seconde fois').fill(`${MOT_DE_PASSE}x`)
       await invitee.getByRole('button', { name: 'Enregistrer mon mot de passe' }).click()
-      await expect(invitee.getByRole('alert')).toContainText('ne sont pas identiques')
+      await expect(invitee.getByRole('alert').filter({ hasText: /./ })).toContainText('ne sont pas identiques')
 
       await invitee.getByLabel('Le même, une seconde fois').fill(MOT_DE_PASSE)
       await invitee.getByRole('button', { name: 'Enregistrer mon mot de passe' }).click()
@@ -153,7 +153,7 @@ test.describe('Utilisateurs', () => {
       await invitee.getByLabel('E-mail').fill(INVITEE.email)
       await invitee.getByLabel('Mot de passe').fill('n-importe-quoi-de-long')
       await invitee.getByRole('button', { name: 'Se connecter' }).click()
-      await expect(invitee.getByRole('alert')).toBeVisible({ timeout: 15_000 })
+      await expect(invitee.getByRole('alert').filter({ hasText: /./ })).toBeVisible({ timeout: 15_000 })
       await expect(invitee).toHaveURL(/\/login/)
     } finally {
       await contexte.close()
