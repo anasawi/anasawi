@@ -1,10 +1,11 @@
-import { and, asc, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, inArray, isNull, sql } from 'drizzle-orm'
 import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 
-import { sectionsFromSnapshot } from '@/lib/publish'
+import { sectionsFromSnapshot } from '@/lib/snapshot'
 import { db } from '../db'
 import {
+  contactMessages,
   faqItems,
   media,
   pages,
@@ -18,12 +19,14 @@ import {
   type Media,
   type Page,
   type SavedSection,
+  type ContactMessage,
   type Section,
   type SeoMeta,
   type ServiceGroup,
   type ServiceWithMedia,
   type Settings,
 } from '../db/schema'
+import type { NavigationItem } from '@/types/content'
 
 /**
  * Tags de cache.
@@ -155,7 +158,10 @@ export const getActiveServices = cache(
       return rows.map((r) => ({ ...r.service, media: r.media, group: r.group }))
     },
     ['services-active'],
-    [tags.services],
+    /* `media` aussi : la jointure embarque l'image de chaque
+       accompagnement, dont le texte alternatif se modifie depuis la
+       médiathèque — sans ce tag, l'ancien alt restait servi une heure. */
+    [tags.services, tags.media],
   ),
 )
 
@@ -297,31 +303,38 @@ export function getHomePageForAdmin() {
 }
 
 /**
+ * Une entrée de menu telle que le site la consomme. `href` est le lien
+ * (ancre nue `contact`, `/#contact`, `https://…`) ; `anchor` en est la
+ * copie, gardée parce que le Header, le Footer et la barre d'admin lisent
+ * encore ce nom-là (`NavItem` de `Header.tsx`).
+ */
+export type NavigationEntry = NavigationItem & { anchor: string }
+
+/**
  * Menu du site.
  *
- * Géré à la main dans l'admin (`settings.navigation`) — `anchor` porte
+ * Géré à la main dans l'admin (`settings.navigation`) — `href` porte
  * alors soit une ancre nue (`contact`), soit un lien complet (`/#contact`,
  * `https://…`). À défaut, dérivation historique : les sections de
  * l'accueil marquées « visible dans la navigation ».
  */
 export const getNavigationItems = cache(
   cached(
-    async (): Promise<{ label: string; anchor: string }[]> => {
+    async (): Promise<NavigationEntry[]> => {
       const [row] = await db
         .select({ navigation: settings.navigation })
         .from(settings)
         .limit(1)
 
       if (Array.isArray(row?.navigation) && row.navigation.length > 0) {
-        return (row.navigation as { label?: unknown; href?: unknown }[])
+        return row.navigation
           .filter(
-            (item) =>
-              typeof item.label === 'string' && typeof item.href === 'string',
+            (item): item is NavigationItem =>
+              Boolean(item) &&
+              typeof item.label === 'string' &&
+              typeof item.href === 'string',
           )
-          .map((item) => ({
-            label: item.label as string,
-            anchor: item.href as string,
-          }))
+          .map((item) => ({ label: item.label, href: item.href, anchor: item.href }))
       }
 
       const [home] = await db
@@ -367,10 +380,72 @@ export const getNavigationItems = cache(
         .filter((r) => r.navLabel && r.anchor)
         .map((r) => ({
           label: r.navLabel as string,
+          href: r.anchor as string,
           anchor: r.anchor as string,
         }))
     },
     ['navigation'],
-    [tags.pages],
+    /* `settings` aussi : le menu enregistré vit dans les réglages. Sans ce
+       tag, un menu modifié à la main restait l'ancien pendant une heure. */
+    [tags.pages, tags.settings],
   ),
 )
+
+/* ════════════════════════════════════════════════════════════════════
+   Messages et compteurs — administration (jamais en cache)
+   ════════════════════════════════════════════════════════════════════ */
+
+/** Messages non lus — la pastille de la navigation. `0` en cas de panne :
+    la barre latérale ne doit pas faire tomber tout l'écran. */
+export async function getUnreadCount(): Promise<number> {
+  try {
+    const [row] = await db
+      .select({ n: count() })
+      .from(contactMessages)
+      .where(eq(contactMessages.isRead, false))
+    return row?.n ?? 0
+  } catch {
+    return 0
+  }
+}
+
+export type DashboardCounts = {
+  sections: number
+  media: number
+  nonLus: number
+  services: number
+  faq: number
+}
+
+/** Les chiffres du tableau de bord : sections de premier niveau de la
+    page donnée, médias, messages non lus, accompagnements, questions. */
+export async function getDashboardCounts(pageId: string | null): Promise<DashboardCounts> {
+  const [sectionRows, mediaRows, unreadRows, serviceRows, faqRows] = await Promise.all([
+    pageId
+      ? db
+          .select({ n: count() })
+          .from(sections)
+          .where(and(eq(sections.pageId, pageId), isNull(sections.parentId)))
+      : Promise.resolve([{ n: 0 }]),
+    db.select({ n: count() }).from(media),
+    db.select({ n: count() }).from(contactMessages).where(eq(contactMessages.isRead, false)),
+    db.select({ n: count() }).from(services),
+    db.select({ n: count() }).from(faqItems),
+  ])
+  return {
+    sections: sectionRows[0]?.n ?? 0,
+    media: mediaRows[0]?.n ?? 0,
+    nonLus: unreadRows[0]?.n ?? 0,
+    services: serviceRows[0]?.n ?? 0,
+    faq: faqRows[0]?.n ?? 0,
+  }
+}
+
+/** Les derniers messages du formulaire de contact, les plus récents d'abord. */
+export async function getMessages(limit = 200): Promise<ContactMessage[]> {
+  return db
+    .select()
+    .from(contactMessages)
+    .orderBy(desc(contactMessages.createdAt))
+    .limit(limit)
+}

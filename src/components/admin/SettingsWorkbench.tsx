@@ -40,7 +40,7 @@ import { cn } from '@/lib/utils'
 import { updateSettings } from '@/server/actions/content'
 import { updateIdentity } from '@/server/actions/identity'
 import { updateNavigation } from '@/server/actions/navigation'
-import { updateSeo } from '@/server/actions/pages'
+import { updateSeo } from '@/server/actions/seo'
 import type {
   Media,
   OpeningHour,

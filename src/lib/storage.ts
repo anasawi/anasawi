@@ -21,25 +21,20 @@ import path from 'node:path'
 const STORE_NAME = 'media'
 const LOCAL_DIR = path.join(process.cwd(), '.storage')
 
-/**
- * Types acceptés à l'envoi. Pas de SVG : un SVG public peut porter du
- * script. Deux formats vidéo, ceux que le navigateur produit lui-même en
- * recompressant (voir `lib/video-compression.ts`) : un `.mov` d'iPhone
- * n'arrive jamais tel quel, il est réencodé avant l'envoi.
- */
-export const ALLOWED_MIME_TYPES = [
-  'image/jpeg',
-  'image/png',
-  'image/webp',
-  'image/avif',
-  'video/mp4',
-  'video/webm',
-] as const
+/* Types et limites : définis dans `lib/media-kind.ts` (sans dépendance
+   Node, donc importable côté client) et réexportés ici pour les routes et
+   actions qui ne connaissent que ce module. */
+import type { AllowedMimeType } from './media-kind'
 
-export type AllowedMimeType = (typeof ALLOWED_MIME_TYPES)[number]
-
-/** Limite de charge utile : les fonctions serverless plafonnent bien avant. */
-export const MAX_UPLOAD_BYTES = 4 * 1024 * 1024
+export {
+  ALLOWED_MIME_TYPES,
+  IMAGE_MIME_TYPES,
+  MAX_UPLOAD_BYTES,
+  isAllowedMimeType,
+  isVideoMimeType,
+  sniffMimeType,
+  type AllowedMimeType,
+} from './media-kind'
 
 const EXTENSION_BY_MIME: Record<AllowedMimeType, string> = {
   'image/jpeg': 'jpg',
@@ -58,12 +53,6 @@ const MIME_BY_EXTENSION: Record<string, AllowedMimeType> = {
   avif: 'image/avif',
   mp4: 'video/mp4',
   webm: 'video/webm',
-}
-
-export { isVideoMimeType } from './media-kind'
-
-export function isAllowedMimeType(value: string): value is AllowedMimeType {
-  return (ALLOWED_MIME_TYPES as readonly string[]).includes(value)
 }
 
 /**

@@ -46,20 +46,17 @@ import { identityCss } from '@/lib/identity'
 import { hasUnpublishedChanges, projectSection } from '@/lib/publish'
 import type { SectionSettings } from '@/lib/section-settings'
 import { cn } from '@/lib/utils'
+import { discardDraft, publishPage, restoreSections } from '@/server/actions/publish'
+import { deleteSavedSection, insertSavedSection } from '@/server/actions/saved-sections'
 import {
-  deleteSavedSection,
   deleteSection,
-  discardDraft,
   duplicateSection,
-  insertSavedSection,
   insertSection,
-  publishPage,
   renameSection,
   reorderSections,
-  restoreSections,
   toggleSection,
   updateTextField,
-} from '@/server/actions/pages'
+} from '@/server/actions/sections'
 import { fail, type ActionResult } from '@/server/actions/types'
 import type { SavedSection, Section } from '@/server/db/schema'
 import { MotionProvider } from '@/components/motion/MotionProvider'

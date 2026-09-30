@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server'
 
+import { clientIp, hashIp, rateLimit } from '@/lib/rate-limit'
+
 /**
  * Réception des violations de Content-Security-Policy.
  *
@@ -21,6 +23,14 @@ import { NextResponse } from 'next/server'
 /** Au-delà, on jette : un rapport honnête pèse quelques kilo-octets. */
 const TAILLE_MAXIMALE = 64 * 1024
 
+/** Rapports journalisés par requête : une page vraiment cassée en produit
+    une poignée ; au-delà, c'est du remplissage. */
+const RAPPORTS_MAX = 10
+
+/** Requêtes tolérées par adresse et par heure : l'endpoint est public, il
+    ne doit pas pouvoir servir à inonder les journaux. */
+const REQUETES_PAR_HEURE = 60
+
 type ViolationCsp = {
   'document-uri'?: string
   documentURL?: string
@@ -30,16 +40,36 @@ type ViolationCsp = {
   blockedURL?: string
 }
 
+/**
+ * Une URL sans ce qui n'a rien à faire dans un journal : le jeton d'un
+ * lien d'invitation (`/invitation/<jeton>`), la chaîne de requête et le
+ * fragment. Tronquée, pour qu'une valeur forgée ne remplisse pas une ligne.
+ */
+function assainir(url: unknown): string {
+  if (typeof url !== 'string' || !url) return '?'
+  return url
+    .replace(/\/invitation\/[^/?#\s]+/g, '/invitation/<jeton>')
+    .replace(/[?#].*$/, '')
+    .slice(0, 300)
+}
+
 /** Ramène les deux formats à une ligne lisible. */
 function resumer(violation: ViolationCsp): string {
-  const directive =
-    violation.effectiveDirective ?? violation['violated-directive'] ?? '?'
-  const bloque = violation.blockedURL ?? violation['blocked-uri'] ?? '?'
-  const page = violation.documentURL ?? violation['document-uri'] ?? '?'
+  const directive = String(
+    violation.effectiveDirective ?? violation['violated-directive'] ?? '?',
+  ).slice(0, 80)
+  const bloque = assainir(violation.blockedURL ?? violation['blocked-uri'])
+  const page = assainir(violation.documentURL ?? violation['document-uri'])
   return `${directive} · bloqué: ${bloque} · page: ${page}`
 }
 
 export async function POST(request: Request): Promise<NextResponse> {
+  const { allowed } = rateLimit(`csp:${hashIp(clientIp(request))}`, {
+    limit: REQUETES_PAR_HEURE,
+    windowMs: 60 * 60 * 1000,
+  })
+  if (!allowed) return new NextResponse(null, { status: 429 })
+
   const annonce = request.headers.get('content-length')
   if (annonce && Number(annonce) > TAILLE_MAXIMALE) {
     return new NextResponse(null, { status: 413 })
@@ -70,7 +100,7 @@ export async function POST(request: Request): Promise<NextResponse> {
       ? [(corps as { 'csp-report': ViolationCsp })['csp-report']]
       : []
 
-  for (const violation of violations) {
+  for (const violation of violations.slice(0, RAPPORTS_MAX)) {
     console.warn(`[csp] ${resumer(violation)}`)
   }
 

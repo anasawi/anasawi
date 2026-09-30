@@ -21,7 +21,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { isVideoMimeType } from '@/lib/media-kind'
 import { cn } from '@/lib/utils'
-import { updateMedia } from '@/server/actions/content'
+import { updateMedia } from '@/server/actions/media'
 import { deleteMedia } from '@/server/actions/media'
 import type { Media } from '@/server/db/schema'
 

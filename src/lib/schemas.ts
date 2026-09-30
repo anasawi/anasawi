@@ -1,5 +1,6 @@
 import { z } from 'zod'
 
+import { safeHrefSchema } from './links'
 
 /** Validation partagée entre le formulaire client et la route API. */
 export const contactSchema = z.object({
@@ -110,18 +111,25 @@ export const settingsFormSchema = z.object({
   longitude: z.string().trim().max(32).nullable().default(null),
 
   openingHours: z
-    .array(z.object({ day: z.string().trim(), hours: z.string().trim() }))
+    .array(z.object({ day: z.string().trim().max(80), hours: z.string().trim().max(120) }))
+    .max(14)
     .default([]),
   practicalInfo: z.string().trim().max(4000).nullable().default(null),
-  bookingUrl: z
-    .string()
-    .trim()
-    .url('URL invalide.')
+  /* Liens saisis à la main : la liste fermée de `safeHrefSchema` — une
+     adresse web, un e-mail, un téléphone… jamais `javascript:`. */
+  bookingUrl: safeHrefSchema
+    .pipe(z.string().max(500))
     .nullable()
     .or(z.literal(''))
     .default(null),
   socialLinks: z
-    .array(z.object({ label: z.string().trim(), url: z.string().trim().url() }))
+    .array(
+      z.object({
+        label: z.string().trim().max(80),
+        url: safeHrefSchema.pipe(z.string().max(500)),
+      }),
+    )
+    .max(20)
     .default([]),
 
   /* Le référencement se règle dans son onglet (voir `updateSeo`, qui

@@ -44,6 +44,8 @@ async function main() {
       'force le pilote de stockage (netlify | local) ; sinon déduit de l’hôte',
     ],
     ['RESEND_API_KEY', 'notification e-mail du formulaire de contact'],
+    ['CONTACT_NOTIFY_TO', 'destinataire de la notification (sans elle, rien n’est envoyé)'],
+    ['CONTACT_NOTIFY_FROM', 'expéditeur de la notification (domaine vérifié chez Resend)'],
     ['NEXT_PUBLIC_SITE_URL', 'URL absolues du SEO (défaut : https://anasawi.com)'],
   ] as const
 
@@ -63,6 +65,19 @@ async function main() {
       `${key} (optionnel)`,
       true,
       process.env[key] ? 'renseignée' : `absente — ${usage} désactivé`,
+    )
+  }
+
+  /* La notification exige les TROIS variables : une clé Resend sans
+     destinataire ni expéditeur n'envoie rien, en silence. */
+  const notify = ['RESEND_API_KEY', 'CONTACT_NOTIFY_TO', 'CONTACT_NOTIFY_FROM'] as const
+  const notifySet = notify.filter((key) => Boolean(process.env[key]))
+  if (notifySet.length > 0 && notifySet.length < notify.length) {
+    record(
+      'Notification e-mail',
+      false,
+      `incomplète — manque ${notify.filter((k) => !process.env[k]).join(', ')}`,
+      'renseigner les trois variables, ou aucune (messages en base seulement)',
     )
   }
 

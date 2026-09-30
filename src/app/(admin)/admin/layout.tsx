@@ -3,17 +3,14 @@ import { redirect } from 'next/navigation'
 import { Suspense } from 'react'
 import { Toaster } from 'sonner'
 
-import { count, eq } from 'drizzle-orm'
-
 import { AdminPillShell } from '@/components/admin/AdminPillShell'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { NavigationProgress } from '@/components/admin/NavigationProgress'
 import { PaletteProvider } from '@/components/admin/PaletteProvider'
 import { auth } from '@/lib/auth'
 import { paletteFromIdentity } from '@/lib/palette'
-import { db } from '@/server/db'
-import { contactMessages } from '@/server/db/schema'
-import { getSettings } from '@/server/queries'
+import { getSettings, getUnreadCount } from '@/server/queries'
+import { userExists } from '@/server/queries/users'
 
 export const metadata: Metadata = {
   title: 'Administration — ANASAWI',
@@ -24,6 +21,9 @@ export const metadata: Metadata = {
  * Le middleware bloque déjà `/admin/*` avant le rendu ; cette seconde
  * vérification garantit qu'une session valide existe côté serveur au moment
  * où le layout charge les données — la ceinture en plus des bretelles.
+ *
+ * Et la personne est relue en base : le jeton de session vaut sept jours,
+ * un compte supprimé entre-temps ne doit pas garder l'écran ouvert.
  */
 export default async function AdminLayout({
   children,
@@ -31,7 +31,8 @@ export default async function AdminLayout({
   children: React.ReactNode
 }) {
   const session = await auth()
-  if (!session?.user) redirect('/login')
+  if (!session?.user?.id) redirect('/login')
+  if (!(await userExists(session.user.id))) redirect('/login')
 
   const userName = session.user.name ?? session.user.email ?? 'Admin'
 
@@ -43,12 +44,7 @@ export default async function AdminLayout({
     /* La pastille « messages non lus » de la navigation : une requête
        légère, sur chaque écran — c'est ce qui fait qu'Anne ne rate pas un
        message reçu pendant qu'elle travaille ailleurs. */
-    db
-      .select({ n: count() })
-      .from(contactMessages)
-      .where(eq(contactMessages.isRead, false))
-      .then((rows) => rows[0]?.n ?? 0)
-      .catch(() => 0),
+    getUnreadCount(),
   ])
 
   return (

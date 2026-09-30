@@ -54,8 +54,25 @@ export function hashIp(ip: string): string {
     .slice(0, 32)
 }
 
+/**
+ * Adresse IP de l'appelant.
+ *
+ * Sur Netlify, `x-nf-client-connection-ip` est posé par la plateforme
+ * elle-même et ne peut pas être forgé par le client : il passe en premier.
+ * `x-forwarded-for` ensuite (chaîne de relais, le premier élément est le
+ * client — et c'est l'en-tête que les tests envoient pour se donner
+ * chacun une adresse), puis `x-real-ip`. `'unknown'` en développement, où
+ * aucun de ces en-têtes n'existe : un seul compteur, ce qui est sans
+ * importance à une personne.
+ */
 export function clientIp(request: Request): string {
-  const forwarded = request.headers.get('x-forwarded-for')
-  if (forwarded) return forwarded.split(',')[0]?.trim() ?? 'unknown'
-  return request.headers.get('x-real-ip') ?? 'unknown'
+  return clientIpFromHeaders(request.headers)
+}
+
+export function clientIpFromHeaders(headers: Headers): string {
+  const netlify = headers.get('x-nf-client-connection-ip')?.trim()
+  if (netlify) return netlify
+  const forwarded = headers.get('x-forwarded-for')
+  if (forwarded) return forwarded.split(',')[0]?.trim() || 'unknown'
+  return headers.get('x-real-ip')?.trim() || 'unknown'
 }

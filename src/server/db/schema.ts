@@ -1,4 +1,10 @@
 import { relations, sql } from 'drizzle-orm'
+import type {
+  NavigationItem,
+  OpeningHour,
+  SnapshotRow,
+  SocialLink,
+} from '@/types/content'
 import {
   boolean,
   foreignKey,
@@ -18,6 +24,9 @@ import {
    ════════════════════════════════════════════════════════════════════ */
 
 export const userRoleEnum = pgEnum('user_role', ['owner', 'editor'])
+
+/** Dérivé de l'enum Postgres : ajouter un rôle ne se fait qu'à un endroit. */
+export type UserRole = (typeof userRoleEnum.enumValues)[number]
 export const pageStatusEnum = pgEnum('page_status', ['draft', 'published'])
 
 const timestamps = {
@@ -49,14 +58,23 @@ export const users = pgTable(
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
     ...timestamps,
   },
-  (t) => [index('users_email_idx').on(t.email)],
+  (t) => [
+    index('users_email_idx').on(t.email),
+    /* L'application cherche par `lower(email)` : l'index d'expression sert
+       cette recherche ET interdit deux comptes ne différant que par la
+       casse (migration 0012). */
+    uniqueIndex('users_email_lower_idx').on(sql`lower(${t.email})`),
+  ],
 )
 
 /**
  * Invitations : le lien envoyé à une personne pour qu'elle choisisse son
- * mot de passe. On ne garde que l'EMPREINTE du jeton (SHA-256) : une
- * lecture de la base ne permet pas de l'utiliser. Un lien vaut sept jours
- * et une seule fois ; en refaire un invalide le précédent.
+ * mot de passe. Le jeton est cherché par son EMPREINTE (SHA-256) ; sa
+ * valeur en clair n'est conservée que CHIFFRÉE (AES-256-GCM, clé dérivée
+ * d'`AUTH_SECRET`), pour que l'administration puisse recopier le lien tant
+ * qu'il vaut : une lecture de la base seule ne permet pas de s'en servir.
+ * Un lien vaut sept jours et une seule fois ; en refaire un invalide le
+ * précédent.
  */
 export const invitations = pgTable(
   'invitations',
@@ -66,7 +84,9 @@ export const invitations = pgTable(
       .notNull()
       .references(() => users.id, { onDelete: 'cascade' }),
     tokenHash: text('token_hash').notNull().unique(),
-    /** Le jeton en clair, pour recopier le lien tant qu'il est valable. */
+    /** Le jeton, CHIFFRÉ (`v1.<iv>.<tag>.<données>`, voir
+        `server/invitation-token.ts`), pour recopier le lien tant qu'il est
+        valable. Nul pour les invitations antérieures au chiffrement. */
     token: text('token'),
     expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
     usedAt: timestamp('used_at', { withTimezone: true }),
@@ -121,7 +141,7 @@ export const pages = pgTable(
      * l'état courant ici — entre les deux, les visiteurs ne voient rien.
      * C'est aussi la fondation d'un futur historique de versions.
      */
-    publishedSnapshot: jsonb('published_snapshot'),
+    publishedSnapshot: jsonb('published_snapshot').$type<unknown>(),
     publishedAt: timestamp('published_at', { withTimezone: true }),
 
     ...timestamps,
@@ -238,7 +258,10 @@ export const seoMeta = pgTable(
     keywords: text('keywords').array().notNull().default(sql`'{}'::text[]`),
     ...timestamps,
   },
-  (t) => [uniqueIndex('seo_meta_page_idx').on(t.pageId)],
+  (t) => [
+    uniqueIndex('seo_meta_page_idx').on(t.pageId),
+    index('seo_meta_og_media_idx').on(t.ogMediaId),
+  ],
 )
 
 /* ════════════════════════════════════════════════════════════════════
@@ -295,6 +318,7 @@ export const services = pgTable(
     uniqueIndex('services_slug_idx').on(t.slug),
     index('services_order_idx').on(t.sortOrder),
     index('services_group_idx').on(t.groupId),
+    index('services_media_idx').on(t.mediaId),
   ],
 )
 
@@ -320,56 +344,63 @@ export const faqItems = pgTable(
    Réglages — singleton (une seule ligne, id = 'singleton')
    ════════════════════════════════════════════════════════════════════ */
 
-export const settings = pgTable('settings', {
-  id: text('id').primaryKey().default('singleton'),
+export const settings = pgTable(
+  'settings',
+  {
+    id: text('id').primaryKey().default('singleton'),
 
-  siteName: text('site_name').notNull().default('ANASAWI'),
-  practitionerName: text('practitioner_name').notNull().default(''),
-  practitionerTitle: text('practitioner_title'),
-  tagline: text('tagline'),
+    siteName: text('site_name').notNull().default('ANASAWI'),
+    practitionerName: text('practitioner_name').notNull().default(''),
+    practitionerTitle: text('practitioner_title'),
+    tagline: text('tagline'),
 
-  contactEmail: text('contact_email'),
-  contactPhone: text('contact_phone'),
-  addressStreet: text('address_street'),
-  addressPostalCode: text('address_postal_code'),
-  addressCity: text('address_city'),
-  addressCountry: text('address_country').default('FR'),
-  latitude: text('latitude'),
-  longitude: text('longitude'),
+    contactEmail: text('contact_email'),
+    contactPhone: text('contact_phone'),
+    addressStreet: text('address_street'),
+    addressPostalCode: text('address_postal_code'),
+    addressCity: text('address_city'),
+    addressCountry: text('address_country').default('FR'),
+    latitude: text('latitude'),
+    longitude: text('longitude'),
 
-  openingHours: jsonb('opening_hours').notNull().default([]),
-  practicalInfo: text('practical_info'),
-  bookingUrl: text('booking_url'),
-  socialLinks: jsonb('social_links').notNull().default([]),
+    openingHours: jsonb('opening_hours').$type<OpeningHour[]>().notNull().default([]),
+    practicalInfo: text('practical_info'),
+    bookingUrl: text('booking_url'),
+    socialLinks: jsonb('social_links').$type<SocialLink[]>().notNull().default([]),
 
-  /** Logo du site, choisi dans la bibliothèque de médias. Nul = celui
-      livré avec l'application. */
-  logoMediaId: uuid('logo_media_id').references(() => media.id, {
-    onDelete: 'set null',
-  }),
+    /** Logo du site, choisi dans la bibliothèque de médias. Nul = celui
+        livré avec l'application. */
+    logoMediaId: uuid('logo_media_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
 
-  defaultSeoTitle: text('default_seo_title'),
-  defaultSeoDescription: text('default_seo_description'),
-  defaultOgMediaId: uuid('default_og_media_id').references(() => media.id, {
-    onDelete: 'set null',
-  }),
+    defaultSeoTitle: text('default_seo_title'),
+    defaultSeoDescription: text('default_seo_description'),
+    defaultOgMediaId: uuid('default_og_media_id').references(() => media.id, {
+      onDelete: 'set null',
+    }),
 
-  /**
-   * Menu du site, géré à la main : [{ label, href }] — ancres de
-   * sections de l'accueil ou liens externes. Null = dérivation automatique historique
-   * (sections `showInNav` de l'accueil).
-   */
-  navigation: jsonb('navigation'),
+    /**
+     * Menu du site, géré à la main : [{ label, href }] — ancres de
+     * sections de l'accueil ou liens externes. Null = dérivation automatique historique
+     * (sections `showInNav` de l'accueil).
+     */
+    navigation: jsonb('navigation').$type<NavigationItem[] | null>(),
 
-  /**
-   * Identité globale du site (tokens surchargés depuis l'admin) :
-   * couleurs, typographie, boutons, respiration. Null = défauts de la
-   * charte. Injectée en variables CSS — tous les templates la consomment.
-   */
-  identity: jsonb('identity'),
+    /**
+     * Identité globale du site (tokens surchargés depuis l'admin) :
+     * couleurs, typographie, boutons, respiration. Null = défauts de la
+     * charte. Injectée en variables CSS — tous les templates la consomment.
+     */
+    identity: jsonb('identity').$type<unknown>(),
 
-  ...timestamps,
-})
+    ...timestamps,
+  },
+  (t) => [
+    index('settings_logo_media_idx').on(t.logoMediaId),
+    index('settings_default_og_media_idx').on(t.defaultOgMediaId),
+  ],
+)
 
 /* ════════════════════════════════════════════════════════════════════
    Messages du formulaire de contact
@@ -454,5 +485,6 @@ export type ServiceWithMedia = Service & {
   /** Famille d'appartenance, résolue — nulle si l'accompagnement est seul. */
   group: ServiceGroup | null
 }
-export type OpeningHour = { day: string; hours: string }
-export type SocialLink = { label: string; url: string }
+/* Formes des colonnes JSONB : définies dans `types/content.ts` (importables
+   côté client), réexportées ici pour les consommateurs existants. */
+export type { NavigationItem, OpeningHour, SnapshotRow, SocialLink }

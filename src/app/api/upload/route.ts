@@ -1,15 +1,24 @@
 import { NextResponse } from 'next/server'
 
 import { auth } from '@/lib/auth'
+import { rejectCrossSite } from '@/server/http/same-origin'
 import {
   buildObjectKey,
   isAllowedMimeType,
   MAX_UPLOAD_BYTES,
   publicUrlForKey,
   putObject,
+  sniffMimeType,
 } from '@/lib/storage'
+import { describeError } from '@/server/actions/types'
 
 export const runtime = 'nodejs'
+
+/** Marge pour l'enveloppe multipart (limites, en-têtes de partie, champ
+    `filename`) au-dessus de la taille maximale du fichier lui-même. */
+const MULTIPART_OVERHEAD_BYTES = 64 * 1024
+
+const FORMAT_REFUSE = 'Format non pris en charge : JPEG, PNG, WebP, AVIF, MP4 ou WebM.'
 
 /**
  * Dépôt d'un fichier dans le stockage des médias.
@@ -17,7 +26,8 @@ export const runtime = 'nodejs'
  * Le navigateur redimensionne et recompresse l'image avant l'envoi (voir
  * `MediaPicker`), ce qui ramène des photos de plusieurs mégaoctets sous la
  * limite de charge utile des fonctions serverless. La route ne fait que
- * vérifier la session, le type et la taille, puis délègue à `lib/storage`.
+ * vérifier la session, l'origine, le type (déclaré ET révélé par les
+ * octets) et la taille, puis délègue à `lib/storage`.
  *
  * L'enregistrement en base est fait ensuite par l'action `registerMedia`,
  * seule à disposer du texte alternatif et des dimensions.
@@ -26,6 +36,19 @@ export async function POST(request: Request): Promise<NextResponse> {
   const session = await auth()
   if (!session?.user) {
     return NextResponse.json({ error: 'Non autorisé.' }, { status: 401 })
+  }
+
+  const crossSite = rejectCrossSite(request)
+  if (crossSite) return crossSite
+
+  /* Refus AVANT de lire le corps : un envoi trop lourd est rejeté sur son
+     annonce, sans charger les octets en mémoire. */
+  const announced = Number(request.headers.get('content-length') ?? '')
+  if (Number.isFinite(announced) && announced > MAX_UPLOAD_BYTES + MULTIPART_OVERHEAD_BYTES) {
+    return NextResponse.json(
+      { error: 'Fichier trop lourd après compression.' },
+      { status: 413 },
+    )
   }
 
   /* Un corps qui n'est pas un formulaire multipart est une erreur du client
@@ -43,10 +66,7 @@ export async function POST(request: Request): Promise<NextResponse> {
   }
 
   if (!isAllowedMimeType(file.type)) {
-    return NextResponse.json(
-      { error: 'Format non pris en charge : JPEG, PNG, WebP ou AVIF.' },
-      { status: 415 },
-    )
+    return NextResponse.json({ error: FORMAT_REFUSE }, { status: 415 })
   }
 
   if (file.size > MAX_UPLOAD_BYTES) {
@@ -56,6 +76,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     )
   }
 
+  const bytes = await file.arrayBuffer()
+
+  /* Le type déclaré doit être confirmé par la signature des octets : un
+     exécutable renommé `.png` porte un `Content-Type` d'image, pas une
+     en-tête PNG. */
+  const sniffed = sniffMimeType(new Uint8Array(bytes.slice(0, 16)))
+  if (sniffed !== file.type) {
+    return NextResponse.json({ error: FORMAT_REFUSE }, { status: 415 })
+  }
+
   const filename = form.get('filename')
   const key = buildObjectKey(
     typeof filename === 'string' && filename ? filename : file.name,
@@ -63,18 +93,21 @@ export async function POST(request: Request): Promise<NextResponse> {
   )
 
   try {
-    await putObject(key, await file.arrayBuffer(), file.type)
+    await putObject(key, bytes, file.type)
   } catch (error) {
-    console.error('[upload] écriture impossible', error)
-    /* La cause technique accompagne la réponse : cette route n'est
-       atteignable qu'avec une session d'administration, et sans elle on
-       ne peut pas diagnostiquer un stockage qui refuse d'écrire depuis
-       l'hébergeur (les journaux serveur ne sont pas toujours sous la
-       main). L'interface, elle, ne montre que le message en clair. */
+    console.error('[upload] écriture impossible', describeError(error))
+    /* Hors production, la cause technique accompagne la réponse : cette
+       route n'est atteignable qu'avec une session d'administration, et
+       sans elle on ne peut pas diagnostiquer un stockage qui refuse
+       d'écrire (les journaux ne sont pas toujours sous la main). En
+       production, les journaux de l'hébergeur suffisent, et le message
+       d'une bibliothèque n'a rien à faire dans une réponse HTTP. */
     return NextResponse.json(
       {
         error: 'Stockage indisponible.',
-        detail: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+        ...(process.env.NODE_ENV !== 'production'
+          ? { detail: describeError(error) }
+          : {}),
       },
       { status: 502 },
     )

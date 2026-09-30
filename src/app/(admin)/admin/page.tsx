@@ -1,4 +1,3 @@
-import { and, count, eq, isNull } from 'drizzle-orm'
 import {
   Eye,
   HelpCircle,
@@ -13,33 +12,9 @@ import Link from 'next/link'
 import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { hasUnpublishedChanges } from '@/lib/publish'
-import { db } from '@/server/db'
-import { contactMessages, faqItems, media, sections, services } from '@/server/db/schema'
-import { getHomePageForAdmin, getSettings } from '@/server/queries'
+import { getDashboardCounts, getHomePageForAdmin, getSettings } from '@/server/queries'
 
 export const dynamic = 'force-dynamic'
-
-async function compter(pageId: string | null) {
-  const [sectionRows, mediaRows, unreadRows, serviceRows, faqRows] = await Promise.all([
-    pageId
-      ? db
-          .select({ n: count() })
-          .from(sections)
-          .where(and(eq(sections.pageId, pageId), isNull(sections.parentId)))
-      : Promise.resolve([{ n: 0 }]),
-    db.select({ n: count() }).from(media),
-    db.select({ n: count() }).from(contactMessages).where(eq(contactMessages.isRead, false)),
-    db.select({ n: count() }).from(services),
-    db.select({ n: count() }).from(faqItems),
-  ])
-  return {
-    sections: sectionRows[0]?.n ?? 0,
-    media: mediaRows[0]?.n ?? 0,
-    nonLus: unreadRows[0]?.n ?? 0,
-    services: serviceRows[0]?.n ?? 0,
-    faq: faqRows[0]?.n ?? 0,
-  }
-}
 
 const pluriel = (n: number, un: string, plusieurs: string) =>
   `${n} ${n > 1 ? plusieurs : un}`
@@ -54,7 +29,7 @@ const pluriel = (n: number, un: string, plusieurs: string) =>
  */
 export default async function DashboardPage() {
   const [home, settings] = await Promise.all([getHomePageForAdmin(), getSettings()])
-  const stats = await compter(home?.id ?? null)
+  const stats = await getDashboardCounts(home?.id ?? null)
 
   const prenom = settings.practitionerName?.split(' ')[0]
 

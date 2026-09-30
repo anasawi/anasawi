@@ -4,36 +4,59 @@ import { eq } from 'drizzle-orm'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 
-import { fail, guard, ok, type ActionResult } from './types'
-import { requireAdmin } from '@/lib/auth'
-import { removeObject } from '@/lib/storage'
+import { adminAction } from './admin'
+import { MESSAGES } from './messages'
+import { describeError, fail, formError, isUuid, ok, type ActionResult } from './types'
+import { ALLOWED_MIME_TYPES } from '@/lib/media-kind'
+import { mediaFormSchema } from '@/lib/schemas'
+import { publicUrlForKey, removeObject } from '@/lib/storage'
 import { db } from '@/server/db'
 import { media, type Media } from '@/server/db/schema'
 import { tags } from '@/server/queries'
 
-const registerSchema = z.object({
-  /* Relative (`/api/media/…`) pour tout ce qui est envoyé depuis le CMS ;
-     absolue pour les médias hérités de l'ancien stockage, encore en base. */
-  url: z
-    .string()
-    .min(1)
-    .refine(
-      (value) => value.startsWith('/') || /^https?:\/\//.test(value),
-      'URL de média invalide.',
-    ),
-  pathname: z.string().min(1),
-  filename: z.string().min(1).max(255),
-  alt: z
-    .string()
-    .trim()
-    .min(1, 'Le texte alternatif est obligatoire.')
-    .max(300),
-  width: z.number().int().nonnegative(),
-  height: z.number().int().nonnegative(),
-  blurDataUrl: z.string().nullable(),
-  mimeType: z.string().min(1),
-  size: z.number().int().nonnegative(),
-})
+/**
+ * Une clé telle que `buildObjectKey` la produit : préfixe lisible, douze
+ * caractères hexadécimaux, extension connue. Rien d'autre n'est
+ * enregistrable — la ligne en base ne peut pointer que vers un objet que
+ * la route d'envoi a pu écrire.
+ */
+const OBJECT_KEY_PATTERN = /^[a-z0-9-]+-[a-f0-9]{12}\.(jpg|png|webp|avif|mp4|webm)$/
+
+const registerSchema = z
+  .object({
+    url: z.string().min(1).max(300),
+    pathname: z.string().regex(OBJECT_KEY_PATTERN, 'Clé de média invalide.'),
+    filename: z.string().min(1).max(255),
+    alt: z
+      .string()
+      .trim()
+      .min(1, 'Le texte alternatif est obligatoire.')
+      .max(300),
+    width: z.number().int().nonnegative().max(20000),
+    height: z.number().int().nonnegative().max(20000),
+    /* La miniature floue est une image en data-URL, générée par le
+       navigateur : quelques centaines d'octets. Bornée, et d'un type
+       image — un `data:text/html` inséré dans un `src` serait rendu. */
+    blurDataUrl: z
+      .string()
+      .max(4096)
+      .regex(/^data:image\//, 'Miniature invalide.')
+      .nullable(),
+    mimeType: z.enum(ALLOWED_MIME_TYPES),
+    size: z.number().int().nonnegative(),
+  })
+  /* L'URL est DÉDUITE de la clé, jamais libre : le client ne peut pas
+     enregistrer une ligne qui pointe ailleurs que vers `/api/media/…`. */
+  .refine((value) => value.url === publicUrlForKey(value.pathname), {
+    path: ['url'],
+    message: 'URL de média invalide.',
+  })
+
+/** Ce que le client envoie : le type MIME y est une chaîne libre (celle
+    du fichier), c'est le schéma qui la restreint aux types acceptés. */
+export type RegisterMediaInput = Omit<z.input<typeof registerSchema>, 'mimeType'> & {
+  mimeType: string
+}
 
 /**
  * Enregistre en base un fichier déjà déposé sur le stockage.
@@ -43,18 +66,14 @@ const registerSchema = z.object({
  * qu'il vaut mieux imposer à l'entrée que rattraper plus tard.
  */
 export async function registerMedia(
-  input: z.input<typeof registerSchema>,
+  input: RegisterMediaInput,
 ): Promise<ActionResult<Media>> {
-  return guard(async () => {
-    await requireAdmin()
-
+  return adminAction(async () => {
     const parsed = registerSchema.safeParse(input)
-    if (!parsed.success) {
-      return fail('Certains champs sont à corriger.', parsed.error.flatten().fieldErrors)
-    }
+    if (!parsed.success) return formError(parsed.error, MESSAGES.champsACorriger)
 
     const [created] = await db.insert(media).values(parsed.data).returning()
-    if (!created) return fail('L’enregistrement n’a pas abouti. Réessayez dans un instant.')
+    if (!created) return fail(MESSAGES.enregistrementEchoue)
 
     revalidateTag(tags.media)
     revalidatePath('/admin/medias')
@@ -62,12 +81,35 @@ export async function registerMedia(
   })
 }
 
+export async function updateMedia(
+  id: string,
+  input: z.input<typeof mediaFormSchema>,
+): Promise<ActionResult<void>> {
+  return adminAction(async () => {
+    if (!isUuid(id)) return fail(MESSAGES.imageIntrouvable)
+
+    const parsed = mediaFormSchema.safeParse(input)
+    if (!parsed.success) return formError(parsed.error, MESSAGES.champsACorriger)
+
+    const [updated] = await db
+      .update(media)
+      .set({ ...parsed.data, updatedAt: new Date() })
+      .where(eq(media.id, id))
+      .returning({ id: media.id })
+    if (!updated) return fail(MESSAGES.imageIntrouvable)
+
+    revalidateTag(tags.media)
+    revalidatePath('/', 'layout')
+    return ok()
+  })
+}
+
 export async function deleteMedia(id: string): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
+  return adminAction(async () => {
+    if (!isUuid(id)) return fail(MESSAGES.imageIntrouvable)
 
     const [row] = await db.select().from(media).where(eq(media.id, id)).limit(1)
-    if (!row) return fail('Cette image n’existe plus. Rechargez la page.')
+    if (!row) return fail(MESSAGES.imageIntrouvable)
 
     /* On supprime d'abord la ligne : si l'effacement du fichier échoue, on
        préfère un objet orphelin sur le stockage à une image cassée. */
@@ -79,7 +121,7 @@ export async function deleteMedia(id: string): Promise<ActionResult<void>> {
       try {
         await removeObject(row.pathname)
       } catch (error) {
-        console.error('[media] suppression du fichier impossible', error)
+        console.error('[media] suppression du fichier impossible', describeError(error))
       }
     }
 

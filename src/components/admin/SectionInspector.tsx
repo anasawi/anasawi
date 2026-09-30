@@ -21,11 +21,8 @@ import {
   parseSectionSettings,
   type SectionSettings,
 } from '@/lib/section-settings'
-import {
-  saveSectionAsTemplate,
-  updateSection,
-  updateSectionSettings,
-} from '@/server/actions/pages'
+import { saveSectionAsTemplate } from '@/server/actions/saved-sections'
+import { updateSection, updateSectionSettings } from '@/server/actions/sections'
 import type { HistoryEntry } from './history'
 import type { ActionResult } from '@/server/actions/types'
 import type { Media, SavedSection, Section } from '@/server/db/schema'

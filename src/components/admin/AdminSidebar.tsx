@@ -65,7 +65,7 @@ const ENTREES: Entree[] = [
     href: '/admin/reglages',
     label: 'Réglages',
     icon: Settings,
-    chemins: ['/admin/reglages', '/admin/navigation', '/admin/seo', '/admin/parametres', '/admin/identite'],
+    chemins: ['/admin/reglages'],
   },
 ]
 

@@ -4,7 +4,7 @@ import './load-env'
 import { eq } from 'drizzle-orm'
 
 import { db } from './index'
-import { pages, sections, settings } from './schema'
+import { pages, sections, settings, type NavigationItem } from './schema'
 
 /**
  * Répare les liens de navigation pointant vers des pages inexistantes.
@@ -68,7 +68,9 @@ async function main() {
 
   if (reglages?.navigation) {
     const avant = corrections
-    const navigation = reecrire(reglages.navigation)
+    /* `reecrire` travaille en `unknown` (elle parcourt n'importe quel JSON) :
+       la forme du menu n'a pas changé, seuls les liens sont réécrits. */
+    const navigation = reecrire(reglages.navigation) as NavigationItem[]
 
     if (corrections > avant) {
       await db

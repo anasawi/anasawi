@@ -4,8 +4,10 @@ import { eq } from 'drizzle-orm'
 import { revalidatePath, revalidateTag } from 'next/cache'
 import { z } from 'zod'
 
-import { fail, guard, ok, type ActionResult } from './types'
-import { requireAdmin } from '@/lib/auth'
+import { adminAction } from './admin'
+import { MESSAGES } from './messages'
+import { fail, ok, type ActionResult } from './types'
+import { safeHrefSchema } from '@/lib/links'
 import { db } from '@/server/db'
 import { settings } from '@/server/db/schema'
 import { tags } from '@/server/queries'
@@ -13,29 +15,26 @@ import { tags } from '@/server/queries'
 /**
  * Menu du site — écrit dans `settings.navigation`.
  *
- * Chaque entrée pointe vers une ancre nue (`contact`), un chemin interne
- * (`/approche`, `/#contact`) ou une URL https. Rien d'autre n'est
- * inscriptible — pas de javascript:, pas de data:.
+ * Chaque entrée pointe vers une ancre nue (`contact`, l'ancien format),
+ * une ancre (`#contact`), un chemin interne (`/approche`, `/#contact`),
+ * une URL http(s), un `mailto:` ou un `tel:` — la liste fermée de
+ * `safeHrefSchema` (`lib/links.ts`). Rien d'autre n'est inscriptible —
+ * pas de javascript:, pas de data:.
  */
 const navItemSchema = z.object({
   label: z.string().trim().min(1, 'Libellé requis.').max(40),
-  href: z
-    .string()
-    .trim()
-    .min(1)
-    .max(200)
-    .regex(
-      /^(\/[a-z0-9\-/#]*|#?[a-z0-9-]+|https:\/\/\S+)$/i,
-      'Lien invalide — ancre, chemin interne ou URL https.',
-    ),
+  href: z.union([
+    /* L'ancre nue, sans dièse : le format historique du menu, que le
+       Header sait encore lire. */
+    z.string().trim().regex(/^[a-z0-9-]+$/i),
+    safeHrefSchema.pipe(z.string().max(200, 'Ce lien est trop long.')),
+  ], { errorMap: () => ({ message: 'Lien invalide — ancre, chemin interne, adresse web, e-mail ou téléphone.' }) }),
 })
 
 export async function updateNavigation(
   input: unknown,
 ): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
+  return adminAction(async () => {
     const parsed = z.array(navItemSchema).max(12).safeParse(input)
     if (!parsed.success) {
       /* Erreurs par champ, clés `<index>.<champ>` (« 2.href ») : l'éditeur
@@ -47,7 +46,7 @@ export async function updateNavigation(
         const key = issue.path.length > 0 ? issue.path.join('.') : '_'
         ;(fieldErrors[key] ??= []).push(issue.message)
       }
-      return fail('Certains liens du menu sont à corriger.', fieldErrors)
+      return fail(MESSAGES.liensMenuACorriger, fieldErrors)
     }
 
     await db

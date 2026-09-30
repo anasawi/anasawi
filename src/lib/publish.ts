@@ -1,56 +1,26 @@
 import { getBlock } from '@/blocks/registry'
 import { parseNodeStyles } from '@/lib/node-styles'
 import { parseSectionSettings } from '@/lib/section-settings'
+import {
+  makeSectionRow,
+  projectSection,
+  sectionsFromSnapshot,
+  type SnapshotRow,
+} from '@/lib/snapshot'
 import type { Section } from '@/server/db/schema'
 
 /**
  * Publication en deux temps.
  *
  * L'admin édite les sections vivantes ; le site public sert l'instantané
- * copié au moment de « Publier ». Ce module définit LA projection d'une
- * section dans l'instantané — la même pour écrire (action de publication)
- * et pour comparer (badge « modifications non publiées »).
+ * copié au moment de « Publier ». La projection elle-même (et sa relecture)
+ * vit dans `lib/snapshot.ts`, sans dépendance au registre : ce module-ci
+ * n'ajoute que la COMPARAISON (badge « modifications non publiées »), qui
+ * a besoin des schémas de blocs pour comparer deux états qui se rendent
+ * pareil.
  */
 
-export type SnapshotRow = {
-  id: string
-  pageId: string
-  parentId: string | null
-  columnIndex: number
-  placement: unknown
-  styles: unknown
-  settings: unknown
-  name: string | null
-  type: string
-  anchor: string | null
-  navLabel: string | null
-  showInNav: boolean
-  sortOrder: number
-  isActive: boolean
-  backgroundColor: string
-  payload: unknown
-}
-
-export function projectSection(section: Section): SnapshotRow {
-  return {
-    id: section.id,
-    pageId: section.pageId,
-    parentId: section.parentId,
-    columnIndex: section.columnIndex,
-    placement: section.placement ?? null,
-    styles: section.styles ?? null,
-    settings: section.settings ?? null,
-    name: section.name,
-    type: section.type,
-    anchor: section.anchor,
-    navLabel: section.navLabel,
-    showInNav: section.showInNav,
-    sortOrder: section.sortOrder,
-    isActive: section.isActive,
-    backgroundColor: section.backgroundColor,
-    payload: section.payload,
-  }
-}
+export { projectSection, sectionsFromSnapshot, type SnapshotRow }
 
 /**
  * JSON canonique : clés triées à tous les niveaux, `undefined` ramené à
@@ -119,7 +89,7 @@ function comparablePayload(type: string, payload: unknown): unknown {
  */
 function serialize(rows: SnapshotRow[]): string {
   const ordered = [...rows]
-    .map((row) => projectSection(row as Section))
+    .map((row) => projectSection(makeSectionRow(row)))
     .sort((a, b) => a.sortOrder - b.sortOrder || (a.id < b.id ? -1 : 1))
 
   const rankWithin = new Map<string, number>()
@@ -150,19 +120,5 @@ export function hasUnpublishedChanges(
   return (
     serialize(sections.map(projectSection)) !==
     serialize(publishedSnapshot as SnapshotRow[])
-  )
-}
-
-/** Relit un instantané comme des lignes de sections rendables. */
-export function sectionsFromSnapshot(snapshot: unknown): Section[] | null {
-  if (!Array.isArray(snapshot)) return null
-  const epoch = new Date(0)
-  return (snapshot as SnapshotRow[]).map(
-    (row) =>
-      ({
-        ...row,
-        createdAt: epoch,
-        updatedAt: epoch,
-      }) as Section,
   )
 }

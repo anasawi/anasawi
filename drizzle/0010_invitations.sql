@@ -6,9 +6,10 @@
 -- connaît. Tant qu'elle ne l'a pas fait, `password_hash` est nul et la
 -- connexion lui est refusée.
 --
--- Une invitation ne stocke que l'empreinte SHA-256 du jeton : lire la
--- base ne permet pas de s'en servir. Elle expire, ne sert qu'une fois, et
--- disparaît avec le compte.
+-- Une invitation est retrouvée par l'empreinte SHA-256 du jeton. Elle
+-- expire, ne sert qu'une fois, et disparaît avec le compte. (La migration
+-- 0011 ajoute ensuite le jeton lui-même, conservé chiffré, pour que le
+-- lien reste recopiable tant qu'il vaut.)
 ALTER TABLE "users" ALTER COLUMN "password_hash" DROP NOT NULL;--> statement-breakpoint
 CREATE TABLE "invitations" (
   "id" uuid PRIMARY KEY DEFAULT gen_random_uuid(),

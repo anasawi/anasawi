@@ -1,15 +1,20 @@
 'use server'
 
 import { hash } from 'bcryptjs'
-import { and, asc, desc, eq, gt, isNull, sql } from 'drizzle-orm'
-import { createHash, randomBytes } from 'node:crypto'
+import { and, count, eq, isNull, sql } from 'drizzle-orm'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
 
-import { fail, guard, ok, type ActionResult } from './types'
-import { requireAdmin } from '@/lib/auth'
+import { adminAction } from './admin'
+import { MESSAGES } from './messages'
+import { fail, formError, guard, isUuid, ok, type ActionResult } from './types'
 import { db } from '@/server/db'
 import { invitations, users } from '@/server/db/schema'
+import {
+  encryptInvitationToken,
+  generateInvitationToken,
+  hashInvitationToken,
+} from '@/server/invitation-token'
 
 /**
  * Utilisateurs de l'administration.
@@ -19,9 +24,14 @@ import { invitations, users } from '@/server/db/schema'
  * son mot de passe elle-même. Le lien vaut sept jours, une seule fois.
  * En refaire un pour la même personne invalide le précédent.
  *
- * Seule l'EMPREINTE du jeton est en base (SHA-256) : le jeton en clair
- * n'existe que dans le lien rendu à l'écran, une fois.
+ * En base, le jeton est cherché par son EMPREINTE (SHA-256) et conservé
+ * CHIFFRÉ (voir `server/invitation-token.ts`) pour que le lien reste
+ * recopiable tant qu'il vaut. Les lectures (`listUsers`, `readInvitation`)
+ * vivent dans `server/queries/users.ts` : ce fichier n'expose que des
+ * écritures.
  */
+
+export type { InvitationOuverte, UtilisateurListe } from '@/server/queries/users'
 
 const DUREE_INVITATION_MS = 7 * 24 * 60 * 60 * 1000
 
@@ -40,97 +50,34 @@ const motDePasseSchema = z
     message: 'Les deux mots de passe ne sont pas identiques.',
   })
 
-function empreinte(token: string): string {
-  return createHash('sha256').update(token).digest('hex')
-}
-
-/** Un nouveau lien pour cette personne ; les précédents ne valent plus. */
+/**
+ * Un nouveau lien pour cette personne ; les précédents ne valent plus.
+ * Les deux écritures partent dans un même lot : pas d'état où l'ancien
+ * lien est mort sans que le nouveau existe.
+ */
 async function nouvelleInvitation(userId: string): Promise<string> {
-  const token = randomBytes(32).toString('base64url')
-  await db
-    .update(invitations)
-    .set({ usedAt: new Date() })
-    .where(and(eq(invitations.userId, userId), isNull(invitations.usedAt)))
-  await db.insert(invitations).values({
-    userId,
-    tokenHash: empreinte(token),
-    token,
-    expiresAt: new Date(Date.now() + DUREE_INVITATION_MS),
-  })
+  const token = generateInvitationToken()
+  await db.batch([
+    db
+      .update(invitations)
+      .set({ usedAt: new Date() })
+      .where(and(eq(invitations.userId, userId), isNull(invitations.usedAt))),
+    db.insert(invitations).values({
+      userId,
+      tokenHash: hashInvitationToken(token),
+      token: encryptInvitationToken(token),
+      expiresAt: new Date(Date.now() + DUREE_INVITATION_MS),
+    }),
+  ])
   return `/invitation/${token}`
-}
-
-export type UtilisateurListe = {
-  id: string
-  name: string
-  email: string
-  role: 'owner' | 'editor'
-  /** A choisi son mot de passe : peut se connecter. */
-  actif: boolean
-  lastLoginAt: Date | null
-  createdAt: Date
-  /** L'invitation en cours, s'il y en a une : son lien (chemin) et sa
-      date d'expiration — ou, à défaut, la dernière invitation périmée. */
-  invitation: { lien: string; expiresAt: Date; valable: boolean } | null
-  /** C'est la personne connectée. */
-  moi: boolean
-}
-
-export async function listUsers(): Promise<ActionResult<UtilisateurListe[]>> {
-  return guard(async () => {
-    const moi = await requireAdmin()
-    const rows = await db
-      .select({
-        id: users.id,
-        name: users.name,
-        email: users.email,
-        role: users.role,
-        passwordHash: users.passwordHash,
-        lastLoginAt: users.lastLoginAt,
-        createdAt: users.createdAt,
-      })
-      .from(users)
-      .orderBy(asc(users.createdAt))
-    /* La dernière invitation non utilisée de chaque personne : valable ou
-       périmée, on la montre — avec son lien tant qu'elle vaut. */
-    const nonUtilisees = await db
-      .select({ userId: invitations.userId, token: invitations.token, expiresAt: invitations.expiresAt })
-      .from(invitations)
-      .where(isNull(invitations.usedAt))
-      .orderBy(desc(invitations.createdAt))
-    const derniere = new Map<string, { token: string | null; expiresAt: Date }>()
-    for (const i of nonUtilisees) if (!derniere.has(i.userId)) derniere.set(i.userId, i)
-    const maintenant = Date.now()
-    return ok(
-      rows.map((r) => ({
-        id: r.id,
-        name: r.name,
-        email: r.email,
-        role: r.role,
-        actif: Boolean(r.passwordHash),
-        lastLoginAt: r.lastLoginAt,
-        createdAt: r.createdAt,
-        invitation: (() => {
-          const i = derniere.get(r.id)
-          if (!i || r.passwordHash) return null
-          const valable = i.expiresAt.getTime() > maintenant && Boolean(i.token)
-          return { lien: valable && i.token ? `/invitation/${i.token}` : '', expiresAt: i.expiresAt, valable }
-        })(),
-        moi: r.id === moi.id,
-      })),
-    )
-  })
 }
 
 export async function createUser(
   input: z.input<typeof nouvelUtilisateurSchema>,
 ): Promise<ActionResult<{ id: string; lien: string }>> {
-  return guard(async () => {
-    await requireAdmin()
+  return adminAction(async () => {
     const parsed = nouvelUtilisateurSchema.safeParse(input)
-    if (!parsed.success) {
-      return fail('Certains champs sont à corriger.', parsed.error.flatten().fieldErrors)
-    }
+    if (!parsed.success) return formError(parsed.error, MESSAGES.champsACorriger)
 
     const [existant] = await db
       .select({ id: users.id })
@@ -138,15 +85,15 @@ export async function createUser(
       .where(sql`lower(${users.email}) = ${parsed.data.email}`)
       .limit(1)
     if (existant) {
-      const message = 'Un compte existe déjà avec cette adresse e-mail.'
-      return fail(message, { email: [message] })
+      return fail(MESSAGES.compteExistant, { email: [MESSAGES.compteExistant] })
     }
 
+    /* Toujours éditeur : un propriétaire ne se crée pas depuis l'écran. */
     const [created] = await db
       .insert(users)
       .values({ name: parsed.data.name, email: parsed.data.email, passwordHash: null, role: 'editor' })
       .returning({ id: users.id })
-    if (!created) return fail('La création n’a pas abouti. Réessayez dans un instant.')
+    if (!created) return fail(MESSAGES.creationEchouee)
 
     const lien = await nouvelleInvitation(created.id)
     revalidatePath('/admin/utilisateurs')
@@ -154,13 +101,27 @@ export async function createUser(
   })
 }
 
-/** Un nouveau lien d'invitation — pour une personne qui n'a pas encore
-    choisi son mot de passe, ou qui l'a oublié. */
+/**
+ * Un nouveau lien d'invitation — pour une personne qui n'a pas encore
+ * choisi son mot de passe, ou qui l'a oublié.
+ *
+ * Pour un compte ACTIF (qui a un mot de passe), le lien vaut une
+ * réinitialisation : un éditeur ne peut pas s'en servir pour prendre le
+ * compte d'un autre. Seule la personne propriétaire peut le faire — ou
+ * chacun pour son propre compte.
+ */
 export async function renewInvitation(userId: string): Promise<ActionResult<{ lien: string }>> {
-  return guard(async () => {
-    await requireAdmin()
-    const [user] = await db.select({ id: users.id }).from(users).where(eq(users.id, userId)).limit(1)
-    if (!user) return fail('Cette personne n’existe plus. Rechargez la page.')
+  return adminAction(async (moi) => {
+    if (!isUuid(userId)) return fail(MESSAGES.personneIntrouvable)
+    const [user] = await db
+      .select({ id: users.id, passwordHash: users.passwordHash })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+    if (!user) return fail(MESSAGES.personneIntrouvable)
+    if (user.passwordHash && moi.role !== 'owner' && moi.id !== user.id) {
+      return fail(MESSAGES.compteActifPasDeLien)
+    }
     const lien = await nouvelleInvitation(user.id)
     revalidatePath('/admin/utilisateurs')
     return ok({ lien })
@@ -168,9 +129,27 @@ export async function renewInvitation(userId: string): Promise<ActionResult<{ li
 }
 
 export async function deleteUser(userId: string): Promise<ActionResult<void>> {
-  return guard(async () => {
-    const moi = await requireAdmin()
-    if (userId === moi.id) return fail('Vous ne pouvez pas supprimer votre propre compte.')
+  return adminAction(async (moi) => {
+    if (!isUuid(userId)) return fail(MESSAGES.personneIntrouvable)
+    if (userId === moi.id) return fail(MESSAGES.propreCompte)
+
+    const [cible] = await db
+      .select({ id: users.id, role: users.role })
+      .from(users)
+      .where(eq(users.id, userId))
+      .limit(1)
+    if (!cible) return fail(MESSAGES.personneIntrouvable)
+
+    if (cible.role === 'owner') {
+      if (moi.role !== 'owner') return fail(MESSAGES.supprimerProprietaire)
+      /* Le dernier propriétaire ne se supprime pas : plus personne ne
+         pourrait gérer les comptes. */
+      const [{ n } = { n: 0 }] = await db
+        .select({ n: count() })
+        .from(users)
+        .where(eq(users.role, 'owner'))
+      if (n <= 1) return fail(MESSAGES.dernierProprietaire)
+    }
 
     await db.delete(users).where(eq(users.id, userId))
     revalidatePath('/admin/utilisateurs')
@@ -178,28 +157,7 @@ export async function deleteUser(userId: string): Promise<ActionResult<void>> {
   })
 }
 
-/* ── Côté invité : le lien, puis le mot de passe ─────────────────────── */
-
-export type InvitationOuverte = { name: string; email: string }
-
-/** Le lien est-il encore bon ? Rend la personne concernée, sans rien
-    modifier. */
-export async function readInvitation(token: string): Promise<InvitationOuverte | null> {
-  if (!token || token.length > 200) return null
-  const [row] = await db
-    .select({ name: users.name, email: users.email })
-    .from(invitations)
-    .innerJoin(users, eq(users.id, invitations.userId))
-    .where(
-      and(
-        eq(invitations.tokenHash, empreinte(token)),
-        isNull(invitations.usedAt),
-        gt(invitations.expiresAt, new Date()),
-      ),
-    )
-    .limit(1)
-  return row ?? null
-}
+/* ── Côté invité : le mot de passe ──────────────────────────────────── */
 
 export async function setPasswordFromInvitation(
   token: string,
@@ -207,29 +165,37 @@ export async function setPasswordFromInvitation(
 ): Promise<ActionResult<void>> {
   return guard(async () => {
     const parsed = motDePasseSchema.safeParse(input)
-    if (!parsed.success) {
-      return fail('Certains champs sont à corriger.', parsed.error.flatten().fieldErrors)
-    }
+    if (!parsed.success) return formError(parsed.error, MESSAGES.champsACorriger)
+    if (!token || token.length > 200) return fail(MESSAGES.invitationInvalide)
 
-    const [invitation] = await db
-      .select({ id: invitations.id, userId: invitations.userId })
-      .from(invitations)
-      .where(
-        and(
-          eq(invitations.tokenHash, empreinte(token)),
-          isNull(invitations.usedAt),
-          gt(invitations.expiresAt, new Date()),
-        ),
-      )
-      .orderBy(desc(invitations.createdAt))
-      .limit(1)
-    if (!invitation) {
-      return fail('Ce lien n’est plus valable. Demandez-en un nouveau à la personne qui vous a invité·e.')
-    }
-
+    /* Le coût de bcrypt est payé avant de consommer le lien : si l'on
+       consommait d'abord, une panne entre les deux laisserait un lien
+       mort et un compte sans mot de passe. */
     const passwordHash = await hash(parsed.data.password, 12)
-    await db.update(users).set({ passwordHash, updatedAt: new Date() }).where(eq(users.id, invitation.userId))
-    await db.update(invitations).set({ usedAt: new Date() }).where(eq(invitations.id, invitation.id))
+
+    /* Consommation ATOMIQUE, en UNE instruction : la CTE marque
+       l'invitation utilisée (condition et marque dans le même UPDATE, si
+       bien que deux soumissions simultanées du même lien ne passent pas
+       toutes deux), et le mot de passe n'est écrit que si elle a
+       effectivement été consommée. Le driver HTTP n'a pas de transaction ;
+       une seule instruction en tient lieu. */
+    const result = await db.execute<{ id: string }>(sql`
+      with consumed as (
+        update ${invitations}
+        set ${sql.identifier(invitations.usedAt.name)} = now()
+        where ${invitations.tokenHash} = ${hashInvitationToken(token)}
+          and ${invitations.usedAt} is null
+          and ${invitations.expiresAt} > now()
+        returning ${invitations.userId} as user_id
+      )
+      update ${users}
+      set ${sql.identifier(users.passwordHash.name)} = ${passwordHash},
+          ${sql.identifier(users.updatedAt.name)} = now()
+      where ${users.id} = (select user_id from consumed)
+      returning ${users.id} as id
+    `)
+    if (result.rows.length === 0) return fail(MESSAGES.invitationInvalide)
+
     return ok()
   })
 }

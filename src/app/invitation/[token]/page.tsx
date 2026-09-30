@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import { InvitationForm } from '@/components/admin/InvitationForm'
 import { LogoMark } from '@/components/site/Logo'
-import { readInvitation } from '@/server/actions/users'
+import { readInvitation } from '@/server/queries/users'
 
 export const metadata: Metadata = {
   title: 'Choisir mon mot de passe — ANASAWI',

@@ -1,19 +1,12 @@
-import { desc } from 'drizzle-orm'
-
 import { AdminContent } from '@/components/admin/AdminContent'
 import { MessagesList } from '@/components/admin/MessagesList'
 import { PageHeader } from '@/components/admin/PageHeader'
-import { db } from '@/server/db'
-import { contactMessages } from '@/server/db/schema'
+import { getMessages } from '@/server/queries'
 
 export const dynamic = 'force-dynamic'
 
 export default async function MessagesPage() {
-  const messages = await db
-    .select()
-    .from(contactMessages)
-    .orderBy(desc(contactMessages.createdAt))
-    .limit(200)
+  const messages = await getMessages(200)
 
   return (
     <AdminContent width="wide">

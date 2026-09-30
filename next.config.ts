@@ -22,9 +22,11 @@ import type { NextConfig } from 'next'
  *   (Google Maps) sont des iframes — sans cette directive, `default-src`
  *   les aurait signalés à chaque page qui les contient.
  * - `img-src` reprend les `remotePatterns` ci-dessous ; à réduire avec eux
- *   quand les images de substitution auront disparu (lot 11). Les médias
+ *   quand les images de substitution (Picsum, `db:seed-images`) et celles
+ *   des semis (Unsplash, `db:seed-site`) auront disparu. Les médias
  *   envoyés depuis le CMS sont servis par `/api/media/…`, donc couverts par
- *   `'self'` : seul l'historique justifie encore l'hôte Vercel Blob.
+ *   `'self'`. L'hôte Vercel Blob de l'ancien stockage n'est plus référencé
+ *   nulle part : retiré.
  * - En développement, le websocket de rechargement à chaud (`ws://`) sera
  *   signalé par `connect-src` : bruit attendu, absent en production.
  *
@@ -42,7 +44,7 @@ const CONTENT_SECURITY_POLICY_REPORT_ONLY = [
   "script-src 'self' 'unsafe-inline' 'unsafe-eval'",
   "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com",
   "font-src 'self' https://fonts.gstatic.com data:",
-  "img-src 'self' data: blob: https://*.public.blob.vercel-storage.com https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos",
+  "img-src 'self' data: blob: https://images.unsplash.com https://picsum.photos https://fastly.picsum.photos",
   "connect-src 'self'",
   /* Vidéos : servies par /api/media ; `blob:` pour la recompression dans
      l'admin (la source lue depuis un objet blob) et l'aperçu. */
@@ -70,7 +72,9 @@ const securityHeaders = [
   { key: 'X-Content-Type-Options', value: 'nosniff' },
   { key: 'X-Frame-Options', value: 'SAMEORIGIN' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
-  { key: 'X-DNS-Prefetch-Control', value: 'on' },
+  /* Isole la fenêtre des pages ouvertes par d'autres origines (`window.
+     opener`) : sans effet sur le site, une attaque de moins sur l'admin. */
+  { key: 'Cross-Origin-Opener-Policy', value: 'same-origin' },
   {
     key: 'Permissions-Policy',
     value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()',
@@ -79,6 +83,11 @@ const securityHeaders = [
     key: 'Strict-Transport-Security',
     value: 'max-age=63072000; includeSubDomains; preload',
   },
+]
+
+const PRIVATE_HEADERS = [
+  { key: 'Cache-Control', value: 'no-store, private' },
+  { key: 'X-Robots-Tag', value: 'noindex, nofollow' },
 ]
 
 const nextConfig: NextConfig = {
@@ -98,7 +107,7 @@ const nextConfig: NextConfig = {
        `next/image` : 75 (défaut) et 88 (`BlockImage`). */
     qualities: [75, 88],
     remotePatterns: [
-      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
+      /* Photographies des semis (npm run db:seed-site). */
       { protocol: 'https', hostname: 'images.unsplash.com' },
       /* Images de substitution (npm run db:seed-images).
          Picsum redirige vers son CDN Fastly : les deux hôtes sont requis.
@@ -114,7 +123,45 @@ const nextConfig: NextConfig = {
   },
 
   async headers() {
-    return [{ source: '/:path*', headers: securityHeaders }]
+    return [
+      { source: '/:path*', headers: securityHeaders },
+      /* Écrans privés : jamais mis en cache par un intermédiaire, jamais
+         indexés. Le CDN de Netlify respecte `Cache-Control` ; sans
+         `private`, une page d'administration rendue pour une personne
+         pouvait être resservie à une autre. `/templates` est public
+         (voir `middleware.ts`) mais reste un outil de revue : pas de
+         cache, pas d'indexation. */
+      {
+        source: '/(admin|login|invitation|templates)/:path*',
+        headers: PRIVATE_HEADERS,
+      },
+      { source: '/(admin|login|templates)', headers: PRIVATE_HEADERS },
+      /* Le lien d'invitation porte son jeton dans l'adresse : aucun
+         `Referer` ne doit l'emporter vers un autre site. */
+      {
+        source: '/invitation/:path*',
+        headers: [{ key: 'Referrer-Policy', value: 'no-referrer' }],
+      },
+    ]
+  },
+
+  /**
+   * Anciennes adresses de l'administration. Redirections HTTP (301) : elles
+   * remplacent quatre pages qui ne faisaient que `redirect()`, et la route
+   * `/admin/edit` — le site est une page unique, « Modifier » c'est
+   * `/admin/accueil`. Les fragments (`#menu`, `#referencement`) ne
+   * voyagent pas dans une redirection serveur : ils sont ajoutés côté
+   * client par la page des réglages si l'adresse les porte, sinon perdus
+   * — acceptable pour des signets.
+   */
+  async redirects() {
+    return [
+      { source: '/admin/identite', destination: '/admin/reglages#palette', permanent: true },
+      { source: '/admin/parametres', destination: '/admin/reglages#coordonnees', permanent: true },
+      { source: '/admin/navigation', destination: '/admin/reglages#menu', permanent: true },
+      { source: '/admin/seo', destination: '/admin/reglages#referencement', permanent: true },
+      { source: '/admin/edit', destination: '/admin/accueil', permanent: true },
+    ]
   },
 }
 

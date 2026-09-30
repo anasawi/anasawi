@@ -3,9 +3,10 @@
 import { eq } from 'drizzle-orm'
 import { revalidatePath, revalidateTag } from 'next/cache'
 
-import { fail, guard, ok, type ActionResult } from './types'
+import { adminAction } from './admin'
+import { MESSAGES } from './messages'
+import { fail, ok, type ActionResult } from './types'
 import { identitySchema } from '@/lib/identity'
-import { requireAdmin } from '@/lib/auth'
 import { db } from '@/server/db'
 import { settings } from '@/server/db/schema'
 import { tags } from '@/server/queries'
@@ -14,11 +15,9 @@ import { tags } from '@/server/queries'
 export async function updateIdentity(
   input: unknown,
 ): Promise<ActionResult<void>> {
-  return guard(async () => {
-    await requireAdmin()
-
+  return adminAction(async () => {
     const parsed = identitySchema.safeParse(input)
-    if (!parsed.success) return fail('Certains champs sont à corriger.')
+    if (!parsed.success) return fail(MESSAGES.champsACorriger)
 
     await db
       .update(settings)

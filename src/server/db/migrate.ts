@@ -8,6 +8,16 @@ import { existsSync, readdirSync } from 'node:fs'
 /**
  * Applique les migrations SQL du dossier `drizzle/`.
  *
+ * LES MIGRATIONS SONT ÉCRITES À LA MAIN. `drizzle-kit generate` n'est PAS
+ * utilisé : les instantanés de `drizzle/meta/*_snapshot.json` ne sont plus
+ * maintenus depuis la 0000, et le générateur produirait un diff faux (il
+ * recréerait tout). Pour changer le schéma : modifier `schema.ts`, écrire
+ * le SQL correspondant dans `drizzle/00NN_nom.sql` (une instruction par
+ * `--> statement-breakpoint`, idempotente autant que possible : `IF NOT
+ * EXISTS`), puis ajouter l'entrée dans `drizzle/meta/_journal.json` avec
+ * un `when` strictement croissant — c'est lui qui décide de l'ordre et de
+ * ce qui reste à appliquer.
+ *
  * On n'utilise pas `drizzle-kit migrate` / `drizzle-kit push` : ces commandes
  * passent par le driver websocket de `@neondatabase/serverless`, qui reste
  * bloqué sur « Pulling schema » selon la version de Node et la configuration
@@ -18,8 +28,7 @@ import { existsSync, readdirSync } from 'node:fs'
  * sont donc appliquées une à une. Pour un schéma versionné dans Git et
  * appliqué en avant seulement, c'est sans conséquence.
  *
- *   npm run db:generate   # produit le SQL depuis le schéma (hors ligne)
- *   npm run db:migrate    # l'applique
+ *   npm run db:migrate    # applique ce qui manque
  */
 async function main() {
   if (!process.env.DATABASE_URL) {
@@ -32,7 +41,7 @@ async function main() {
   if (!existsSync('drizzle') || readdirSync('drizzle').length === 0) {
     console.error(
       '\n  ✗ Aucune migration dans drizzle/.\n' +
-        '    → npm run db:generate    (génère le SQL depuis le schéma)\n',
+        '    → les migrations sont écrites à la main, voir l’en-tête de ce fichier\n',
     )
     process.exit(1)
   }

@@ -5,6 +5,11 @@ import type { NextAuthConfig } from 'next-auth'
  * C'est elle que le middleware importe, ce qui lui permet de tourner sur le
  * runtime Edge sans embarquer le driver Postgres.
  */
+
+/** Préfixes réservés à une session. Le `matcher` de `middleware.ts` doit
+    les couvrir aussi — c'est lui qui décide si ce rappel est consulté. */
+const PROTECTED_PREFIXES = ['/admin']
+
 export const authConfig = {
   pages: {
     signIn: '/login',
@@ -16,20 +21,23 @@ export const authConfig = {
   callbacks: {
     authorized({ auth, request }) {
       const { pathname } = request.nextUrl
-      if (!pathname.startsWith('/admin')) return true
+      const isProtected = PROTECTED_PREFIXES.some(
+        (prefix) => pathname === prefix || pathname.startsWith(`${prefix}/`),
+      )
+      if (!isProtected) return true
       return Boolean(auth?.user)
     },
     jwt({ token, user }) {
       if (user) {
-        token.id = user.id as string
-        token.role = (user as { role?: string }).role ?? 'editor'
+        token.id = user.id
+        token.role = user.role ?? 'editor'
       }
       return token
     },
     session({ session, token }) {
       if (session.user) {
-        session.user.id = token.id as string
-        session.user.role = token.role as 'owner' | 'editor'
+        session.user.id = token.id ?? ''
+        session.user.role = token.role ?? 'editor'
       }
       return session
     },

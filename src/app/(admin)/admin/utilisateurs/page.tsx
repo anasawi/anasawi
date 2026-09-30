@@ -1,7 +1,7 @@
 import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { UsersManager } from '@/components/admin/UsersManager'
-import { listUsers } from '@/server/actions/users'
+import { listUsers } from '@/server/queries/users'
 
 export const dynamic = 'force-dynamic'
 
