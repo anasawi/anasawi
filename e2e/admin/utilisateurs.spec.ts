@@ -51,7 +51,7 @@ async function inviter(page: Page): Promise<string> {
   await expect(lien).toBeVisible()
   const url = await lien.inputValue()
   expect(url).toMatch(/\/invitation\/[A-Za-z0-9_-]{20,}$/)
-  await page.getByRole('button', { name: 'Fermer' }).click()
+  await page.getByRole('button', { name: 'J’ai copié le lien' }).click()
   return url
 }
 
@@ -168,7 +168,7 @@ test.describe('Utilisateurs', () => {
     await expect(lien).toBeVisible()
     const nouveau = await lien.inputValue()
     expect(nouveau).not.toBe(ancien)
-    await page.getByRole('button', { name: 'Fermer' }).click()
+    await page.getByRole('button', { name: 'J’ai copié le lien' }).click()
 
     const contexte = await browser.newContext({ baseURL: test.info().project.use.baseURL })
     const invitee = await contexte.newPage()

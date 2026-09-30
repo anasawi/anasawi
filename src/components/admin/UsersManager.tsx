@@ -237,7 +237,7 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
           </DialogHeader>
           {lien && <LienACopier url={lien.url} />}
           <DialogFooter>
-            <Button onClick={() => setLien(null)}>Fermer</Button>
+            <Button onClick={() => setLien(null)}>J’ai copié le lien</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
