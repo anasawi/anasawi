@@ -86,10 +86,15 @@ export async function listUsers(): Promise<ActionResult<UtilisateurListe[]>> {
         passwordHash: users.passwordHash,
         lastLoginAt: users.lastLoginAt,
         createdAt: users.createdAt,
-        invitationEnCours: sql<boolean>`exists(select 1 from ${invitations} where ${invitations.userId} = ${users.id} and ${invitations.usedAt} is null and ${invitations.expiresAt} > now())`,
       })
       .from(users)
       .orderBy(asc(users.createdAt))
+    /* Les invitations encore valables — une requête à part, lisible. */
+    const enCours = await db
+      .select({ userId: invitations.userId })
+      .from(invitations)
+      .where(and(isNull(invitations.usedAt), gt(invitations.expiresAt, new Date())))
+    const invites = new Set(enCours.map((i) => i.userId))
     return ok(
       rows.map((r) => ({
         id: r.id,
@@ -99,7 +104,7 @@ export async function listUsers(): Promise<ActionResult<UtilisateurListe[]>> {
         actif: Boolean(r.passwordHash),
         lastLoginAt: r.lastLoginAt,
         createdAt: r.createdAt,
-        invitationEnCours: r.invitationEnCours,
+        invitationEnCours: invites.has(r.id),
         moi: r.id === moi.id,
       })),
     )
