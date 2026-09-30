@@ -10,6 +10,7 @@ import {
   Menu as MenuIcon,
   PenLine,
   Settings,
+  Users,
   Sparkles,
   X,
 } from 'lucide-react'
@@ -59,6 +60,7 @@ const ENTREES: Entree[] = [
   { href: '/admin/faq', label: 'Questions fréquentes', icon: HelpCircle, chemins: ['/admin/faq'] },
   { href: '/admin/medias', label: 'Médias', icon: ImageIcon, chemins: ['/admin/medias'] },
   { href: '/admin/messages', label: 'Messages', icon: Mail, chemins: ['/admin/messages'] },
+  { href: '/admin/utilisateurs', label: 'Utilisateurs', icon: Users, chemins: ['/admin/utilisateurs'] },
   {
     href: '/admin/reglages',
     label: 'Réglages',

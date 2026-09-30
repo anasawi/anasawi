@@ -71,6 +71,13 @@
       "when": 1788353001000,
       "tag": "0009_logo_media",
       "breakpoints": true
+    },
+    {
+      "idx": 10,
+      "version": "7",
+      "when": 1788353002000,
+      "tag": "0010_invitations",
+      "breakpoints": true
     }
   ]
 }

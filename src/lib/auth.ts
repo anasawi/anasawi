@@ -26,9 +26,10 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .where(sql`lower(${users.email}) = lower(${parsed.data.email})`)
           .limit(1)
 
-        if (!user) {
+        if (!user || !user.passwordHash) {
           /* Comparaison factice : le temps de réponse ne doit pas révéler
-             si l'adresse existe. */
+             si l'adresse existe — ni si la personne, invitée, n'a pas
+             encore choisi son mot de passe. */
           await compare(parsed.data.password, '$2a$12$invalidinvalidinvalidinvalidinvalidinvalidinvalidinva')
           return null
         }

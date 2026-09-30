@@ -41,7 +41,9 @@ export const users = pgTable(
     id: uuid('id').primaryKey().defaultRandom(),
     /** Toujours stocké en minuscules — la contrainte d'unicité en dépend. */
     email: text('email').notNull().unique(),
-    passwordHash: text('password_hash').notNull(),
+    /** Nul tant que la personne invitée n'a pas choisi son mot de passe :
+        elle ne peut pas se connecter avant. */
+    passwordHash: text('password_hash'),
     name: text('name').notNull(),
     role: userRoleEnum('role').notNull().default('editor'),
     lastLoginAt: timestamp('last_login_at', { withTimezone: true }),
@@ -49,6 +51,29 @@ export const users = pgTable(
   },
   (t) => [index('users_email_idx').on(t.email)],
 )
+
+/**
+ * Invitations : le lien envoyé à une personne pour qu'elle choisisse son
+ * mot de passe. On ne garde que l'EMPREINTE du jeton (SHA-256) : une
+ * lecture de la base ne permet pas de l'utiliser. Un lien vaut sept jours
+ * et une seule fois ; en refaire un invalide le précédent.
+ */
+export const invitations = pgTable(
+  'invitations',
+  {
+    id: uuid('id').primaryKey().defaultRandom(),
+    userId: uuid('user_id')
+      .notNull()
+      .references(() => users.id, { onDelete: 'cascade' }),
+    tokenHash: text('token_hash').notNull().unique(),
+    expiresAt: timestamp('expires_at', { withTimezone: true }).notNull(),
+    usedAt: timestamp('used_at', { withTimezone: true }),
+    createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
+  },
+  (t) => [index('invitations_user_idx').on(t.userId)],
+)
+
+export type Invitation = typeof invitations.$inferSelect
 
 /* ════════════════════════════════════════════════════════════════════
    Médias
