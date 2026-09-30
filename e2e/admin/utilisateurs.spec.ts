@@ -94,8 +94,9 @@ test.describe('Utilisateurs', () => {
     const url = await inviter(page)
     await expect(ligne(page, INVITEE.nom).getByText('Invitation en attente')).toBeVisible()
 
-    /* La personne invitée n'a pas de session : un contexte vierge. */
-    const contexte = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    /* La personne invitée n'a pas de session : un contexte vierge — sans
+       l'état de connexion que la configuration donne à tous les autres. */
+    const contexte = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const invitee = await contexte.newPage()
     try {
       await invitee.goto(url, { waitUntil: 'domcontentloaded' })
@@ -145,7 +146,7 @@ test.describe('Utilisateurs', () => {
     await ouvrirUtilisateurs(page)
     await inviter(page)
 
-    const contexte = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    const contexte = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const invitee = await contexte.newPage()
     try {
       await invitee.goto('/login')
@@ -170,7 +171,7 @@ test.describe('Utilisateurs', () => {
     expect(nouveau).not.toBe(ancien)
     await page.getByRole('button', { name: 'J’ai copié le lien' }).click()
 
-    const contexte = await browser.newContext({ baseURL: test.info().project.use.baseURL })
+    const contexte = await browser.newContext({ storageState: { cookies: [], origins: [] } })
     const invitee = await contexte.newPage()
     try {
       await invitee.goto(ancien, { waitUntil: 'domcontentloaded' })

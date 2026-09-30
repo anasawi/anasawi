@@ -70,7 +70,6 @@ export function InvitationForm({ token, email }: { token: string; email: string 
           name="password"
           type="password"
           required
-          minLength={10}
           autoComplete="new-password"
           autoFocus
           value={password}
