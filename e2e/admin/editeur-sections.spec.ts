@@ -61,6 +61,9 @@ async function attendreEnregistrement(page: Page) {
 
 /** Jette le brouillon : la page revient à sa version en ligne. */
 async function revenirEnLigne(page: Page) {
+  /* Une action encore en vol retiendrait la navigation : on la laisse
+     finir avant de repartir de l'éditeur. */
+  if (page.url().includes('/admin/accueil')) await attendreEnregistrement(page)
   await ouvrirEditeur(page)
   if ((await etat(page).textContent()) === 'En ligne') return
   await page.getByRole('button', { name: 'Autres actions' }).click()

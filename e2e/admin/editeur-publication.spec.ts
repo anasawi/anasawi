@@ -63,6 +63,10 @@ async function basculerVisibilite(page: Page, nom: string) {
   const ligne = rangee(page, nom)
   await ligne.getByRole('button', { name: /^Actions de/ }).click()
   await page.getByRole('menuitem', { name: /^(Masquer|Afficher)$/ }).click()
+  /* L'écran change tout de suite ; la base, juste après. La barre du haut
+     dit « Enregistrement… » tant que ce n'est pas écrit — et le
+     navigateur retiendrait un rechargement. On attend que ce soit fait. */
+  await expect(page.getByText('Enregistrement…')).toHaveCount(0, { timeout: 15_000 })
 }
 
 /** Jette le brouillon courant et revient à la version en ligne. */

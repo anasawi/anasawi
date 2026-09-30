@@ -322,17 +322,25 @@ export function TemplateEditor({
     if (!selected) onSaveStateChange('saved')
   }, [selected, onSaveStateChange])
 
-  /* Une frappe pas encore écrite : le navigateur demande confirmation
-     avant de fermer ou recharger l'onglet. */
+  /* Actions en vol (masquer, déplacer, dupliquer, supprimer, ajouter) :
+     tant qu'il en reste, la page dit « Enregistrement… » et le navigateur
+     retient un rechargement. Sans ce compteur, masquer une section puis
+     recharger aussitôt perdait le geste en silence — l'écran avait déjà
+     changé, la base pas encore. */
+  const enVolRef = useRef(0)
+  const [enVol, setEnVol] = useState(false)
+
+  /* Une frappe pas encore écrite, ou une action pas encore écrite : le
+     navigateur demande confirmation avant de fermer ou recharger. */
   useEffect(() => {
-    if (saveState === 'saved') return
+    if (saveState === 'saved' && !enVol) return
     const onBeforeUnload = (e: BeforeUnloadEvent) => {
       e.preventDefault()
       e.returnValue = ''
     }
     window.addEventListener('beforeunload', onBeforeUnload)
     return () => window.removeEventListener('beforeunload', onBeforeUnload)
-  }, [saveState])
+  }, [saveState, enVol])
 
   /* La section « fraîche » ne l'est que tant qu'elle reste sélectionnée. */
   useEffect(() => {
@@ -378,8 +386,14 @@ export function TemplateEditor({
               'Connexion impossible — vérifiez votre réseau et réessayez.',
             ) as unknown as T,
         )
+      enVolRef.current += 1
+      setEnVol(true)
       const run = queueRef.current.then(attempt, attempt)
       queueRef.current = run.catch(() => undefined)
+      void run.finally(() => {
+        enVolRef.current -= 1
+        if (enVolRef.current === 0) setEnVol(false)
+      })
       return run
     },
     [],
@@ -1487,7 +1501,7 @@ export function TemplateEditor({
             className="hidden text-[12.5px] leading-none text-stone xl:block"
             aria-live="polite"
           >
-            {saveState !== 'saved'
+            {saveState !== 'saved' || enVol
               ? 'Enregistrement…'
               : publishState === 'pending'
                 ? 'Enregistré automatiquement · visible par vos visiteurs après « Publier »'
