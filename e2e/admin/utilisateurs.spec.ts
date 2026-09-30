@@ -27,6 +27,19 @@ async function ouvrirUtilisateurs(page: Page) {
 
 const ligne = (page: Page, nom: string) => page.getByRole('listitem').filter({ hasText: nom })
 
+/**
+ * Un contexte vierge pour la personne invitée : sans l'état de connexion
+ * que la configuration donne à tous les autres, et avec SA PROPRE adresse
+ * IP — la connexion est limitée à huit essais par adresse, et ce fichier
+ * ne doit pas consommer le quota des tests de connexion.
+ */
+function contexteInvitee(browser: import('@playwright/test').Browser) {
+  return browser.newContext({
+    storageState: { cookies: [], origins: [] },
+    extraHTTPHeaders: { 'X-Forwarded-For': '203.0.113.42' },
+  })
+}
+
 /** Supprime la personne de test si elle existe — tolérant. */
 async function supprimerSiPresente(page: Page) {
   await ouvrirUtilisateurs(page)
@@ -96,7 +109,7 @@ test.describe('Utilisateurs', () => {
 
     /* La personne invitée n'a pas de session : un contexte vierge — sans
        l'état de connexion que la configuration donne à tous les autres. */
-    const contexte = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const contexte = await contexteInvitee(browser)
     const invitee = await contexte.newPage()
     try {
       await invitee.goto(url, { waitUntil: 'domcontentloaded' })
@@ -146,7 +159,7 @@ test.describe('Utilisateurs', () => {
     await ouvrirUtilisateurs(page)
     await inviter(page)
 
-    const contexte = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const contexte = await contexteInvitee(browser)
     const invitee = await contexte.newPage()
     try {
       await invitee.goto('/login')
@@ -171,7 +184,7 @@ test.describe('Utilisateurs', () => {
     expect(nouveau).not.toBe(ancien)
     await page.getByRole('button', { name: 'J’ai copié le lien' }).click()
 
-    const contexte = await browser.newContext({ storageState: { cookies: [], origins: [] } })
+    const contexte = await contexteInvitee(browser)
     const invitee = await contexte.newPage()
     try {
       await invitee.goto(ancien, { waitUntil: 'domcontentloaded' })

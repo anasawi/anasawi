@@ -43,14 +43,22 @@ export function MessagesList({ messages }: { messages: ContactMessage[] }) {
               onClick={() => {
                 setOpenId(open ? null : message.id)
 
+                /* La pastille « Nouveau » ne s'efface qu'une fois le
+                   serveur d'accord : c'est l'accusé de réception. Avant,
+                   elle partait tout de suite, et un rechargement rapide
+                   la faisait revenir — la lecture n'était pas écrite. */
                 if (!message.isRead) {
-                  setItems((prev) =>
-                    prev.map((m) =>
-                      m.id === message.id ? { ...m, isRead: true } : m,
-                    ),
-                  )
                   start(async () => {
-                    await markMessageRead(message.id, true)
+                    const result = await markMessageRead(message.id, true)
+                    if (!result.ok) {
+                      toast.error(result.error)
+                      return
+                    }
+                    setItems((prev) =>
+                      prev.map((m) =>
+                        m.id === message.id ? { ...m, isRead: true } : m,
+                      ),
+                    )
                     router.refresh()
                   })
                 }
