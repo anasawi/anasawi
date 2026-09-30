@@ -365,22 +365,57 @@ const PREVIEW_WIDTH = 1280
 /** Au-delà, une section très haute (galerie, FAQ) écraserait la grille. */
 const PREVIEW_MAX_HEIGHT = 340
 
-/** Contenus d'exemple : les défauts du template, avec des images de la
-    bibliothèque glissées dans chaque emplacement média vide. */
+/**
+ * Cadres gris pour les aperçus : chaque emplacement de photo d'un modèle
+ * en reçoit un, avec un petit pictogramme — on voit d'un coup d'œil où
+ * la photo ira. Avant, l'aperçu glissait le PREMIER média de la
+ * bibliothèque dans chaque emplacement : une vidéo, depuis qu'il y en a,
+ * et l'image ne s'affichait pas du tout.
+ */
+function cadreGris(index: number, ratio: 'paysage' | 'portrait'): Media {
+  const [w, h] = ratio === 'portrait' ? [1200, 1500] : [1600, 1000]
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${w} ${h}"><rect width="${w}" height="${h}" fill="#e6e2da"/><g fill="none" stroke="#b9b3a8" stroke-width="${Math.round(w / 90)}" stroke-linejoin="round"><rect x="${w * 0.4}" y="${h / 2 - w * 0.075}" width="${w * 0.2}" height="${w * 0.15}" rx="${w / 80}"/><path d="M${w * 0.42} ${h / 2 + w * 0.05}l${w * 0.05}-${w * 0.055}l${w * 0.04} ${w * 0.04}l${w * 0.03}-${w * 0.03}l${w * 0.04} ${w * 0.045}"/><circle cx="${w * 0.53}" cy="${h / 2 - w * 0.04}" r="${w / 70}"/></g></svg>`
+  /* Un identifiant au format UUID : les schémas des modèles l'exigent, et
+     un cadre à l'identifiant fantaisiste rendait la section invalide —
+     donc invisible dans l'aperçu. */
+  return {
+    id: `00000000-0000-4000-8000-00000000000${index}`,
+    url: `data:image/svg+xml;utf8,${encodeURIComponent(svg)}`,
+    pathname: '',
+    filename: 'cadre.svg',
+    alt: 'Emplacement de photo',
+    caption: null,
+    width: w,
+    height: h,
+    blurDataUrl: null,
+    mimeType: 'image/png',
+    size: 0,
+    createdAt: new Date(0),
+    updatedAt: new Date(0),
+  }
+}
+
+const CADRES: Media[] = [cadreGris(1, 'paysage'), cadreGris(2, 'portrait'), cadreGris(3, 'paysage')]
+
+/** Contenus d'exemple : les défauts du template ; un cadre gris dans
+    chaque emplacement de photo vide, une vidéo de la bibliothèque dans
+    chaque emplacement de vidéo. */
 function previewPayload(type: BlockType, media: Media[]): unknown {
   const block = blockRegistry[type]
   const payload = block.schema.parse(block.defaults) as Record<string, unknown>
+  const videos = media.filter((m) => m.mimeType.startsWith('video/'))
 
   for (const f of block.fields) {
-    if (f.kind === 'media' && !payload[f.name] && media[0]) {
-      payload[f.name] = media[0].id
+    if (f.kind === 'media' && !payload[f.name]) {
+      const choix = f.mediaKind === 'video' ? videos[0] : CADRES[0]
+      if (choix) payload[f.name] = choix.id
     }
     if (
       f.kind === 'mediaList' &&
       Array.isArray(payload[f.name]) &&
       (payload[f.name] as unknown[]).length === 0
     ) {
-      payload[f.name] = media.slice(0, 3).map((m) => m.id)
+      payload[f.name] = CADRES.map((m) => m.id)
     }
   }
   return payload
@@ -423,6 +458,12 @@ export function TemplatePreview({
         updatedAt: new Date(),
       }) as Section,
     [type, data.media, payloadOverride, backgroundColor],
+  )
+  /* Les cadres gris doivent se résoudre comme des médias : on les ajoute
+     à la bibliothèque que voit le moteur de rendu. */
+  const dataAvecCadres = useMemo(
+    () => ({ ...data, media: [...data.media, ...CADRES] }),
+    [data],
   )
 
   /* L'aperçu épouse la largeur de sa carte : l'échelle se déduit de la
@@ -481,7 +522,7 @@ export function TemplatePreview({
           <AnimProvider enabled={false}>
             <SectionsView
               sections={[section]}
-              data={data}
+              data={dataAvecCadres}
               breakpoint="desktop"
             />
           </AnimProvider>

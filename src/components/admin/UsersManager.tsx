@@ -127,13 +127,31 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
                       <span className="text-muted-foreground"> · vu le {formatDate(u.lastLoginAt)}</span>
                     )}
                   </span>
-                ) : u.invitationEnCours ? (
-                  <span className="text-[#8a5f1e]">Invitation en attente</span>
+                ) : u.invitation?.valable ? (
+                  <span className="text-[#8a5f1e]">
+                    Invitation en attente
+                    <span className="block text-muted-foreground">
+                      Le lien expire {delaiRestant(u.invitation.expiresAt)}
+                    </span>
+                  </span>
+                ) : u.invitation ? (
+                  <span className="text-[#b4342c]">
+                    Lien expiré
+                    <span className="block text-muted-foreground">
+                      le {formatDate(u.invitation.expiresAt)} — faites-en un nouveau
+                    </span>
+                  </span>
                 ) : (
-                  <span className="text-muted-foreground">Lien expiré — à renouveler</span>
+                  <span className="text-muted-foreground">Aucune invitation — faites un lien</span>
                 )}
               </div>
               <div className="flex shrink-0 items-center gap-1.5">
+                {u.invitation?.valable && (
+                  <BoutonCopier
+                    url={`${origine}${u.invitation.lien}`}
+                    label={`Copier le lien d’invitation de ${u.name}`}
+                  />
+                )}
                 <Button
                   variant="outline"
                   size="sm"
@@ -242,6 +260,43 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
         </DialogContent>
       </Dialog>
     </>
+  )
+}
+
+/** « expire dans 6 jours », « dans 3 heures », « dans quelques minutes ». */
+function delaiRestant(date: Date): string {
+  const ms = new Date(date).getTime() - Date.now()
+  const heures = Math.floor(ms / 3_600_000)
+  if (heures >= 48) return `dans ${Math.floor(heures / 24)} jours`
+  if (heures >= 24) return 'demain'
+  if (heures >= 2) return `dans ${heures} heures`
+  if (heures === 1) return 'dans une heure'
+  return 'dans quelques minutes'
+}
+
+function BoutonCopier({ url, label }: { url: string; label: string }) {
+  const [copie, setCopie] = useState(false)
+  return (
+    <Button
+      type="button"
+      variant="outline"
+      size="sm"
+      aria-label={label}
+      title="Le même lien, à envoyer de nouveau"
+      onClick={async () => {
+        try {
+          await navigator.clipboard.writeText(url)
+          setCopie(true)
+          toast.success('Lien copié.')
+          window.setTimeout(() => setCopie(false), 2500)
+        } catch {
+          toast.error('Impossible de copier automatiquement.')
+        }
+      }}
+    >
+      {copie ? <Check /> : <Copy />}
+      {copie ? 'Copié' : 'Copier le lien'}
+    </Button>
   )
 }
 

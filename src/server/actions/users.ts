@@ -54,6 +54,7 @@ async function nouvelleInvitation(userId: string): Promise<string> {
   await db.insert(invitations).values({
     userId,
     tokenHash: empreinte(token),
+    token,
     expiresAt: new Date(Date.now() + DUREE_INVITATION_MS),
   })
   return `/invitation/${token}`
@@ -68,8 +69,9 @@ export type UtilisateurListe = {
   actif: boolean
   lastLoginAt: Date | null
   createdAt: Date
-  /** Une invitation encore valable est en attente. */
-  invitationEnCours: boolean
+  /** L'invitation en cours, s'il y en a une : son lien (chemin) et sa
+      date d'expiration — ou, à défaut, la dernière invitation périmée. */
+  invitation: { lien: string; expiresAt: Date; valable: boolean } | null
   /** C'est la personne connectée. */
   moi: boolean
 }
@@ -89,12 +91,16 @@ export async function listUsers(): Promise<ActionResult<UtilisateurListe[]>> {
       })
       .from(users)
       .orderBy(asc(users.createdAt))
-    /* Les invitations encore valables — une requête à part, lisible. */
-    const enCours = await db
-      .select({ userId: invitations.userId })
+    /* La dernière invitation non utilisée de chaque personne : valable ou
+       périmée, on la montre — avec son lien tant qu'elle vaut. */
+    const nonUtilisees = await db
+      .select({ userId: invitations.userId, token: invitations.token, expiresAt: invitations.expiresAt })
       .from(invitations)
-      .where(and(isNull(invitations.usedAt), gt(invitations.expiresAt, new Date())))
-    const invites = new Set(enCours.map((i) => i.userId))
+      .where(isNull(invitations.usedAt))
+      .orderBy(desc(invitations.createdAt))
+    const derniere = new Map<string, { token: string | null; expiresAt: Date }>()
+    for (const i of nonUtilisees) if (!derniere.has(i.userId)) derniere.set(i.userId, i)
+    const maintenant = Date.now()
     return ok(
       rows.map((r) => ({
         id: r.id,
@@ -104,7 +110,12 @@ export async function listUsers(): Promise<ActionResult<UtilisateurListe[]>> {
         actif: Boolean(r.passwordHash),
         lastLoginAt: r.lastLoginAt,
         createdAt: r.createdAt,
-        invitationEnCours: invites.has(r.id),
+        invitation: (() => {
+          const i = derniere.get(r.id)
+          if (!i || r.passwordHash) return null
+          const valable = i.expiresAt.getTime() > maintenant && Boolean(i.token)
+          return { lien: valable && i.token ? `/invitation/${i.token}` : '', expiresAt: i.expiresAt, valable }
+        })(),
         moi: r.id === moi.id,
       })),
     )

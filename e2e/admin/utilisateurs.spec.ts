@@ -105,7 +105,14 @@ test.describe('Utilisateurs', () => {
     test.slow()
     await ouvrirUtilisateurs(page)
     const url = await inviter(page)
-    await expect(ligne(page, INVITEE.nom).getByText('Invitation en attente')).toBeVisible()
+    const entree = ligne(page, INVITEE.nom)
+    await expect(entree.getByText('Invitation en attente')).toBeVisible()
+    /* Le lien reste consultable tant qu'il vaut : on le recopie sans le
+       changer, et l'on sait quand il expire. */
+    await expect(entree.getByText('Le lien expire dans 6 jours')).toBeVisible()
+    await expect(
+      entree.getByRole('button', { name: `Copier le lien d’invitation de ${INVITEE.nom}` }),
+    ).toBeVisible()
 
     /* La personne invitée n'a pas de session : un contexte vierge — sans
        l'état de connexion que la configuration donne à tous les autres. */
