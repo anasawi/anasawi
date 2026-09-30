@@ -29,7 +29,6 @@ import {
   horairesBlock,
   reseauxBlock,
   statBlock,
-  temoignageBlock,
   videoBlock,
 } from './extras'
 import { faqBlock } from './faq'
@@ -99,11 +98,6 @@ import {
   servicesNumerotesBlock,
   tarifsSobreBlock,
 } from './templates/services'
-import {
-  temoignageGrandBlock,
-  temoignageSimpleBlock,
-  temoignagesMultiplesBlock,
-} from './templates/temoignages'
 import { viergeBlock } from './templates/vierge'
 import type { AnyBlockDefinition } from './types'
 
@@ -155,9 +149,6 @@ export const blockRegistry = {
   tarifsSobre: tarifsSobreBlock,
 
   /* Inspirer confiance. */
-  temoignageGrand: temoignageGrandBlock,
-  temoignagesMultiples: temoignagesMultiplesBlock,
-  temoignageSimple: temoignageSimpleBlock,
   chiffresClefs: chiffresClefsBlock,
   engagements: engagementsBlock,
   logosPresse: logosPresseBlock,
@@ -202,7 +193,6 @@ export const blockRegistry = {
   stat: statBlock,
   carte: carteBlock,
   atout: atoutBlock,
-  temoignage: temoignageBlock,
   accordeon: accordeonBlock,
   onglets: ongletsBlock,
   tableau: tableauBlock,
@@ -286,7 +276,6 @@ export const TEMPLATE_CATEGORIES = [
   'Qui je suis',
   'Ma méthode',
   'Accompagnements',
-  'Témoignages',
   'Questions',
   'Photos & vidéos',
   'Textes',
@@ -301,7 +290,6 @@ export const CATEGORY_HINT: Record<TemplateCategory, string> = {
   'Qui je suis': 'Vous présenter : parcours, valeurs, chiffres, engagements.',
   'Ma méthode': 'Expliquer comment vous travaillez et comment se passe une séance.',
   'Accompagnements': 'Montrer ce que vous proposez, et vos tarifs.',
-  'Témoignages': 'Les paroles de personnes que vous avez accompagnées.',
   'Questions': 'Les questions que l’on vous pose souvent.',
   'Photos & vidéos': 'Le cabinet, le lieu, une ambiance.',
   'Textes': 'Un texte, une phrase forte, une respiration entre deux sections.',
@@ -340,9 +328,6 @@ const CATEGORY_OF: Partial<Record<BlockType, TemplateCategory>> = {
   servicesDetail: 'Accompagnements',
   tarifsSobre: 'Accompagnements',
 
-  temoignageGrand: 'Témoignages',
-  temoignagesMultiples: 'Témoignages',
-  temoignageSimple: 'Témoignages',
 
   faq: 'Questions',
   faqEditoriale: 'Questions',

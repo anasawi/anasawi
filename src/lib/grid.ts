@@ -199,7 +199,6 @@ const DEFAULT_SPANS: Record<string, { colSpan: number; rowSpan: number }> = {
   stat: { colSpan: 3, rowSpan: 2 },
   carte: { colSpan: 4, rowSpan: 7 },
   atout: { colSpan: 4, rowSpan: 3 },
-  temoignage: { colSpan: 5, rowSpan: 4 },
   video: { colSpan: 6, rowSpan: 6 },
   accordeon: { colSpan: 6, rowSpan: 6 },
   onglets: { colSpan: 6, rowSpan: 4 },

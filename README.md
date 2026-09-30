@@ -117,31 +117,31 @@ src/
 
 ## Ajouter un type de section
 
-Créer `src/blocks/temoignages/index.tsx` :
+Créer `src/blocks/engagements/index.tsx` :
 
 ```tsx
-export const temoignagesSchema = z.object({
+export const engagementsSchema = z.object({
   title: z.string().default(''),
   items: z.array(z.object({ quote: z.string(), author: z.string() })).default([]),
 })
 
-function Temoignages({ data, ctx }: BlockProps<z.output<typeof temoignagesSchema>>) {
+function Engagements({ data, ctx }: BlockProps<z.output<typeof engagementsSchema>>) {
   return /* … */
 }
 
-export const temoignagesBlock: BlockDefinition<typeof temoignagesSchema> = {
-  label: 'Témoignages',
-  description: 'Paroles de personnes accompagnées.',
-  schema: temoignagesSchema,
+export const engagementsBlock: BlockDefinition<typeof engagementsSchema> = {
+  label: 'Engagements',
+  description: 'Ce à quoi la praticienne s’engage, point par point.',
+  schema: engagementsSchema,
   fields: [
     field.text('title', 'Titre', { full: true }),
-    field.list('items', 'Témoignages', [
+    field.list('items', 'Engagements', [
       field.textarea('quote', 'Texte'),
       field.text('author', 'Signature'),
     ]),
   ],
   defaults: { title: '', items: [] },
-  Component: Temoignages,
+  Component: Engagements,
 }
 ```
 

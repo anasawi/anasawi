@@ -29,7 +29,6 @@ import { faqItems, pages, sections, services, settings } from './schema'
 const IVORY = '#fbf8f2'
 const CREAM = '#f8f4ea'
 const SAND = '#f4eee3'
-const NIGHT = '#2e424f'
 
 async function main() {
   const [home] = await db
@@ -262,52 +261,13 @@ async function main() {
         text: 'Deuils, séparations, épuisements, transitions — et tout ce qui n’a pas encore de nom.',
       },
     },
-    /* I — La parole : fond nuit, halo, arche qui respire. */
-    {
-      pageId: home.id,
-      type: 'temoignageGrand',
-      sortOrder: 7,
-      backgroundColor: NIGHT,
-      payload: {
-        quote: 'Le courage, c’est de demander *de l’aide*.',
-        author: 'Une patiente, accompagnée deux ans',
-      },
-    },
-    /* J — Trois voix : la carte centrale bleu brume. */
-    {
-      pageId: home.id,
-      type: 'temoignagesMultiples',
-      sortOrder: 8,
-      backgroundColor: IVORY,
-      payload: {
-        eyebrow: 'Ils en parlent',
-        title: '',
-        items: [
-          {
-            quote: 'J’ai retrouvé un sol sous mes pieds.',
-            name: 'M.',
-            role: 'deux ans',
-          },
-          {
-            quote: 'Une écoute qui ne juge jamais, qui n’attend rien.',
-            name: 'S.',
-            role: '41 ans',
-          },
-          {
-            quote: 'Mon fils a recommencé à parler.',
-            name: 'Une maman',
-            role: '',
-          },
-        ],
-      },
-    },
     /* G — La galerie d'arches : fond crème. Les images se choisissent
        dans l'admin — les dégradés de la charte tiennent lieu d'attente. */
     {
       pageId: home.id,
       type: 'galerieArches',
       anchor: 'images',
-      sortOrder: 9,
+      sortOrder: 7,
       backgroundColor: CREAM,
       payload: {
         eyebrow: 'Le cabinet, en images',
@@ -321,7 +281,7 @@ async function main() {
       anchor: 'questions',
       navLabel: 'Questions',
       showInNav: false,
-      sortOrder: 10,
+      sortOrder: 8,
       backgroundColor: IVORY,
       payload: {
         eyebrow: 'Questions fréquentes',
@@ -337,7 +297,7 @@ async function main() {
       anchor: 'contact',
       navLabel: 'Contact',
       showInNav: false,
-      sortOrder: 11,
+      sortOrder: 9,
       backgroundColor: IVORY,
       payload: {
         eyebrow: '',

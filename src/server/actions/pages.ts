@@ -133,7 +133,6 @@ const INLINE_EDITABLE: Record<string, Set<string>> = {
   citation: new Set(['text']),
   carte: new Set(['title']),
   atout: new Set(['title']),
-  temoignage: new Set(['quote']),
   avatar: new Set(['name']),
   encart: new Set(['title']),
   tarif: new Set(['title']),

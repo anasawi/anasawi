@@ -250,7 +250,7 @@ test.describe('Liste des sections — les gestes', () => {
     await expect(dialogue).toBeVisible()
 
     /* Les catégories parlent du besoin d'Anne, pas d'un composant. */
-    for (const cat of ['Ouverture', 'Qui je suis', 'Accompagnements', 'Témoignages', 'Questions', 'Contact & rendez-vous']) {
+    for (const cat of ['Ouverture', 'Qui je suis', 'Accompagnements', 'Questions', 'Contact & rendez-vous']) {
       await expect(dialogue.getByRole('button', { name: new RegExp(`^${cat}`) })).toBeVisible()
     }
 

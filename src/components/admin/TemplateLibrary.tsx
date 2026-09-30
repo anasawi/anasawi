@@ -246,7 +246,7 @@ export function TemplateLibrary({
                 autoFocus
                 value={query}
                 onChange={(e) => setQuery(e.target.value)}
-                placeholder="Rechercher… (ex. témoignage, contact)"
+                placeholder="Rechercher… (ex. photo, contact)"
                 aria-label="Rechercher un modèle"
                 className="h-8 w-full rounded-md border border-border bg-transparent pl-8 pr-3 text-[0.8rem] outline-none transition-colors placeholder:text-muted-foreground focus:border-foreground/40"
               />

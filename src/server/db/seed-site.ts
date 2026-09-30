@@ -49,7 +49,6 @@ import {
 const IVORY = '#fbf8f2'
 const CREAM = '#f8f4ea'
 const SAND = '#f4eee3'
-const NIGHT = '#2e424f'
 
 /* ════════════════════════════════════════════════════════════════════
    1. Photothèque d'attente
@@ -622,41 +621,6 @@ function homePage(): PageSeed {
           ring: 'quinze années d’écoute · quinze années de présence · ',
           title: 'années à accompagner ce qui *déborde*.',
           text: 'Deuils, séparations, épuisements, transitions — et tout ce qui n’a pas encore de nom.',
-        },
-      },
-      /* I — La parole : fond nuit. */
-      {
-        type: 'temoignageGrand',
-        backgroundColor: NIGHT,
-        payload: {
-          quote: 'Le courage, c’est de demander *de l’aide*.',
-          author: 'Une patiente, accompagnée deux ans',
-        },
-      },
-      /* J — Trois voix. */
-      {
-        type: 'temoignagesMultiples',
-        backgroundColor: IVORY,
-        payload: {
-          eyebrow: 'Ils en parlent',
-          title: 'Ce qu’ils en *gardent*.',
-          items: [
-            {
-              quote: 'J’ai retrouvé un sol sous mes pieds.',
-              name: 'M.',
-              role: 'accompagnée deux ans',
-            },
-            {
-              quote: 'Une écoute qui ne juge jamais, qui n’attend rien.',
-              name: 'S.',
-              role: '41 ans',
-            },
-            {
-              quote: 'Mon fils a recommencé à parler.',
-              name: 'Une maman',
-              role: 'accompagnement d’un adolescent',
-            },
-          ],
         },
       },
       /* G — La galerie d'arches : les légendes viennent des médias. */
