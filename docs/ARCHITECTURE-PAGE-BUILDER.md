@@ -2,7 +2,10 @@
 
 > **Document historique — ne décrit plus le code.**
 >
-> Ce document décrivait une architecture abandonnée : éditeur grille avec
+> Ce document décrivait une architecture abandonnée. Il reste seulement pour
+> comprendre les colonnes `sections.parent_id`, `placement` et `styles`, encore
+> présentes en base (aucun écran ne les écrit ; le rendu sait encore les lire).
+> Il décrivait une architecture abandonnée : éditeur grille avec
 > placement libre (`GridBuilder`, `LayersPanel`), aperçu dans une iframe
 > piloté par `postMessage`, arbre de blocs à profondeur illimitée et file
 > d'opérations atomique. Ce code a été retiré du dépôt (refactoring, lot 3).

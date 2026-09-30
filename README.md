@@ -1,91 +1,67 @@
 # ANASAWI
 
-Site vitrine et CMS d'**Anne Winzenried**, thérapeute à Cesson-Sévigné.
+Site vitrine et administration (CMS) d'**Anne Winzenried**, Gestalt-thérapeute à Cesson-Sévigné.
 
-Next.js 15 · TypeScript · Tailwind v4 · Drizzle · Neon PostgreSQL · Auth.js v5 · Netlify Blobs
-
----
-
-## Le principe à retenir
-
-**Le site public ne connaît pas son contenu.** Il connaît des *types de blocs*.
-
-Chaque type vit dans `src/blocks/<type>/` et déclare, dans un seul fichier : son schéma Zod, ses descripteurs de champs, ses valeurs par défaut et son composant de rendu. Le registre (`src/blocks/registry.ts`) les rassemble. À partir de là, le sélecteur du CMS, le formulaire d'édition, la validation et le rendu public en découlent automatiquement.
-
-**Ajouter un type de section = créer un dossier et ajouter une ligne au registre.** Rien d'autre.
-
-Deux conséquences qui valent d'être connues :
-
-- La page d'accueil n'est pas un cas particulier codé en dur. C'est la page marquée `is_home`, composée de sections comme n'importe quelle autre.
-- Le header ne code pas sa navigation. Il lit les sections de l'accueil marquées « visible dans le menu » et compose les ancres. Renommer une entrée ou en déplacer une se fait depuis le CMS.
+Next.js 15 (App Router) · React 19 · TypeScript · Tailwind v4 · Drizzle ORM · Neon PostgreSQL · Auth.js v5 · Netlify (Blobs pour les médias) · Playwright.
 
 ---
 
-## Installation
+## En deux minutes
+
+- **Le site est une page unique** (`/`), composée de *sections*. Chaque section est une ligne de la table `sections` : un type (`heroPleinEcran`, `faq`, `contactMinimal`…), un contenu JSON (`payload`) validé par Zod, une couleur de fond, une ancre. Le menu du site pointe vers ces ancres.
+- **Chaque type de section est un *bloc*** (`src/blocks/**`) qui déclare dans un seul objet : schéma Zod, descripteurs de champs, valeurs par défaut, composant de rendu. Le registre (`src/blocks/registry.ts`) les rassemble ; le formulaire d'édition, la bibliothèque de modèles, la validation et le rendu public en découlent.
+- **L'administration (`/admin`) édite un brouillon** enregistré automatiquement ; « Publier » copie ce brouillon dans `pages.published_snapshot`, et c'est cet instantané que le site sert. Les autres écrans (accompagnements, questions, médias, réglages) sont en ligne dès l'enregistrement.
+- **Lectures et écritures sont séparées** : `src/server/queries` lit (mis en cache par tag en production), `src/server/actions` écrit (Server Actions, toutes derrière une session vérifiée en base) et invalide les tags. Aucun composant ne parle à la base directement.
+
+---
+
+## Installation et développement
 
 ```bash
 npm install
-cp .env.example .env.local
+cp .env.example .env.local     # puis renseigner les variables (voir plus bas)
+npm run db:seed                # structure du site + contenus d'amorçage
+npm run admin:create           # compte administrateur (mot de passe saisi à la main)
+npm run doctor                 # vérifie env, connexion, tables, contenu, admin
+npm run dev                    # http://localhost:3000 — administration sur /admin
 ```
 
-Renseigner `.env.local` :
+`npm run dev` applique d'abord les migrations (`predev`) sur la base de `.env.local`. **Ne pointez jamais `.env.local` vers la base de production** : utilisez une branche Neon de développement.
 
-| Variable | Où l'obtenir |
+En développement, les médias envoyés vont dans `.storage/` (ignoré par Git) ; en ligne, dans Netlify Blobs. Sans `RESEND_API_KEY`, le formulaire de contact enregistre les messages (visibles dans `/admin/messages`) mais n'envoie pas d'e-mail.
+
+### Variables d'environnement
+
+| Variable | Rôle | Obligatoire |
+|---|---|---|
+| `DATABASE_URL` | Neon, chaîne **pooled** | oui |
+| `AUTH_SECRET` | secret des sessions (`openssl rand -base64 32`) ; sert aussi à chiffrer les jetons d'invitation | oui |
+| `NEXT_PUBLIC_SITE_URL` | adresse publique (`https://anasawi.com`) : canonical, sitemap, e-mails | oui |
+| `RESEND_API_KEY`, `CONTACT_NOTIFY_TO`, `CONTACT_NOTIFY_FROM` | notification par e-mail des messages de contact | non |
+| `MEDIA_STORAGE` | forcer `local` ou `netlify` (sinon déduit de l'environnement) | non |
+| `AUTH_TRUST_HOST` | `true` derrière un proxy (déjà fixé dans le code) | non |
+| `PREPROD_DATABASE_URL`, `PROD_DATABASE_URL`, `NETLIFY_AUTH_TOKEN`, `NETLIFY_SITE_ID` | scripts de copie de contenu seulement | non |
+| `E2E_DATABASE_URL`, `E2E_ADMIN_PASSWORD`, `E2E_PORT` | tests de bout en bout (`.env.test`, voir `.env.test.example`) | tests |
+
+`CONTEXT`, `NETLIFY`, `NETLIFY_BLOBS_CONTEXT` sont injectées par Netlify ; `NEXT_DIST_DIR` sert aux builds parallèles (tests, vérification).
+
+---
+
+## Commandes
+
+| Commande | |
 |---|---|
-| `DATABASE_URL` | [console.neon.tech](https://console.neon.tech) → connection string **pooled** |
-| `AUTH_SECRET` | `openssl rand -base64 32` |
-| `MEDIA_STORAGE` | optionnel — `netlify` ou `local`, sinon déduit de l'hôte |
-| `RESEND_API_KEY` | [resend.com](https://resend.com) — optionnel |
-| `NEXT_PUBLIC_SITE_URL` | `https://anasawi.com` |
+| `npm run dev` | développement (migre d'abord la base) |
+| `npm run build` / `npm start` | build et serveur de production |
+| `npm run lint` · `npm run typecheck` | ESLint · `tsc` (application + tests) |
+| `npm test` · `npm run test:ui` · `npm run test:report` | Playwright (série complète, interface, rapport HTML) |
+| `npm run verifier` | lint + typecheck + tests |
+| `npm run db:migrate` (`db:setup`) | applique les migrations de `drizzle/` |
+| `npm run db:seed` · `db:seed-site` · `db:seed-accompagnements` | amorçages (structure + coordonnées · site complet · accompagnements) |
+| `npm run db:prune-pages` | supprime les anciennes pages secondaires (le site est à page unique) |
+| `npm run admin:create` · `npm run doctor` | compte administrateur · diagnostic |
 
-Puis :
-
-```bash
-npm run db:setup      # applique les migrations versionnées dans drizzle/
-npm run db:seed       # structure du site + coordonnées réelles
-npm run admin:create  # compte administrateur (mot de passe saisi à la main)
-npm run doctor        # vérifie que tout est en place
-npm run dev
-```
-
-> **Pourquoi pas `drizzle-kit push` ou `drizzle-kit migrate` ?** Ces commandes
-> se connectent via le driver **websocket** de `@neondatabase/serverless`, qui
-> reste bloqué sur « Pulling schema » selon la version de Node et le réseau.
->
-> `db:migrate` est donc un script maison (`src/server/db/migrate.ts`) qui
-> emprunte le driver **HTTP** — celui dont l'application se sert déjà, et dont
-> on sait qu'il fonctionne. `db:generate`, lui, ne touche pas à la base : il
-> lit le schéma TypeScript et écrit du SQL dans `drizzle/`.
->
-> Le SQL étant versionné dans Git, chaque évolution du schéma laisse une
-> trace : après avoir modifié `schema.ts`, lancer `npm run db:generate` puis
-> `npm run db:migrate`.
->
-> **`db:generate` est interactif.** Quand une colonne disparaît et qu'une autre
-> apparaît, drizzle-kit demande s'il s'agit d'un renommage ou d'une création —
-> il faut donc le lancer seul, jamais dans une commande chaînée, sinon il
-> attend une réponse qui ne viendra pas et n'écrit aucun fichier. En cas de
-> doute, écrire la migration à la main dans `drizzle/` et l'ajouter à
-> `drizzle/meta/_journal.json` (voir `0001_section_background_color.sql`).
->
-> ⚠️ Les migrations `0001` à `0006` ont été écrites à la main, sans leur
-> `drizzle/meta/000N_snapshot.json` (seul `0000_snapshot.json` existe).
-> Sans conséquence pour `db:migrate` ni pour le build, mais le prochain
-> `db:generate` diffèrera contre le snapshot `0000` et proposera de recréer
-> toutes les colonnes ajoutées depuis (`background_color`, `parent_id`,
-> `placement`, `styles`, `settings`, `published_snapshot`, la table
-> `saved_sections`…). Le jour où ça arrive : supprimer le fichier généré et
-> écrire la migration à la main, ou resynchroniser une bonne fois (snapshots
-> réécrits, ou nouvelle baseline) — sur une base de préproduction d'abord.
->
-> ⚠️ La colonne `pages.puck_data` (ajoutée par `0005_puck_editor.sql`) est
-> **orpheline** : elle n'apparaît pas dans `schema.ts` et n'est lue par aucun
-> code. Elle reste en base tant qu'une migration `DROP COLUMN` explicite n'a
-> pas été écrite ; `db:generate` la signalera comme colonne à supprimer.
-
-Le site tourne sur `localhost:3000`, l'administration sur `/admin`.
-
-Sans `RESEND_API_KEY`, le formulaire de contact fonctionne : les messages sont enregistrés en base et consultables dans `/admin/messages`. Seule la notification par e-mail est désactivée.
+Scripts « double-clic » pour macOS dans `scripts/*.command` (chacun écrit son journal dans `.e2e-logs/`) : `lancer-les-tests`, `construire` (lint + typecheck + build), `deployer` (push de la branche lue dans `.e2e-logs/branche.txt`), `migrer-la-base`, `copier-le-contenu` (dev → préprod/prod, cible dans `.e2e-logs/copie.txt`), `nettoyer-les-pages`, `retirer-les-temoignages`. Les scripts de copie et de retrait écrivent dans la base indiquée par leur fichier de cible : lire le fichier avant de double-cliquer.
 
 ---
 
@@ -94,138 +70,86 @@ Sans `RESEND_API_KEY`, le formulaire de contact fonctionne : les messages sont e
 ```
 src/
 ├── app/
-│   ├── (site)/        Site public — la page d'accueil (site à page unique)
-│   ├── (admin)/admin/ CMS
+│   ├── (site)/            page d'accueil, layout du site, /templates (revue des modèles)
+│   ├── (admin)/admin/     tableau de bord, accueil (éditeur), accompagnements, faq,
+│   │                      medias, messages, utilisateurs, reglages
+│   ├── invitation/[token] choix du mot de passe d'une personne invitée
 │   ├── login/
-│   └── api/           auth · upload · media/[key] · contact
-├── blocks/            ← les types de sections
+│   ├── api/               auth · upload · media/[key] · contact · admin-bar · csp-report
+│   └── robots · sitemap · manifest · icônes · image Open Graph
+├── blocks/                les types de sections (registry.ts + templates/*.tsx + briques)
 ├── components/
-│   ├── site/          chrome public (Header, Footer, Logo…)
-│   ├── motion/        primitives d'animation
-│   ├── admin/         écrans du CMS
-│   └── ui/            shadcn/ui — admin uniquement
+│   ├── site/              chrome public, primitives d'animation (anim.tsx), rendu des sections
+│   ├── admin/             écrans du CMS ; editor/ (éditeur découpé en hooks), settings/, form/, hooks/
+│   ├── ui/                composants de base de l'admin (button, dialog, select, action-menu…)
+│   └── motion/            MotionProvider (motion/react)
 ├── server/
-│   ├── db/            schéma Drizzle, seed, création d'admin
-│   ├── queries/       lectures, cachées par tag
-│   └── actions/       écritures, invalident leur tag
-└── lib/               auth · seo · schémas Zod · utilitaires
+│   ├── db/                schéma Drizzle, migrations (migrate.ts), seeds, scripts de maintenance
+│   ├── queries/           lectures (cache par tag)
+│   └── actions/           écritures : sections, publish, saved-sections, seo, content, media,
+│                          users, navigation, identity, auth — toutes via adminAction()
+├── lib/                   auth, seo, schémas Zod, liens sûrs, stockage, snapshot/publication…
+├── types/                 types JSON partagés (content.ts), augmentation next-auth
+└── styles/globals.css     jetons de couleur, typographie, animations
+drizzle/                   migrations SQL numérotées + meta/_journal.json
+e2e/                       tests Playwright (public, admin, api, auth) + support (fixtures, reset)
+docs/                      matrice de couverture des tests, rapports
 ```
 
-**Séparation à respecter** : `queries/` lit et est cachable, `actions/` écrit et invalide. Aucun composant ne parle à la base directement.
+---
+
+## Comment faire…
+
+**Modifier un modèle de section existant.** Ouvrir son bloc dans `src/blocks/templates/*.tsx` (ou `src/blocks/<type>/index.tsx`). Le `schema` valide le contenu, `fields` génère le formulaire de l'inspecteur, `Component` rend la section. Les contenus déjà en base doivent rester valides : ajouter un champ avec `.default()`, ne jamais retirer une clé sans migration de données.
+
+**Ajouter un modèle de section.** Créer le bloc (mêmes quatre éléments), l'enregistrer dans `blockRegistry` et lui donner une catégorie dans `CATEGORY_OF` (`src/blocks/registry.ts`). Il apparaît aussitôt dans « Ajouter une section ». Le nom (`label`) et la description sont lus par une personne non technique : pas de jargon.
+
+**Modifier le design.** Jetons dans `src/styles/globals.css` (`@theme`) ; primitives d'animation dans `src/components/site/anim.tsx` (le `TEMPO` y règle la vitesse de tous les échelonnements) ; composants de base de l'admin dans `src/components/ui`.
+
+**Changer le schéma de la base.** Modifier `src/server/db/schema.ts`, puis écrire la migration SQL **à la main** dans `drizzle/00NN_nom.sql` (instructions séparées par `--> statement-breakpoint`, le pilote HTTP de Neon n'accepte qu'une instruction par requête) et l'ajouter à `drizzle/meta/_journal.json`. `drizzle-kit generate` n'est pas utilisé : les instantanés `drizzle/meta` ne sont pas maintenus. Les migrations s'appliquent au `dev` et au build Netlify (`netlify.toml`).
+
+**Ajouter une action serveur.** Dans le fichier `src/server/actions/<domaine>.ts` : `adminAction(async (user) => …)` (session relue en base, `requireOwner()` pour les gestes réservés), validation Zod des entrées (`uuidSchema`, `formError`), messages en français courant (`messages.ts`), `revalidateTag`/`revalidatePage` à la fin. Une écriture en plusieurs étapes passe par `db.batch` (`runBatch`), atomique avec le pilote HTTP.
+
+**Comprendre la publication.** `src/lib/snapshot.ts` projette les sections vivantes en lignes d'instantané ; `publishPage` (actions/publish.ts) les écrit dans `pages.published_snapshot` ; `src/lib/publish.ts` compare brouillon et instantané (`hasUnpublishedChanges`) ; `getPublishedHome` (queries) sert l'instantané au site.
+
+**Utilisateurs.** L'administration invite une personne (nom, e-mail) et obtient un lien `/invitation/<jeton>` valable 7 jours, une fois ; la personne y choisit son mot de passe. Le jeton est stocké chiffré (AES-GCM, clé dérivée d'`AUTH_SECRET`) pour rester recopiable tant qu'il vaut. Rôles : `owner` (peut gérer les autres owners) et `editor`.
 
 ---
 
-## Ajouter un type de section
+## Tests
 
-Créer `src/blocks/engagements/index.tsx` :
+Playwright, contre une base Neon dédiée (`E2E_DATABASE_URL`) remise à zéro au démarrage (`e2e/support/reset-db.ts`), avec un build de production dans `.next-e2e`. Trois profils : ordinateur (Chromium), tablette et téléphone (WebKit) pour le site public ; les suites `admin/` tournent sur ordinateur.
 
-```tsx
-export const engagementsSchema = z.object({
-  title: z.string().default(''),
-  items: z.array(z.object({ quote: z.string(), author: z.string() })).default([]),
-})
-
-function Engagements({ data, ctx }: BlockProps<z.output<typeof engagementsSchema>>) {
-  return /* … */
-}
-
-export const engagementsBlock: BlockDefinition<typeof engagementsSchema> = {
-  label: 'Engagements',
-  description: 'Ce à quoi la praticienne s’engage, point par point.',
-  schema: engagementsSchema,
-  fields: [
-    field.text('title', 'Titre', { full: true }),
-    field.list('items', 'Engagements', [
-      field.textarea('quote', 'Texte'),
-      field.text('author', 'Signature'),
-    ]),
-  ],
-  defaults: { title: '', items: [] },
-  Component: Engagements,
-}
+```bash
+cp .env.test.example .env.test   # base de test + mot de passe du compte de test
+npm test
 ```
 
-Puis l'ajouter au registre. Le formulaire d'édition est généré à partir de `fields` — il n'y a pas d'éditeur React à écrire.
-
----
-
-## Décisions techniques
-
-**Pourquoi les médias sont référencés par id, pas dénormalisés.** Une section stocke `mediaId`, pas l'URL et l'alt. Une même image sert donc dans plusieurs sections, et corriger son texte alternatif se fait à un seul endroit. Le rendu collecte tous les ids d'une page et fait *une* requête, jamais une par bloc.
-
-**Pourquoi le alt est obligatoire à l'upload.** Un média sans texte alternatif ne peut pas être créé. C'est une contrainte plus simple à tenir à l'entrée qu'à rattraper sur cinquante images.
-
-**Pourquoi le blur et les dimensions sont calculés côté client.** Le navigateur a déjà l'image décodée ; un canvas de 16 px suffit. Cela évite `sharp` côté serveur, et les dimensions stockées éliminent tout décalage de mise en page (CLS = 0).
-
-**Pourquoi un payload invalide ne casse pas la page.** `SectionRenderer` fait un `safeParse` : une section illisible disparaît, la page reste debout. Une faute de saisie dans le CMS ne doit jamais produire un écran blanc en production.
-
-**Pourquoi le hero n'est pas animé à l'entrée.** C'est le Largest Contentful Paint. Aucune animation ne doit lui coûter de millisecondes. Le reste du site s'anime au scroll, lui est peint immédiatement.
-
-**Pourquoi `prefers-reduced-motion` n'est pas un fallback.** Les primitives rendent directement leur état final plutôt que d'exécuter une transition ramenée à 0 ms — il n'y a donc ni flash, ni élément invisible resté à `opacity: 0`.
-
-**Pourquoi rien n'est inventé dans le JSON-LD.** `prune()` retire tout champ vide avant sérialisation. Une adresse ou un horaire non renseigné est omis du balisage, jamais rempli d'un placeholder qui se retrouverait indexé.
-
----
-
-## SEO
-
-- `generateMetadata` de l'accueil, lue depuis `seo_meta` avec repli sur les Réglages
-- `sitemap.xml` et `robots.txt` générés depuis la base — la date de dernière publication suit au prochain revalidate, sans redéploiement
-- Graphe Schema.org unique : `Person` (Anne Winzenried), `HealthAndBeautyBusiness` (ANASAWI), `WebSite`, `WebPage`, `FAQPage`
-- `/admin/seo` : title et description avec compteurs, canonical, image OG, index/follow, aperçu du snippet Google
-- `/admin`, `/login` et `/api` en `noindex`
-
-Le tableau de bord signale les réglages manquants qui dégradent le balisage — c'est le premier endroit à regarder après le déploiement.
+Règles : un test ne se modifie pas pour passer ; « le bouton existe » ou « la page s'affiche » ne sont pas des validations ; chaque suite remet la base dans l'état où elle l'a trouvée. La couverture est décrite dans `docs/tests-matrice-de-couverture.md`.
 
 ---
 
 ## Déploiement
 
-L'hébergement est **Netlify** : son offre gratuite autorise explicitement
-l'usage commercial, contrairement au plan Hobby de Vercel.
+Hébergement **Netlify**, branche `main` = production (`anasawi.com`), branche `preprod` = déploiement de branche (`preprod--anasawi.netlify.app`), chacune avec sa base Neon. Le build (`netlify.toml`) applique les migrations sur la base du contexte **avant** `next build` : une migration qui échoue fait échouer le déploiement au lieu de mettre en ligne du code que la base ne peut pas servir.
 
-1. Pousser sur GitHub, importer le dépôt dans Netlify (« Add new project »)
-2. Reporter les variables d'environnement (`DATABASE_URL` en **pooled**)
-3. Rien à faire pour le stockage : Netlify Blobs est provisionné automatiquement
-4. `npm run db:setup` puis `npm run db:seed` contre la base de production
-5. `npm run admin:create` pour le compte d'Anne
-6. Pointer `anasawi.com` sur le projet Netlify (Domain management)
+Mise en ligne : pousser `preprod`, vérifier, puis fusionner dans `main` en avance rapide et pousser. Les médias vivent dans Netlify Blobs (store `media`), partagé par la préprod et la prod ; la base ne contient que leurs métadonnées. Copier le contenu d'une base vers une autre (`copier-le-contenu`) ne copie pas les fichiers de `.storage/` : les envoyer par l'admin ou avec `NETLIFY_AUTH_TOKEN`/`NETLIFY_SITE_ID`.
 
-`main` est la branche de production ; `preprod` est déployée en branche de
-prévisualisation, sur une URL distincte et avec les mêmes variables.
-
-Le build est assuré par l'adaptateur OpenNext, appliqué automatiquement — il
-ne faut pas l'épingler dans `package.json`, Netlify le met à jour à chaque
-build pour suivre les versions de Next.js.
-
-Le cache est invalidé par tag à chaque enregistrement dans le CMS : la modification est visible immédiatement, sans rebuild.
+Première installation d'un environnement : variables d'environnement dans Netlify, `npm run db:seed` puis `npm run admin:create` contre sa base.
 
 ---
 
-## Commandes
+## Sécurité, en bref
 
-| | |
-|---|---|
-| `npm run dev` | développement |
-| `npm run doctor` | diagnostic : env, connexion, tables, contenu, admin |
-| `npm run build` | build de production |
-| `npm run lint` | ESLint (flat config `eslint.config.mjs`, règles `next/core-web-vitals` + `next/typescript`) |
-| `npm run typecheck` | `tsc --noEmit` — inclut aussi `next.config.ts` et `drizzle.config.ts` |
-| `npm run db:setup` | applique les migrations (alias de `db:migrate`) |
-| `npm run db:generate` | génère le SQL depuis le schéma (hors ligne, interactif — voir l'avertissement plus haut) |
-| `npm run db:migrate` | applique les migrations (driver HTTP) |
-| `npm run db:studio` | explorateur de base Drizzle |
-| `npm run db:seed` | amorce la base (structure + coordonnées) |
-| `npm run db:seed-site` | remplit tout le site (accueil, médias Unsplash, réglages, accompagnements, FAQ) — remplace les sections existantes, ne publie rien |
-| `npm run db:seed-home` | ancienne amorce de l'accueil seul, remplacée par `db:seed-site` (conservée pour référence) |
-| `npm run db:seed-images` | images de substitution (Picsum, noir et blanc) |
-| `npm run db:rename-brand` | remplace l'ancien nom de marque dans les contenus en base |
-| `npm run admin:create` | crée un administrateur |
+Session JWT de 7 jours, mais chaque action serveur et chaque écran admin relisent l'utilisateur en base (compte supprimé ou invité sans mot de passe → refus). Connexion limitée à 8 essais par quart d'heure, par adresse IP et par e-mail. Envois de médias : type vérifié par les octets, 4 Mo maximum, stockage servi par `/api/media/<clé>` sans exécution. Formulaire de contact : validation, piège à robots, 5 messages par heure et par adresse. En-têtes : HSTS, `nosniff`, `X-Frame-Options`, CSP en mode rapport (`/api/csp-report`), `no-store`/`noindex` sur l'admin, la connexion et les invitations. Aucun secret dans le dépôt ; `.env.local` et `.env.test` sont ignorés.
 
 ---
 
-## À compléter
+## Décisions techniques
 
-Le seed pose la structure et les coordonnées exactes. Les textes éditoriaux sont marqués **« À COMPLÉTER »** et doivent être réécrits depuis `/admin` — ils sont volontairement reconnaissables pour qu'aucun ne passe en production par inadvertance.
-
-Manquent également : les photographies (hero, portrait, accompagnements), les horaires d'ouverture, et le parcours professionnel d'Anne pour la section À propos.
+- **Médias référencés par identifiant**, jamais dénormalisés : une image sert dans plusieurs sections, sa description se corrige à un endroit ; le rendu collecte les identifiants d'une page et fait une requête.
+- **Description (alt) obligatoire à l'envoi** : plus simple à tenir à l'entrée qu'à rattraper sur cinquante images.
+- **Recompression côté navigateur** (images et vidéos, `src/lib/video-compression.ts`) : l'hébergeur n'a pas de ffmpeg et les fonctions plafonnent à quelques Mo.
+- **Une section invalide ne casse pas la page** (`safeParse`) : elle disparaît du rendu public et se signale dans l'éditeur.
+- **Le hero n'est pas animé à l'entrée** (c'est le LCP) ; le rideau d'ouverture ne joue qu'une fois par visite et n'est jamais rendu sans JavaScript.
+- **Rien d'inventé dans le JSON-LD** : un champ vide est omis, jamais remplacé par une valeur factice.
