@@ -5,6 +5,7 @@ import { Toaster } from 'sonner'
 
 import { count, eq } from 'drizzle-orm'
 
+import { AdminPillShell } from '@/components/admin/AdminPillShell'
 import { AdminSidebar } from '@/components/admin/AdminSidebar'
 import { NavigationProgress } from '@/components/admin/NavigationProgress'
 import { PaletteProvider } from '@/components/admin/PaletteProvider'
@@ -67,6 +68,10 @@ export default async function AdminLayout({
         <main className="flex min-w-0 flex-1 flex-col overflow-hidden">
           {children}
         </main>
+
+        {/* La pastille flottante, sur tous les écrans : voir le site,
+            menu du compte. */}
+        <AdminPillShell name={userName} email={session.user.email ?? undefined} />
 
         <Toaster position="bottom-right" richColors closeButton />
       </div>

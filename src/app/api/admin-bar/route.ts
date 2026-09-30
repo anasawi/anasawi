@@ -24,6 +24,7 @@ export async function GET() {
       ? {
           admin: true,
           name: session.user.name ?? session.user.email ?? 'Admin',
+          email: session.user.email ?? undefined,
         }
       : { admin: false },
     { headers: { 'Cache-Control': 'no-store' } },

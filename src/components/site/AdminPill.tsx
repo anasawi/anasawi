@@ -1,23 +1,40 @@
+'use client'
+
 import Link from 'next/link'
+import { useEffect, useId, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
+import { signOutAction } from '@/server/actions/auth'
 
 /**
  * Pastille flottante d'administration.
  *
- * Purement présentationnelle et partagée par les deux côtés : le site public
- * la monte après vérification de session côté client, l'administration la
- * rend directement puisqu'elle dispose déjà de la session. Le composant ne
- * sait rien de tout cela — il ne fait qu'afficher.
+ * Partagée par les deux côtés : le site public la monte après vérification
+ * de session côté client, l'administration la rend sur chacun de ses
+ * écrans. Trois zones : l'état, l'action principale (Modifier / Voir le
+ * site), et l'avatar — qui ouvre un menu de compte : raccourcis vers les
+ * écrans et déconnexion. Le menu s'ouvre vers le haut (la pastille est en
+ * bas), se ferme à Échap ou d'un clic ailleurs, et rend le focus.
  */
+
+export type PillMenuItem = { label: string; href: string }
+
+const RACCOURCIS: PillMenuItem[] = [
+  { label: 'Tableau de bord', href: '/admin' },
+  { label: 'Mon site', href: '/admin/accueil' },
+  { label: 'Médias', href: '/admin/medias' },
+  { label: 'Utilisateurs', href: '/admin/utilisateurs' },
+  { label: 'Réglages', href: '/admin/reglages' },
+]
+
 export function AdminPill({
   status,
   actionLabel,
   actionHref,
   actionDisabledHint,
   icon,
-  homeHref,
   name,
+  email,
   className,
   newTab = false,
   dotClassName = 'bg-[#12b981]',
@@ -31,9 +48,9 @@ export function AdminPill({
   /** Explication affichée au survol quand l'action est inerte. */
   actionDisabledHint?: string
   icon: React.ReactNode
-  /** Cible du bouton rond de droite. */
-  homeHref: string
   name: string
+  /** Affiché dans le menu de compte, sous le nom. */
+  email?: string
   className?: string
   /** Ouvre l'action dans un nouvel onglet. Sans usage aujourd'hui :
       « Voir le site » revient sur le site dans le même onglet — jamais
@@ -43,6 +60,45 @@ export function AdminPill({
   dotClassName?: string
 }) {
   const initial = name.trim().charAt(0).toUpperCase() || 'A'
+  const [ouvert, setOuvert] = useState(false)
+  const bouton = useRef<HTMLButtonElement>(null)
+  const menu = useRef<HTMLDivElement>(null)
+  const menuId = useId()
+
+  useEffect(() => {
+    if (!ouvert) return
+    menu.current?.querySelector<HTMLElement>('[role="menuitem"]')?.focus()
+    const onDown = (e: PointerEvent) => {
+      const t = e.target as Node
+      if (menu.current?.contains(t) || bouton.current?.contains(t)) return
+      setOuvert(false)
+    }
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setOuvert(false)
+        bouton.current?.focus()
+      }
+    }
+    document.addEventListener('pointerdown', onDown, true)
+    document.addEventListener('keydown', onKey)
+    return () => {
+      document.removeEventListener('pointerdown', onDown, true)
+      document.removeEventListener('keydown', onKey)
+    }
+  }, [ouvert])
+
+  const onMenuKey = (e: React.KeyboardEvent) => {
+    const els = Array.from(menu.current?.querySelectorAll<HTMLElement>('[role="menuitem"]') ?? [])
+    const i = els.indexOf(document.activeElement as HTMLElement)
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      els[(i + 1) % els.length]?.focus()
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      els[(i - 1 + els.length) % els.length]?.focus()
+    }
+  }
 
   return (
     <div
@@ -93,14 +149,64 @@ export function AdminPill({
           </span>
         )}
 
-        <Link
-          href={homeHref}
-          aria-label={`Tableau de bord — connecté en tant que ${name}`}
-          title={name}
-          className="flex h-8 w-8 items-center justify-center rounded-full bg-ivory-warm text-[0.78rem] font-medium text-ink-soft transition-colors duration-300 hover:bg-ivory-deep hover:text-ink"
-        >
-          {initial}
-        </Link>
+        <div className="relative">
+          <button
+            ref={bouton}
+            type="button"
+            aria-label={`Compte — ${name}`}
+            aria-haspopup="menu"
+            aria-expanded={ouvert}
+            aria-controls={ouvert ? menuId : undefined}
+            title={name}
+            onClick={() => setOuvert((v) => !v)}
+            className={cn(
+              'flex h-8 w-8 items-center justify-center rounded-full bg-ivory-warm text-[0.78rem] font-medium text-ink-soft transition-colors duration-300 hover:bg-ivory-deep hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50',
+              ouvert && 'bg-ivory-deep text-ink',
+            )}
+          >
+            {initial}
+          </button>
+
+          {ouvert && (
+            <div
+              ref={menu}
+              id={menuId}
+              role="menu"
+              aria-label="Menu du compte"
+              onKeyDown={onMenuKey}
+              className="absolute bottom-[calc(100%+10px)] right-0 w-[230px] rounded-[12px] border border-black/5 bg-white p-1.5 text-left shadow-[0_10px_30px_rgba(28,32,30,0.18)]"
+            >
+              <div className="px-2.5 pb-2 pt-1.5">
+                <p className="truncate text-[0.82rem] font-medium text-ink">{name}</p>
+                {email && <p className="truncate text-[0.74rem] text-ink-soft">{email}</p>}
+              </div>
+              <div role="separator" className="mx-1 mb-1 border-t border-black/5" />
+              {RACCOURCIS.map((item) => (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  role="menuitem"
+                  tabIndex={-1}
+                  onClick={() => setOuvert(false)}
+                  className="block rounded-md px-2.5 py-2 text-[0.8rem] text-ink transition-colors hover:bg-ivory-warm focus-visible:bg-ivory-warm focus-visible:outline-none"
+                >
+                  {item.label}
+                </Link>
+              ))}
+              <div role="separator" className="mx-1 my-1 border-t border-black/5" />
+              <form action={signOutAction}>
+                <button
+                  type="submit"
+                  role="menuitem"
+                  tabIndex={-1}
+                  className="block w-full rounded-md px-2.5 py-2 text-left text-[0.8rem] text-red-700 transition-colors hover:bg-red-50 focus-visible:bg-red-50 focus-visible:outline-none"
+                >
+                  Se déconnecter
+                </button>
+              </form>
+            </div>
+          )}
+        </div>
       </nav>
     </div>
   )

@@ -14,7 +14,7 @@ import { AdminPill, PencilIcon } from './AdminPill'
  * un instant plus tard ne coûte rien, dégrader le rendu statique si.
  */
 export function AdminBar() {
-  const [state, setState] = useState<{ admin: boolean; name?: string } | null>(
+  const [state, setState] = useState<{ admin: boolean; name?: string; email?: string } | null>(
     null,
   )
   useEffect(() => {
@@ -25,7 +25,7 @@ export function AdminBar() {
       signal: controller.signal,
     })
       .then((response) => (response.ok ? response.json() : { admin: false }))
-      .then((data: { admin: boolean; name?: string }) => setState(data))
+      .then((data: { admin: boolean; name?: string; email?: string }) => setState(data))
       .catch(() => {
         /* Hors ligne ou requête annulée : on n'affiche simplement rien. */
       })
@@ -43,8 +43,8 @@ export function AdminBar() {
          l'accueil. */
       actionHref="/admin/accueil"
       icon={<PencilIcon />}
-      homeHref="/admin"
       name={state.name ?? 'Admin'}
+      email={state.email}
       /* Remontée sur mobile pour ne pas recouvrir la barre
          « Prendre rendez-vous », qui occupe déjà le bas de l'écran. */
       className="bottom-24 lg:bottom-7"
