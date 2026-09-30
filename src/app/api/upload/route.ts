@@ -66,8 +66,16 @@ export async function POST(request: Request): Promise<NextResponse> {
     await putObject(key, await file.arrayBuffer(), file.type)
   } catch (error) {
     console.error('[upload] écriture impossible', error)
+    /* La cause technique accompagne la réponse : cette route n'est
+       atteignable qu'avec une session d'administration, et sans elle on
+       ne peut pas diagnostiquer un stockage qui refuse d'écrire depuis
+       l'hébergeur (les journaux serveur ne sont pas toujours sous la
+       main). L'interface, elle, ne montre que le message en clair. */
     return NextResponse.json(
-      { error: 'Stockage indisponible.' },
+      {
+        error: 'Stockage indisponible.',
+        detail: error instanceof Error ? `${error.name}: ${error.message}` : String(error),
+      },
       { status: 502 },
     )
   }
