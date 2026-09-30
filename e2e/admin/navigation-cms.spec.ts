@@ -21,7 +21,7 @@ async function ralentir(page: import('@playwright/test').Page, motif: string) {
 }
 
 const rail = (page: import('@playwright/test').Page) =>
-  page.getByRole('navigation', { name: 'Administration' })
+  page.getByRole('navigation', { name: 'Administration', exact: true })
 
 test.describe('Navigation dans le CMS', () => {
   test('un clic dans la barre latérale répond tout de suite', async ({

@@ -168,7 +168,7 @@ test.describe('Déconnexion', () => {
     /* « Se déconnecter » est un bouton nommé de la barre latérale — pas
        un menu à ouvrir d'abord. */
     await page
-      .getByRole('navigation', { name: 'Administration' })
+      .getByRole('navigation', { name: 'Administration', exact: true })
       .getByRole('button', { name: 'Se déconnecter' })
       .click()
 

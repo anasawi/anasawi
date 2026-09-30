@@ -47,7 +47,7 @@ async function inviter(page: Page): Promise<string> {
   await dialogue.getByRole('button', { name: 'Créer le lien d’invitation' }).click()
   await attendreNotification(page, `${INVITEE.nom} a été ajouté·e`)
 
-  const lien = page.getByLabel('Lien d’invitation')
+  const lien = page.getByRole('textbox', { name: 'Lien d’invitation' })
   await expect(lien).toBeVisible()
   const url = await lien.inputValue()
   expect(url).toMatch(/\/invitation\/[A-Za-z0-9_-]{20,}$/)
@@ -164,7 +164,7 @@ test.describe('Utilisateurs', () => {
     const ancien = await inviter(page)
 
     await ligne(page, INVITEE.nom).getByRole('button', { name: 'Nouveau lien' }).click()
-    const lien = page.getByLabel('Lien d’invitation')
+    const lien = page.getByRole('textbox', { name: 'Lien d’invitation' })
     await expect(lien).toBeVisible()
     const nouveau = await lien.inputValue()
     expect(nouveau).not.toBe(ancien)
