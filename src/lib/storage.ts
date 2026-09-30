@@ -122,7 +122,22 @@ type Driver = {
 function driverName(): 'netlify' | 'local' {
   const forced = process.env.MEDIA_STORAGE
   if (forced === 'netlify' || forced === 'local') return forced
-  return process.env.NETLIFY === 'true' ? 'netlify' : 'local'
+  /* `NETLIFY=true` n'existe qu'au BUILD : dans les fonctions en ligne, la
+     variable est absente et le pilote local prenait le relais — il
+     tentait d'écrire dans `/var/task/.storage`, en lecture seule, et
+     tout envoi de média échouait en production (« ENOENT … mkdir »).
+     La lecture, elle, répondait « introuvable » au lieu d'une erreur.
+     On reconnaît donc aussi le contexte Blobs injecté à l'exécution, et
+     à défaut le mode production tout court : hors Netlify, la production
+     n'existe pas pour ce site, et les tests forcent `local`. */
+  if (
+    process.env.NETLIFY === 'true' ||
+    process.env.NETLIFY_BLOBS_CONTEXT ||
+    process.env.NODE_ENV === 'production'
+  ) {
+    return 'netlify'
+  }
+  return 'local'
 }
 
 /* L'import est différé : `getStore` doit être appelé dans le contexte d'une
