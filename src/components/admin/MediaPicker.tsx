@@ -614,7 +614,7 @@ export const UploadField = forwardRef<
               }}
             />
             <p id={`${altId}-aide`} className="mt-1.5 text-[12px] leading-[1.5] text-stone">
-              Obligatoire. Cette phrase est lue à voix haute par les lecteurs d’écran et aide Google à comprendre l’{nom}.
+              Obligatoire. Cette phrase est lue à voix haute par les lecteurs d’écran et aide Google à comprendre {nom === 'image' ? 'l’image' : 'la vidéo'}.
             </p>
           </div>
 
