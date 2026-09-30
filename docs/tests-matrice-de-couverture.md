@@ -31,6 +31,8 @@ rien de plus.
 | Référencement | `robots.txt` (administration fermée, plan du site désigné), `sitemap.xml` (XML valide, l'accueil et rien d'autre — site à page unique), titre, description, canonique absolue, métadonnées de partage, indexabilité | `public/referencement.spec.ts` |
 | JSON-LD | JSON valide en un seul graphe, coordonnées réelles du cabinet, praticienne, questions fréquentes, `@type` et `@id` sur chaque nœud | `public/referencement.spec.ts` |
 | Hiérarchie des titres | commence par le H1, aucun saut de niveau, chaque accompagnement en H3 | `public/referencement.spec.ts` |
+| Rideau d'ouverture | sans JavaScript la page reste lisible, une seule fois par visite (capsule entrée quand il ne joue pas), aucun rideau sous `prefers-reduced-motion` | `public/rideau.spec.ts` |
+| Manifeste et 404 | manifeste déclaré et icônes servies, page introuvable non indexable avec un contenu principal | `public/manifeste.spec.ts` |
 
 ## Administration
 
@@ -55,6 +57,7 @@ rien de plus.
 | `POST /api/contact` | message complet, téléphone facultatif, caractères spéciaux, corps vide, corps non-JSON, nom d'une lettre, message trop court, consentement, cinq adresses invalides, bornes de longueur, piège à robots (200 sans enregistrement), limitation à cinq envois par heure **et par adresse** | `api/contact.spec.ts` |
 | `POST /api/upload` | 401 sans session et sans écriture, 400 sans formulaire, 400 sans fichier, 415 pour un SVG ou un exécutable déguisé, 413 au-delà de la borne, dépôt valide **relu** avec cache immuable | `api/upload.spec.ts` |
 | `GET /api/media/…` | clé inconnue en 404, extension inconnue en 404, remontée de dossier sans effet | `api/upload.spec.ts` |
+| Durcissement | `/login` et invitations sans cache ni referer, anciennes adresses admin en 308, `HEAD` et plages en suffixe sur les médias, politique d'exécution nulle sur les médias, origine étrangère refusée (upload, contact), octets qui contredisent le type annoncé (415), corps non JSON (400) | `api/durcissement.spec.ts` |
 
 ---
 
