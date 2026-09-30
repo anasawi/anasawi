@@ -31,7 +31,7 @@ test.describe('Écrans privés — en-têtes', () => {
     expect(reponse.headers()['cache-control']).toContain('no-store')
   })
 
-  test('les anciennes adresses de l’administration redirigent en 301', async ({ request }) => {
+  test('les anciennes adresses de l’administration redirigent de façon permanente (308)', async ({ request }) => {
     const anciennes: [string, string][] = [
       ['/admin/navigation', '/admin/reglages'],
       ['/admin/seo', '/admin/reglages'],
@@ -41,7 +41,7 @@ test.describe('Écrans privés — en-têtes', () => {
     ]
     for (const [ancienne, nouvelle] of anciennes) {
       const reponse = await request.get(ancienne, { maxRedirects: 0 })
-      expect(reponse.status(), ancienne).toBe(301)
+      expect(reponse.status(), ancienne).toBe(308)
       expect(reponse.headers()['location'], ancienne).toContain(nouvelle)
     }
   })

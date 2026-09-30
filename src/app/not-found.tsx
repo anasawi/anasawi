@@ -7,7 +7,8 @@ import { LogoMark } from '@/components/site/Logo'
    avec un titre qui n'a rien à voir avec le cabinet. */
 export const metadata: Metadata = {
   title: 'Page introuvable — ANASAWI',
-  robots: { index: false, follow: false },
+  /* Pas de `robots` ici : Next ajoute lui-même `noindex` à toute page
+     introuvable — le déclarer une seconde fois doublait la balise. */
 }
 
 export default function NotFound() {

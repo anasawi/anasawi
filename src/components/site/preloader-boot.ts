@@ -45,6 +45,9 @@ export const PRELOADER_HTML_ATTRIBUTE = 'data-rideau'
 export const PRELOADER_BOOT_SCRIPT =
   '(function(){try{var d=document,h=d.documentElement,a=/^\\/(admin|login)(\\/|$|\\?)/,s=null;' +
   `try{s=sessionStorage.getItem('${PRELOADER_SESSION_KEY}')}catch(e){}` +
+  /* La visite est marquée ICI, avant toute hydratation : un test ou un
+     rechargement immédiat ne doit pas dépendre du moment où React s'attache. */
+  `try{sessionStorage.setItem('${PRELOADER_SESSION_KEY}','1')}catch(e){}` +
   "if(s==='1')return;" +
   "if(matchMedia('(prefers-reduced-motion: reduce)').matches)return;" +
   'if(a.test(location.pathname))return;' +

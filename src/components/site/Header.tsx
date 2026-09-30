@@ -253,7 +253,10 @@ export function Header({
           /* Cachée à la descente, la capsule revient dès qu'un de ses
              liens reçoit le focus : sinon la tabulation atterrissait
              sur un lien hors écran, invisible. */
-          'focus-within:translate-y-0',
+          /* Seulement pour un focus CLAVIER : après un clic à la souris sur un
+             lien du menu, le lien garde le focus et la capsule ne se cacherait
+             plus en descendant. */
+          '[&:has(:focus-visible)]:translate-y-0',
         )}
       >
         <Link

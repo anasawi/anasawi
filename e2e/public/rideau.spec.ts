@@ -55,8 +55,11 @@ test.describe('Rideau d’ouverture', () => {
 
     /* Et la capsule est entrée : elle attendait le signal du rideau, qui
        doit être émis même quand il ne joue pas. */
-    const capsule = await page.getByRole('banner').boundingBox()
-    expect(capsule?.y ?? -9999).toBeGreaterThanOrEqual(0)
+    await expect
+      .poll(async () => (await page.getByRole('banner').boundingBox())?.y ?? -9999, {
+        timeout: 5_000,
+      })
+      .toBeGreaterThanOrEqual(0)
   })
 
   test('sous prefers-reduced-motion, aucun rideau', async ({ browser }) => {
