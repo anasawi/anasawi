@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils'
 import type { Media, ServiceWithMedia } from '@/server/db/schema'
 
 /**
- * LES MODÈLES D’EXCEPTION de la version moderne. Vitrine : /moderne/exception. — chacun porte UNE idée
+ * LES MODÈLES D’EXCEPTION de la version moderne (suite : exception2.tsx). Vitrine : /moderne/exception. — chacun porte UNE idée
  * de mouvement, plus surprenante que la précédente, dans la même DA
  * (ivoire, nuit, bleu d'Anasawi, accents turquoise, serif douce).
  *
@@ -76,10 +76,15 @@ export function LettresVivantes({ texte, className }: { texte: string; className
       const rayon = Math.max(140, el.getBoundingClientRect().height * 0.9)
       lettres.forEach((l, i) => {
         const c = centres[i]
-        if (!c || !pos) return l.style.setProperty('--f', '0')
+        if (!c || !pos) {
+          l.style.setProperty('--r', '0')
+          return l.style.setProperty('--f', '0')
+        }
         const d = Math.hypot(c.x - pos.x, c.y - pos.y)
         const f = Math.max(0, 1 - d / rayon)
         l.style.setProperty('--f', (f * f).toFixed(3))
+        /* Elles se penchent vers la souris, comme des fleurs vers la lumière. */
+        l.style.setProperty('--r', (Math.max(-1, Math.min(1, (pos.x - c.x) / rayon)) * f).toFixed(3))
       })
     }
     const bouge = (e: PointerEvent) => {
@@ -125,13 +130,14 @@ export function LettresVivantes({ texte, className }: { texte: string; className
                   key={i}
                   data-l=""
                   className={cn(
-                    'inline-block [--f:0] [transition:transform_0.6s_cubic-bezier(0.22,1,0.36,1),font-variation-settings_0.6s,color_0.6s]',
+                    'inline-block [--f:0] [--r:0] [transition:transform_0.6s_cubic-bezier(0.22,1,0.36,1),font-variation-settings_0.6s,color_0.6s]',
                     estAccent && 'text-[var(--ad-bleu)] italic',
                     vu ? 'motion-safe:animate-[ad-lettre_1.1s_cubic-bezier(0.22,1,0.36,1)_backwards] [@media(hover:none)]:motion-safe:animate-[ad-lettre_1.1s_cubic-bezier(0.22,1,0.36,1)_backwards,ad-vague_5s_ease-in-out_1.2s_infinite]' : 'opacity-0',
                   )}
                   style={{
                     animationDelay: vu ? `${i * 0.028}s, ${1.2 + i * 0.09}s` : undefined,
-                    transform: 'translateY(calc(var(--f) * -0.16em)) scale(calc(1 + var(--f) * 0.06))',
+                    transform: 'translateY(calc(var(--f) * -0.16em)) rotate(calc(var(--r) * 9deg)) scale(calc(1 + var(--f) * 0.06))',
+                    textShadow: '0 calc(var(--f) * 0.12em) calc(var(--f) * 0.3em) rgba(70,114,138,calc(var(--f) * 0.25))',
                     fontVariationSettings: '"wght" calc(380 + var(--f) * 260)',
                     color: estAccent ? undefined : 'color-mix(in srgb, var(--ad-bleu) calc(var(--f) * 70%), var(--ad-nuit))',
                   }}
@@ -188,21 +194,27 @@ export function Fente({ haut, bas, legende, photo }: { haut: string; bas: string
         {/* Les deux moitiés de la phrase, qui s'écartent. */}
         <p
           className="pointer-events-none absolute inset-x-0 bottom-1/2 mb-[clamp(10px,1.6vw,22px)] px-5 text-center font-[family-name:var(--ad-titre)] text-[clamp(40px,9vw,150px)] leading-[0.95] tracking-[-0.03em] text-[var(--ad-nuit)]"
-          style={{ transform: 'translateY(calc(var(--e) * var(--ad-vh) * -60))', opacity: 'clamp(0, calc(1 - var(--e) * 1.6), 1)' }}
+          style={{ transform: 'translateY(calc(var(--e) * var(--ad-vh) * -60))', opacity: 'clamp(0, calc(1 - var(--e) * 1.6), 1)', letterSpacing: 'calc(-0.03em + var(--e) * 0.22em)', filter: 'blur(calc(var(--e) * 12px))' }}
         >
           {accent(haut)}
         </p>
         <p
           className="pointer-events-none absolute inset-x-0 top-1/2 mt-[clamp(10px,1.6vw,22px)] px-5 text-center font-[family-name:var(--ad-titre)] text-[clamp(40px,9vw,150px)] leading-[0.95] tracking-[-0.03em] text-[var(--ad-nuit)]"
-          style={{ transform: 'translateY(calc(var(--e) * var(--ad-vh) * 60))', opacity: 'clamp(0, calc(1 - var(--e) * 1.6), 1)' }}
+          style={{ transform: 'translateY(calc(var(--e) * var(--ad-vh) * 60))', opacity: 'clamp(0, calc(1 - var(--e) * 1.6), 1)', letterSpacing: 'calc(-0.03em + var(--e) * 0.22em)', filter: 'blur(calc(var(--e) * 12px))' }}
         >
           {accent(bas)}
         </p>
         {/* Le trait de lumière, avant que la fente s'ouvre. */}
         <span
           aria-hidden="true"
-          className="absolute left-1/2 top-1/2 h-px w-[88%] -translate-x-1/2 bg-[linear-gradient(90deg,transparent,var(--ad-or),transparent)]"
+          className="absolute left-1/2 top-1/2 h-px w-[88%] -translate-x-1/2 bg-[linear-gradient(90deg,transparent,var(--ad-or),transparent)] motion-safe:animate-[ad-lueur-trait_3s_ease-in-out_infinite]"
           style={{ opacity: 'clamp(0, calc(1 - var(--e) * 8), 1)' }}
+        />
+        {/* Le halo : la lumière qui filtre déjà par la fente. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-1/2 top-1/2 h-[30vh] w-[70%] -translate-x-1/2 -translate-y-1/2 rounded-[50%] bg-[radial-gradient(closest-side,rgba(79,169,166,0.22),transparent)] blur-2xl"
+          style={{ opacity: 'clamp(0, calc(1 - var(--e) * 3), 1)', transform: 'translate(-50%, -50%) scaleY(calc(0.2 + var(--e) * 3))' }}
         />
       </div>
     </section>
@@ -253,6 +265,14 @@ export function Lampe({ photo, titre, texte }: { photo: Media | null; titre: str
           />
         </>
       )}
+      {/* Le bord de la lumière : un anneau très doux, comme sous un abat-jour. */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute inset-0 mix-blend-screen"
+        style={{ background: 'radial-gradient(circle var(--lampe-r) at var(--lampe-x) var(--lampe-y), transparent 58%, rgba(191,229,226,0.22) 70%, transparent 82%)' }}
+      />
+      {/* Le grain, pour la matière de la photo. */}
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 opacity-[0.13] mix-blend-overlay [background-image:url(&quot;data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='g'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23g)'/%3E%3C/svg%3E&quot;)]" />
       <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgba(46,66,79,0.75),transparent)]" />
       <div className="absolute inset-x-0 bottom-0 p-7 text-white sm:p-10">
         <h3 className="max-w-[16ch] text-[clamp(30px,4vw,56px)] leading-[1.02] text-white [&_em]:[-webkit-text-fill-color:#bfe5e2] [&_em]:[background:none]">{accent(titre)}</h3>
@@ -275,18 +295,20 @@ export function Eventail({ photos }: { photos: Media[] }) {
   return (
     <div
       ref={ref}
-      className="relative mx-auto h-[clamp(300px,52vw,560px)] w-full max-w-[1100px] [--p:1] [--pas:42%] sm:[--pas:62%]"
-      style={{ ['--ouv' as string]: 'clamp(0, calc((var(--p) - 0.18) * 3), 1)' }}
+      className="relative mx-auto h-[clamp(300px,52vw,560px)] w-full max-w-[1100px] [--p:1] [--pas:42%] [perspective:1800px] sm:[--pas:62%]"
     >
       {liste.map((p, i) => {
         const k = i - milieu
+        /* Chaque carte s'ouvre un peu après sa voisine plus centrale. */
+        const ouv = `clamp(0, calc((var(--p) - ${(0.14 + Math.abs(k) * 0.035).toFixed(3)}) * 3.2), 1)`
         return (
           <figure
             key={p.id}
-            className="group/carte absolute bottom-0 left-1/2 aspect-[3/4] w-[clamp(120px,20vw,230px)] origin-[50%_120%]"
+            className="group/carte absolute bottom-0 left-1/2 aspect-[3/4] w-[clamp(120px,20vw,230px)] origin-[50%_120%] [transform-style:preserve-3d]"
             style={{
               zIndex: 10 + i,
-              transform: `translateX(-50%) translateX(calc(var(--ouv) * ${k} * var(--pas))) rotate(calc(var(--ouv) * ${k * 7}deg)) translateY(calc(var(--ouv) * ${Math.abs(k) * 5}%))`,
+              ['--ouv' as string]: ouv,
+              transform: `translateX(-50%) translateX(calc(var(--ouv) * ${k} * var(--pas))) rotate(calc(var(--ouv) * ${k * 7}deg)) rotateY(calc(var(--ouv) * ${-k * 6}deg)) translateY(calc(var(--ouv) * ${Math.abs(k) * 5}%)) translateZ(calc((1 - var(--ouv)) * ${-Math.abs(k) * 30}px))`,
             }}
           >
             <div className="relative h-full w-full overflow-hidden rounded-[22px] bg-[var(--ad-sable-fonce)] shadow-[0_30px_60px_-30px_rgba(46,66,79,0.55)] ring-4 ring-[var(--ad-ivoire)] transition-transform duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] group-hover/carte:-translate-y-8 group-hover/carte:scale-[1.06]">
@@ -320,6 +342,12 @@ export function Orbite({ services, portrait, rdv, bouton }: { services: ServiceW
         {/* Les anneaux. */}
         <span aria-hidden="true" className="absolute inset-[6%] rounded-full border border-[var(--ad-sable-fonce)]" />
         <span aria-hidden="true" className="absolute inset-[22%] rounded-full border border-dashed border-[var(--ad-or)]/40 motion-safe:animate-[ad-tourner_90s_linear_infinite_reverse]" />
+        {/* La comète : un point de lumière qui fait le tour, plus vite. */}
+        <span aria-hidden="true" className="absolute inset-[6%] motion-safe:animate-[ad-tourner_14s_linear_infinite]">
+          <span className="absolute left-1/2 top-0 h-2.5 w-2.5 -translate-x-1/2 -translate-y-1/2 rounded-full bg-[var(--ad-or)] shadow-[0_0_0_6px_rgba(79,169,166,0.18),0_0_24px_6px_rgba(79,169,166,0.45)]" />
+        </span>
+        {/* Un pouls autour du centre quand un accompagnement y vient. */}
+        {s && <span key={`pouls-${s.id}`} aria-hidden="true" className="absolute inset-[27%] rounded-full border-2 border-[var(--ad-or)] motion-safe:animate-[ad-onde-large_1.4s_ease-out_backwards]" />}
         {/* Le centre : le portrait, ou l'accompagnement survolé. */}
         <div className="absolute inset-[27%] overflow-hidden rounded-full bg-[var(--ad-sable-fonce)] shadow-[0_40px_80px_-40px_rgba(46,66,79,0.6)]">
           {portrait && <Image src={portrait.url} alt={portrait.alt} fill sizes="340px" className={cn('object-cover transition-[transform,filter] duration-700', s && 'scale-110 blur-[3px]')} />}
@@ -428,7 +456,8 @@ export function Ruban({ ruban, phrase, auteur }: { ruban: string; phrase: string
     <div ref={ref} className="relative mx-auto aspect-square w-[min(680px,92vw)] [--p:0.5]">
       {anneau(186, 'ad-ruban-ext', 1, 13, 'fill-[var(--ad-nuit)]')}
       {anneau(150, 'ad-ruban-int', -1, 11, 'fill-[var(--ad-or)]')}
-      <span aria-hidden="true" className="absolute inset-[24%] rounded-full bg-[radial-gradient(closest-side,rgba(79,169,166,0.14),transparent)]" />
+      {anneau(122, 'ad-ruban-coeur', 1, 8, 'fill-[var(--ad-bleu-clair)] opacity-70')}
+      <span aria-hidden="true" className="absolute inset-[24%] rounded-full bg-[radial-gradient(closest-side,rgba(79,169,166,0.16),transparent)] motion-safe:animate-[ad-respire_6s_ease-in-out_infinite]" />
       <blockquote className="absolute inset-[26%] flex flex-col items-center justify-center text-center">
         <p className="font-[family-name:var(--ad-titre)] text-[clamp(20px,3.2vw,38px)] leading-[1.15] tracking-[-0.02em] text-[var(--ad-nuit)]">{accent(phrase)}</p>
         {auteur && <footer className="mt-4 text-[11px] uppercase tracking-[0.22em] text-[var(--ad-gris)]">{auteur}</footer>}
@@ -467,11 +496,12 @@ export function Carnet({ etapes, titre }: { etapes: { titre: string; texte: stri
                 className="absolute inset-0 origin-left [backface-visibility:hidden] [transform-style:preserve-3d]"
                 style={{
                   zIndex: n - i,
-                  transform: derniere ? undefined : `rotateY(calc(${tour} * -172deg))`,
+                  /* À mi-tour, la page se courbe un peu (skew), comme du papier. */
+                  transform: derniere ? undefined : `rotateY(calc(${tour} * -172deg)) skewY(calc(${tour} * (1 - ${tour}) * -10deg))`,
                 }}
               >
                 <div
-                  className="flex h-full flex-col justify-between rounded-[6px_28px_28px_6px] border border-[var(--ad-sable-fonce)] bg-white p-7 shadow-[0_40px_80px_-40px_rgba(46,66,79,0.45)] sm:p-10"
+                  className="relative flex h-full flex-col justify-between rounded-[6px_28px_28px_6px] border border-[var(--ad-sable-fonce)] bg-white p-7 shadow-[0_40px_80px_-40px_rgba(46,66,79,0.45)] sm:p-10"
                   style={{
                     background: `linear-gradient(90deg, rgba(46,66,79,${0.08}) 0%, transparent 6%), #fff`,
                     filter: derniere ? undefined : `brightness(calc(1 - ${tour} * 0.25))`,
@@ -487,6 +517,14 @@ export function Carnet({ etapes, titre }: { etapes: { titre: string; texte: stri
                   <span className="text-right text-[12px] uppercase tracking-[0.2em] text-[var(--ad-gris)]">
                     {i + 1} / {n}
                   </span>
+                  {/* L'ombre qui balaie la page pendant qu'elle se tourne. */}
+                  {!derniere && (
+                    <span
+                      aria-hidden="true"
+                      className="pointer-events-none absolute inset-0 rounded-[inherit] bg-[linear-gradient(90deg,rgba(46,66,79,0),rgba(46,66,79,0.2))]"
+                      style={{ opacity: `calc(${tour} * (1 - ${tour}) * 4)` }}
+                    />
+                  )}
                 </div>
               </article>
             )
@@ -519,7 +557,7 @@ export function Puzzle({ photo }: { photo: Media | null }) {
       ref={ref}
       role="img"
       aria-label={photo?.alt ?? ''}
-      className="relative mx-auto aspect-[5/4] w-full max-w-[880px] [--p:1]"
+      className="relative mx-auto aspect-[5/4] w-full max-w-[880px] [--p:1] [perspective:1400px]"
       style={{ ['--ass' as string]: 'clamp(0, calc((var(--p) - 0.12) * 2.4), 1)' }}
     >
       {photo &&
@@ -544,11 +582,21 @@ export function Puzzle({ photo }: { photo: Media | null }) {
                 backgroundSize: `${COLS * 100}% ${LIGNES * 100}%`,
                 backgroundPosition: `${Math.round((c / (COLS - 1)) * 1000) / 10}% ${Math.round((l / (LIGNES - 1)) * 1000) / 10}%`,
                 opacity: `calc(0.25 + var(--ass) * 0.75)`,
-                transform: `translate(calc((1 - var(--ass)) * ${dx}%), calc((1 - var(--ass)) * ${dy}%)) rotate(calc((1 - var(--ass)) * ${rot}deg)) scale(calc(${z} + var(--ass) * ${1 - z}))`,
+                transform: `translate(calc((1 - var(--ass)) * ${dx}%), calc((1 - var(--ass)) * ${dy}%)) rotate(calc((1 - var(--ass)) * ${rot}deg)) rotateX(calc((1 - var(--ass)) * ${rot * 1.4}deg)) rotateY(calc((1 - var(--ass)) * ${-dx * 0.5}deg)) scale(calc(${z} + var(--ass) * ${1 - z}))`,
               }}
             />
           )
         })}
+      {/* Assemblée : un trait de lumière la traverse, une seule fois. */}
+      <span aria-hidden="true" className="pointer-events-none absolute inset-0 overflow-hidden rounded-[32px]">
+        <span
+          className="absolute inset-y-0 left-0 w-1/2 bg-[linear-gradient(100deg,transparent,rgba(255,255,255,0.45),transparent)]"
+          style={{
+            transform: 'translateX(calc(-100% + clamp(0, calc((var(--ass) - 0.9) * 10), 1) * 300%)) skewX(-12deg)',
+            opacity: 'calc(clamp(0, calc((var(--ass) - 0.9) * 10), 1) * (1 - clamp(0, calc((var(--ass) - 0.995) * 200), 1)))',
+          }}
+        />
+      </span>
       {/* Assemblée, la photo reprend ses coins arrondis d'un seul tenant. */}
       <span
         aria-hidden="true"
