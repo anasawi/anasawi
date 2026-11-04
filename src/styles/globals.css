@@ -1042,16 +1042,6 @@
     filter: blur(8px);
   }
 }
-/* Écran tactile : une vague lente parcourt les lettres. */
-@keyframes ad-vague {
-  0%,
-  100% {
-    --f: 0;
-  }
-  50% {
-    --f: 0.6;
-  }
-}
 @property --f {
   syntax: '<number>';
   inherits: true;
@@ -1094,73 +1084,9 @@
 }
 
 /* ── Modèles d’exception, suite (components/anasawi/exception2.tsx) ── */
-/* Un polaroïd qui tombe sur la table. */
-@keyframes ad-tombe {
-  from {
-    opacity: 0;
-    transform: translateY(-40vh) rotate(calc(var(--rot, 0deg) * -3)) scale(1.15);
-  }
-}
-/* Une carte qui se retourne une fois, pour montrer qu'elle le peut. */
-@keyframes ad-apercu {
-  0%,
-  100% {
-    transform: rotateY(0);
-  }
-  35%,
-  60% {
-    transform: rotateY(180deg);
-  }
-}
-/* L'aiguille de la boussole, au repos, qui cherche un peu. */
-@keyframes ad-tremble {
-  0%,
-  100% {
-    transform: rotate(32deg);
-  }
-  30% {
-    transform: rotate(18deg);
-  }
-  60% {
-    transform: rotate(40deg);
-  }
-}
-/* Les ondes autour du grand appel. */
-@keyframes ad-onde-large {
-  from {
-    transform: scale(1);
-    opacity: 0.7;
-  }
-  to {
-    transform: scale(1.7);
-    opacity: 0;
-  }
-}
 /* Le curseur de la machine à écrire. */
 @keyframes ad-clignote {
   50% {
     opacity: 0;
-  }
-}
-/* Le trait de lumière de la fente, qui respire. */
-@keyframes ad-lueur-trait {
-  0%,
-  100% {
-    box-shadow: 0 0 8px 0 rgba(79, 169, 166, 0.35);
-  }
-  50% {
-    box-shadow: 0 0 22px 2px rgba(79, 169, 166, 0.6);
-  }
-}
-/* Le cœur du ruban, qui bat lentement. */
-@keyframes ad-respire {
-  0%,
-  100% {
-    transform: scale(0.92);
-    opacity: 0.7;
-  }
-  50% {
-    transform: scale(1.08);
-    opacity: 1;
   }
 }
