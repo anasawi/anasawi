@@ -42,7 +42,7 @@ export const TEINTES = [
   { fond: '#e6e2f6', encre: '#5d4f9c' }, // lavande
   { fond: '#dce8f6', encre: '#36628f' }, // ciel
 ] as const
-const teinte = (i: number) => TEINTES[((i % TEINTES.length) + TEINTES.length) % TEINTES.length]!
+export const teinte = (i: number) => TEINTES[((i % TEINTES.length) + TEINTES.length) % TEINTES.length]!
 
 /** Les courbes : l'apparition Qeeps (Framer) et le petit rebond. */
 const APPARITION = 'cubic-bezier(0.02,0.45,0.56,1)'
@@ -50,7 +50,7 @@ const REBOND = 'cubic-bezier(0.34,1.56,0.64,1)'
 const OMBRE = 'shadow-[0_1px_2px_rgba(46,66,79,0.06),0_18px_40px_-24px_rgba(46,66,79,0.35)]'
 
 /** Vrai une fois l'élément entré dans l'écran (toujours vrai dans l'éditeur). */
-function useVu<T extends HTMLElement>(marge = '-12%') {
+export function useVu<T extends HTMLElement>(marge = '-12%') {
   const ref = useRef<T>(null)
   const edition = useContext(Edition)
   const [vu, setVu] = useState(false)
@@ -74,7 +74,7 @@ function useVu<T extends HTMLElement>(marge = '-12%') {
 }
 
 /** Un minuteur qui tourne tant que la section est à l'écran (et pas survolée). */
-function useCadence(actif: boolean, ms: number, cb: () => void) {
+export function useCadence(actif: boolean, ms: number, cb: () => void) {
   const rappel = useRef(cb)
   useEffect(() => {
     rappel.current = cb
@@ -129,13 +129,13 @@ function useElan<T extends HTMLElement>() {
 const LUMIERE = 'rgba(255,255,255,0.6)'
 
 /** L'apparition Qeeps : 20 px de montée, en fondu, avec un délai. */
-const monte = (vu: boolean, delai = 0) => ({
+export const monte = (vu: boolean, delai = 0) => ({
   opacity: vu ? 1 : 0,
   transform: vu ? 'none' : 'translateY(20px)',
   transition: `opacity 1.1s ${APPARITION} ${delai}s, transform 1.1s ${APPARITION} ${delai}s`,
 })
 /** Le « pop » : la pastille grandit avec un petit rebond. */
-const pop = (vu: boolean, delai = 0) => ({
+export const pop = (vu: boolean, delai = 0) => ({
   opacity: vu ? 1 : 0,
   transform: vu ? 'none' : 'scale(0.6)',
   transition: `opacity 0.5s ${delai}s, transform 0.7s ${REBOND} ${delai}s`,

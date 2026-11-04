@@ -1244,3 +1244,64 @@
     opacity: 0;
   }
 }
+
+/* ── Le laboratoire d’imagination (components/anasawi/imagination.tsx) ── */
+/* La pluie de la météo intérieure. */
+@keyframes ad-goutte {
+  from {
+    transform: translateY(-30px);
+  }
+  to {
+    transform: translateY(240px);
+  }
+}
+/* L'éclair de l'orage : deux flashs, puis rien. */
+@keyframes ad-eclair {
+  0%,
+  88%,
+  91%,
+  94%,
+  100% {
+    opacity: 0;
+  }
+  89%,
+  93% {
+    opacity: 0.55;
+  }
+}
+/* Un mot doux qui sort de sa boîte. */
+@keyframes ad-mot-doux {
+  from {
+    opacity: 0;
+    transform: translateY(80px) scale(0.6) rotate(-8deg);
+  }
+}
+/* Les étoiles. */
+@keyframes ad-scintille {
+  0%,
+  100% {
+    opacity: 0.2;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+/* Les ronds dans l'eau. */
+@keyframes ad-ride {
+  from {
+    opacity: 0.9;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 0;
+    transform: scale(7);
+  }
+}
+/* La réponse qui remonte à la surface. */
+@keyframes ad-remonte {
+  from {
+    opacity: 0;
+    transform: translateY(40px) scale(0.96);
+    filter: blur(6px);
+  }
+}

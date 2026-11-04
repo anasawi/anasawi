@@ -51,6 +51,9 @@ export default async function ExceptionPage() {
             {MODELES_EXCEPTION.length} sections, trois par catégorie, dans l’esprit Qeeps : des blocs droits, de la couleur, et une animation
             simple mais surprenante chacune. Toutes s’ajoutent depuis l’éditeur du site moderne et se modifient entièrement.
           </p>
+          <a href="/moderne/imagination" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[var(--ad-nuit)] px-5 py-3 text-[14px] font-semibold text-white">
+            Voir aussi le laboratoire d’imagination →
+          </a>
           <nav aria-label="Sommaire" className="mt-12 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
             {EXCEPTION_PAR_CATEGORIE.map((g) => (
               <div key={g.categorie}>
