@@ -32,7 +32,7 @@ import {
   Tuiles,
 } from '@/components/anasawi/exception'
 import { enLignes, Surtitre } from '@/components/anasawi/sections'
-import { Lignes, Revele } from '@/components/anasawi/vivant'
+import { Aimant, Lignes, Revele } from '@/components/anasawi/vivant'
 import type { Media } from '@/server/db/schema'
 
 /**
@@ -99,12 +99,14 @@ const servicesIllustres = (c: Contenu) => {
   const photos = sansSubstitution(c).filter((p) => p.id !== c.portrait?.id)
   return c.services.map((s, i) => ({ ...s, media: s.media ?? photos[i % Math.max(1, photos.length)] ?? null }))
 }
-/** Le bouton principal, dans le ton des blocs. */
+/** Le bouton principal, dans le ton des blocs : attiré par la souris. */
 function Bouton({ href, children }: { href: string; children: React.ReactNode }) {
   return (
-    <a href={href} className="inline-flex rounded-full bg-[var(--ad-nuit)] px-6 py-3.5 text-[14px] font-semibold text-white transition-transform duration-500 hover:-translate-y-0.5">
-      {children}
-    </a>
+    <Aimant force={0.3}>
+      <a href={href} className="inline-flex rounded-full bg-[var(--ad-nuit)] px-6 py-3.5 text-[14px] font-semibold text-white shadow-[0_14px_30px_-16px_rgba(46,66,79,0.8)]">
+        {children}
+      </a>
+    </Aimant>
   )
 }
 

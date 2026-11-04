@@ -1157,3 +1157,90 @@
     opacity: 0;
   }
 }
+/* La petite démonstration de la fenêtre : le curseur, le clic, l'onde, le toast (7 s). */
+@keyframes ad-curseur {
+  0% {
+    opacity: 0;
+    transform: translate(-150px, -90px);
+  }
+  8% {
+    opacity: 1;
+  }
+  40% {
+    transform: translate(0, 0);
+  }
+  44% {
+    transform: translate(0, 0) scale(0.82);
+  }
+  48%,
+  75% {
+    opacity: 1;
+    transform: translate(0, 0) scale(1);
+  }
+  86%,
+  100% {
+    opacity: 0;
+    transform: translate(40px, 30px);
+  }
+}
+@keyframes ad-clic {
+  0%,
+  42%,
+  50%,
+  100% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(0.93);
+  }
+}
+@keyframes ad-onde-clic {
+  0%,
+  43% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0);
+  }
+  44% {
+    opacity: 0.8;
+    transform: translate(-50%, -50%) scale(0.3);
+  }
+  62%,
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(2.6);
+  }
+}
+@keyframes ad-toast {
+  0%,
+  46% {
+    opacity: 0;
+    transform: translateY(10px) scale(0.9);
+  }
+  53%,
+  80% {
+    opacity: 1;
+    transform: none;
+  }
+  88%,
+  100% {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+}
+/* Les confettis de la dernière étape cochée. */
+@keyframes ad-confetti {
+  from {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy))) scale(0.3);
+  }
+}
+/* Un fond qui apparaît. */
+@keyframes ad-fondu {
+  from {
+    opacity: 0;
+  }
+}

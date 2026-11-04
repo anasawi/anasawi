@@ -1,10 +1,11 @@
 'use client'
 
-import { ArrowRight, ArrowUpRight, CalendarCheck, Check, Clock, Copy, Mail, MapPin, Phone, Video } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, CalendarCheck, Check, ChevronLeft, ChevronRight, Clock, Copy, Mail, MapPin, MousePointer2, Phone, SendHorizontal, Video, X } from 'lucide-react'
 import Image from 'next/image'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useCallback, useContext, useEffect, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
 
-import { Compteur, Edition, useAvancement } from './vivant'
+import { Aimant, Compteur, Edition, Incline, Lueur, useAvancement } from './vivant'
 import { cn, toE164 } from '@/lib/utils'
 import type { FaqItem, Media, OpeningHour, ServiceWithMedia } from '@/server/db/schema'
 
@@ -18,6 +19,10 @@ import type { FaqItem, Media, OpeningHour, ServiceWithMedia } from '@/server/db/
  * - des animations SIMPLES mais qui surprennent : une apparition qui
  *   monte de 20 px, une pastille qui « pop », une coche qui se dessine, un
  *   message qui s'écrit, une couleur qui change. Une idée par section.
+ *
+ * Et partout, de petites attentions : la lumière qui suit la souris sur
+ * les blocs de couleur, les boutons aimantés, les frises qui prennent de
+ * l'élan quand on fait défiler la page.
  *
  * Rien ne bouge pour qui a demandé moins d'animations, et l'éditeur fige
  * les mises en scène (useVu → tout est visible d'emblée).
@@ -81,6 +86,48 @@ function useCadence(actif: boolean, ms: number, cb: () => void) {
   }, [actif, ms])
 }
 
+/**
+ * L'ÉLAN — les rangées qui défilent seules accélèrent quand on fait
+ * défiler la page, puis reprennent doucement leur rythme. Une seule
+ * boucle, active seulement quand la section est à l'écran.
+ */
+const DEFILEMENTS = ['ad-defiler', 'ad-defiler-inverse', 'ad-colonne', 'ad-colonne-inverse']
+function useElan<T extends HTMLElement>() {
+  const ref = useRef<T>(null)
+  useEffect(() => {
+    const el = ref.current
+    if (!el || reduit()) return
+    let image = 0
+    let dernier = window.scrollY
+    let elan = 0
+    const boucle = () => {
+      const y = window.scrollY
+      elan = Math.max(elan * 0.93, Math.min(Math.abs(y - dernier) / 5, 7))
+      dernier = y
+      for (const a of el.getAnimations({ subtree: true })) {
+        if (DEFILEMENTS.includes((a as CSSAnimation).animationName)) a.playbackRate = 1 + elan
+      }
+      image = requestAnimationFrame(boucle)
+    }
+    const io = new IntersectionObserver(([e]) => {
+      cancelAnimationFrame(image)
+      if (e?.isIntersecting) {
+        dernier = window.scrollY
+        image = requestAnimationFrame(boucle)
+      }
+    })
+    io.observe(el)
+    return () => {
+      io.disconnect()
+      cancelAnimationFrame(image)
+    }
+  }, [])
+  return ref
+}
+
+/** La lumière douce qui suit la souris sur un bloc de couleur. */
+const LUMIERE = 'rgba(255,255,255,0.6)'
+
 /** L'apparition Qeeps : 20 px de montée, en fondu, avec un délai. */
 const monte = (vu: boolean, delai = 0) => ({
   opacity: vu ? 1 : 0,
@@ -117,7 +164,7 @@ export function Tuiles({ photos, mots }: { photos: Media[]; mots: string[] }) {
         const t = teinte(i + n)
         const mot = mots.length ? mots[(i + n) % mots.length] : ''
         return (
-          <div key={i} className="relative aspect-square overflow-hidden rounded-[22px]" style={pop(vu, 0.15 + i * 0.08)}>
+          <div key={i} onMouseEnter={() => setEtat((e) => e.map((v, k) => (k === i ? v + 1 : v)))} className="relative aspect-square cursor-pointer overflow-hidden rounded-[22px]" style={pop(vu, 0.15 + i * 0.08)}>
             {estPhoto && p ? (
               <Image key={`${p.id}-${n}`} src={p.url} alt={n === 0 ? p.alt : ''} fill sizes="240px" className="object-cover motion-safe:animate-[ad-tuile_0.9s_cubic-bezier(0.22,1,0.36,1)_backwards]" />
             ) : (
@@ -196,7 +243,25 @@ export function Fenetre({ photo, notes }: { photo: Media | null; notes: { titre:
             ))}
             <span className="mx-auto rounded-full bg-[var(--ad-sable)] px-4 py-1 text-[12px] text-[var(--ad-gris)]">anasawi.fr</span>
           </div>
-          <div className="relative aspect-[16/8] bg-[var(--ad-sable)]">{photo && <Image src={photo.url} alt={photo.alt} fill sizes="1200px" className="object-cover" />}</div>
+          <div className="relative aspect-[16/8] bg-[var(--ad-sable)]">
+            {photo && <Image src={photo.url} alt={photo.alt} fill sizes="1200px" className="object-cover" />}
+            {/* La petite démonstration : un curseur vient cliquer le bouton, un toast confirme. */}
+            {vu && (
+              <div aria-hidden="true" className="absolute bottom-[10%] right-[6%] max-sm:hidden">
+                <span className="absolute -top-14 right-0 flex items-center gap-2 whitespace-nowrap rounded-full bg-white py-2 pl-2 pr-4 text-[13px] font-semibold text-[var(--ad-nuit)] shadow-[0_12px_30px_-12px_rgba(46,66,79,0.5)] motion-safe:animate-[ad-toast_7s_ease-in-out_1s_infinite] motion-reduce:hidden">
+                  <span className="grid h-6 w-6 place-items-center rounded-full" style={{ background: teinte(2).fond, color: teinte(2).encre }}>
+                    <Check className="h-3.5 w-3.5" />
+                  </span>
+                  Demande envoyée
+                </span>
+                <span className="relative block rounded-full bg-[var(--ad-nuit)] px-5 py-3 text-[14px] font-semibold text-white motion-safe:animate-[ad-clic_7s_ease-in-out_1s_infinite]">
+                  {notes[0]?.titre || 'Prendre rendez-vous'}
+                  <span className="absolute left-[62%] top-[60%] h-8 w-8 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/60 opacity-0 motion-safe:animate-[ad-onde-clic_7s_ease-out_1s_infinite]" />
+                </span>
+                <MousePointer2 className="absolute left-[60%] top-[55%] h-6 w-6 fill-white text-[var(--ad-nuit)] opacity-0 drop-shadow motion-safe:animate-[ad-curseur_7s_ease-in-out_1s_infinite]" />
+              </div>
+            )}
+          </div>
         </div>
         {notes.slice(0, 2).map((n, i) => {
           const Icone = icones[i] ?? CalendarCheck
@@ -234,8 +299,10 @@ export function CarteVisite({ portrait, nom, metier, tags, infos }: { portrait: 
   const [ref, vu] = useVu<HTMLDivElement>()
   const icones = [MapPin, Phone, Clock]
   return (
-    <div ref={ref} className="rounded-[32px] p-[clamp(20px,5vw,56px)]" style={{ background: teinte(0).fond }}>
-      <div className={cn('mx-auto max-w-[400px] rounded-[24px] bg-white p-6', OMBRE)} style={monte(vu)}>
+    <div ref={ref} className="relative isolate overflow-hidden rounded-[32px] p-[clamp(20px,5vw,56px)]" style={{ background: teinte(0).fond }}>
+      <Lueur couleur={LUMIERE} taille={420} />
+      <Incline max={6} className="mx-auto max-w-[400px]">
+      <div className={cn('rounded-[24px] bg-white p-6', OMBRE)} style={monte(vu)}>
         <div className="flex items-center gap-4">
           <span className="relative h-16 w-16 shrink-0">
             <span className="block h-full w-full overflow-hidden rounded-[18px] bg-[var(--ad-sable)]">
@@ -273,6 +340,7 @@ export function CarteVisite({ portrait, nom, metier, tags, infos }: { portrait: 
           })}
         </ul>
       </div>
+      </Incline>
     </div>
   )
 }
@@ -287,8 +355,9 @@ export function ChiffresCouleur({ chiffres }: { chiffres: { valeur: string; libe
         const t = teinte(i * 2)
         const m = c.valeur.match(/^(\d+)(.*)$/)
         return (
-          <div key={i} className="relative overflow-hidden rounded-[28px] bg-white p-8" style={{ color: t.encre }}>
-            <span aria-hidden="true" className="absolute inset-0 origin-bottom" style={{ background: t.fond, transform: vu ? 'scaleY(1)' : 'scaleY(0)', transition: `transform 1.2s ${APPARITION} ${0.1 + i * 0.15}s` }} />
+          <div key={i} className="relative isolate overflow-hidden rounded-[28px] bg-white p-8" style={{ color: t.encre }}>
+            <Lueur couleur={LUMIERE} taille={320} />
+            <span aria-hidden="true" className="absolute inset-0 -z-20 origin-bottom" style={{ background: t.fond, transform: vu ? 'scaleY(1)' : 'scaleY(0)', transition: `transform 1.2s ${APPARITION} ${0.1 + i * 0.15}s` }} />
             <span className="relative block font-[family-name:var(--ad-titre)] text-[clamp(64px,8vw,104px)] leading-none tracking-[-0.04em]">
               {m ? (
                 <>
@@ -351,8 +420,30 @@ type Etape = { titre: string; texte: string }
 
 /** LES ÉTAPES À COCHER — une liste façon application : au défilement,
  *  chaque étape se coche, sa coche se dessine et sa ligne se colore. */
+const CONFETTIS = Array.from({ length: 14 }, (_, i) => {
+  const a = (i / 14) * Math.PI * 2
+  const r = 46 + (i % 3) * 14
+  return { dx: Math.round(Math.cos(a) * r), dy: Math.round(Math.sin(a) * r), c: TEINTES[i % TEINTES.length]!.encre, d: (i % 4) * 0.04 }
+})
 export function Coche({ etapes }: { etapes: Etape[] }) {
   const ref = useAvancement<HTMLDivElement>('passage')
+  const [fete, setFete] = useState(false)
+  const derniere = useRef<HTMLLIElement>(null)
+  useEffect(() => {
+    const el = derniere.current
+    if (!el || reduit()) return
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e?.isIntersecting) {
+          setFete(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin: '0px 0px -58% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [])
   const n = Math.max(1, etapes.length)
   const avance = 'clamp(0, calc((var(--p) - 0.22) * 2.4), 1)'
   return (
@@ -368,11 +459,20 @@ export function Coche({ etapes }: { etapes: Etape[] }) {
           const t = teinte(i * 2 + 2)
           const fait = `clamp(0, calc((${avance} - ${(i / n).toFixed(3)}) * ${n * 4}), 1)`
           return (
-            <li key={i} className="flex items-start gap-4 rounded-[20px] p-5" style={{ background: `color-mix(in srgb, ${t.fond} calc(${fait} * 100%), white)` }}>
+            <li key={i} ref={i === etapes.length - 1 ? derniere : undefined} className="flex items-start gap-4 rounded-[20px] p-5" style={{ background: `color-mix(in srgb, ${t.fond} calc(${fait} * 100%), white)` }}>
               <span className="relative mt-0.5 grid h-8 w-8 shrink-0 place-items-center rounded-full border-2" style={{ borderColor: t.encre, background: `color-mix(in srgb, ${t.encre} calc(${fait} * 100%), white)` }}>
                 <svg viewBox="0 0 24 24" className="h-4 w-4" fill="none" stroke="white" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
                   <path d="M5 12.5l4.5 4.5L19 7" pathLength={1} strokeDasharray="1" style={{ strokeDashoffset: `calc(1 - ${fait})` }} />
                 </svg>
+                {fete && i === etapes.length - 1 &&
+                  CONFETTIS.map((c, k) => (
+                    <span
+                      key={k}
+                      aria-hidden="true"
+                      className="pointer-events-none absolute left-1/2 top-1/2 h-2 w-2 rounded-full opacity-0 motion-safe:animate-[ad-confetti_1.1s_cubic-bezier(0.22,1,0.36,1)_forwards]"
+                      style={{ background: c.c, ['--dx' as string]: `${c.dx}px`, ['--dy' as string]: `${c.dy}px`, animationDelay: `${0.25 + c.d}s` }}
+                    />
+                  ))}
               </span>
               <span>
                 <span className="block text-[18px] font-semibold text-[var(--ad-nuit)]">{e.titre}</span>
@@ -419,7 +519,8 @@ export function Onglets({ etapes }: { etapes: Etape[] }) {
           )
         })}
       </div>
-      <div className="mt-5 grid min-h-[300px] items-end rounded-[32px] p-[clamp(28px,5vw,56px)] transition-colors duration-700" style={{ background: t.fond, color: t.encre }}>
+      <div className="relative isolate mt-5 grid min-h-[300px] items-end overflow-hidden rounded-[32px] p-[clamp(28px,5vw,56px)] transition-colors duration-700" style={{ background: t.fond, color: t.encre }}>
+        <Lueur couleur={LUMIERE} taille={520} />
         <div key={i} className="motion-safe:animate-[ad-tuile_0.8s_cubic-bezier(0.22,1,0.36,1)_backwards]">
           <span className="font-[family-name:var(--ad-titre)] text-[clamp(64px,9vw,120px)] leading-none opacity-40">{n2(i)}</span>
           <h3 className="mt-4 text-[clamp(28px,3.4vw,44px)] leading-[1.1]" style={{ color: t.encre }}>
@@ -441,7 +542,8 @@ export function PileCouleurs({ etapes }: { etapes: Etape[] }) {
         const t = teinte(i * 2 + 3)
         return (
           <li key={i} className="sticky mb-[14vh] last:mb-0" style={{ top: `calc(100px + ${Math.min(i, 5) * 18}px)` }}>
-            <div className={cn('grid min-h-[300px] gap-6 rounded-[32px] p-[clamp(28px,5vw,56px)] sm:grid-cols-[auto_1fr] sm:items-end', OMBRE)} style={{ background: t.fond, color: t.encre }}>
+            <div className={cn('relative isolate grid min-h-[300px] gap-6 overflow-hidden rounded-[32px] p-[clamp(28px,5vw,56px)] sm:grid-cols-[auto_1fr] sm:items-end', OMBRE)} style={{ background: t.fond, color: t.encre }}>
+              <Lueur couleur={LUMIERE} taille={520} />
               <span className="font-[family-name:var(--ad-titre)] text-[clamp(72px,10vw,140px)] leading-none">{n2(i)}</span>
               <div>
                 <h3 className="text-[clamp(26px,3vw,38px)] leading-[1.1]" style={{ color: t.encre }}>
@@ -470,7 +572,9 @@ export function CartesCouleur({ services, rdv }: { services: ServiceWithMedia[];
       {services.map((s, i) => {
         const t = teinte(i)
         return (
-          <a key={s.id} href={rdv} className="group flex flex-col rounded-[28px] p-3 transition-transform duration-500 hover:-translate-y-1.5" style={{ background: t.fond, ...monte(vu, 0.1 + i * 0.1) }}>
+          <Incline key={s.id} max={4} reflet={false} style={monte(vu, 0.1 + i * 0.1)}>
+          <a href={rdv} className="group relative isolate flex h-full flex-col overflow-hidden rounded-[28px] p-3" style={{ background: t.fond }}>
+            <Lueur couleur={LUMIERE} taille={340} />
             <div className="relative aspect-[4/3] overflow-hidden rounded-[20px] bg-white/50">
               {s.media && <Image src={s.media.url} alt="" fill sizes="380px" className="object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-[1.04]" style={{ transform: vu ? undefined : 'scale(1.15)' }} />}
               {s.duration && <span className="absolute left-3 top-3 rounded-full bg-white px-3 py-1 text-[12px] font-semibold text-[var(--ad-nuit)]">{s.duration}</span>}
@@ -485,6 +589,7 @@ export function CartesCouleur({ services, rdv }: { services: ServiceWithMedia[];
               </span>
             </div>
           </a>
+          </Incline>
         )
       })}
     </div>
@@ -495,14 +600,16 @@ export function CartesCouleur({ services, rdv }: { services: ServiceWithMedia[];
  *  pastille de couleur, qui montent sans fin dans un bloc ; survolée, la
  *  liste s'arrête. */
 export function ListeDefilante({ services }: { services: ServiceWithMedia[] }) {
+  const ref = useElan<HTMLDivElement>()
   return (
-    <div className="group/liste h-[460px] overflow-hidden rounded-[32px] bg-[var(--ad-sable)] px-4 [mask-image:linear-gradient(to_bottom,transparent,#000_14%,#000_86%,transparent)]">
+    <div ref={ref} className="group/liste h-[460px] overflow-hidden rounded-[32px] bg-[var(--ad-sable)] px-4 [mask-image:linear-gradient(to_bottom,transparent,#000_14%,#000_86%,transparent)]">
       <ul className="flex flex-col gap-3 py-3 group-hover/liste:[animation-play-state:paused] motion-safe:animate-[ad-colonne_26s_linear_infinite]">
         {[0, 1, 2].map((tour) =>
           services.map((s, i) => {
             const t = teinte(i)
             return (
-              <li key={`${tour}-${s.id}`} aria-hidden={tour > 0 || undefined} className="flex items-center gap-4 rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(46,66,79,0.06)]">
+              <li key={`${tour}-${s.id}`} aria-hidden={tour > 0 || undefined} className="group/l relative isolate flex items-center gap-4 overflow-hidden rounded-[18px] bg-white p-4 shadow-[0_1px_2px_rgba(46,66,79,0.06)]">
+                <span aria-hidden="true" className="absolute inset-0 -z-10 origin-left scale-x-0 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/l:scale-x-100" style={{ background: t.fond }} />
                 <span className="grid h-11 w-11 shrink-0 place-items-center rounded-[14px] font-[family-name:var(--ad-titre)] text-[18px]" style={{ background: t.fond, color: t.encre }}>
                   {s.title.slice(0, 1)}
                 </span>
@@ -536,13 +643,15 @@ export function Selecteur({ services, rdv }: { services: ServiceWithMedia[]; rdv
         {services.map((x, k) => {
           const tk = teinte(k)
           return (
-            <button key={x.id} type="button" onClick={() => setI(k)} className="rounded-full px-5 py-2.5 text-[14px] font-semibold transition-[background-color,color,transform] duration-500" style={k === i ? { background: tk.fond, color: tk.encre, transform: 'scale(1.06)' } : { background: 'white', color: 'var(--ad-pierre)' }}>
-              {x.title}
+            <button key={x.id} type="button" onClick={() => setI(k)} className="relative overflow-hidden rounded-full px-5 py-2.5 text-[14px] font-semibold transition-[background-color,color,transform] duration-500" style={k === i ? { background: tk.fond, color: tk.encre, transform: 'scale(1.06)' } : { background: 'white', color: 'var(--ad-pierre)' }}>
+              {k === i && !pause && vu && <span key={i} aria-hidden="true" className="absolute inset-y-0 left-0 w-full origin-left opacity-20 motion-safe:animate-[ad-remplir_4200ms_linear_forwards]" style={{ background: tk.encre }} />}
+              <span className="relative">{x.title}</span>
             </button>
           )
         })}
       </div>
-      <div className="mt-8 grid overflow-hidden rounded-[36px] transition-colors duration-700 md:grid-cols-2" style={{ background: t.fond }}>
+      <div className="relative isolate mt-8 grid overflow-hidden rounded-[36px] transition-colors duration-700 md:grid-cols-2" style={{ background: t.fond }}>
+        <Lueur couleur={LUMIERE} taille={560} />
         <div key={`t-${s.id}`} className="flex flex-col justify-center p-[clamp(28px,5vw,60px)] motion-safe:animate-[ad-tuile_0.8s_cubic-bezier(0.22,1,0.36,1)_backwards]">
           {s.duration && <span className="w-fit rounded-full bg-white px-3 py-1 text-[12.5px] font-semibold" style={{ color: t.encre }}>{s.duration}</span>}
           <h3 className="mt-5 text-[clamp(30px,3.6vw,48px)] leading-[1.05]" style={{ color: t.encre }}>
@@ -569,24 +678,47 @@ export function Selecteur({ services, rdv }: { services: ServiceWithMedia[]; rdv
    QUESTIONS
    ══════════════════════════════════════════════════════════════════════ */
 
-/** LA CONVERSATION — une fenêtre de messagerie : la question arrive en
- *  bulle colorée, trois petits points, puis la réponse. Et la suivante. */
+/** LA CONVERSATION — une fenêtre de messagerie : la question se tape
+ *  dans le champ, part en bulle colorée ; trois petits points, puis la
+ *  réponse arrive. Et la suivante. En pause hors de l'écran. */
 export function Conversation({ faq, nom }: { faq: FaqItem[]; nom: string }) {
   const [ref, vu] = useVu<HTMLDivElement>('0%')
-  const [etape, setEtape] = useState(0)
-  useCadence(vu && faq.length > 0, 1500, () => setEtape((x) => x + 1))
-  /* Chaque échange dure 5 temps : question (1), points (2), réponse (3-5). */
-  const echange = Math.floor(etape / 5)
-  const phase = etape % 5
-  const messages: { cote: 'moi' | 'elle' | 'points'; texte: string; cle: string }[] = []
-  for (let k = Math.max(0, echange - 1); k <= echange; k++) {
-    const f = faq[k % Math.max(1, faq.length)]
-    if (!f) break
-    messages.push({ cote: 'moi', texte: f.question, cle: `q${k}` })
-    if (k < echange || phase >= 2) messages.push({ cote: 'elle', texte: propre(f.answer), cle: `r${k}` })
-    else if (phase === 1) messages.push({ cote: 'points', texte: '', cle: `p${k}` })
+  const [k, setK] = useState(0)
+  const [lettres, setLettres] = useState(0)
+  const [phase, setPhase] = useState<'tape' | 'points' | 'reponse'>('tape')
+  const n = faq.length
+  const f = n ? faq[k % n] : null
+  useEffect(() => {
+    if (!vu || !f) return
+    if (reduit()) {
+      setPhase('reponse')
+      return
+    }
+    let t = 0
+    if (phase === 'tape') {
+      t = lettres < f.question.length ? window.setTimeout(() => setLettres((l) => l + 1), 32) : window.setTimeout(() => setPhase('points'), 450)
+    } else if (phase === 'points') {
+      t = window.setTimeout(() => setPhase('reponse'), 1400)
+    } else {
+      t = window.setTimeout(() => {
+        setK((x) => x + 1)
+        setLettres(0)
+        setPhase('tape')
+      }, 6000)
+    }
+    return () => window.clearTimeout(t)
+  }, [vu, phase, lettres, f])
+  if (!f) return null
+  const precedente = k > 0 ? faq[(k - 1) % n] : null
+  const messages: { cote: 'moi' | 'elle' | 'points'; texte: string; cle: string; teinte: number }[] = []
+  if (precedente) {
+    messages.push({ cote: 'moi', texte: precedente.question, cle: `q${k - 1}`, teinte: k - 1 })
+    messages.push({ cote: 'elle', texte: propre(precedente.answer), cle: `r${k - 1}`, teinte: k - 1 })
   }
-  const t = teinte(echange)
+  if (phase !== 'tape') messages.push({ cote: 'moi', texte: f.question, cle: `q${k}`, teinte: k })
+  if (phase === 'points') messages.push({ cote: 'points', texte: '', cle: `p${k}`, teinte: k })
+  if (phase === 'reponse') messages.push({ cote: 'elle', texte: propre(f.answer), cle: `r${k}`, teinte: k })
+  const pret = phase === 'tape' && lettres >= f.question.length
   return (
     <div ref={ref} className={cn('mx-auto max-w-[680px] overflow-hidden rounded-[28px] bg-white', OMBRE)}>
       <div className="flex items-center gap-3 border-b border-[var(--ad-sable)] px-5 py-4">
@@ -596,28 +728,47 @@ export function Conversation({ faq, nom }: { faq: FaqItem[]; nom: string }) {
         </span>
         <span>
           <span className="block text-[15px] font-semibold text-[var(--ad-nuit)]">{nom}</span>
-          <span className="block text-[12.5px] text-[var(--ad-gris)]">Répond à vos questions</span>
+          <span className="block text-[12.5px] text-[var(--ad-gris)]">{phase === 'points' ? 'écrit…' : 'Répond à vos questions'}</span>
         </span>
       </div>
-      <div className="flex h-[440px] flex-col justify-end gap-3 overflow-hidden bg-[var(--ad-ivoire)] p-5">
-        {messages.map((m) => (
-          <div key={m.cle} className={cn('max-w-[82%] motion-safe:animate-[ad-bulle_0.5s_cubic-bezier(0.34,1.4,0.64,1)_backwards]', m.cote === 'moi' ? 'self-end' : 'self-start')}>
-            {m.cote === 'points' ? (
-              <span className="flex gap-1 rounded-[18px] rounded-bl-[6px] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(46,66,79,0.08)]">
-                {[0, 1, 2].map((d) => (
-                  <span key={d} className="h-2 w-2 rounded-full bg-[var(--ad-gris)] motion-safe:animate-[ad-points_1.2s_ease-in-out_infinite]" style={{ animationDelay: `${d * 0.15}s` }} />
-                ))}
-              </span>
-            ) : (
-              <p
-                className={cn('whitespace-pre-line px-4 py-3 text-[15px] leading-[1.55]', m.cote === 'moi' ? 'rounded-[18px] rounded-br-[6px] font-semibold' : 'rounded-[18px] rounded-bl-[6px] bg-white text-[var(--ad-pierre)] shadow-[0_1px_2px_rgba(46,66,79,0.08)]')}
-                style={m.cote === 'moi' ? { background: t.fond, color: t.encre } : undefined}
-              >
-                {m.texte}
-              </p>
-            )}
-          </div>
-        ))}
+      <div className="flex h-[400px] flex-col justify-end gap-3 overflow-hidden bg-[var(--ad-ivoire)] p-5" aria-live="polite">
+        {messages.map((m) => {
+          const t = teinte(m.teinte)
+          return (
+            <div key={m.cle} className={cn('max-w-[82%] motion-safe:animate-[ad-bulle_0.5s_cubic-bezier(0.34,1.4,0.64,1)_backwards]', m.cote === 'moi' ? 'origin-bottom-right self-end' : 'origin-bottom-left self-start')}>
+              {m.cote === 'points' ? (
+                <span className="flex gap-1 rounded-[18px] rounded-bl-[6px] bg-white px-4 py-3.5 shadow-[0_1px_2px_rgba(46,66,79,0.08)]">
+                  {[0, 1, 2].map((d) => (
+                    <span key={d} className="h-2 w-2 rounded-full bg-[var(--ad-gris)] motion-safe:animate-[ad-points_1.2s_ease-in-out_infinite]" style={{ animationDelay: `${d * 0.15}s` }} />
+                  ))}
+                </span>
+              ) : (
+                <p
+                  className={cn('whitespace-pre-line px-4 py-3 text-[15px] leading-[1.55]', m.cote === 'moi' ? 'rounded-[18px] rounded-br-[6px] font-semibold' : 'rounded-[18px] rounded-bl-[6px] bg-white text-[var(--ad-pierre)] shadow-[0_1px_2px_rgba(46,66,79,0.08)]')}
+                  style={m.cote === 'moi' ? { background: t.fond, color: t.encre } : undefined}
+                >
+                  {m.texte}
+                </p>
+              )}
+            </div>
+          )
+        })}
+      </div>
+      {/* Le champ où la question s'écrit, lettre à lettre. */}
+      <div className="flex items-center gap-3 border-t border-[var(--ad-sable)] p-3">
+        <span className="min-h-[44px] flex-1 truncate rounded-full bg-[var(--ad-sable)] px-5 py-3 text-[14.5px] text-[var(--ad-nuit)]">
+          {phase === 'tape' && lettres > 0 ? (
+            <>
+              {f.question.slice(0, lettres)}
+              <span aria-hidden="true" className="ml-0.5 inline-block h-[1em] w-px translate-y-[0.15em] bg-[var(--ad-nuit)] motion-safe:animate-[ad-clignote_1s_steps(1)_infinite]" />
+            </>
+          ) : (
+            <span className="text-[var(--ad-gris)]">Écrire un message…</span>
+          )}
+        </span>
+        <span className={cn('grid h-11 w-11 shrink-0 place-items-center rounded-full text-white transition-[background-color,transform] duration-300', pret ? 'scale-110 bg-[var(--ad-nuit)]' : 'bg-[var(--ad-sable-fonce)]')}>
+          <SendHorizontal className="h-4 w-4" />
+        </span>
       </div>
     </div>
   )
@@ -661,11 +812,13 @@ export function AccordeonCouleur({ faq }: { faq: FaqItem[] }) {
  *  sur des pastilles de couleur ; on en touche une, sa réponse s'affiche. */
 export function QuestionsDefilantes({ faq }: { faq: FaqItem[] }) {
   const [i, setI] = useState(0)
+  const elan = useElan<HTMLDivElement>()
   const q = faq[i]
   const t = teinte(i)
   return (
     <div className="grid gap-6 lg:grid-cols-2">
-      <div className="flex min-h-[320px] flex-col justify-end rounded-[32px] p-[clamp(28px,4vw,48px)] transition-colors duration-700" style={{ background: t.fond }}>
+      <div className="relative isolate flex min-h-[320px] flex-col justify-end overflow-hidden rounded-[32px] p-[clamp(28px,4vw,48px)] transition-colors duration-700" style={{ background: t.fond }}>
+        <Lueur couleur={LUMIERE} taille={480} />
         {q && (
           <div key={q.id} className="motion-safe:animate-[ad-tuile_0.7s_cubic-bezier(0.22,1,0.36,1)_backwards]">
             <p className="font-[family-name:var(--ad-titre)] text-[clamp(24px,2.6vw,32px)] leading-[1.2]" style={{ color: t.encre }}>
@@ -675,7 +828,7 @@ export function QuestionsDefilantes({ faq }: { faq: FaqItem[] }) {
           </div>
         )}
       </div>
-      <div className="group/q h-[440px] overflow-hidden rounded-[32px] bg-[var(--ad-sable)] px-4 [mask-image:linear-gradient(to_bottom,transparent,#000_12%,#000_88%,transparent)]">
+      <div ref={elan} className="group/q h-[440px] overflow-hidden rounded-[32px] bg-[var(--ad-sable)] px-4 [mask-image:linear-gradient(to_bottom,transparent,#000_12%,#000_88%,transparent)]">
         <ul className="flex flex-col gap-2.5 py-3 group-hover/q:[animation-play-state:paused] motion-safe:animate-[ad-colonne_34s_linear_infinite]">
           {[0, 1].map((tour) =>
             faq.map((f, k) => {
@@ -701,25 +854,76 @@ export function QuestionsDefilantes({ faq }: { faq: FaqItem[] }) {
    ══════════════════════════════════════════════════════════════════════ */
 
 /** LA GALERIE QUI FAIT LE POINT — une grille droite ; on en survole une,
- *  les autres s'effacent en douceur et sa légende apparaît en pastille. */
+ *  les autres s'effacent en douceur et sa légende apparaît en pastille.
+ *  Un clic l'ouvre en grand ; flèches et Échap pour naviguer, clic à
+ *  côté pour fermer. */
 export function GalerieFocus({ photos }: { photos: Media[] }) {
   const [ref, vu] = useVu<HTMLDivElement>()
+  const liste = photos.slice(0, 6)
+  const [ouverte, setOuverte] = useState<number | null>(null)
+  const fermer = useCallback(() => setOuverte(null), [])
+  const aller = useCallback((d: number) => setOuverte((x) => (x === null ? x : (x + d + liste.length) % liste.length)), [liste.length])
+  useEffect(() => {
+    if (ouverte === null) return
+    const touche = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') fermer()
+      if (e.key === 'ArrowRight') aller(1)
+      if (e.key === 'ArrowLeft') aller(-1)
+    }
+    window.addEventListener('keydown', touche)
+    return () => window.removeEventListener('keydown', touche)
+  }, [ouverte, fermer, aller])
+  const vue = ouverte !== null ? liste[ouverte] : null
   return (
-    <div ref={ref} className="group/g grid grid-cols-2 gap-4 md:grid-cols-3">
-      {photos.slice(0, 6).map((p, i) => {
-        const t = teinte(i)
-        return (
-          <figure key={p.id} className="group/p relative aspect-[4/5] overflow-hidden rounded-[24px] bg-[var(--ad-sable)] transition-[opacity,filter,transform] duration-500 group-hover/g:opacity-40 group-hover/g:grayscale hover:!opacity-100 hover:!grayscale-0 hover:scale-[1.02]" style={pop(vu, 0.1 + i * 0.08)}>
-            <Image src={p.url} alt={p.alt} fill sizes="(max-width: 768px) 50vw, 400px" className="object-cover" />
-            {p.caption && (
-              <figcaption className="absolute bottom-3 left-3 translate-y-2 rounded-full px-3 py-1.5 text-[13px] font-semibold opacity-0 transition-[opacity,transform] duration-500 group-hover/p:translate-y-0 group-hover/p:opacity-100" style={{ background: t.fond, color: t.encre }}>
-                {p.caption}
-              </figcaption>
-            )}
-          </figure>
-        )
-      })}
-    </div>
+    <>
+      <div ref={ref} className="group/g grid grid-cols-2 gap-4 md:grid-cols-3">
+        {liste.map((p, i) => {
+          const t = teinte(i)
+          return (
+            <button
+              key={p.id}
+              type="button"
+              onClick={() => setOuverte(i)}
+              aria-label={`Agrandir : ${p.alt}`}
+              className="group/p relative aspect-[4/5] cursor-zoom-in overflow-hidden rounded-[24px] bg-[var(--ad-sable)] text-left transition-[opacity,filter,transform] duration-500 group-hover/g:opacity-40 group-hover/g:grayscale hover:!opacity-100 hover:!grayscale-0 hover:scale-[1.02]"
+              style={pop(vu, 0.1 + i * 0.08)}
+            >
+              <Image src={p.url} alt={p.alt} fill sizes="(max-width: 768px) 50vw, 400px" className="object-cover" />
+              {p.caption && (
+                <span className="absolute bottom-3 left-3 translate-y-2 rounded-full px-3 py-1.5 text-[13px] font-semibold opacity-0 transition-[opacity,transform] duration-500 group-hover/p:translate-y-0 group-hover/p:opacity-100" style={{ background: t.fond, color: t.encre }}>
+                  {p.caption}
+                </span>
+              )}
+            </button>
+          )
+        })}
+      </div>
+      {vue &&
+        createPortal(
+          <div role="dialog" aria-modal="true" aria-label={vue.alt} onClick={fermer} className="fixed inset-0 z-[90] grid place-items-center bg-[rgba(46,66,79,0.72)] p-4 backdrop-blur-md motion-safe:animate-[ad-fondu_0.35s_ease-out_backwards]">
+            <div key={vue.id} onClick={(e) => e.stopPropagation()} className="relative h-[min(82vh,900px)] w-[min(92vw,1300px)] overflow-hidden rounded-[28px] bg-[var(--ad-sable)] motion-safe:animate-[ad-tuile_0.6s_cubic-bezier(0.22,1,0.36,1)_backwards]">
+              <Image src={vue.url} alt={vue.alt} fill sizes="92vw" className="object-cover" />
+              {vue.caption && (
+                <span className="absolute bottom-5 left-5 rounded-full px-4 py-2 text-[14px] font-semibold" style={{ background: teinte(ouverte ?? 0).fond, color: teinte(ouverte ?? 0).encre }}>
+                  {vue.caption}
+                </span>
+              )}
+              <div className="absolute bottom-5 right-5 flex gap-2">
+                <button type="button" onClick={() => aller(-1)} aria-label="Photo précédente" className="grid h-11 w-11 place-items-center rounded-full bg-white text-[var(--ad-nuit)]">
+                  <ChevronLeft className="h-5 w-5" />
+                </button>
+                <button type="button" onClick={() => aller(1)} aria-label="Photo suivante" className="grid h-11 w-11 place-items-center rounded-full bg-white text-[var(--ad-nuit)]">
+                  <ChevronRight className="h-5 w-5" />
+                </button>
+              </div>
+              <button type="button" onClick={fermer} aria-label="Fermer" className="absolute right-5 top-5 grid h-11 w-11 place-items-center rounded-full bg-white text-[var(--ad-nuit)]">
+                <X className="h-5 w-5" />
+              </button>
+            </div>
+          </div>,
+          document.body,
+        )}
+    </>
   )
 }
 
@@ -753,8 +957,9 @@ export function Eventail({ photos }: { photos: Media[] }) {
 /** LA FRISE — une seule rangée de photos qui défile très lentement, bords
  *  fondus ; survolée, elle s'arrête. Les légendes en pastilles colorées. */
 export function Frise({ photos }: { photos: Media[] }) {
+  const ref = useElan<HTMLDivElement>()
   return (
-    <div className="group/frise overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+    <div ref={ref} className="group/frise overflow-hidden [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
       <div className="flex w-max gap-5 group-hover/frise:[animation-play-state:paused] motion-safe:animate-[ad-defiler_70s_linear_infinite]">
         {[0, 1].map((tour) =>
           photos.map((p, i) => {
@@ -827,15 +1032,16 @@ export function Lecture({ phrase, auteur }: { phrase: string; auteur: string }) 
  *  rangées droites qui défilent en sens contraire. */
 export function Etiquettes({ mots }: { mots: string[] }) {
   const rangees = [mots, [...mots].reverse()]
+  const ref = useElan<HTMLDivElement>()
   return (
-    <div className="flex flex-col gap-4 overflow-hidden py-4 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+    <div ref={ref} className="flex flex-col gap-4 overflow-hidden py-4 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
       {rangees.map((r, k) => (
         <div key={k} className="flex w-max gap-4" style={{ animation: `${k ? 'ad-defiler-inverse' : 'ad-defiler'} ${44 + k * 10}s linear infinite` }}>
           {[0, 1, 2, 3].map((tour) =>
             r.map((m, i) => {
               const t = teinte(i + k * 3)
               return (
-                <span key={`${tour}-${i}`} aria-hidden={tour > 0 || undefined} className="shrink-0 rounded-full px-7 py-4 font-[family-name:var(--ad-titre)] text-[clamp(20px,2.6vw,34px)]" style={{ background: t.fond, color: t.encre }}>
+                <span key={`${tour}-${i}`} aria-hidden={tour > 0 || undefined} className="shrink-0 rounded-full px-7 py-4 font-[family-name:var(--ad-titre)] text-[clamp(20px,2.6vw,34px)] transition-[transform,background-color,color] duration-500 ease-[cubic-bezier(0.34,1.56,0.64,1)] hover:-rotate-3 hover:scale-110 hover:!bg-[var(--ad-nuit)] hover:!text-white" style={{ background: t.fond, color: t.encre }}>
                   {m}
                 </span>
               )
@@ -1016,7 +1222,15 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
                 style={leve ? { background: 'var(--ad-nuit)', color: 'white' } : ferme ? { background: 'white', color: 'var(--ad-gris)' } : { background: t.fond, color: t.encre }}
               >
                 <span className="font-[family-name:var(--ad-titre)] text-[clamp(18px,1.7vw,24px)] capitalize leading-none">{j}</span>
-                <span className="text-[13px] font-semibold leading-[1.35]">{heures}</span>
+                <span className="text-[13px] font-semibold leading-[1.35]">
+                  {leve && maintenant && (
+                    <span className="mb-1.5 flex items-center gap-1.5 text-[12px] font-normal text-white/70">
+                      <span className="h-1.5 w-1.5 rounded-full bg-[#7fd39b] motion-safe:animate-[ad-clignote_2s_steps(1)_infinite]" />
+                      {maintenant.getHours()} h {String(maintenant.getMinutes()).padStart(2, '0')}
+                    </span>
+                  )}
+                  {heures}
+                </span>
               </div>
             </div>
           )
@@ -1032,7 +1246,8 @@ export function AppelCouleur({ titre, libelle, href, texte }: { titre: string; l
   const [ref, vu] = useVu<HTMLDivElement>()
   const degrade = `linear-gradient(120deg, ${TEINTES.map((t) => t.fond).join(', ')}, ${TEINTES[0].fond})`
   return (
-    <div ref={ref} className="relative overflow-hidden rounded-[40px] px-6 py-[clamp(72px,10vw,128px)] text-center motion-safe:animate-[ad-degrade_16s_ease-in-out_infinite_alternate]" style={{ backgroundImage: degrade, backgroundSize: '400% 100%' }}>
+    <div ref={ref} className="relative isolate overflow-hidden rounded-[40px] px-6 py-[clamp(72px,10vw,128px)] text-center motion-safe:animate-[ad-degrade_16s_ease-in-out_infinite_alternate]" style={{ backgroundImage: degrade, backgroundSize: '400% 100%' }}>
+      <Lueur couleur="rgba(255,255,255,0.7)" taille={640} />
       <h2 className="mx-auto max-w-[16ch] text-[clamp(40px,6.4vw,92px)] leading-[1.02]" style={monte(vu)}>
         {accent(titre)}
       </h2>
@@ -1042,11 +1257,13 @@ export function AppelCouleur({ titre, libelle, href, texte }: { titre: string; l
         </p>
       )}
       <div className="mt-10 flex justify-center" style={pop(vu, 0.4)}>
+        <Aimant force={0.35}>
         <a href={href} className="group relative inline-flex items-center gap-2.5 rounded-full bg-[var(--ad-nuit)] px-7 py-4 text-[15px] font-semibold text-white">
           <span aria-hidden="true" className="absolute inset-0 rounded-full bg-[var(--ad-nuit)] motion-safe:animate-[ad-halo_2.4s_ease-out_infinite]" />
           <span className="relative">{libelle}</span>
           <ArrowRight className="relative h-4 w-4 transition-transform duration-500 group-hover:translate-x-1" />
         </a>
+        </Aimant>
       </div>
     </div>
   )
