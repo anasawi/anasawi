@@ -18,7 +18,8 @@ import { cn, toE164 } from '@/lib/utils'
  * textes, contact. Tous animés, tous dans la DA moderne, tous branchés
  * sur le contenu partagé (un champ laissé vide suit le site classique ou
  * les écrans du CMS). Vitrine : /moderne/modeles. Fond : celui du site,
- * le même pour toutes les sections ; accents turquoise.
+ * le même pour toutes les sections ; accents turquoise. Responsifs, du
+ * téléphone au grand écran.
  */
 
 const t = z.string().default('')
@@ -178,7 +179,7 @@ export const mOuverturePartageeBlock: BlockDefinition<typeof partageeSchema> = {
                   {photo && <Image src={photo.url} alt={photo.alt} fill priority sizes="460px" className="object-cover" />}
                 </div>
               </Incline>
-              {(data.pastille || !data.titre) && <span className="absolute -left-6 bottom-12 flex items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3.5 py-2 text-[12.5px] font-semibold text-[var(--ad-nuit)] shadow-[0_14px_30px_-16px_rgba(46,66,79,0.4)] backdrop-blur-md motion-safe:animate-[ad-flotter_7s_ease-in-out_infinite]">
+              {(data.pastille || !data.titre) && <span className="absolute bottom-6 left-3 flex sm:-left-6 sm:bottom-12 items-center gap-2 rounded-full border border-white/80 bg-white/70 px-3.5 py-2 text-[12.5px] font-semibold text-[var(--ad-nuit)] shadow-[0_14px_30px_-16px_rgba(46,66,79,0.4)] backdrop-blur-md motion-safe:animate-[ad-flotter_7s_ease-in-out_infinite]">
                 <span className="h-1.5 w-1.5 rounded-full bg-[#6e9a6b]" />
                 {ou(data.pastille, 'Nouveaux patients bienvenus')}
               </span>}
@@ -230,8 +231,8 @@ export const mPortraitChiffresBlock: BlockDefinition<typeof chiffresSchema> = {
     return (
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
-          <div className={cn(CONTENEUR, 'grid items-center gap-14 md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-20')}>
-            <Revele>
+          <div className={cn(CONTENEUR, 'grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] lg:gap-20')}>
+            <Revele className="mx-auto w-full max-w-[440px] lg:max-w-none">
               <Incline max={8} className="aspect-[4/5]">
                 <div className="relative h-full w-full overflow-hidden rounded-[32px] bg-[var(--ad-sable-fonce)]">
                   {photo && <Image src={photo.url} alt={photo.alt} fill sizes="460px" className="object-cover" />}
@@ -244,16 +245,16 @@ export const mPortraitChiffresBlock: BlockDefinition<typeof chiffresSchema> = {
                 <Lignes lignes={[ou(data.titre, c.nom)]} />
               </h2>
               <Encre texte={ou(data.texte, c.apropos.texte)} className="mt-8 text-[19px] font-medium leading-[1.6] tracking-[-0.01em] text-[var(--ad-nuit)]" />
-              <dl className="mt-12 grid grid-cols-[repeat(auto-fit,minmax(150px,1fr))] gap-4">
+              <dl className="mt-10 grid grid-cols-3 gap-2.5 sm:mt-12 sm:gap-4">
                 {chiffres.slice(0, 3).map((ch, i) => (
                   <Revele key={i} delai={i * 0.1}>
-                    <div className="rounded-[24px] bg-white p-5 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)]">
+                    <div className="h-full rounded-[20px] bg-white p-3.5 sm:rounded-[24px] sm:p-5 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)]">
                       <dt className="sr-only">{ch.libelle}</dt>
-                      <dd className="text-[40px] font-semibold leading-none tracking-[-0.04em] text-[var(--ad-nuit)]">
+                      <dd className="text-[30px] font-semibold leading-none sm:text-[40px] tracking-[-0.04em] text-[var(--ad-nuit)]">
                         <Compteur valeur={ch.valeur} />
                         <span className="text-[var(--ad-bleu)]">{ch.suffixe}</span>
                       </dd>
-                      <p aria-hidden="true" className="mt-2 text-[13px] leading-[1.4] text-[var(--ad-gris)]">
+                      <p aria-hidden="true" className="mt-2 text-[12px] leading-[1.35] text-[var(--ad-gris)] [hyphens:auto] sm:text-[13px]">
                         {ch.libelle}
                       </p>
                     </div>
@@ -714,9 +715,15 @@ export const mCarteBlock: BlockDefinition<typeof carteSchema> = {
               <Lignes lignes={[emphase(titre)]} />
             </h2>
             <Revele className="relative overflow-hidden rounded-[36px] shadow-[0_50px_100px_-60px_rgba(46,66,79,0.55)]">
-              {c.adresse ? <Carte adresse={c.adresse} className="h-[560px] md:[--centre:68%]" /> : <div className="h-[560px] bg-[var(--ad-brume)]" />}
-              <div className="pointer-events-none absolute inset-0 flex items-end p-5 md:items-center md:p-10">
-                <div className="pointer-events-auto w-full max-w-[380px] rounded-[28px] border border-white/70 bg-white/85 p-7 shadow-[0_30px_60px_-30px_rgba(46,66,79,0.45)] backdrop-blur-xl">
+              {/* Téléphone : la carte, puis la fiche dessous (l'épingle reste visible).
+                  Grand écran : la fiche posée sur la carte, à gauche. */}
+              {c.adresse ? (
+                <Carte adresse={c.adresse} className="h-[300px] sm:h-[400px] md:h-[560px] md:[--centre:68%]" />
+              ) : (
+                <div className="h-[300px] bg-[var(--ad-brume)] md:h-[560px]" />
+              )}
+              <div className="relative p-3 md:pointer-events-none md:absolute md:inset-0 md:flex md:items-center md:p-10">
+                <div className="pointer-events-auto w-full rounded-[24px] border border-white/70 bg-white/85 p-5 sm:p-7 md:max-w-[380px] md:rounded-[28px] shadow-[0_30px_60px_-30px_rgba(46,66,79,0.45)] backdrop-blur-xl">
                   <p className="flex items-center gap-2 text-[13px] font-semibold text-[var(--ad-gris)]">
                     <MapPin className="h-4 w-4 text-[var(--ad-or)]" />
                     {data.etiquette}

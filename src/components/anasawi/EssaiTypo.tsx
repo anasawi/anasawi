@@ -85,7 +85,7 @@ export function EssaiTypo() {
   }
 
   return (
-    <div className="fixed bottom-5 right-5 z-[70] flex flex-col items-end font-[system-ui] text-[13px]">
+    <div className="fixed bottom-24 right-4 z-[70] flex flex-col sm:bottom-5 sm:right-5 items-end font-[system-ui] text-[13px]">
       {ouvert && (
         <div className="mb-2 w-[300px] overflow-hidden rounded-[20px] border border-black/10 bg-white/95 shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] backdrop-blur">
           <div className="flex items-center justify-between border-b border-black/5 px-4 py-3">

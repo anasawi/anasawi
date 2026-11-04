@@ -11,7 +11,9 @@ import { cn } from '@/lib/utils'
 import type { FaqItem, Media, OpeningHour, ServiceWithMedia } from '@/server/db/schema'
 
 /**
- * Les composants VIVANTS de la nouvelle DA d’Anasawi (couleurs chaudes du classique, accents turquoise).
+ * Les composants VIVANTS de la nouvelle DA d’Anasawi (couleurs chaudes du classique, accents turquoise),
+ * pensés pour le téléphone et la tablette autant que pour le grand écran
+ * (rangées et mises en scène larges à partir de `lg`, 1024 px).
  * Les textes qui « s’encrent » sont entièrement lisibles avant que leur
  * section n’atteigne le milieu de l’écran.
  *
@@ -283,7 +285,9 @@ export function Seuil({
     'flex items-center gap-2 whitespace-nowrap rounded-full border border-white/80 bg-white/55 px-3 py-1.5 text-[12px] font-medium text-[var(--ad-pierre)] shadow-[0_8px_24px_-14px_rgba(46,66,79,0.35)] backdrop-blur-md'
   /* La fenêtre : sous le nom au départ, plein écran à l'arrivée. */
   const larg = 'min(460px, 64vw)'
-  const haut = 'min(400px, var(--ad-vh) * 38)'
+  /* Plus basse sur les écrans peu hauts : elle ne doit jamais toucher les
+     boutons du bas. */
+  const haut = 'min(400px, var(--ad-vh) * 34)'
   return (
     <section ref={ref} id="haut" className={cn('relative [--e:0] [--p:0]', edition ? 'h-[calc(var(--ad-vh)*100)]' : 'h-[calc(var(--ad-vh)*240)]')}>
       <div className="sticky top-0 h-[calc(var(--ad-vh)*100)] overflow-hidden">
@@ -334,7 +338,7 @@ export function Seuil({
           variables
           className="absolute left-1/2 z-10 [perspective:1400px] motion-safe:animate-[ad-monter_1.4s_var(--ad-ease)_0.35s_backwards]"
           style={{
-            top: 'calc(66% - 16% * var(--e))',
+            top: 'calc(62% - 12% * var(--e))',
             width: `calc(${larg} + (100vw - ${larg}) * var(--e))`,
             height: `calc(${haut} + (var(--ad-vh) * 100 - ${haut}) * var(--e))`,
             transform: 'translate(-50%, -50%)',
@@ -386,7 +390,7 @@ export function Seuil({
             sur ses bords, qui flottent à peine — discrètes, pas des cartes. */}
         <div
           aria-hidden={jour === null || undefined}
-          className="pointer-events-none absolute left-1/2 top-[66%] z-20 max-sm:hidden"
+          className="pointer-events-none absolute left-1/2 top-[62%] z-20 max-sm:hidden"
           style={{ ...sFondu, width: larg, height: haut, transform: 'translate(-50%, -50%)' }}
         >
           {jour !== null && (
@@ -608,7 +612,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
   }
 
   return (
-    <ul ref={liste} onMouseLeave={renoncer} className="flex flex-col gap-3 md:h-[580px] md:flex-row md:gap-3 [--ouvert:100%]">
+    <ul ref={liste} onMouseLeave={renoncer} className="flex flex-col gap-3 lg:h-[580px] lg:flex-row lg:gap-3 [--ouvert:100%]">
       {services.map((s, i) => {
         const actif = ouverte === i
         const mots = s.title.split(' ')
@@ -619,12 +623,15 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
             onMouseEnter={() => viser(i)}
             onPointerMove={actif ? suivre : undefined}
             className={cn(
-              'relative isolate overflow-hidden rounded-[30px] [--mx:0] [--my:0] motion-reduce:!transition-none',
-              actif ? 'h-[480px] md:h-auto' : 'h-[96px] md:h-auto',
+              /* Téléphone : une pile, chaque arche a sa hauteur (l'ouverte
+                 plus haute). Grand écran : une rangée, les largeurs se
+                 partagent (flex-grow) — jamais de flex-basis nul en
+                 colonne, qui écraserait les hauteurs. */
+              'relative isolate shrink-0 overflow-hidden rounded-[30px] [--mx:0] [--my:0] motion-reduce:!transition-none lg:shrink lg:[flex-basis:0px] lg:[flex-grow:var(--grow)]',
+              actif ? 'h-[min(520px,calc(var(--ad-vh)*72))] lg:h-auto' : 'h-[88px] lg:h-auto',
             )}
             style={{
-              flexGrow: actif ? OUVERTURE : 1,
-              flexBasis: 0,
+              ['--grow' as string]: actif ? OUVERTURE : 1,
               background: TEINTES[i % TEINTES.length],
               transition: `flex-grow 1.05s ${RIDEAU}, height 1.05s ${RIDEAU}`,
             }}
@@ -644,7 +651,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
             {s.media && (
               <div
                 aria-hidden="true"
-                className="pointer-events-none absolute inset-y-0 left-1/2 w-full -translate-x-1/2 md:w-[var(--ouvert)]"
+                className="pointer-events-none absolute inset-y-0 left-1/2 w-full -translate-x-1/2 lg:w-[var(--ouvert)]"
               >
                 <div
                   className="absolute -inset-6"
@@ -683,7 +690,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
             {/* Un trait de lumière traverse l'arche quand elle s'ouvre. */}
             <span
               aria-hidden="true"
-              className="pointer-events-none absolute inset-y-0 left-0 z-[5] w-[60%] -skew-x-[18deg] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] mix-blend-overlay md:w-[calc(var(--ouvert)*0.5)]"
+              className="pointer-events-none absolute inset-y-0 left-0 z-[5] w-[60%] -skew-x-[18deg] bg-[linear-gradient(90deg,transparent,rgba(255,255,255,0.22),transparent)] mix-blend-overlay lg:w-[calc(var(--ouvert)*0.5)]"
               style={{
                 transform: actif ? 'translateX(260%) skewX(-18deg)' : 'translateX(-120%) skewX(-18deg)',
                 transition: actif ? `transform 1.5s ${SORTIE} 0.25s` : 'none',
@@ -710,7 +717,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
             <span
               aria-hidden="true"
               className={cn(
-                'pointer-events-none absolute right-5 top-5 z-20 grid h-11 w-11 place-items-center rounded-full backdrop-blur-md max-md:hidden',
+                'pointer-events-none absolute right-5 top-5 z-20 grid h-11 w-11 place-items-center rounded-full backdrop-blur-md max-lg:hidden',
                 actif ? 'bg-white text-[var(--ad-nuit)]' : 'bg-white/70 text-[var(--ad-nuit)]',
               )}
               style={{
@@ -723,7 +730,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
 
             {/* Fermée : le numéro et le titre, debout. */}
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-[6] flex items-end gap-3 p-6 text-[var(--ad-nuit)]"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-[6] flex items-end gap-3 p-6 text-[var(--ad-nuit)] lg:flex-col-reverse lg:items-center lg:gap-4 lg:px-0"
               style={{
                 opacity: actif ? 0 : 1,
                 transform: actif ? 'translate3d(0,24px,0)' : 'translate3d(0,0,0)',
@@ -733,14 +740,14 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
               }}
             >
               <span className="font-[family-name:var(--ad-titre)] text-[18px] font-semibold tracking-[-0.03em] opacity-60">{String(i + 1).padStart(2, '0')}</span>
-              <span className="font-[family-name:var(--ad-titre)] text-[24px] font-semibold leading-[1.05] tracking-[-0.03em] md:rotate-180 md:[writing-mode:vertical-rl]">{s.title}</span>
+              <span className="font-[family-name:var(--ad-titre)] text-[24px] font-semibold leading-[1.05] tracking-[-0.03em] lg:rotate-180 lg:[writing-mode:vertical-rl]">{s.title}</span>
             </div>
 
             {/* Ouverte : la fiche, posée à la largeur finale (aucune
                 recomposition), qui se dévoile ligne à ligne. */}
             <div
               className={cn(
-                'absolute bottom-0 left-0 z-20 w-full p-7 md:w-[var(--ouvert)] md:p-9',
+                'absolute bottom-0 left-0 z-20 w-full p-7 lg:w-[var(--ouvert)] lg:p-9',
                 sombre ? 'text-white' : 'text-[var(--ad-nuit)]',
                 !actif && 'pointer-events-none',
               )}
@@ -756,7 +763,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
                 {s.group && <span className="rounded-full border border-current/40 px-3 py-1 backdrop-blur-sm">{s.group.label}</span>}
                 {s.duration && <span className="rounded-full border border-current/40 px-3 py-1 backdrop-blur-sm">{s.duration.split(/[·—]/)[0]}</span>}
               </div>
-              <h3 className="max-w-[14ch] text-[40px] leading-[0.98] md:text-[58px]">
+              <h3 className="max-w-[14ch] text-[40px] leading-[0.98] lg:text-[58px]">
                 {mots.map((mot, k) => (
                   <span key={k} className="inline-block overflow-hidden pb-[0.1em] align-bottom">
                     <span
@@ -908,11 +915,21 @@ export function Conversation({
     return () => window.clearTimeout(t)
   }, [choisie])
   const q = faq[choisie]
+  /* La question choisie reste visible dans la ligne défilante (téléphone). */
+  const rangee = useRef<HTMLUListElement>(null)
+  useEffect(() => {
+    const ul = rangee.current
+    if (!ul || ul.scrollWidth <= ul.clientWidth) return
+    const actif = ul.querySelector<HTMLElement>('[aria-pressed="true"]')?.parentElement
+    if (actif) ul.scrollTo({ left: actif.offsetLeft - 20, behavior: 'smooth' })
+  }, [choisie])
   return (
-    <div className="grid gap-10 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
-      <ul className="flex flex-wrap content-start gap-2.5">
+    <div className="grid gap-8 lg:grid-cols-[minmax(0,0.9fr)_minmax(0,1.1fr)] lg:gap-16">
+      {/* Téléphone : les questions défilent en une ligne, au doigt, pour que
+          la réponse reste à portée d'œil. Grand écran : un nuage. */}
+      <ul ref={rangee} className="-mx-[5vw] flex snap-x snap-mandatory scroll-px-[5vw] gap-2.5 overflow-x-auto px-[5vw] pb-1 [scrollbar-width:none] lg:mx-0 lg:snap-none lg:flex-wrap lg:content-start lg:overflow-visible lg:px-0 lg:pb-0">
         {faq.map((f, i) => (
-          <li key={f.id}>
+          <li key={f.id} className="shrink-0 snap-start max-lg:max-w-[78vw]">
             <button
               type="button"
               onClick={() => setChoisie(i)}
@@ -1319,11 +1336,11 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
               </svg>
               <LogoMark src={logo} priority className="h-7 w-7 transition-transform duration-700 ease-[var(--ad-ease)] group-hover/logo:rotate-[-12deg]" />
             </span>
-            <span className={cn('transition-[opacity,max-width] duration-700 ease-[var(--ad-ease)]', serre ? 'max-w-0 opacity-0 md:max-w-[120px] md:opacity-100' : 'max-w-[120px]')}>
+            <span className={cn('transition-[opacity,max-width] duration-700 ease-[var(--ad-ease)]', serre ? 'max-w-0 opacity-0 sm:max-w-[120px] sm:opacity-100' : 'max-w-[120px]')}>
               Anasawi<span className="text-[var(--ad-or)]">.</span>
             </span>
           </a>
-          <nav ref={navRef} aria-label="Sections" className="relative flex items-center max-md:hidden" onMouseLeave={() => setSurvol(null)}>
+          <nav ref={navRef} aria-label="Sections" className="relative flex items-center max-lg:hidden" onMouseLeave={() => setSurvol(null)}>
             {/* La pastille qui glisse d'un lien à l'autre, et qui se
                 remplit d'un dégradé pendant qu'on lit la section. */}
             <span
@@ -1351,7 +1368,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
                 onBlur={() => setSurvol(null)}
                 aria-current={actif === l.href ? 'location' : undefined}
                 className={cn(
-                  'relative z-[1] rounded-full px-3.5 py-2 text-[14px] transition-colors duration-300',
+                  'relative z-[1] whitespace-nowrap rounded-full px-3.5 py-2 text-[14px] transition-colors duration-300',
                   cible === l.href ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-pierre)]',
                 )}
               >
@@ -1360,11 +1377,11 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
             ))}
           </nav>
           <BasculeVersion actuelle="moderne" className="mr-1 text-[var(--ad-pierre)] max-lg:hidden" />
-          <Aimant force={0.25} className="max-md:hidden">
+          <Aimant force={0.25} className="max-lg:hidden">
           <a
             href={rdv}
             className={cn(
-              'rounded-full bg-[var(--ad-nuit)] text-[14px] font-medium text-white transition-[padding] duration-700 ease-[var(--ad-ease)] max-md:hidden',
+              'whitespace-nowrap rounded-full bg-[var(--ad-nuit)] text-[14px] font-medium text-white transition-[padding] duration-700 ease-[var(--ad-ease)] max-lg:hidden',
               serre ? 'px-4 py-2' : 'px-5 py-2.5',
             )}
           >
@@ -1375,7 +1392,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
             type="button"
             onClick={() => setOuvert(true)}
             aria-label="Ouvrir le menu"
-            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ad-nuit)] text-white md:hidden"
+            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ad-nuit)] text-white lg:hidden"
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -1385,7 +1402,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
       {/* Le rideau du téléphone. */}
       <div
         className={cn(
-          'fixed inset-0 z-[60] flex flex-col bg-[var(--ad-ivoire)] px-7 pb-10 pt-6 transition-[clip-path] duration-[800ms] ease-[var(--ad-ease)] md:hidden',
+          'fixed inset-0 z-[60] flex flex-col bg-[var(--ad-ivoire)] px-7 pb-10 pt-6 transition-[clip-path] duration-[800ms] ease-[var(--ad-ease)] lg:hidden',
           ouvert ? '[clip-path:circle(150%_at_calc(100%-44px)_44px)]' : 'pointer-events-none [clip-path:circle(0%_at_calc(100%-44px)_44px)]',
         )}
         aria-hidden={!ouvert}
@@ -1483,7 +1500,7 @@ export function Souffle({ bouton = 'Respirer une minute' }: { bouton?: string })
           <span className="col-start-1 row-start-1 opacity-0 motion-safe:animate-[ad-expirez_8s_linear_infinite]">Expirez</span>
         </span>
       </div>
-      <div className="flex items-center gap-4" aria-live="polite">
+      <div className="flex flex-col items-center gap-3 text-center xl:flex-row xl:gap-4 xl:text-left" aria-live="polite">
         <button
           type="button"
           onClick={() => {
@@ -1493,7 +1510,7 @@ export function Souffle({ bouton = 'Respirer une minute' }: { bouton?: string })
               setDebut(Date.now())
             }
           }}
-          className="group inline-flex items-center gap-3 rounded-full bg-[var(--ad-nuit)] py-2 pl-5 pr-2 text-[14px] font-semibold text-white"
+          className="group inline-flex items-center gap-3 whitespace-nowrap rounded-full bg-[var(--ad-nuit)] py-2 pl-5 pr-2 text-[14px] font-semibold text-white"
         >
           {enCours ? 'Arrêter' : fini ? 'Recommencer' : bouton}
           <span className="grid h-8 w-8 place-items-center rounded-full bg-white/15">

@@ -9,7 +9,7 @@ import { LogoMark } from '@/components/site/Logo'
 import { cn, toE164 } from '@/lib/utils'
 
 /**
- * Les sections de la nouvelle DA d’Anasawi (couleurs chaudes du classique). Chacune a une idée, une
+ * Les sections de la nouvelle DA d’Anasawi (couleurs chaudes du classique), responsives. Chacune a une idée, une
  * seule, et un mouvement qui la sert :
  *
  *   Seuil          on passe la porte : l'arche s'ouvre sur le cabinet
@@ -226,11 +226,13 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           {/* Le plan : une vraie carte, teintée aux couleurs du site. */}
           <Revele className={cn(carte, 'relative overflow-hidden p-0 md:col-span-2 md:row-span-2')}>
             {c.adresse ? (
-              <Carte adresse={c.adresse} className="absolute inset-0" />
+              <Carte adresse={c.adresse} className="h-[260px] sm:h-[320px] md:absolute md:inset-0 md:h-auto" />
             ) : (
-              <div aria-hidden="true" className="absolute inset-0 bg-[var(--ad-brume)]" />
+              <div aria-hidden="true" className="h-[200px] bg-[var(--ad-brume)] md:absolute md:inset-0 md:h-auto" />
             )}
-            <div className="pointer-events-none relative flex h-full min-h-[340px] flex-col justify-end p-5">
+            {/* Téléphone : l'adresse SOUS la carte (l'épingle reste visible).
+                Grand écran : posée dessus, en bas. */}
+            <div className="relative p-3 md:pointer-events-none md:flex md:h-full md:min-h-[340px] md:flex-col md:justify-end md:p-5">
               <div className="pointer-events-auto rounded-[20px] bg-white/90 p-5 shadow-[0_14px_40px_-20px_rgba(46,66,79,0.4)] backdrop-blur">
                 <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.cabinet}</p>
                 <p className="mt-1 text-[18px] font-semibold tracking-[-0.02em]">{c.adresse ?? c.ville}</p>
@@ -239,7 +241,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
                     href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.adresse)}`}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="group mt-3 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--ad-bleu)]"
+                    className="group -my-1 mt-2 inline-flex items-center gap-1.5 py-2 text-[14px] font-semibold text-[var(--ad-bleu)]"
                   >
                     {t.itineraire}
                     <ArrowUpRight className="h-4 w-4 transition-transform duration-300 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
@@ -468,7 +470,7 @@ export function Horizon({
           </span>
           <nav aria-label="Pied de page" className="flex flex-wrap gap-x-6 gap-y-2">
             {liens.map((l) => (
-              <a key={l.href} href={l.href} className="transition-colors hover:text-white">
+              <a key={l.href} href={l.href} className="-my-1.5 py-1.5 transition-colors hover:text-white">
                 {l.label}
               </a>
             ))}
