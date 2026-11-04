@@ -71,6 +71,16 @@ import {
   mTexteImageBlock,
   mVideoBlock,
 } from './moderne/modeles'
+import {
+  mExCarnetBlock,
+  mExEventailBlock,
+  mExFenteBlock,
+  mExLampeBlock,
+  mExLettresBlock,
+  mExOrbiteBlock,
+  mExPuzzleBlock,
+  mExRubanBlock,
+} from './moderne/exception'
 import { quoteBlock } from './quote'
 import { servicesBlock } from './services'
 import {
@@ -253,6 +263,14 @@ export const blockRegistry = {
   mConversation: mConversationBlock,
   mRendezVous: mRendezVousBlock,
   mHorizon: mHorizonBlock,
+  mExLettres: mExLettresBlock,
+  mExFente: mExFenteBlock,
+  mExLampe: mExLampeBlock,
+  mExEventail: mExEventailBlock,
+  mExOrbite: mExOrbiteBlock,
+  mExRuban: mExRubanBlock,
+  mExCarnet: mExCarnetBlock,
+  mExPuzzle: mExPuzzleBlock,
   mOuverturePleine: mOuverturePleineBlock,
   mOuverturePartagee: mOuverturePartageeBlock,
   mPortraitChiffres: mPortraitChiffresBlock,
@@ -372,6 +390,14 @@ const CATEGORY_OF: Partial<Record<BlockType, TemplateCategory>> = {
   mEnPratique: 'Contact & rendez-vous',
   mRendezVous: 'Contact & rendez-vous',
   mHorizon: 'Contact & rendez-vous',
+  mExLettres: 'Textes',
+  mExFente: 'Ouverture',
+  mExLampe: 'Photos & vidéos',
+  mExEventail: 'Photos & vidéos',
+  mExOrbite: 'Accompagnements',
+  mExRuban: 'Textes',
+  mExCarnet: 'Ma méthode',
+  mExPuzzle: 'Qui je suis', // modèles d’exception : /moderne/exception
   mOuverturePleine: 'Ouverture',
   mOuverturePartagee: 'Ouverture',
   mPortraitChiffres: 'Qui je suis',

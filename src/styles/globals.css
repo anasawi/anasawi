@@ -1032,3 +1032,63 @@
     filter: blur(4px);
   }
 }
+
+/* ── Modèles d’exception (components/anasawi/exception.tsx) ────────── */
+/* Une lettre qui arrive : elle monte en se redressant, floue puis nette. */
+@keyframes ad-lettre {
+  from {
+    opacity: 0;
+    transform: translateY(0.55em) rotate(10deg);
+    filter: blur(8px);
+  }
+}
+/* Écran tactile : une vague lente parcourt les lettres. */
+@keyframes ad-vague {
+  0%,
+  100% {
+    --f: 0;
+  }
+  50% {
+    --f: 0.6;
+  }
+}
+@property --f {
+  syntax: '<number>';
+  inherits: true;
+  initial-value: 0;
+}
+/* La lampe : position et rayon (en longueur) animables — transition, errance. */
+@property --lampe-x {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+@property --lampe-y {
+  syntax: '<percentage>';
+  inherits: true;
+  initial-value: 50%;
+}
+@property --lampe-r {
+  syntax: '<length>';
+  inherits: true;
+  initial-value: 200px;
+}
+@keyframes ad-errance {
+  0%,
+  100% {
+    --lampe-x: 30%;
+    --lampe-y: 40%;
+  }
+  25% {
+    --lampe-x: 70%;
+    --lampe-y: 30%;
+  }
+  50% {
+    --lampe-x: 62%;
+    --lampe-y: 68%;
+  }
+  75% {
+    --lampe-x: 26%;
+    --lampe-y: 62%;
+  }
+}
