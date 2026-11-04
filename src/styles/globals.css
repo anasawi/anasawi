@@ -1121,3 +1121,39 @@
     transform: rotate(3.5deg);
   }
 }
+/* Une tuile, une photo ou un panneau qui change : fondu + léger recul. */
+@keyframes ad-tuile {
+  from {
+    opacity: 0;
+    transform: scale(1.06);
+  }
+}
+/* La barre qui se remplit dans l'onglet actif. */
+@keyframes ad-remplir {
+  from {
+    transform: scaleX(0);
+  }
+  to {
+    transform: scaleX(1);
+  }
+}
+/* Le dégradé de couleurs qui glisse lentement. */
+@keyframes ad-degrade {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
+/* Le halo d'un bouton : il s'élargit à peine et s'efface. */
+@keyframes ad-halo {
+  from {
+    transform: scale(1);
+    opacity: 0.35;
+  }
+  to {
+    transform: scale(1.35, 1.6);
+    opacity: 0;
+  }
+}
