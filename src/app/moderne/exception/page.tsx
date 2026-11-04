@@ -48,8 +48,8 @@ export default async function ExceptionPage() {
             Modèles <em>d’exception</em>
           </h1>
           <p className="mt-6 max-w-[56ch] text-[17px] leading-[1.7] text-[var(--ad-pierre)]">
-            {MODELES_EXCEPTION.length} sections épurées, trois par catégorie de la bibliothèque : beaucoup d’air, des filets fins, et une seule
-            animation soignée chacune. Toutes s’ajoutent depuis l’éditeur du site moderne et se modifient entièrement.
+            {MODELES_EXCEPTION.length} sections, trois par catégorie, dans l’esprit de l’éventail et de la frise : des cartes qui bougent comme de
+            vrais objets, en continu ou au défilement. Toutes s’ajoutent depuis l’éditeur du site moderne et se modifient entièrement.
           </p>
           <nav aria-label="Sommaire" className="mt-12 grid gap-x-10 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
             {EXCEPTION_PAR_CATEGORIE.map((g) => (

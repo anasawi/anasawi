@@ -5,30 +5,31 @@ import type { BlockDefinition } from '../types'
 import { contenuDe, Enveloppe } from './blocs'
 import type { Contenu } from './contenu'
 import {
-  Adresse,
-  Chapitres,
-  Devoilement,
+  CartePostale,
+  ChiffresCartes,
+  CitationPosee,
+  Colonnes,
+  Defile,
+  Donne,
+  Ecart,
+  Etiquettes,
   Eventail,
-  Fente,
-  Fil,
+  EventailEtapes,
+  Fiches,
   Frise,
-  Horloge,
-  Index,
+  FriseServices,
   Invitation,
-  Lames,
-  Lampe,
-  LettresVivantes,
-  LignesServices,
-  MachineAEcrire,
-  MotPhoto,
+  InvitationFlottante,
+  Liasse,
+  Manege,
+  Mobile,
   MotQuiChange,
-  Odometre,
-  Planche,
-  Pli,
-  Ruban,
-  Sommaire,
-  Volets,
-  Voyage,
+  Mur,
+  Paquet,
+  Pile,
+  PortraitAccompagne,
+  Roue,
+  Semaine,
 } from '@/components/anasawi/exception'
 import { enLignes, Surtitre } from '@/components/anasawi/sections'
 import { Lignes, Revele } from '@/components/anasawi/vivant'
@@ -36,8 +37,9 @@ import type { Media } from '@/server/db/schema'
 
 /**
  * LES MODÈLES D'EXCEPTION — vingt-quatre sections, trois par catégorie de
- * la bibliothèque. Épurées : beaucoup d'air, des filets fins, et une seule
- * animation soignée par section. Vitrine : /moderne/exception.
+ * la bibliothèque, dans l'esprit de l'éventail et de la frise : des cartes
+ * (photos, étapes, questions, jours…) qui bougent comme de vrais objets,
+ * en continu ou au défilement. Vitrine : /moderne/exception.
  *
  * Comme les autres blocs modernes : préremplis avec le contenu réel,
  * tout modifiable dans l'éditeur.
@@ -45,14 +47,24 @@ import type { Media } from '@/server/db/schema'
 
 const t = z.string().default('')
 const media = z.string().nullable().default(null)
+const liste = z.array(z.string()).default([])
 const commun = { group: 'Sections' as const, theme: 'moderne' as const, bleed: true }
 const TITRE = 'Une ligne par retour à la ligne ; le mot clé entre *astérisques*.'
-const SECTION = 'py-24 md:py-36'
+const SECTION = 'overflow-x-clip py-24 md:py-36'
 const CONTENEUR = 'mx-auto max-w-[1200px] px-[5vw]'
 const RDV = 'Prendre rendez-vous'
 
+const champ = {
+  surtitre: field.text('surtitre', 'Étiquette'),
+  titre: field.textarea('titre', 'Titre', { help: TITRE }),
+  texte: field.textarea('texte', 'Texte'),
+  bouton: field.text('bouton', 'Bouton'),
+  photos: (help?: string) => field.mediaList('photos', 'Photos', help ? { help } : undefined),
+}
+
 /** En-tête commun : étiquette + titre en lignes (+ texte), centré ou non. */
 function Tete({ surtitre, titre, texte, centre = false }: { surtitre: string; titre: string; texte?: string; centre?: boolean }) {
+  if (!surtitre && !titre && !texte) return null
   return (
     <div className={centre ? 'mx-auto mb-16 max-w-[760px] text-center' : 'mb-16 grid gap-6 lg:grid-cols-2 lg:items-end'}>
       <div>
@@ -72,108 +84,125 @@ function Tete({ surtitre, titre, texte, centre = false }: { surtitre: string; ti
   )
 }
 const photoDe = (id: string | null, resolve: (id: string) => Media | null) => (id ? resolve(id) : null)
-const photosDe = (ids: string[], resolve: (id: string) => Media | null) => ids.map(resolve).filter((m): m is Media => Boolean(m))
 const sansSubstitution = (c: Contenu) => c.photos.filter((p) => !/substitution/i.test(p.alt))
+/** Les photos choisies, sinon celles du cabinet (n au plus). */
+const photosOu = (ids: string[], resolve: (id: string) => Media | null, c: Contenu, n: number) => {
+  const choisies = ids.map(resolve).filter((m): m is Media => Boolean(m))
+  return (choisies.length ? choisies : sansSubstitution(c)).slice(0, n)
+}
+const idsDe = (c: Contenu, n: number, sauf?: string) => sansSubstitution(c).filter((p) => p.id !== sauf).slice(0, n).map((p) => p.id)
 /** Les accompagnements, chacun avec sa photo (la sienne, sinon une du cabinet). */
 const servicesIllustres = (c: Contenu) => {
   const photos = sansSubstitution(c).filter((p) => p.id !== c.portrait?.id)
   return c.services.map((s, i) => ({ ...s, media: s.media ?? photos[i % Math.max(1, photos.length)] ?? null }))
 }
 
+/** Le texte d'ouverture (étiquette, titre, intro, bouton), réutilisé. */
+function TexteOuverture({ data, c, centre = false }: { data: { surtitre: string; titre: string; intro: string; bouton: string }; c: Contenu; centre?: boolean }) {
+  return (
+    <div className={centre ? 'mx-auto max-w-[820px] text-center' : ''}>
+      {data.surtitre && (centre ? <div className="flex justify-center"><Surtitre>{data.surtitre}</Surtitre></div> : <Surtitre>{data.surtitre}</Surtitre>)}
+      <h1 className="text-[clamp(42px,6.4vw,96px)] leading-[1]">
+        <Lignes lignes={enLignes(data.titre || c.ouverture.titre)} />
+      </h1>
+      {data.intro && (
+        <Revele delai={0.3}>
+          <p className={centre ? 'mx-auto mt-7 max-w-[48ch] text-[17px] leading-[1.7] text-[var(--ad-pierre)]' : 'mt-7 max-w-[44ch] text-[17px] leading-[1.7] text-[var(--ad-pierre)]'}>{data.intro}</p>
+        </Revele>
+      )}
+      <Revele delai={0.45} className={centre ? 'mt-9 flex justify-center' : 'mt-9'}>
+        <a href={c.rdv} className="inline-flex rounded-full bg-[var(--ad-nuit)] px-6 py-3.5 text-[14px] font-semibold text-white shadow-[0_18px_36px_-18px_rgba(46,66,79,0.7)] transition-transform duration-500 hover:-translate-y-0.5">
+          {data.bouton || RDV}
+        </a>
+      </Revele>
+    </div>
+  )
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    OUVERTURE
    ══════════════════════════════════════════════════════════════════════ */
 
-const fenteSchema = z.object({ haut: t, bas: t, legende: t, mediaId: media })
-export const mExFenteBlock: BlockDefinition<typeof fenteSchema> = {
+const ouvertureSchema = z.object({ surtitre: t, titre: t, intro: t, bouton: t, photos: liste })
+const champsOuverture = [champ.surtitre, champ.titre, field.textarea('intro', 'Introduction'), champ.bouton, champ.photos('Quatre ou cinq, c’est l’idéal.')]
+const ouvertureDe = (c: Contenu) => ({ surtitre: c.ouverture.surtitre, titre: c.ouverture.titre, intro: c.ouverture.intro, bouton: RDV, photos: idsDe(c, 5) })
+
+export const mExPileBlock: BlockDefinition<typeof ouvertureSchema> = {
   ...commun,
-  label: 'Exception — La fente',
-  description: 'Une phrase coupée par un trait fin ; en descendant, elle s’écarte et s’ouvre sur une photo plein écran.',
-  schema: fenteSchema,
-  fields: [
-    field.text('haut', 'Moitié du haut', { help: 'Le mot clé entre *astérisques*.' }),
-    field.text('bas', 'Moitié du bas'),
-    field.text('legende', 'Légende, dans la photo'),
-    field.media('mediaId', 'Photo'),
-  ],
-  defaults: { haut: 'Entrez,', bas: '*prenez place*', legende: '', mediaId: null },
-  preremplir: (c) => ({ haut: 'Entrez,', bas: '*prenez place*', legende: c.accroche, mediaId: c.ambiance?.id ?? null }),
+  label: 'Exception — La pile',
+  description: 'À côté du titre, des photos posées en tas qui flottent doucement et s’écartent les unes des autres quand on descend.',
+  schema: ouvertureSchema,
+  fields: champsOuverture,
+  defaults: { surtitre: '', titre: '', intro: '', bouton: RDV, photos: [] },
+  preremplir: ouvertureDe,
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <Fente haut={data.haut} bas={data.bas} legende={data.legende} photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance} />
+        <section className="overflow-x-clip pb-24 pt-36 md:pb-32 md:pt-44">
+          <div className={`${CONTENEUR} grid items-center gap-16 lg:grid-cols-2`}>
+            <TexteOuverture data={data} c={c} />
+            <Pile photos={photosOu(data.photos, ctx.resolveMedia, c, 4)} />
+          </div>
+        </section>
       </Enveloppe>
     )
   },
 }
 
-const lamesSchema = z.object({ surtitre: t, titre: t, intro: t, bouton: t, mediaId: media })
-export const mExLamesBlock: BlockDefinition<typeof lamesSchema> = {
+export const mExRoueBlock: BlockDefinition<typeof ouvertureSchema> = {
   ...commun,
-  label: 'Exception — Les lames',
-  description: 'La photo d’ouverture arrive en six bandes qui montent l’une après l’autre ; le texte se pose ensuite.',
-  schema: lamesSchema,
-  fields: [
-    field.text('surtitre', 'Étiquette'),
-    field.textarea('titre', 'Titre', { help: TITRE }),
-    field.textarea('intro', 'Introduction'),
-    field.text('bouton', 'Bouton'),
-    field.media('mediaId', 'Photo'),
-  ],
-  defaults: { surtitre: '', titre: '', intro: '', bouton: RDV, mediaId: null },
-  preremplir: (c) => ({ surtitre: c.ouverture.surtitre, titre: c.ouverture.titre, intro: c.ouverture.intro, bouton: RDV, mediaId: c.ambiance?.id ?? null }),
+  label: 'Exception — La roue',
+  description: 'Sous le titre, une grande roue de photos qui tourne lentement, sans fin ; on n’en voit que le haut, comme un horizon.',
+  schema: ouvertureSchema,
+  fields: champsOuverture,
+  defaults: { surtitre: '', titre: '', intro: '', bouton: RDV, photos: [] },
+  preremplir: (c) => ({ ...ouvertureDe(c), photos: idsDe(c, 10) }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <Lames photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance}>
-          {data.surtitre && <p className="text-[12px] font-semibold uppercase tracking-[0.2em] text-white/70">{data.surtitre}</p>}
-          <h1 className="mt-4 max-w-[16ch] text-[clamp(42px,7vw,104px)] leading-[1] text-white [&_em]:[-webkit-text-fill-color:#dff1ef] [&_em]:[background:none]">
-            {enLignes(data.titre || c.ouverture.titre).map((l, i) => (
+        <section className="overflow-x-clip pt-36 md:pt-44">
+          <div className={CONTENEUR}>
+            <TexteOuverture data={data} c={c} centre />
+          </div>
+          <div className="mt-16">
+            <Roue photos={photosOu(data.photos, ctx.resolveMedia, c, 10)} />
+          </div>
+        </section>
+      </Enveloppe>
+    )
+  },
+}
+
+const ecartSchema = z.object({ surtitre: t, titre: t, texte: t, photos: liste })
+export const mExEcartBlock: BlockDefinition<typeof ecartSchema> = {
+  ...commun,
+  label: 'Exception — L’écart',
+  description: 'Les photos recouvrent le titre, en tas ; en descendant, elles glissent vers les bords et le titre apparaît au milieu.',
+  schema: ecartSchema,
+  fields: [champ.surtitre, champ.titre, champ.texte, champ.photos('Cinq photos.')],
+  defaults: { surtitre: '', titre: 'Entrez,\n*prenez place*', texte: '', photos: [] },
+  preremplir: (c) => ({ surtitre: c.ouverture.surtitre, titre: 'Entrez,\n*prenez place*', texte: c.accroche, photos: idsDe(c, 5) }),
+  Component: ({ data, ctx }) => {
+    const c = contenuDe(ctx)
+    return (
+      <Enveloppe ctx={ctx}>
+        <Ecart photos={photosOu(data.photos, ctx.resolveMedia, c, 5)}>
+          {data.surtitre && (
+            <div className="flex justify-center">
+              <Surtitre>{data.surtitre}</Surtitre>
+            </div>
+          )}
+          <h2 className="text-[clamp(44px,8vw,128px)] leading-[0.98]">
+            {enLignes(data.titre || 'Entrez,\n*prenez place*').map((l, i) => (
               <span key={i} className="block">
                 {l}
               </span>
             ))}
-          </h1>
-          <div className="mt-8 flex flex-wrap items-end justify-between gap-6">
-            {data.intro && <p className="max-w-[46ch] text-[16.5px] leading-[1.65] text-white/80">{data.intro}</p>}
-            <a href={c.rdv} className="rounded-full border border-white/50 px-6 py-3 text-[14px] font-semibold text-white transition-colors duration-500 hover:bg-white hover:text-[var(--ad-nuit)]">
-              {data.bouton || RDV}
-            </a>
-          </div>
-        </Lames>
-      </Enveloppe>
-    )
-  },
-}
-
-const motPhotoSchema = z.object({ surtitre: t, mot: t, texte: t, mediaId: media })
-export const mExMotPhotoBlock: BlockDefinition<typeof motPhotoSchema> = {
-  ...commun,
-  label: 'Exception — Le mot-photo',
-  description: 'Un très grand mot taillé dans la photo : il se resserre en arrivant, et l’image glisse lentement dans les lettres.',
-  schema: motPhotoSchema,
-  fields: [field.text('surtitre', 'Étiquette'), field.text('mot', 'Le mot', { help: 'Court : un mot, deux au plus.' }), field.textarea('texte', 'Texte dessous'), field.media('mediaId', 'Photo')],
-  defaults: { surtitre: '', mot: 'respirer', texte: '', mediaId: null },
-  preremplir: (c) => ({ surtitre: c.ouverture.surtitre, mot: 'respirer', texte: c.accroche, mediaId: (c.photos.find((p) => /jardin|verdure|plante/i.test(p.alt)) ?? c.ambiance)?.id ?? null }),
-  Component: ({ data, ctx }) => {
-    const c = contenuDe(ctx)
-    return (
-      <Enveloppe ctx={ctx}>
-        <section className="overflow-hidden pb-24 pt-32 md:pb-32 md:pt-44">
-          {data.surtitre && (
-            <div className="mb-6 flex justify-center">
-              <Surtitre>{data.surtitre}</Surtitre>
-            </div>
-          )}
-          <MotPhoto mot={data.mot || 'respirer'} photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance} />
-          {data.texte && (
-            <Revele delai={0.4}>
-              <p className="mx-auto mt-10 max-w-[46ch] px-6 text-center text-[17px] leading-[1.7] text-[var(--ad-pierre)]">{data.texte}</p>
-            </Revele>
-          )}
-        </section>
+          </h2>
+          {data.texte && <p className="mx-auto mt-8 max-w-[44ch] text-[17px] leading-[1.7] text-[var(--ad-pierre)]">{data.texte}</p>}
+        </Ecart>
       </Enveloppe>
     )
   },
@@ -183,41 +212,32 @@ export const mExMotPhotoBlock: BlockDefinition<typeof motPhotoSchema> = {
    QUI JE SUIS
    ══════════════════════════════════════════════════════════════════════ */
 
-const devoilementSchema = z.object({ surtitre: t, titre: t, texte: t, citation: t, mediaId: media })
-export const mExDevoilementBlock: BlockDefinition<typeof devoilementSchema> = {
+const portraitSchema = z.object({ surtitre: t, titre: t, texte: t, mediaId: media, photos: liste })
+export const mExPortraitBlock: BlockDefinition<typeof portraitSchema> = {
   ...commun,
-  label: 'Exception — Le dévoilement',
-  description: 'Le portrait se découvre lentement de bas en haut, à côté d’un texte qui se pose ligne à ligne.',
-  schema: devoilementSchema,
-  fields: [
-    field.text('surtitre', 'Étiquette'),
-    field.textarea('titre', 'Titre', { help: TITRE }),
-    field.textarea('texte', 'Texte'),
-    field.textarea('citation', 'Phrase mise en avant'),
-    field.media('mediaId', 'Portrait'),
-  ],
-  defaults: { surtitre: 'Qui je suis', titre: '', texte: '', citation: '', mediaId: null },
-  preremplir: (c) => ({ surtitre: c.apropos.surtitre, titre: c.apropos.titre, texte: c.apropos.texte, citation: c.apropos.citation ?? '', mediaId: c.portrait?.id ?? null }),
+  label: 'Exception — Le portrait accompagné',
+  description: 'Le portrait sur sa carte, deux petites photos glissées derrière qui dépassent et dérivent à leur propre vitesse.',
+  schema: portraitSchema,
+  fields: [champ.surtitre, champ.titre, champ.texte, field.media('mediaId', 'Portrait'), champ.photos('Deux photos, derrière le portrait.')],
+  defaults: { surtitre: 'Qui je suis', titre: '', texte: '', mediaId: null, photos: [] },
+  preremplir: (c) => ({ surtitre: c.apropos.surtitre, titre: c.apropos.titre, texte: c.apropos.texte, mediaId: c.portrait?.id ?? null, photos: idsDe(c, 2, c.portrait?.id) }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
+    const portrait = photoDe(data.mediaId, ctx.resolveMedia) ?? c.portrait
+    const autres = photosOu(data.photos, ctx.resolveMedia, c, 3).filter((p) => p.id !== portrait?.id).slice(0, 2)
     return (
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
-          <div className={`${CONTENEUR} grid items-center gap-12 lg:grid-cols-[minmax(0,0.85fr)_minmax(0,1fr)] lg:gap-24`}>
-            <Devoilement photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.portrait} />
+          <div className={`${CONTENEUR} grid items-center gap-20 lg:grid-cols-2`}>
+            <PortraitAccompagne portrait={portrait} photos={autres} />
             <div>
               {data.surtitre && <Surtitre>{data.surtitre}</Surtitre>}
-              <h2 className="text-[clamp(34px,4.4vw,56px)]">
+              <h2 className="text-[clamp(32px,4.2vw,54px)]">
                 <Lignes lignes={enLignes(data.titre || c.apropos.titre)} />
               </h2>
               {data.texte && (
                 <Revele delai={0.3}>
                   <p className="mt-8 whitespace-pre-line text-[16.5px] leading-[1.75] text-[var(--ad-pierre)]">{data.texte}</p>
-                </Revele>
-              )}
-              {data.citation && (
-                <Revele delai={0.5}>
-                  <p className="mt-10 border-l border-[var(--ad-sable-fonce)] pl-6 font-[family-name:var(--ad-titre)] text-[22px] italic leading-[1.4] text-[var(--ad-nuit)]">{data.citation}</p>
                 </Revele>
               )}
             </div>
@@ -228,29 +248,23 @@ export const mExDevoilementBlock: BlockDefinition<typeof devoilementSchema> = {
   },
 }
 
-const plancheSchema = z.object({ surtitre: t, titre: t, texte: t, photos: z.array(z.string()).default([]) })
-export const mExPlancheBlock: BlockDefinition<typeof plancheSchema> = {
+const photosSchema = z.object({ surtitre: t, titre: t, texte: t, photos: liste })
+export const mExColonnesBlock: BlockDefinition<typeof photosSchema> = {
   ...commun,
-  label: 'Exception — La planche',
-  description: 'Des photos en trois colonnes qui glissent à des vitesses différentes au défilement : une profondeur à peine perceptible.',
-  schema: plancheSchema,
-  fields: [
-    field.text('surtitre', 'Étiquette'),
-    field.textarea('titre', 'Titre', { help: TITRE }),
-    field.textarea('texte', 'Texte'),
-    field.mediaList('photos', 'Photos', { help: 'Six ou neuf, c’est l’idéal. La légende de la photo s’affiche dessous.' }),
-  ],
+  label: 'Exception — Les colonnes',
+  description: 'Trois colonnes de photos qui montent et descendent sans fin, en sens contraire ; survolées, elles s’arrêtent.',
+  schema: photosSchema,
+  fields: [champ.surtitre, champ.titre, champ.texte, champ.photos('Six ou plus.')],
   defaults: { surtitre: 'Quelques instants', titre: 'Le cabinet, *au quotidien*', texte: '', photos: [] },
-  preremplir: (c) => ({ surtitre: 'Quelques instants', titre: 'Le cabinet, *au quotidien*', texte: '', photos: sansSubstitution(c).slice(0, 6).map((p) => p.id) }),
+  preremplir: (c) => ({ surtitre: 'Quelques instants', titre: 'Le cabinet, *au quotidien*', texte: '', photos: idsDe(c, 9) }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
-    const choisies = photosDe(data.photos, ctx.resolveMedia)
     return (
       <Enveloppe ctx={ctx}>
-        <section className="overflow-x-clip py-24 md:py-36">
+        <section className={SECTION}>
           <div className={CONTENEUR}>
             <Tete surtitre={data.surtitre} titre={data.titre} texte={data.texte} />
-            <Planche photos={choisies.length ? choisies : sansSubstitution(c).slice(0, 6)} />
+            <Colonnes photos={photosOu(data.photos, ctx.resolveMedia, c, 12)} />
           </div>
         </section>
       </Enveloppe>
@@ -258,22 +272,18 @@ export const mExPlancheBlock: BlockDefinition<typeof plancheSchema> = {
   },
 }
 
-const odometreSchema = z.object({ surtitre: t, titre: t, chiffres: z.array(z.object({ valeur: t, libelle: t })).default([]) })
+const chiffresSchema = z.object({ surtitre: t, titre: t, chiffres: z.array(z.object({ valeur: t, libelle: t })).default([]) })
 const chiffresDe = (c: Contenu) => [
   { valeur: String(c.services.length), libelle: 'accompagnements' },
   { valeur: String(c.horaires.filter((h) => !/ferm/i.test(h.hours)).length), libelle: 'jours de consultation' },
   { valeur: String(c.faq.length), libelle: 'questions répondues' },
 ]
-export const mExOdometreBlock: BlockDefinition<typeof odometreSchema> = {
+export const mExChiffresBlock: BlockDefinition<typeof chiffresSchema> = {
   ...commun,
-  label: 'Exception — L’odomètre',
-  description: 'Vos chiffres clés : chaque chiffre roule comme un compteur avant de s’arrêter sur sa valeur.',
-  schema: odometreSchema,
-  fields: [
-    field.text('surtitre', 'Étiquette'),
-    field.textarea('titre', 'Titre', { help: TITRE }),
-    field.list('chiffres', 'Chiffres', [field.text('valeur', 'Valeur', { help: 'Ex. « 12 », « 50 min ».' }), field.text('libelle', 'Légende')], { addLabel: 'Ajouter un chiffre' }),
-  ],
+  label: 'Exception — Les chiffres en cartes',
+  description: 'Chaque chiffre sur sa carte : empilées, elles s’ouvrent en éventail au défilement, et les chiffres roulent.',
+  schema: chiffresSchema,
+  fields: [champ.surtitre, champ.titre, field.list('chiffres', 'Chiffres', [field.text('valeur', 'Valeur', { help: 'Ex. « 12 », « 50 min ».' }), field.text('libelle', 'Légende')], { addLabel: 'Ajouter un chiffre' })],
   defaults: { surtitre: 'En quelques chiffres', titre: 'Ce qui *compte*', chiffres: [] },
   preremplir: (c) => ({ surtitre: 'En quelques chiffres', titre: 'Ce qui *compte*', chiffres: chiffresDe(c) }),
   Component: ({ data, ctx }) => {
@@ -283,8 +293,8 @@ export const mExOdometreBlock: BlockDefinition<typeof odometreSchema> = {
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
           <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
-            <Odometre chiffres={chiffres.length ? chiffres : chiffresDe(c)} />
+            <Tete surtitre={data.surtitre} titre={data.titre} centre />
+            <ChiffresCartes chiffres={chiffres.length ? chiffres : chiffresDe(c)} />
           </div>
         </section>
       </Enveloppe>
@@ -297,20 +307,16 @@ export const mExOdometreBlock: BlockDefinition<typeof odometreSchema> = {
    ══════════════════════════════════════════════════════════════════════ */
 
 const etapesSchema = z.object({ surtitre: t, titre: t, etapes: z.array(z.object({ titre: t, texte: t })).default([]) })
-const champsEtapes = [
-  field.text('surtitre', 'Étiquette'),
-  field.textarea('titre', 'Titre', { help: TITRE }),
-  field.list('etapes', 'Étapes', [field.text('titre', 'Titre'), field.textarea('texte', 'Texte')], { addLabel: 'Ajouter une étape' }),
-]
+const champsEtapes = [champ.surtitre, champ.titre, field.list('etapes', 'Étapes', [field.text('titre', 'Titre'), field.textarea('texte', 'Texte')], { addLabel: 'Ajouter une étape' })]
 const etapesDe = (data: { etapes: { titre: string; texte: string }[] }, c: Contenu) => {
   const e = data.etapes.filter((x) => x.titre.trim())
   return e.length ? e : c.methode.etapes
 }
 
-export const mExFilBlock: BlockDefinition<typeof etapesSchema> = {
+export const mExPaquetBlock: BlockDefinition<typeof etapesSchema> = {
   ...commun,
-  label: 'Exception — Le fil',
-  description: 'Un trait vertical se dessine au défilement ; chaque étape s’éclaire quand il l’atteint.',
+  label: 'Exception — Le paquet',
+  description: 'En descendant, les étapes arrivent une à une du bas de l’écran pour se poser sur la pile, un peu de travers.',
   schema: etapesSchema,
   fields: champsEtapes,
   defaults: { surtitre: 'Ma méthode', titre: 'Comment ça *se passe*', etapes: [] },
@@ -319,21 +325,21 @@ export const mExFilBlock: BlockDefinition<typeof etapesSchema> = {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <section className={SECTION}>
+        <section className="pt-24 md:pt-36">
           <div className={CONTENEUR}>
             <Tete surtitre={data.surtitre} titre={data.titre} centre />
-            <Fil etapes={etapesDe(data, c)} />
           </div>
+          <Paquet etapes={etapesDe(data, c)} />
         </section>
       </Enveloppe>
     )
   },
 }
 
-export const mExVoyageBlock: BlockDefinition<typeof etapesSchema> = {
+export const mExDefileBlock: BlockDefinition<typeof etapesSchema> = {
   ...commun,
-  label: 'Exception — Le voyage',
-  description: 'Sur grand écran, la page s’immobilise et les étapes défilent de côté sur un trait fin qui se trace.',
+  label: 'Exception — Le défilé',
+  description: 'Sur grand écran, la page s’arrête et les cartes-étapes passent devant nous ; celle du centre se redresse, les autres s’inclinent.',
   schema: etapesSchema,
   fields: champsEtapes,
   defaults: { surtitre: 'Ma méthode', titre: 'Un chemin, *pas à pas*', etapes: [] },
@@ -344,10 +350,10 @@ export const mExVoyageBlock: BlockDefinition<typeof etapesSchema> = {
       <Enveloppe ctx={ctx}>
         <section className="pb-24 pt-24 md:pt-36 lg:pb-0">
           <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
+            <Tete surtitre={data.surtitre} titre={data.titre} centre />
           </div>
           <div className="mx-auto max-w-[1200px] px-[5vw] lg:max-w-none lg:px-0">
-            <Voyage etapes={etapesDe(data, c)} />
+            <Defile etapes={etapesDe(data, c)} />
           </div>
         </section>
       </Enveloppe>
@@ -355,10 +361,10 @@ export const mExVoyageBlock: BlockDefinition<typeof etapesSchema> = {
   },
 }
 
-export const mExVoletsBlock: BlockDefinition<typeof etapesSchema> = {
+export const mExEventailEtapesBlock: BlockDefinition<typeof etapesSchema> = {
   ...commun,
-  label: 'Exception — Les volets',
-  description: 'Les étapes en colonnes ; celle qu’on survole s’élargit doucement et laisse lire son texte.',
+  label: 'Exception — L’éventail des étapes',
+  description: 'Les étapes sur des cartes empilées, qui s’ouvrent en éventail depuis le centre au défilement.',
   schema: etapesSchema,
   fields: champsEtapes,
   defaults: { surtitre: 'Ma méthode', titre: 'Trois *temps*', etapes: [] },
@@ -369,8 +375,8 @@ export const mExVoletsBlock: BlockDefinition<typeof etapesSchema> = {
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
           <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
-            <Volets etapes={etapesDe(data, c)} />
+            <Tete surtitre={data.surtitre} titre={data.titre} centre />
+            <EventailEtapes etapes={etapesDe(data, c)} />
           </div>
         </section>
       </Enveloppe>
@@ -382,18 +388,42 @@ export const mExVoletsBlock: BlockDefinition<typeof etapesSchema> = {
    ACCOMPAGNEMENTS
    ══════════════════════════════════════════════════════════════════════ */
 
-const servicesSchema = z.object({ surtitre: t, titre: t, bouton: t })
-const champsServices = [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: TITRE }), field.text('bouton', 'Lien')]
+const servicesSchema = z.object({ surtitre: t, titre: t })
+const champsServices = [champ.surtitre, champ.titre]
 const sourceServices = { label: 'Les accompagnements', href: '/admin/accompagnements' }
 
-export const mExLignesBlock: BlockDefinition<typeof servicesSchema> = {
+export const mExFriseServicesBlock: BlockDefinition<typeof servicesSchema> = {
   ...commun,
-  label: 'Exception — Les lignes',
-  description: 'Une liste à filets ; la ligne survolée s’ouvre en douceur et laisse apparaître sa photo et son texte.',
+  label: 'Exception — La frise des accompagnements',
+  description: 'Les cartes des accompagnements défilent lentement, sans fin ; survolée, la frise s’arrête et la carte se lève.',
   schema: servicesSchema,
   fields: champsServices,
-  defaults: { surtitre: 'Accompagnements', titre: 'Ce que je *propose*', bouton: RDV },
-  preremplir: () => ({ surtitre: 'Accompagnements', titre: 'Ce que je *propose*', bouton: RDV }),
+  defaults: { surtitre: 'Accompagnements', titre: 'Ce que je *propose*' },
+  preremplir: () => ({ surtitre: 'Accompagnements', titre: 'Ce que je *propose*' }),
+  dataSource: sourceServices,
+  Component: ({ data, ctx }) => {
+    const c = contenuDe(ctx)
+    return (
+      <Enveloppe ctx={ctx}>
+        <section className="py-24 md:py-36">
+          <div className={CONTENEUR}>
+            <Tete surtitre={data.surtitre} titre={data.titre} />
+          </div>
+          <FriseServices services={servicesIllustres(c)} rdv={c.rdv} />
+        </section>
+      </Enveloppe>
+    )
+  },
+}
+
+export const mExDonneBlock: BlockDefinition<typeof servicesSchema> = {
+  ...commun,
+  label: 'Exception — La donne',
+  description: 'Les cartes arrivent en paquet au centre, puis se distribuent chacune à sa place, comme un jeu qu’on étale.',
+  schema: servicesSchema,
+  fields: champsServices,
+  defaults: { surtitre: 'Accompagnements', titre: 'Cartes *sur table*' },
+  preremplir: () => ({ surtitre: 'Accompagnements', titre: 'Cartes *sur table*' }),
   dataSource: sourceServices,
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
@@ -402,7 +432,7 @@ export const mExLignesBlock: BlockDefinition<typeof servicesSchema> = {
         <section className={SECTION}>
           <div className={CONTENEUR}>
             <Tete surtitre={data.surtitre} titre={data.titre} />
-            <LignesServices services={servicesIllustres(c)} rdv={c.rdv} bouton={data.bouton || RDV} />
+            <Donne services={servicesIllustres(c)} rdv={c.rdv} />
           </div>
         </section>
       </Enveloppe>
@@ -410,14 +440,14 @@ export const mExLignesBlock: BlockDefinition<typeof servicesSchema> = {
   },
 }
 
-export const mExSommaireBlock: BlockDefinition<typeof servicesSchema> = {
+export const mExManegeBlock: BlockDefinition<typeof servicesSchema> = {
   ...commun,
-  label: 'Exception — Le sommaire',
-  description: 'Les noms en grand, en retrait ; celui qu’on survole s’affirme, un filet se trace dessous et sa photo se pose en fondu.',
+  label: 'Exception — Le manège',
+  description: 'Les cartes forment un cercle en trois dimensions qui tourne lentement ; survolé, il s’arrête.',
   schema: servicesSchema,
   fields: champsServices,
-  defaults: { surtitre: 'Accompagnements', titre: '', bouton: RDV },
-  preremplir: () => ({ surtitre: 'Accompagnements', titre: '', bouton: RDV }),
+  defaults: { surtitre: 'Accompagnements', titre: 'Faites *un tour*' },
+  preremplir: () => ({ surtitre: 'Accompagnements', titre: 'Faites *un tour*' }),
   dataSource: sourceServices,
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
@@ -425,33 +455,9 @@ export const mExSommaireBlock: BlockDefinition<typeof servicesSchema> = {
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
           <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
-            <Sommaire services={servicesIllustres(c)} rdv={c.rdv} bouton={data.bouton || RDV} />
+            <Tete surtitre={data.surtitre} titre={data.titre} centre />
           </div>
-        </section>
-      </Enveloppe>
-    )
-  },
-}
-
-export const mExChapitresBlock: BlockDefinition<typeof servicesSchema> = {
-  ...commun,
-  label: 'Exception — Les chapitres',
-  description: 'Un accompagnement à la fois, comme les chapitres d’un livre : la photo se découvre, le texte monte, un filet marque l’avancée.',
-  schema: servicesSchema,
-  fields: champsServices,
-  defaults: { surtitre: 'Accompagnements', titre: 'Un chapitre *à la fois*', bouton: RDV },
-  preremplir: () => ({ surtitre: 'Accompagnements', titre: 'Un chapitre *à la fois*', bouton: RDV }),
-  dataSource: sourceServices,
-  Component: ({ data, ctx }) => {
-    const c = contenuDe(ctx)
-    return (
-      <Enveloppe ctx={ctx}>
-        <section className={SECTION}>
-          <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
-            <Chapitres services={servicesIllustres(c)} rdv={c.rdv} bouton={data.bouton || RDV} />
-          </div>
+          <Manege services={servicesIllustres(c)} rdv={c.rdv} />
         </section>
       </Enveloppe>
     )
@@ -463,119 +469,125 @@ export const mExChapitresBlock: BlockDefinition<typeof servicesSchema> = {
    ══════════════════════════════════════════════════════════════════════ */
 
 const faqSchema = z.object({ surtitre: t, titre: t })
-const champsFaq = [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: TITRE })]
+const champsFaq = [champ.surtitre, champ.titre]
 const sourceFaq = { label: 'Les questions', href: '/admin/questions' }
-
-export const mExPliBlock: BlockDefinition<typeof faqSchema> = {
+const blocFaq = (
+  type: { label: string; description: string; titre: string },
+  rendu: (c: Contenu) => React.ReactNode,
+  centre = true,
+): BlockDefinition<typeof faqSchema> => ({
   ...commun,
-  label: 'Exception — Le pli',
-  description: 'Des questions à filets ; la réponse se déplie en douceur et la croix tourne d’un quart de tour.',
+  label: type.label,
+  description: type.description,
   schema: faqSchema,
   fields: champsFaq,
-  defaults: { surtitre: 'Questions', titre: 'Ce qu’on *se demande*' },
-  preremplir: () => ({ surtitre: 'Questions', titre: 'Ce qu’on *se demande*' }),
+  defaults: { surtitre: 'Questions', titre: type.titre },
+  preremplir: () => ({ surtitre: 'Questions', titre: type.titre }),
   dataSource: sourceFaq,
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <section className={SECTION}>
+        <section className="py-24 md:py-36">
           <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} centre />
-            <Pli faq={c.faq} />
+            <Tete surtitre={data.surtitre} titre={data.titre} centre={centre} />
           </div>
+          {rendu(c)}
         </section>
       </Enveloppe>
     )
   },
-}
+})
 
-export const mExMachineBlock: BlockDefinition<typeof faqSchema> = {
-  ...commun,
-  label: 'Exception — La machine à écrire',
-  description: 'La question se tape lettre à lettre avec un curseur fin, puis la réponse apparaît ; elles se suivent seules.',
-  schema: faqSchema,
-  fields: champsFaq,
-  defaults: { surtitre: 'Vous vous demandez peut-être', titre: '' },
-  preremplir: () => ({ surtitre: 'Vous vous demandez peut-être', titre: '' }),
-  dataSource: sourceFaq,
-  Component: ({ data, ctx }) => {
-    const c = contenuDe(ctx)
-    return (
-      <Enveloppe ctx={ctx}>
-        <section className="py-28 md:py-44">
-          <div className={CONTENEUR}>
-            {data.surtitre && <Surtitre>{data.surtitre}</Surtitre>}
-            {data.titre && (
-              <h2 className="mb-10 text-[clamp(28px,3.5vw,44px)]">
-                <Lignes lignes={enLignes(data.titre)} />
-              </h2>
-            )}
-            <MachineAEcrire faq={c.faq} />
-          </div>
-        </section>
-      </Enveloppe>
-    )
-  },
-}
-
-export const mExIndexBlock: BlockDefinition<typeof faqSchema> = {
-  ...commun,
-  label: 'Exception — L’index',
-  description: 'Les questions numérotées ; la réponse s’affiche à côté en fondu. En accordéon sur téléphone.',
-  schema: faqSchema,
-  fields: champsFaq,
-  defaults: { surtitre: 'Questions', titre: 'Tout ce qu’il faut *savoir*' },
-  preremplir: () => ({ surtitre: 'Questions', titre: 'Tout ce qu’il faut *savoir*' }),
-  dataSource: sourceFaq,
-  Component: ({ data, ctx }) => {
-    const c = contenuDe(ctx)
-    return (
-      <Enveloppe ctx={ctx}>
-        <section className={SECTION}>
-          <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
-            <Index faq={c.faq} />
-          </div>
-        </section>
-      </Enveloppe>
-    )
-  },
-}
+export const mExFichesBlock = blocFaq(
+  { label: 'Exception — Les fiches', description: 'Un paquet de fiches : toutes les quelques secondes, celle du dessus glisse de côté et repart derrière.', titre: 'Ce qu’on *se demande*' },
+  (c) => (
+    <div className={CONTENEUR}>
+      <Fiches faq={c.faq} />
+    </div>
+  ),
+)
+export const mExMurBlock = blocFaq(
+  { label: 'Exception — Le mur', description: 'Deux rangées de questions qui défilent en sens contraire ; survolée, une carte se lève et montre sa réponse.', titre: 'Toutes *vos questions*' },
+  (c) => <Mur faq={c.faq} />,
+)
+export const mExLiasseBlock = blocFaq(
+  { label: 'Exception — La liasse', description: 'Les questions-réponses sur des cartes qui, au défilement, viennent se poser les unes sur les autres.', titre: 'Tout ce qu’il faut *savoir*' },
+  (c) => (
+    <div className={CONTENEUR}>
+      <Liasse faq={c.faq} />
+    </div>
+  ),
+)
 
 /* ══════════════════════════════════════════════════════════════════════
    PHOTOS & VIDÉOS
    ══════════════════════════════════════════════════════════════════════ */
 
-const lampeSchema = z.object({ surtitre: t, titre: t, texte: t, mediaId: media })
-export const mExLampeBlock: BlockDefinition<typeof lampeSchema> = {
+const galerieSchema = z.object({ surtitre: t, titre: t, photos: liste })
+const blocPhotos = (
+  type: { label: string; description: string; titre: string; n: number; aide: string },
+  rendu: (photos: Media[]) => React.ReactNode,
+  pleineLargeur = false,
+): BlockDefinition<typeof galerieSchema> => ({
   ...commun,
-  label: 'Exception — La lampe',
-  description: 'Une photo en noir et blanc ; la souris y promène une lumière douce qui lui rend ses couleurs.',
-  schema: lampeSchema,
-  fields: [
-    field.text('surtitre', 'Étiquette'),
-    field.textarea('titre', 'Titre, sur la photo', { help: 'Le mot clé entre *astérisques*.' }),
-    field.textarea('texte', 'Texte, sur la photo'),
-    field.media('mediaId', 'Photo'),
-  ],
-  defaults: { surtitre: 'Le cabinet', titre: 'Regardez *de plus près*', texte: '', mediaId: null },
-  preremplir: (c) => ({
-    surtitre: 'Le cabinet',
-    titre: 'Regardez *de plus près*',
-    texte: 'Un lieu calme et lumineux, à l’écart du bruit.',
-    mediaId: (c.photos.find((p) => p.id !== c.portrait?.id) ?? c.ambiance)?.id ?? null,
-  }),
+  label: type.label,
+  description: type.description,
+  schema: galerieSchema,
+  fields: [champ.surtitre, champ.titre, champ.photos(type.aide)],
+  defaults: { surtitre: 'En images', titre: type.titre, photos: [] },
+  preremplir: (c) => ({ surtitre: 'En images', titre: type.titre, photos: idsDe(c, type.n) }),
+  Component: ({ data, ctx }) => {
+    const c = contenuDe(ctx)
+    const photos = photosOu(data.photos, ctx.resolveMedia, c, type.n)
+    return (
+      <Enveloppe ctx={ctx}>
+        <section className={SECTION}>
+          <div className={CONTENEUR}>
+            <Tete surtitre={data.surtitre} titre={data.titre} centre={!pleineLargeur} />
+            {!pleineLargeur && rendu(photos)}
+          </div>
+          {pleineLargeur && rendu(photos)}
+        </section>
+      </Enveloppe>
+    )
+  },
+})
+
+export const mExMobileBlock = blocPhotos(
+  { label: 'Exception — Le mobile', description: 'Des photos suspendues à des fils qui se balancent doucement, chacune à son rythme.', titre: 'Le cabinet, *en suspens*', n: 7, aide: 'Jusqu’à sept.' },
+  (photos) => <Mobile photos={photos} />,
+)
+export const mExEventailBlock = blocPhotos(
+  { label: 'Exception — L’éventail', description: 'Les photos empilées s’ouvrent en éventail, depuis le centre, à mesure qu’on descend.', titre: 'Le cabinet, *pièce par pièce*', n: 7, aide: 'Jusqu’à sept, de gauche à droite.' },
+  (photos) => <Eventail photos={photos} />,
+)
+export const mExFriseBlock = blocPhotos(
+  { label: 'Exception — La frise', description: 'Une seule rangée de photos qui défile très lentement, aux bords fondus ; survolée, elle s’arrête.', titre: 'Le cabinet, *en lumière*', n: 8, aide: 'Six ou plus.' },
+  (photos) => <Frise photos={photos} />,
+  true,
+)
+
+/* ══════════════════════════════════════════════════════════════════════
+   TEXTES
+   ══════════════════════════════════════════════════════════════════════ */
+
+const citationSchema = z.object({ phrase: t, auteur: t, photos: liste })
+export const mExCitationBlock: BlockDefinition<typeof citationSchema> = {
+  ...commun,
+  label: 'Exception — La citation posée',
+  description: 'La phrase sur une grande carte, deux photos glissées dessous qui dépassent et flottent ; au défilement, tout se décale.',
+  schema: citationSchema,
+  fields: [field.textarea('phrase', 'Phrase', { help: 'Le mot clé entre *astérisques*.' }), field.text('auteur', 'Signature'), champ.photos('Deux photos.')],
+  defaults: { phrase: '', auteur: '', photos: [] },
+  preremplir: (c) => ({ phrase: c.citation.texte, auteur: c.citation.auteur, photos: idsDe(c, 2) }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
           <div className={CONTENEUR}>
-            {data.surtitre && <Surtitre>{data.surtitre}</Surtitre>}
-            <Revele className="mt-4">
-              <Lampe photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance} titre={data.titre} texte={data.texte} />
-            </Revele>
+            <CitationPosee phrase={data.phrase || c.citation.texte} auteur={data.auteur} photos={photosOu(data.photos, ctx.resolveMedia, c, 2)} />
           </div>
         </section>
       </Enveloppe>
@@ -583,100 +595,24 @@ export const mExLampeBlock: BlockDefinition<typeof lampeSchema> = {
   },
 }
 
-const photosSchema = z.object({ surtitre: t, titre: t, photos: z.array(z.string()).default([]) })
-export const mExEventailBlock: BlockDefinition<typeof photosSchema> = {
+const etiquettesSchema = z.object({ surtitre: t, titre: t, mots: t })
+export const mExEtiquettesBlock: BlockDefinition<typeof etiquettesSchema> = {
   ...commun,
-  label: 'Exception — L’éventail',
-  description: 'Les photos empilées s’ouvrent en éventail, depuis le centre, à mesure qu’on descend.',
-  schema: photosSchema,
-  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: TITRE }), field.mediaList('photos', 'Photos', { help: 'Jusqu’à sept, de gauche à droite.' })],
-  defaults: { surtitre: 'En images', titre: 'Le cabinet, *pièce par pièce*', photos: [] },
-  preremplir: (c) => ({ surtitre: 'En images', titre: 'Le cabinet, *pièce par pièce*', photos: sansSubstitution(c).slice(0, 7).map((p) => p.id) }),
+  label: 'Exception — Les étiquettes',
+  description: 'Des mots sur de petites cartes, en rangées qui défilent en sens contraire, légèrement penchées.',
+  schema: etiquettesSchema,
+  fields: [champ.surtitre, champ.titre, field.textarea('mots', 'Mots', { help: 'Un mot (ou une courte expression) par ligne.' })],
+  defaults: { surtitre: 'Ce qui m’anime', titre: '', mots: 'Écoute\nBienveillance\nPrésence\nConfiance\nRespiration\nLien\nTemps\nAccueil' },
+  preremplir: () => ({ surtitre: 'Ce qui m’anime', titre: '', mots: 'Écoute\nBienveillance\nPrésence\nConfiance\nRespiration\nLien\nTemps\nAccueil' }),
   Component: ({ data, ctx }) => {
-    const c = contenuDe(ctx)
-    const choisies = photosDe(data.photos, ctx.resolveMedia)
+    const mots = data.mots.split('\n').map((m) => m.trim()).filter(Boolean)
     return (
       <Enveloppe ctx={ctx}>
-        <section className="overflow-x-clip py-24 md:py-36">
+        <section className="overflow-x-clip py-24 md:py-32">
           <div className={CONTENEUR}>
             <Tete surtitre={data.surtitre} titre={data.titre} centre />
-            <Eventail photos={choisies.length ? choisies : sansSubstitution(c).slice(0, 7)} />
           </div>
-        </section>
-      </Enveloppe>
-    )
-  },
-}
-
-export const mExFriseBlock: BlockDefinition<typeof photosSchema> = {
-  ...commun,
-  label: 'Exception — La frise',
-  description: 'Une seule rangée de photos qui défile très lentement, aux bords fondus ; survolée, elle s’arrête.',
-  schema: photosSchema,
-  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: TITRE }), field.mediaList('photos', 'Photos')],
-  defaults: { surtitre: 'En images', titre: 'Le cabinet, *en lumière*', photos: [] },
-  preremplir: (c) => ({ surtitre: 'En images', titre: 'Le cabinet, *en lumière*', photos: sansSubstitution(c).slice(0, 8).map((p) => p.id) }),
-  Component: ({ data, ctx }) => {
-    const c = contenuDe(ctx)
-    const choisies = photosDe(data.photos, ctx.resolveMedia)
-    return (
-      <Enveloppe ctx={ctx}>
-        <section className="py-24 md:py-36">
-          <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
-          </div>
-          <Frise photos={choisies.length ? choisies : sansSubstitution(c).slice(0, 8)} />
-        </section>
-      </Enveloppe>
-    )
-  },
-}
-
-/* ══════════════════════════════════════════════════════════════════════
-   TEXTES
-   ══════════════════════════════════════════════════════════════════════ */
-
-const lettresSchema = z.object({ surtitre: t, titre: t, texte: t })
-export const mExLettresBlock: BlockDefinition<typeof lettresSchema> = {
-  ...commun,
-  label: 'Exception — Lettres vivantes',
-  description: 'Un très grand titre : les lettres arrivent en cascade, puis se soulèvent à peine sous la souris.',
-  schema: lettresSchema,
-  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: 'Le mot clé entre *astérisques*.' }), field.textarea('texte', 'Texte')],
-  defaults: { surtitre: 'Une conviction', titre: 'Ici, on prend *le temps*', texte: '' },
-  preremplir: (c) => ({ surtitre: 'Une conviction', titre: 'Ici, on prend *le temps*', texte: c.accroche }),
-  Component: ({ data, ctx }) => (
-    <Enveloppe ctx={ctx}>
-      <section className={SECTION}>
-        <div className={CONTENEUR}>
-          {data.surtitre && <Surtitre>{data.surtitre}</Surtitre>}
-          <LettresVivantes texte={data.titre || 'Ici, on prend *le temps*'} className="text-[clamp(50px,10vw,160px)] tracking-[-0.035em]" />
-          {data.texte && (
-            <Revele delai={0.5}>
-              <p className="mt-10 max-w-[46ch] text-[17px] leading-[1.7] text-[var(--ad-pierre)]">{data.texte}</p>
-            </Revele>
-          )}
-        </div>
-      </section>
-    </Enveloppe>
-  ),
-}
-
-const rubanSchema = z.object({ ruban: t, phrase: t, auteur: t })
-export const mExRubanBlock: BlockDefinition<typeof rubanSchema> = {
-  ...commun,
-  label: 'Exception — Le ruban',
-  description: 'Une phrase écrite en cercle qui tourne doucement au défilement, la conviction au centre.',
-  schema: rubanSchema,
-  fields: [field.text('ruban', 'Texte du cercle'), field.textarea('phrase', 'Phrase du centre', { help: 'Le mot clé entre *astérisques*.' }), field.text('auteur', 'Signature')],
-  defaults: { ruban: 'Écouter · Accueillir · Traverser', phrase: '', auteur: '' },
-  preremplir: (c) => ({ ruban: 'Écouter · Accueillir · Traverser', phrase: c.citation.texte, auteur: c.citation.auteur }),
-  Component: ({ data, ctx }) => {
-    const c = contenuDe(ctx)
-    return (
-      <Enveloppe ctx={ctx}>
-        <section className="overflow-x-clip py-20 md:py-28">
-          <Ruban ruban={data.ruban || 'Écouter · Accueillir · Traverser'} phrase={data.phrase || c.citation.texte} auteur={data.auteur} />
+          <Etiquettes mots={mots.length ? mots : ['Écoute']} />
         </section>
       </Enveloppe>
     )
@@ -687,14 +623,9 @@ const motSchema = z.object({ surtitre: t, debut: t, mots: t, texte: t })
 export const mExMotChangeBlock: BlockDefinition<typeof motSchema> = {
   ...commun,
   label: 'Exception — Le mot qui change',
-  description: '« Un lieu pour… » : le dernier mot change, glisse et se floute ; la phrase s’ajuste à sa longueur.',
+  description: '« Un lieu pour… » : le dernier mot est posé sur une carte qui bascule pour laisser place au suivant.',
   schema: motSchema,
-  fields: [
-    field.text('surtitre', 'Étiquette'),
-    field.text('debut', 'Début de la phrase'),
-    field.textarea('mots', 'Mots qui changent', { help: 'Un mot (ou deux) par ligne.' }),
-    field.textarea('texte', 'Texte dessous'),
-  ],
+  fields: [champ.surtitre, field.text('debut', 'Début de la phrase'), field.textarea('mots', 'Mots qui changent', { help: 'Un mot (ou deux) par ligne.' }), champ.texte],
   defaults: { surtitre: '', debut: 'Un lieu pour', mots: 'respirer\ndéposer\ncomprendre\navancer', texte: '' },
   preremplir: (c) => ({ surtitre: '', debut: 'Un lieu pour', mots: 'respirer\ndéposer\ncomprendre\navancer', texte: c.accroche }),
   Component: ({ data, ctx }) => {
@@ -725,32 +656,24 @@ export const mExMotChangeBlock: BlockDefinition<typeof motSchema> = {
    CONTACT & RENDEZ-VOUS
    ══════════════════════════════════════════════════════════════════════ */
 
-const contactSchema = z.object({ surtitre: t, titre: t })
-const champsContact = [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: TITRE })]
-const sourceReglages = (label: string) => ({ label, href: '/admin/reglages' })
-
-export const mExAdresseBlock: BlockDefinition<typeof contactSchema> = {
+const postaleSchema = z.object({ surtitre: t, titre: t, mediaId: media })
+export const mExCartePostaleBlock: BlockDefinition<typeof postaleSchema> = {
   ...commun,
-  label: 'Exception — L’adresse',
-  description: 'L’adresse en grand ; un filet se trace dessous et les coordonnées s’y posent une à une.',
-  schema: contactSchema,
-  fields: champsContact,
-  defaults: { surtitre: 'Venir', titre: '' },
-  preremplir: () => ({ surtitre: 'Venir', titre: '' }),
-  dataSource: sourceReglages('Les coordonnées'),
+  label: 'Exception — La carte postale',
+  description: 'L’adresse écrite sur une carte postale posée de travers ; au défilement elle se redresse, et flotte à peine.',
+  schema: postaleSchema,
+  fields: [champ.surtitre, champ.titre, field.media('mediaId', 'Photo de la carte')],
+  defaults: { surtitre: 'Venir', titre: 'À *bientôt*', mediaId: null },
+  preremplir: (c) => ({ surtitre: 'Venir', titre: 'À *bientôt*', mediaId: (c.photos.find((p) => /porte|fen[eê]tre/i.test(p.alt)) ?? c.ambiance)?.id ?? null }),
+  dataSource: { label: 'Les coordonnées', href: '/admin/reglages' },
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
           <div className={CONTENEUR}>
-            {data.surtitre && <Surtitre>{data.surtitre}</Surtitre>}
-            {data.titre && (
-              <h2 className="mb-8 text-[clamp(28px,3.5vw,44px)]">
-                <Lignes lignes={enLignes(data.titre)} />
-              </h2>
-            )}
-            <Adresse adresse={c.adresse} telephone={c.telephone} email={c.email} acces={c.infoPratique} />
+            <Tete surtitre={data.surtitre} titre={data.titre} centre />
+            <CartePostale photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance} adresse={c.adresse} telephone={c.telephone} email={c.email} nom={c.nom} />
           </div>
         </section>
       </Enveloppe>
@@ -758,23 +681,24 @@ export const mExAdresseBlock: BlockDefinition<typeof contactSchema> = {
   },
 }
 
-export const mExHorlogeBlock: BlockDefinition<typeof contactSchema> = {
+const semaineSchema = z.object({ surtitre: t, titre: t })
+export const mExSemaineBlock: BlockDefinition<typeof semaineSchema> = {
   ...commun,
-  label: 'Exception — L’horloge',
-  description: 'Un cadran de 24 heures au trait : les heures du jour en arc, l’aiguille à l’heure qu’il est, « Ouvert maintenant » en clair.',
-  schema: contactSchema,
-  fields: champsContact,
+  label: 'Exception — La semaine',
+  description: 'Sept cartes, une par jour, qui s’ouvrent en éventail ; celle d’aujourd’hui se lève, et l’on sait si c’est ouvert.',
+  schema: semaineSchema,
+  fields: [champ.surtitre, champ.titre],
   defaults: { surtitre: 'Horaires', titre: 'Quand *venir*' },
   preremplir: () => ({ surtitre: 'Horaires', titre: 'Quand *venir*' }),
-  dataSource: sourceReglages('Les horaires'),
+  dataSource: { label: 'Les horaires', href: '/admin/reglages' },
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
         <section className={SECTION}>
           <div className={CONTENEUR}>
-            <Tete surtitre={data.surtitre} titre={data.titre} />
-            <Horloge horaires={c.horaires} />
+            <Tete surtitre={data.surtitre} titre={data.titre} centre />
+            <Semaine horaires={c.horaires} />
           </div>
         </section>
       </Enveloppe>
@@ -782,32 +706,34 @@ export const mExHorlogeBlock: BlockDefinition<typeof contactSchema> = {
   },
 }
 
-const invitationSchema = z.object({ surtitre: t, titre: t, bouton: t })
+const invitationSchema = z.object({ surtitre: t, titre: t, bouton: t, photos: liste })
 export const mExInvitationBlock: BlockDefinition<typeof invitationSchema> = {
   ...commun,
   label: 'Exception — L’invitation',
-  description: 'Une phrase, beaucoup d’air, un lien : le filet se trace sous le texte et la flèche avance au survol.',
+  description: 'Une phrase au centre et, autour, quelques photos qui flottent comme posées en l’air ; au défilement, elles dérivent.',
   schema: invitationSchema,
-  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Phrase', { help: TITRE }), field.text('bouton', 'Lien')],
-  defaults: { surtitre: 'Rendez-vous', titre: 'Prenons le temps\nd’en *parler*', bouton: RDV },
-  preremplir: () => ({ surtitre: 'Rendez-vous', titre: 'Prenons le temps\nd’en *parler*', bouton: RDV }),
+  fields: [champ.surtitre, field.textarea('titre', 'Phrase', { help: TITRE }), field.text('bouton', 'Lien'), champ.photos('Quatre photos.')],
+  defaults: { surtitre: 'Rendez-vous', titre: 'Prenons le temps\nd’en *parler*', bouton: RDV, photos: [] },
+  preremplir: (c) => ({ surtitre: 'Rendez-vous', titre: 'Prenons le temps\nd’en *parler*', bouton: RDV, photos: idsDe(c, 4) }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <section className="py-32 md:py-48">
-          <div className={`${CONTENEUR} text-center`}>
-            {data.surtitre && (
-              <div className="flex justify-center">
-                <Surtitre>{data.surtitre}</Surtitre>
-              </div>
-            )}
-            <h2 className="text-[clamp(44px,7vw,104px)] leading-[1]">
-              <Lignes lignes={enLignes(data.titre || 'Prenons le temps\nd’en *parler*')} />
-            </h2>
-            <Revele delai={0.5} className="mt-14 flex justify-center">
-              <Invitation libelle={data.bouton || RDV} href={c.rdv} />
-            </Revele>
+        <section className="overflow-x-clip py-16 md:py-24">
+          <div className="mx-auto max-w-[1400px] px-[3vw]">
+            <InvitationFlottante photos={photosOu(data.photos, ctx.resolveMedia, c, 4)}>
+              {data.surtitre && (
+                <div className="flex justify-center">
+                  <Surtitre>{data.surtitre}</Surtitre>
+                </div>
+              )}
+              <h2 className="text-[clamp(40px,6.4vw,96px)] leading-[1]">
+                <Lignes lignes={enLignes(data.titre || 'Prenons le temps\nd’en *parler*')} />
+              </h2>
+              <Revele delai={0.5} className="mt-12 flex justify-center">
+                <Invitation libelle={data.bouton || RDV} href={c.rdv} />
+              </Revele>
+            </InvitationFlottante>
           </div>
         </section>
       </Enveloppe>
@@ -817,14 +743,14 @@ export const mExInvitationBlock: BlockDefinition<typeof invitationSchema> = {
 
 /** Les modèles d'exception, par catégorie (l'ordre de la vitrine). */
 export const EXCEPTION_PAR_CATEGORIE = [
-  { categorie: 'Ouverture', types: ['mExFente', 'mExLames', 'mExMotPhoto'] },
-  { categorie: 'Qui je suis', types: ['mExDevoilement', 'mExPlanche', 'mExOdometre'] },
-  { categorie: 'Ma méthode', types: ['mExFil', 'mExVoyage', 'mExVolets'] },
-  { categorie: 'Accompagnements', types: ['mExLignes', 'mExSommaire', 'mExChapitres'] },
-  { categorie: 'Questions', types: ['mExPli', 'mExMachine', 'mExIndex'] },
-  { categorie: 'Photos & vidéos', types: ['mExLampe', 'mExEventail', 'mExFrise'] },
-  { categorie: 'Textes', types: ['mExLettres', 'mExRuban', 'mExMotChange'] },
-  { categorie: 'Contact & rendez-vous', types: ['mExAdresse', 'mExHorloge', 'mExInvitation'] },
+  { categorie: 'Ouverture', types: ['mExPile', 'mExRoue', 'mExEcart'] },
+  { categorie: 'Qui je suis', types: ['mExPortrait', 'mExColonnes', 'mExChiffres'] },
+  { categorie: 'Ma méthode', types: ['mExPaquet', 'mExDefile', 'mExEventailEtapes'] },
+  { categorie: 'Accompagnements', types: ['mExFriseServices', 'mExDonne', 'mExManege'] },
+  { categorie: 'Questions', types: ['mExFiches', 'mExMur', 'mExLiasse'] },
+  { categorie: 'Photos & vidéos', types: ['mExMobile', 'mExEventail', 'mExFrise'] },
+  { categorie: 'Textes', types: ['mExCitation', 'mExEtiquettes', 'mExMotChange'] },
+  { categorie: 'Contact & rendez-vous', types: ['mExCartePostale', 'mExSemaine', 'mExInvitation'] },
 ] as const
 
 export const MODELES_EXCEPTION = EXCEPTION_PAR_CATEGORIE.flatMap((g) => g.types)

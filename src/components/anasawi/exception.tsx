@@ -1,8 +1,8 @@
 'use client'
 
-import { ArrowLeft, ArrowRight, ArrowUpRight } from 'lucide-react'
+import { ArrowRight, ArrowUpRight, MapPin } from 'lucide-react'
 import Image from 'next/image'
-import { useContext, useEffect, useRef, useState } from 'react'
+import { useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
 import { Edition, useAvancement } from './vivant'
 import { cn, toE164 } from '@/lib/utils'
@@ -11,9 +11,10 @@ import type { FaqItem, Media, OpeningHour, ServiceWithMedia } from '@/server/db/
 /**
  * LES MODÈLES D'EXCEPTION de la version moderne — vitrine : /moderne/exception.
  *
- * Le parti pris : ÉPURÉ, minimaliste. Beaucoup d'air, des traits d'un pixel, la
- * typographie au premier plan, et UNE animation soignée par section —
- * lente, douce, qui sert le contenu au lieu de se montrer.
+ * Le langage : DES OBJETS QUI BOUGENT. Photos et contenus sont posés sur
+ * des cartes (coins arrondis, liseré ivoire, ombre douce), qui s'ouvrent,
+ * glissent, s'empilent, se balancent — en continu ou au défilement, sans
+ * qu'on ait à cliquer. C'est l'esprit de l'éventail et de la frise.
  *
  * Même règle que `vivant.tsx` : le défilement et la souris n'écrivent
  * que des variables CSS ; tout le reste est du calc(). Rien ne bouge pour
@@ -23,11 +24,13 @@ import type { FaqItem, Media, OpeningHour, ServiceWithMedia } from '@/server/db/
 const reduit = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const accent = (texte: string) => texte.split('*').map((m, i) => (i % 2 ? <em key={i}>{m}</em> : m))
 const propre = (t: string) => t.replace(/\*/g, '')
-/** Une image optimisée en arrière-plan CSS (pour les découpes). */
-const fond = (url: string, w = 1920) => `url("/_next/image?url=${encodeURIComponent(url)}&w=${w}&q=75")`
-/** La courbe de toute la bibliothèque : un départ franc, une arrivée très douce. */
-const DOUX = 'cubic-bezier(0.22,1,0.36,1)'
 const n2 = (i: number) => String(i + 1).padStart(2, '0')
+const DOUX = 'cubic-bezier(0.22,1,0.36,1)'
+
+/** LA CARTE — l'objet de toute la bibliothèque. */
+const CADRE = 'overflow-hidden rounded-[20px] bg-white ring-[6px] ring-[var(--ad-ivoire)] shadow-[0_24px_50px_-28px_rgba(46,66,79,0.45)]'
+/** Un flottement continu, chacun à son rythme (durée, décalage). */
+const flotte = (i: number) => ({ animation: `ad-flotter ${6 + (i % 4) * 1.4}s ease-in-out ${-(i * 1.7) % 5}s infinite` })
 
 /** Vrai une fois l'élément entré dans l'écran (toujours vrai dans l'éditeur). */
 function useVu<T extends HTMLElement>(marge = '-12%') {
@@ -53,98 +56,111 @@ function useVu<T extends HTMLElement>(marge = '-12%') {
   return [ref, vu] as const
 }
 
+/** Une photo dans sa carte. */
+function CartePhoto({ p, className, sizes = '320px' }: { p: Media; className?: string; sizes?: string }) {
+  return (
+    <div className={cn(CADRE, 'relative bg-[var(--ad-sable)]', className)}>
+      <Image src={p.url} alt={p.alt} fill sizes={sizes} className="object-cover" />
+    </div>
+  )
+}
+
 /* ══════════════════════════════════════════════════════════════════════
    OUVERTURE
    ══════════════════════════════════════════════════════════════════════ */
 
-/** LA FENTE — une phrase coupée par un trait fin ; en descendant, elle
- *  s'écarte et la fente s'ouvre sur une photo plein écran. */
-export function Fente({ haut, bas, legende, photo }: { haut: string; bas: string; legende: string; photo: Media | null }) {
-  const ref = useAvancement<HTMLElement>('colle', true)
-  const edition = useContext(Edition)
-  const moitie = 'pointer-events-none absolute inset-x-0 px-5 text-center font-[family-name:var(--ad-titre)] text-[clamp(40px,8vw,128px)] leading-[0.95] tracking-[-0.03em] text-[var(--ad-nuit)]'
-  return (
-    <section ref={ref} className={cn('relative [--e:0]', edition ? 'h-[calc(var(--ad-vh)*100)]' : 'h-[calc(var(--ad-vh)*230)]')}>
-      <div className="sticky top-0 flex h-[calc(var(--ad-vh)*100)] items-center justify-center overflow-hidden">
-        <div className="absolute inset-0" style={{ clipPath: 'inset(calc((1 - var(--e)) * 49.5%) calc((1 - var(--e)) * 8%) round calc((1 - var(--e)) * 400px))' }}>
-          {photo && <Image src={photo.url} alt={photo.alt} fill sizes="100vw" className="object-cover" style={{ transform: 'scale(calc(1.2 - var(--e) * 0.2))' }} />}
-          <div className="absolute inset-0 bg-[linear-gradient(to_top,rgba(46,66,79,0.55),transparent_55%)]" style={{ opacity: 'var(--e)' }} />
-          <p
-            className="absolute inset-x-0 bottom-[10%] mx-auto max-w-[40ch] px-6 text-center text-[clamp(17px,1.8vw,22px)] leading-[1.5] text-white"
-            style={{ opacity: 'clamp(0, calc((var(--e) - 0.75) * 4), 1)', transform: 'translateY(calc((1 - var(--e)) * 24px))' }}
-          >
-            {legende}
-          </p>
-        </div>
-        <p className={cn(moitie, 'bottom-1/2 mb-[clamp(10px,1.4vw,20px)]')} style={{ transform: 'translateY(calc(var(--e) * var(--ad-vh) * -55))', opacity: 'clamp(0, calc(1 - var(--e) * 1.8), 1)' }}>
-          {accent(haut)}
-        </p>
-        <p className={cn(moitie, 'top-1/2 mt-[clamp(10px,1.4vw,20px)]')} style={{ transform: 'translateY(calc(var(--e) * var(--ad-vh) * 55))', opacity: 'clamp(0, calc(1 - var(--e) * 1.8), 1)' }}>
-          {accent(bas)}
-        </p>
-        <span aria-hidden="true" className="absolute left-1/2 top-1/2 h-px w-[84%] -translate-x-1/2 bg-[var(--ad-sable-fonce)]" style={{ opacity: 'clamp(0, calc(1 - var(--e) * 8), 1)' }} />
-      </div>
-    </section>
-  )
-}
-
-/** LES LAMES — la photo d'ouverture arrive en six bandes verticales qui
- *  montent l'une après l'autre ; le texte se pose ensuite. */
-export function Lames({ photo, children }: { photo: Media | null; children: React.ReactNode }) {
-  const [ref, vu] = useVu<HTMLDivElement>('0%')
-  const N = 6
-  return (
-    <div ref={ref} className="relative isolate h-[calc(var(--ad-vh)*90)] min-h-[540px] overflow-hidden bg-[var(--ad-sable)]">
-      {photo &&
-        Array.from({ length: N }, (_, i) => (
-          <span key={i} aria-hidden="true" className="absolute inset-y-0 overflow-hidden" style={{ left: `${(i / N) * 100}%`, width: `${100 / N + 0.1}%` }}>
-            <span
-              className="absolute inset-0 bg-cover bg-no-repeat"
-              style={{
-                backgroundImage: fond(photo.url),
-                backgroundSize: `${N * 100}% 100%`,
-                backgroundPosition: `${(i / (N - 1)) * 100}% 50%`,
-                transform: vu ? 'translateY(0)' : 'translateY(101%)',
-                transition: `transform 1.4s ${DOUX} ${0.1 + i * 0.09}s`,
-              }}
-            />
-          </span>
-        ))}
-      <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_top,rgba(46,66,79,0.7),rgba(46,66,79,0.1)_60%)]" style={{ opacity: vu ? 1 : 0, transition: 'opacity 1.4s 0.6s' }} />
-      <div
-        className="absolute inset-0 flex flex-col justify-end px-[5vw] pb-[9vh] text-white"
-        style={{ opacity: vu ? 1 : 0, transform: vu ? 'none' : 'translateY(16px)', transition: `opacity 1.2s 1s, transform 1.2s ${DOUX} 1s` }}
-      >
-        {children}
-      </div>
-    </div>
-  )
-}
-
-/** LE MOT-PHOTO — un très grand mot taillé dans la photo ; il se resserre
- *  en arrivant, puis la photo glisse doucement dans les lettres au
- *  défilement. */
-export function MotPhoto({ mot, photo }: { mot: string; photo: Media | null }) {
-  const [vuRef, vu] = useVu<HTMLParagraphElement>()
+/** LA PILE — à côté du titre, quelques photos posées en tas, qui flottent
+ *  doucement et s'écartent les unes des autres quand on descend. */
+const TAS = [
+  { x: -30, y: -12, r: -9, dx: -60, dy: -30 },
+  { x: 22, y: -22, r: 7, dx: 50, dy: -50 },
+  { x: -12, y: 20, r: -3, dx: -30, dy: 60 },
+  { x: 28, y: 16, r: 11, dx: 70, dy: 40 },
+]
+export function Pile({ photos }: { photos: Media[] }) {
   const ref = useAvancement<HTMLDivElement>('passage')
   return (
-    <div ref={ref} className="[--p:0.5]">
-      <p
-        ref={vuRef}
-        aria-label={mot}
-        className="select-none whitespace-nowrap bg-clip-text text-center font-[family-name:var(--ad-titre)] text-[clamp(64px,19vw,300px)] font-semibold leading-[0.9] text-transparent [-webkit-background-clip:text]"
-        style={{
-          backgroundImage: photo ? fond(photo.url) : 'linear-gradient(120deg,#46728a,#4fa9a6)',
-          backgroundSize: 'cover',
-          backgroundPosition: '50% calc(var(--p) * 100%)',
-          letterSpacing: vu ? '-0.045em' : '0.06em',
-          opacity: vu ? 1 : 0,
-          transition: `letter-spacing 1.8s ${DOUX}, opacity 1.2s`,
-        }}
-      >
-        {mot}
-      </p>
+    <div ref={ref} className="relative mx-auto aspect-square w-full max-w-[560px] [--p:0.5]">
+      {photos.slice(0, TAS.length).map((p, i) => {
+        const t = TAS[i]!
+        return (
+          <div
+            key={p.id}
+            className="absolute left-1/2 top-1/2 w-[46%]"
+            style={{
+              zIndex: 10 + i,
+              transform: `translate(-50%, -50%) translate(calc(${t.x}% + (var(--p) - 0.4) * ${t.dx}px * 2.2), calc(${t.y}% + (var(--p) - 0.4) * ${t.dy}px * 2.2)) rotate(calc(${t.r}deg + (var(--p) - 0.4) * ${t.r}deg))`,
+            }}
+          >
+            <div style={flotte(i)}>
+              <CartePhoto p={p} className="aspect-[3/4]" sizes="300px" />
+            </div>
+          </div>
+        )
+      })}
     </div>
+  )
+}
+
+/** LA ROUE — sous le titre, une grande roue de photos qui tourne
+ *  lentement, sans fin ; on n'en voit que le haut, comme un horizon. */
+export function Roue({ photos }: { photos: Media[] }) {
+  const N = 20
+  const liste = photos.length ? Array.from({ length: N }, (_, i) => photos[i % photos.length]!) : []
+  return (
+    <div className="group/roue relative h-[clamp(300px,34vw,460px)] overflow-hidden [--d:max(1500px,150vw)] [mask-image:linear-gradient(to_bottom,#000_70%,transparent)]">
+      <div
+        className="absolute left-1/2 top-[150px] h-[var(--d)] w-[var(--d)] -translate-x-1/2 motion-safe:animate-[ad-tourner_220s_linear_infinite] group-hover/roue:[animation-play-state:paused]"
+      >
+        {liste.map((p, i) => (
+          <div
+            key={i}
+            className="absolute left-1/2 top-1/2 w-[clamp(130px,14vw,200px)]"
+            style={{ transform: `translate(-50%, -50%) rotate(${i * (360 / N)}deg) translateY(calc(var(--d) / -2))` }}
+          >
+            <CartePhoto p={p} className="aspect-[3/4] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-4" sizes="200px" />
+          </div>
+        ))}
+      </div>
+    </div>
+  )
+}
+
+/** L'ÉCART — les photos recouvrent le titre, en tas ; en descendant, elles
+ *  glissent vers les bords et le titre apparaît au milieu. */
+const COINS = [
+  { x: -36, y: -26, r: -10 },
+  { x: 36, y: -24, r: 8 },
+  { x: -38, y: 26, r: 6 },
+  { x: 38, y: 28, r: -7 },
+  { x: 0, y: 40, r: 3 },
+]
+export function Ecart({ photos, children }: { photos: Media[]; children: React.ReactNode }) {
+  const ref = useAvancement<HTMLElement>('colle', true)
+  const edition = useContext(Edition)
+  const o = edition ? '1' : 'clamp(0, calc(var(--e) * 1.3), 1)'
+  return (
+    <section ref={ref} className={cn('relative [--e:0]', edition ? 'h-[calc(var(--ad-vh)*100)]' : 'h-[calc(var(--ad-vh)*200)]')}>
+      <div className="sticky top-0 flex h-[calc(var(--ad-vh)*100)] items-center justify-center overflow-hidden px-[5vw]">
+        <div className="relative z-0 text-center" style={{ opacity: `calc(0.1 + ${o} * 0.9)`, transform: `scale(calc(0.94 + ${o} * 0.06))` }}>
+          {children}
+        </div>
+        {photos.slice(0, COINS.length).map((p, i) => {
+          const c = COINS[i]!
+          return (
+            <div
+              key={p.id}
+              className="absolute left-1/2 top-1/2 z-10 w-[clamp(130px,20vw,260px)]"
+              style={{ transform: `translate(-50%, -50%) translate(calc(${o} * ${c.x}vw), calc(${o} * ${c.y}vh)) rotate(calc(${(i % 2 ? 4 : -4) * (i + 1) * 0.6}deg + ${o} * ${c.r}deg)) scale(calc(1.1 - ${o} * 0.25))` }}
+            >
+              <div style={flotte(i)}>
+                <CartePhoto p={p} className="aspect-[3/4]" sizes="260px" />
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </section>
   )
 }
 
@@ -152,94 +168,111 @@ export function MotPhoto({ mot, photo }: { mot: string; photo: Media | null }) {
    QUI JE SUIS
    ══════════════════════════════════════════════════════════════════════ */
 
-/** LE DÉVOILEMENT — le portrait se découvre de bas en haut, lentement,
- *  pendant que l'image se pose (léger recul du zoom). */
-export function Devoilement({ photo }: { photo: Media | null }) {
-  const [ref, vu] = useVu<HTMLDivElement>()
+/** LE PORTRAIT ACCOMPAGNÉ — le portrait sur sa carte, deux petites photos
+ *  glissées derrière, qui dépassent et dérivent à leur propre vitesse. */
+export function PortraitAccompagne({ portrait, photos }: { portrait: Media | null; photos: Media[] }) {
+  const ref = useAvancement<HTMLDivElement>('passage')
+  const [a, b] = photos
   return (
-    <div
-      ref={ref}
-      className="relative aspect-[4/5] w-full overflow-hidden rounded-[28px] bg-[var(--ad-sable)]"
-      style={{ clipPath: vu ? 'inset(0 0 0 0 round 28px)' : 'inset(100% 0 0 0 round 28px)', transition: `clip-path 1.6s ${DOUX}` }}
-    >
-      {photo && (
-        <Image
-          src={photo.url}
-          alt={photo.alt}
-          fill
-          sizes="(max-width: 1024px) 100vw, 560px"
-          className="object-cover"
-          style={{ transform: vu ? 'scale(1)' : 'scale(1.18)', transition: `transform 2.4s ${DOUX}` }}
-        />
+    <div ref={ref} className="relative mx-auto aspect-[4/5] w-[min(440px,78vw)] [--p:0.5]">
+      {a && (
+        <div className="absolute -left-[22%] top-[6%] w-[46%]" style={{ transform: 'translateY(calc((var(--p) - 0.5) * -120px)) rotate(-8deg)' }}>
+          <div style={flotte(1)}>
+            <CartePhoto p={a} className="aspect-[3/4]" sizes="220px" />
+          </div>
+        </div>
+      )}
+      {b && (
+        <div className="absolute -right-[18%] bottom-[4%] z-20 w-[42%]" style={{ transform: 'translateY(calc((var(--p) - 0.5) * 140px)) rotate(7deg)' }}>
+          <div style={flotte(2)}>
+            <CartePhoto p={b} className="aspect-square" sizes="200px" />
+          </div>
+        </div>
+      )}
+      {portrait && (
+        <div className="relative z-10 h-full" style={{ transform: 'rotate(calc((var(--p) - 0.5) * -6deg))' }}>
+          <CartePhoto p={portrait} className="h-full" sizes="440px" />
+        </div>
       )}
     </div>
   )
 }
 
-/** LA PLANCHE — des photos en trois colonnes qui glissent à des vitesses
- *  différentes au défilement : une profondeur à peine perceptible. */
-export function Planche({ photos }: { photos: Media[] }) {
-  const ref = useAvancement<HTMLDivElement>('passage')
-  const colonnes = [0, 1, 2].map((c) => photos.filter((_, i) => i % 3 === c))
-  const vitesses = [40, -30, 70]
+/** LES COLONNES — trois colonnes de photos qui montent et descendent sans
+ *  fin, en sens contraire ; survolées, elles s'arrêtent. */
+export function Colonnes({ photos }: { photos: Media[] }) {
+  const cols = [0, 1, 2].map((c) => {
+    const l = photos.filter((_, i) => i % 3 === c)
+    return l.length ? l : photos
+  })
   return (
-    <div ref={ref} className="grid grid-cols-2 gap-4 [--p:0.5] sm:grid-cols-3 sm:gap-6">
-      {colonnes.map((col, c) => (
-        <div
-          key={c}
-          className={cn('flex flex-col gap-4 sm:gap-6', c === 1 && 'mt-16', c === 2 && 'hidden sm:flex sm:mt-8')}
-          style={{ transform: `translateY(calc((var(--p) - 0.5) * ${vitesses[c]}px * -2))` }}
-        >
-          {col.map((p, k) => (
-            <figure key={p.id}>
-              <div className={cn('relative overflow-hidden rounded-[20px] bg-[var(--ad-sable)]', (c + k) % 2 ? 'aspect-[4/5]' : 'aspect-[4/3]')}>
-                <Image src={p.url} alt={p.alt} fill sizes="(max-width: 640px) 50vw, 380px" className="object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)] hover:scale-[1.04]" />
-              </div>
-              {p.caption && <figcaption className="mt-2.5 text-[13px] text-[var(--ad-gris)]">{p.caption}</figcaption>}
-            </figure>
-          ))}
+    <div className="group/col grid h-[clamp(520px,62vw,760px)] grid-cols-2 gap-5 overflow-hidden [mask-image:linear-gradient(to_bottom,transparent,#000_12%,#000_88%,transparent)] sm:grid-cols-3">
+      {cols.map((col, c) => (
+        <div key={c} className={cn(c === 2 && 'hidden sm:block')}>
+          <div
+            className="flex flex-col gap-5 px-2 group-hover/col:[animation-play-state:paused]"
+            style={{ animation: `${c % 2 ? 'ad-colonne-inverse' : 'ad-colonne'} ${46 + c * 9}s linear infinite` }}
+          >
+            {[0, 1].map((tour) =>
+              col.map((p, k) => (
+                <div key={`${tour}-${p.id}-${k}`} aria-hidden={tour === 1 || undefined}>
+                  <CartePhoto p={p} className={(c + k) % 2 ? 'aspect-[4/5]' : 'aspect-[4/3]'} sizes="(max-width: 640px) 50vw, 380px" />
+                </div>
+              )),
+            )}
+          </div>
         </div>
       ))}
     </div>
   )
 }
 
-/** L'ODOMÈTRE — chaque chiffre roule comme un compteur, puis s'arrête. */
-export function Odometre({ chiffres }: { chiffres: { valeur: string; libelle: string }[] }) {
-  const [ref, vu] = useVu<HTMLDListElement>()
+/** LES CHIFFRES EN CARTES — chaque chiffre sur sa carte ; empilées, elles
+ *  s'ouvrent en éventail au défilement, et les chiffres roulent. */
+export function ChiffresCartes({ chiffres }: { chiffres: { valeur: string; libelle: string }[] }) {
+  const ref = useAvancement<HTMLDivElement>('passage')
+  const [vuRef, vu] = useVu<HTMLDivElement>()
+  const liste = chiffres.slice(0, 4)
+  const milieu = (liste.length - 1) / 2
   return (
-    <dl ref={ref} className="grid gap-x-10 gap-y-12 sm:grid-cols-2 lg:grid-cols-3">
-      {chiffres.map((c, k) => (
-        <div key={k} className="border-t border-[var(--ad-sable-fonce)] pt-6">
-          <dt className="sr-only">{c.libelle}</dt>
-          <dd aria-label={c.valeur} className="flex items-baseline font-[family-name:var(--ad-titre)] text-[clamp(64px,8vw,112px)] leading-none tracking-[-0.04em] text-[var(--ad-nuit)]">
-            {[...c.valeur].map((ch, i) =>
-              /\d/.test(ch) ? (
-                <span key={i} aria-hidden="true" className="relative inline-block h-[1em] overflow-hidden">
-                  <span
-                    className="flex flex-col"
-                    style={{ transform: vu ? `translateY(-${Number(ch) + 10}em)` : 'translateY(0)', transition: `transform 2s ${DOUX} ${k * 0.15 + i * 0.1}s` }}
-                  >
-                    {Array.from({ length: 20 }, (_, n) => (
-                      <span key={n} className="block h-[1em] leading-none">
-                        {n % 10}
+    <div ref={vuRef}>
+      <div ref={ref} className="relative mx-auto h-[clamp(190px,34vw,380px)] w-full max-w-[1000px] [--p:1] [--pas:78%] sm:[--pas:108%]">
+        {liste.map((c, i) => {
+          const k = i - milieu
+          const ouv = `clamp(0, calc((var(--p) - ${(0.12 + Math.abs(k) * 0.03).toFixed(2)}) * 3), 1)`
+          return (
+            <div
+              key={i}
+              className="absolute bottom-0 left-1/2 aspect-[4/5] w-[clamp(118px,22vw,260px)] origin-[50%_120%]"
+              style={{ zIndex: 10 + i, transform: `translateX(-50%) translateX(calc(${ouv} * ${k} * var(--pas))) rotate(calc(${ouv} * ${k * 5}deg))` }}
+            >
+              <div className={cn(CADRE, 'flex h-full flex-col justify-between p-[9%]', i % 2 && 'bg-[var(--ad-sable)]')}>
+                <span aria-label={c.valeur} className="flex font-[family-name:var(--ad-titre)] text-[clamp(44px,7vw,96px)] leading-none tracking-[-0.04em] text-[var(--ad-nuit)]">
+                  {[...c.valeur].map((ch, j) =>
+                    /\d/.test(ch) ? (
+                      <span key={j} aria-hidden="true" className="relative inline-block h-[1em] overflow-hidden">
+                        <span className="flex flex-col" style={{ transform: vu ? `translateY(-${Number(ch) + 10}em)` : 'none', transition: `transform 2s ${DOUX} ${0.3 + i * 0.15 + j * 0.1}s` }}>
+                          {Array.from({ length: 20 }, (_, n) => (
+                            <span key={n} className="block h-[1em]">
+                              {n % 10}
+                            </span>
+                          ))}
+                        </span>
                       </span>
-                    ))}
-                  </span>
+                    ) : (
+                      <span key={j} aria-hidden="true" className="self-end text-[0.4em] text-[var(--ad-gris)]">
+                        {ch}
+                      </span>
+                    ),
+                  )}
                 </span>
-              ) : (
-                <span key={i} aria-hidden="true" className="text-[0.4em] text-[var(--ad-gris)]">
-                  {ch}
-                </span>
-              ),
-            )}
-          </dd>
-          <p aria-hidden="true" className="mt-4 text-[15px] text-[var(--ad-pierre)]">
-            {c.libelle}
-          </p>
-        </div>
-      ))}
-    </dl>
+                <span className="text-[clamp(12px,1.3vw,15px)] leading-[1.35] text-[var(--ad-pierre)]">{c.libelle}</span>
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
   )
 }
 
@@ -249,76 +282,85 @@ export function Odometre({ chiffres }: { chiffres: { valeur: string; libelle: st
 
 type Etape = { titre: string; texte: string }
 
-/** LE FIL — un trait vertical se dessine au défilement ; chaque étape
- *  s'éclaire quand il l'atteint. */
-export function Fil({ etapes }: { etapes: Etape[] }) {
-  const ref = useAvancement<HTMLOListElement>('passage')
-  const n = Math.max(1, etapes.length)
-  const trait = 'clamp(0, calc((var(--p) - 0.18) * 1.9), 1)'
+function CarteEtape({ e, i, className }: { e: Etape; i: number; className?: string }) {
   return (
-    <ol ref={ref} className="relative mx-auto max-w-[760px] [--p:1]">
-      <span aria-hidden="true" className="absolute bottom-3 left-[7px] top-3 w-px bg-[var(--ad-sable-fonce)]" />
-      <span aria-hidden="true" className="absolute bottom-3 left-[7px] top-3 w-px origin-top bg-[var(--ad-nuit)]" style={{ transform: `scaleY(${trait})` }} />
-      {etapes.map((e, i) => {
-        const allume = `clamp(0, calc((${trait} - ${(i / n).toFixed(3)}) * ${n * 3}), 1)`
-        return (
-          <li key={i} className="relative pb-14 pl-12 last:pb-0" style={{ opacity: `calc(0.3 + ${allume} * 0.7)` }}>
-            <span
-              aria-hidden="true"
-              className="absolute left-0 top-2 h-[15px] w-[15px] rounded-full border border-[var(--ad-nuit)] bg-[var(--ad-ivoire)]"
-              style={{ background: `color-mix(in srgb, var(--ad-nuit) calc(${allume} * 100%), var(--ad-ivoire))` }}
-            />
-            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--ad-gris)]">Étape {n2(i)}</p>
-            <h3 className="mt-2 text-[clamp(26px,3vw,36px)]" style={{ transform: `translateX(calc((1 - ${allume}) * -8px))` }}>
-              {e.titre}
-            </h3>
-            {e.texte && <p className="mt-3 max-w-[52ch] text-[16px] leading-[1.7] text-[var(--ad-pierre)]">{e.texte}</p>}
-          </li>
-        )
-      })}
-    </ol>
+    <div className={cn(CADRE, 'flex h-full flex-col justify-between p-7 sm:p-9', className)}>
+      <span className="font-[family-name:var(--ad-titre)] text-[clamp(44px,5vw,68px)] leading-none text-[var(--ad-sable-fonce)]">{n2(i)}</span>
+      <div>
+        <h3 className="text-[clamp(22px,2.4vw,30px)] leading-[1.15]">{e.titre}</h3>
+        {e.texte && <p className="mt-3 text-[15px] leading-[1.6] text-[var(--ad-pierre)]">{e.texte}</p>}
+      </div>
+    </div>
   )
 }
 
-/** LE VOYAGE — sur grand écran, la page s'immobilise et le chemin défile
- *  de côté sur un trait fin qui se trace. En colonne sur téléphone. */
-export function Voyage({ etapes }: { etapes: Etape[] }) {
+/** LE PAQUET — on descend, et les étapes arrivent une à une du bas de
+ *  l'écran pour se poser sur la pile, un peu de travers. */
+const PENTES = [-2, 1.6, -1.2, 2.4, -1.8, 1]
+export function Paquet({ etapes }: { etapes: Etape[] }) {
   const ref = useAvancement<HTMLElement>('colle')
   const edition = useContext(Edition)
   const n = etapes.length
-  const pas = 440
-  const largeur = n * pas
+  const t = `calc(var(--p) * ${Math.max(1, n - 1)} * 1.15)`
+  return (
+    <section ref={ref} className="relative [--p:0]" style={{ height: edition ? 'calc(var(--ad-vh) * 100)' : `calc(var(--ad-vh) * ${100 + n * 55})` }}>
+      <div className="sticky top-0 flex h-[calc(var(--ad-vh)*100)] items-center justify-center overflow-hidden">
+        <div className="relative h-[clamp(320px,44vh,400px)] w-[min(560px,86vw)]">
+          {etapes.map((e, i) => {
+            const arrivee = i === 0 ? '1' : `clamp(0, calc(${t} - ${i - 1}), 1)`
+            const dessus = `clamp(0, calc(${t} - ${i}), ${n})`
+            return (
+              <div
+                key={i}
+                className="absolute inset-0"
+                style={{
+                  zIndex: i,
+                  transform: `translateY(calc((1 - ${arrivee}) * 110vh + ${dessus} * -12px)) rotate(calc(${PENTES[i % PENTES.length]}deg + (1 - ${arrivee}) * 14deg)) scale(calc(1 - ${dessus} * 0.035))`,
+                }}
+              >
+                <CarteEtape e={e} i={i} />
+              </div>
+            )
+          })}
+        </div>
+      </div>
+    </section>
+  )
+}
+
+/** LE DÉFILÉ — sur grand écran, la page s'arrête et les cartes-étapes
+ *  passent devant nous ; celle du centre se redresse, les autres se
+ *  penchent et s'éloignent. En colonne sur téléphone. */
+export function Defile({ etapes }: { etapes: Etape[] }) {
+  const ref = useAvancement<HTMLElement>('colle')
+  const edition = useContext(Edition)
+  const n = etapes.length
+  const pas = 400
   return (
     <>
-      <ol className="flex flex-col gap-10 lg:hidden">
+      <div className="flex flex-col gap-6 lg:hidden">
         {etapes.map((e, i) => (
-          <li key={i} className="border-t border-[var(--ad-sable-fonce)] pt-5">
-            <span className="text-[13px] tabular-nums text-[var(--ad-gris)]">{n2(i)}</span>
-            <h3 className="mt-2 text-[26px]">{e.titre}</h3>
-            {e.texte && <p className="mt-2 text-[15px] leading-[1.65] text-[var(--ad-pierre)]">{e.texte}</p>}
-          </li>
+          <CarteEtape key={i} e={e} i={i} className="min-h-[240px]" />
         ))}
-      </ol>
-      <section ref={ref} className="relative hidden [--p:0] lg:block" style={{ height: edition ? 'calc(var(--ad-vh) * 100)' : `calc(var(--ad-vh) * ${100 + n * 40})` }}>
+      </div>
+      <section ref={ref} className="relative hidden [--p:0] lg:block" style={{ height: edition ? 'calc(var(--ad-vh) * 100)' : `calc(var(--ad-vh) * ${100 + n * 45})` }}>
         <div className="sticky top-0 flex h-[calc(var(--ad-vh)*100)] items-center overflow-hidden">
-          <div className="relative h-[320px] shrink-0" style={{ width: `calc(${largeur}px + 20vw)`, transform: `translateX(calc(var(--p) * (100vw - ${largeur}px - 20vw)))` }}>
-            <span aria-hidden="true" className="absolute left-[10vw] top-[60px] h-px bg-[var(--ad-sable-fonce)]" style={{ width: largeur }} />
-            <span aria-hidden="true" className="absolute left-[10vw] top-[60px] h-px origin-left bg-[var(--ad-nuit)]" style={{ width: largeur, transform: 'scaleX(var(--p))' }} />
+          <div className="relative h-[400px] w-full" style={{ transform: `translateX(calc(50vw - ${pas / 2}px - var(--p) * ${(n - 1) * pas}px))` }}>
             {etapes.map((e, i) => {
-              const allume = `clamp(0, calc((var(--p) - ${(i / n - 0.05).toFixed(3)}) * 10), 1)`
+              const d = `(var(--p) * ${n - 1} - ${i})`
+              const loin = `min(1, max(${d}, -1 * ${d}))`
               return (
-                <article key={i} className="absolute top-0 w-[340px]" style={{ left: `calc(10vw + ${i * pas}px)`, opacity: `calc(0.25 + ${allume} * 0.75)` }}>
-                  <span className="block font-[family-name:var(--ad-titre)] text-[28px] leading-none text-[var(--ad-gris)]">{n2(i)}</span>
-                  <span
-                    aria-hidden="true"
-                    className="absolute left-0 top-[54px] h-[13px] w-[13px] rounded-full border border-[var(--ad-nuit)]"
-                    style={{ background: `color-mix(in srgb, var(--ad-nuit) calc(${allume} * 100%), var(--ad-ivoire))` }}
-                  />
-                  <h3 className="mt-[70px] text-[30px] leading-[1.1]" style={{ transform: `translateY(calc((1 - ${allume}) * 12px))` }}>
-                    {e.titre}
-                  </h3>
-                  {e.texte && <p className="mt-3 max-w-[34ch] text-[15px] leading-[1.65] text-[var(--ad-pierre)]">{e.texte}</p>}
-                </article>
+                <div
+                  key={i}
+                  className="absolute top-0 h-full w-[340px] px-0"
+                  style={{
+                    left: i * pas,
+                    transform: `translateY(calc(${loin} * 40px)) rotate(calc(clamp(-1, ${d}, 1) * -7deg)) scale(calc(1 - ${loin} * 0.1))`,
+                    opacity: `calc(1 - ${loin} * 0.35)`,
+                  }}
+                >
+                  <CarteEtape e={e} i={i} />
+                </div>
               )
             })}
           </div>
@@ -328,43 +370,37 @@ export function Voyage({ etapes }: { etapes: Etape[] }) {
   )
 }
 
-/** LES VOLETS — les étapes en colonnes ; celle qu'on survole s'élargit
- *  doucement et laisse lire son texte. Empilées sur téléphone. */
-export function Volets({ etapes }: { etapes: Etape[] }) {
-  const [actif, setActif] = useState(0)
+/** L'ÉVENTAIL DES ÉTAPES — les étapes, des cartes empilées, s'ouvrent en
+ *  éventail depuis le centre au défilement. En pile sur téléphone. */
+export function EventailEtapes({ etapes }: { etapes: Etape[] }) {
+  const ref = useAvancement<HTMLDivElement>('passage')
+  const liste = etapes.slice(0, 5)
+  const milieu = (liste.length - 1) / 2
   return (
-    <ol className="flex flex-col gap-3 lg:h-[460px] lg:flex-row">
-      {etapes.map((e, i) => {
-        const ouvert = i === actif
-        return (
-          <li
-            key={i}
-            onMouseEnter={() => setActif(i)}
-            onFocus={() => setActif(i)}
-            tabIndex={0}
-            className={cn(
-              'relative flex min-w-0 flex-col justify-between overflow-hidden rounded-[24px] border p-7 outline-none transition-[flex-grow,background-color,border-color] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] lg:p-9',
-              ouvert ? 'border-transparent bg-[var(--ad-sable)] lg:flex-[2.6]' : 'border-[var(--ad-sable-fonce)] bg-transparent lg:flex-1',
-            )}
-          >
-            <span className="font-[family-name:var(--ad-titre)] text-[clamp(44px,5vw,72px)] leading-none text-[var(--ad-sable-fonce)]">{n2(i)}</span>
-            <div className="mt-8 lg:mt-0">
-              <h3 className="text-[clamp(22px,2.2vw,30px)] leading-[1.15]">{e.titre}</h3>
-              {e.texte && (
-                <p
-                  className={cn(
-                    'mt-3 max-w-[44ch] text-[15px] leading-[1.65] text-[var(--ad-pierre)] transition-[opacity,transform] duration-700',
-                    ouvert ? 'delay-300 lg:translate-y-0 lg:opacity-100' : 'lg:translate-y-2 lg:opacity-0',
-                  )}
-                >
-                  {e.texte}
-                </p>
-              )}
+    <>
+      <div className="flex flex-col gap-6 md:hidden">
+        {liste.map((e, i) => (
+          <CarteEtape key={i} e={e} i={i} className="min-h-[220px]" />
+        ))}
+      </div>
+      <div ref={ref} className="relative mx-auto hidden h-[clamp(380px,40vw,500px)] w-full max-w-[1100px] [--p:1] [--pas:92%] md:block">
+        {liste.map((e, i) => {
+          const k = i - milieu
+          const ouv = `clamp(0, calc((var(--p) - ${(0.15 + Math.abs(k) * 0.03).toFixed(2)}) * 3), 1)`
+          return (
+            <div
+              key={i}
+              className="group/carte absolute bottom-0 left-1/2 h-[92%] w-[clamp(210px,24vw,290px)] origin-[50%_130%]"
+              style={{ zIndex: 10 + i, transform: `translateX(-50%) translateX(calc(${ouv} * ${k} * var(--pas))) rotate(calc(${ouv} * ${k * 5}deg)) translateY(calc(${ouv} * ${Math.abs(k) * 4}%))` }}
+            >
+              <div className="h-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/carte:-translate-y-5">
+                <CarteEtape e={e} i={i} />
+              </div>
             </div>
-          </li>
-        )
-      })}
-    </ol>
+          )
+        })}
+      </div>
+    </>
   )
 }
 
@@ -372,139 +408,117 @@ export function Volets({ etapes }: { etapes: Etape[] }) {
    ACCOMPAGNEMENTS
    ══════════════════════════════════════════════════════════════════════ */
 
-/** LES LIGNES — une liste à filets ; la ligne survolée s'ouvre et laisse
- *  apparaître sa photo et son texte. */
-export function LignesServices({ services, rdv, bouton }: { services: ServiceWithMedia[]; rdv: string; bouton: string }) {
-  const [ouvert, setOuvert] = useState(0)
+function CarteService({ s, rdv, className }: { s: ServiceWithMedia; rdv: string; className?: string }) {
   return (
-    <ul className="border-t border-[var(--ad-sable-fonce)]">
-      {services.map((s, i) => {
-        const o = i === ouvert
-        return (
-          <li key={s.id} className="border-b border-[var(--ad-sable-fonce)]" onMouseEnter={() => setOuvert(i)}>
-            <button type="button" onClick={() => setOuvert(i)} onFocus={() => setOuvert(i)} aria-expanded={o} className="flex w-full items-baseline gap-5 py-6 text-left">
-              <span className="w-8 shrink-0 text-[13px] tabular-nums text-[var(--ad-gris)]">{n2(i)}</span>
-              <span className={cn('flex-1 font-[family-name:var(--ad-titre)] text-[clamp(24px,3.2vw,40px)] leading-[1.1] transition-colors duration-500', o ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-pierre)]')}>
-                {s.title}
-              </span>
-              {s.duration && <span className="hidden shrink-0 text-[13px] text-[var(--ad-gris)] sm:block">{s.duration}</span>}
-            </button>
-            <div className={cn('grid transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]', o ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-              <div className="overflow-hidden">
-                <div className={cn('flex flex-col gap-6 pb-8 pl-[52px] transition-opacity duration-700 sm:flex-row sm:items-start', o ? 'opacity-100 delay-150' : 'opacity-0')}>
-                  {s.media && (
-                    <div className="relative aspect-[4/3] w-full max-w-[240px] shrink-0 overflow-hidden rounded-[16px] bg-[var(--ad-sable)]">
-                      <Image src={s.media.url} alt="" fill sizes="240px" className={cn('object-cover transition-transform duration-[1.4s] ease-[cubic-bezier(0.22,1,0.36,1)]', o ? 'scale-100' : 'scale-110')} />
-                    </div>
-                  )}
-                  <div>
-                    <p className="max-w-[52ch] text-[15.5px] leading-[1.7] text-[var(--ad-pierre)]">{propre(s.excerpt)}</p>
-                    <a href={rdv} className="group mt-4 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--ad-nuit)]">
-                      <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 group-hover:bg-[length:100%_1px]">{bouton}</span>
-                      <ArrowUpRight className="h-4 w-4 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
-                    </a>
-                  </div>
-                </div>
-              </div>
+    <article className={cn(CADRE, 'flex h-full flex-col', className)}>
+      <div className="relative aspect-[4/3] shrink-0 bg-[var(--ad-sable)]">
+        {s.media && <Image src={s.media.url} alt="" fill sizes="340px" className="object-cover" />}
+        {s.duration && <span className="absolute left-3 top-3 rounded-full bg-white/90 px-3 py-1 text-[12px] font-semibold text-[var(--ad-nuit)]">{s.duration}</span>}
+      </div>
+      <div className="flex flex-1 flex-col p-6">
+        <h3 className="text-[23px] leading-[1.15]">{s.title}</h3>
+        <p className="mt-2 line-clamp-3 text-[14.5px] leading-[1.6] text-[var(--ad-pierre)]">{propre(s.excerpt)}</p>
+        <a href={rdv} className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[14px] font-semibold text-[var(--ad-nuit)]">
+          Prendre rendez-vous <ArrowUpRight className="h-4 w-4" />
+        </a>
+      </div>
+    </article>
+  )
+}
+
+/** LA FRISE DES ACCOMPAGNEMENTS — les cartes défilent lentement, sans
+ *  fin ; survolée, la frise s'arrête et la carte pointée se lève. */
+export function FriseServices({ services, rdv }: { services: ServiceWithMedia[]; rdv: string }) {
+  return (
+    <div className="group/frise overflow-hidden py-6 [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)]">
+      <div className="flex w-max gap-7 px-4 group-hover/frise:[animation-play-state:paused] motion-safe:animate-[ad-defiler_60s_linear_infinite]">
+        {[0, 1].map((tour) =>
+          services.map((s, i) => (
+            <div key={`${tour}-${s.id}`} aria-hidden={tour === 1 || undefined} className="w-[300px] shrink-0 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-3" style={{ transform: `rotate(${i % 2 ? 1.5 : -1.5}deg)` }}>
+              <CarteService s={s} rdv={rdv} />
             </div>
-          </li>
-        )
-      })}
-    </ul>
+          )),
+        )}
+      </div>
+    </div>
   )
 }
 
-/** LE SOMMAIRE — les noms à gauche, en grand et en retrait ; celui qu'on
- *  survole s'affirme, un filet se trace dessous et sa photo se pose à
- *  droite en fondu. */
-export function Sommaire({ services, rdv, bouton }: { services: ServiceWithMedia[]; rdv: string; bouton: string }) {
-  const [choisi, setChoisi] = useState(0)
-  const s = services[choisi]
+/** LA DONNE — les cartes arrivent en paquet au centre, puis se
+ *  distribuent chacune à sa place, comme un jeu qu'on étale. */
+export function Donne({ services, rdv }: { services: ServiceWithMedia[]; rdv: string }) {
+  const ref = useAvancement<HTMLDivElement>('passage')
+  const grille = useRef<HTMLDivElement>(null)
+  useLayoutEffect(() => {
+    const g = grille.current
+    if (!g) return
+    const placer = () => {
+      const r = g.getBoundingClientRect()
+      const cx = r.left + r.width / 2
+      const cy = r.top + r.height / 2
+      g.querySelectorAll<HTMLElement>('[data-carte]').forEach((el) => {
+        const avant = el.style.transform
+        el.style.transform = 'none'
+        const c = el.getBoundingClientRect()
+        el.style.transform = avant
+        el.style.setProperty('--dx', `${Math.round(cx - (c.left + c.width / 2))}px`)
+        el.style.setProperty('--dy', `${Math.round(cy - (c.top + c.height / 2))}px`)
+      })
+    }
+    placer()
+    window.addEventListener('resize', placer)
+    return () => window.removeEventListener('resize', placer)
+  }, [services.length])
   return (
-    <div className="grid gap-12 lg:grid-cols-[minmax(0,1.1fr)_minmax(0,0.9fr)] lg:items-center lg:gap-20">
-      <ul className="flex flex-col gap-2">
-        {services.map((sv, i) => (
-          <li key={sv.id}>
-            <button type="button" onMouseEnter={() => setChoisi(i)} onFocus={() => setChoisi(i)} onClick={() => setChoisi(i)} className="group relative py-2 text-left">
-              <span className={cn('font-[family-name:var(--ad-titre)] text-[clamp(30px,4vw,56px)] leading-[1.1] tracking-[-0.02em] transition-colors duration-500', i === choisi ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-sable-fonce)] group-hover:text-[var(--ad-gris)]')}>
-                {sv.title}
-              </span>
-              <span aria-hidden="true" className={cn('absolute bottom-1 left-0 h-px w-full origin-left bg-[var(--ad-nuit)] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]', i === choisi ? 'scale-x-100' : 'scale-x-0')} />
-            </button>
-          </li>
+    <div ref={ref} className="[--p:1]">
+      <div ref={grille} className="grid gap-7 sm:grid-cols-2 lg:grid-cols-3">
+        {services.map((s, i) => {
+          const d = `clamp(0, calc((var(--p) - ${(0.14 + i * 0.035).toFixed(3)}) * 3.2), 1)`
+          return (
+            <div
+              key={s.id}
+              data-carte=""
+              className="[--dx:0px] [--dy:0px]"
+              style={{ zIndex: 20 - i, transform: `translate(calc((1 - ${d}) * var(--dx)), calc((1 - ${d}) * var(--dy))) rotate(calc((1 - ${d}) * ${(i % 2 ? 1 : -1) * (4 + i * 2)}deg))` }}
+            >
+              <CarteService s={s} rdv={rdv} />
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+/** LE MANÈGE — les cartes forment un cercle en trois dimensions qui
+ *  tourne lentement ; survolé, il s'arrête. Au doigt : une rangée. */
+export function Manege({ services, rdv }: { services: ServiceWithMedia[]; rdv: string }) {
+  const n = Math.max(3, services.length)
+  const largeur = 250
+  const rayon = Math.max(420, Math.round(((largeur + 50) * n) / (2 * Math.PI)))
+  return (
+    <>
+    {/* Téléphone : les cartes en rangée, qu'on fait glisser du doigt. */}
+    <div className="flex snap-x snap-mandatory gap-5 overflow-x-auto px-[7vw] pb-8 pt-2 [scrollbar-width:none] sm:hidden">
+      {services.map((s, i) => (
+        <div key={s.id} className="w-[76vw] shrink-0 snap-center" style={{ transform: `rotate(${i % 2 ? 1.2 : -1.2}deg)` }}>
+          <CarteService s={s} rdv={rdv} />
+        </div>
+      ))}
+    </div>
+    <div className="group/manege relative mx-auto hidden h-[500px] w-full overflow-x-clip [perspective:1700px] sm:block">
+      <div
+        className="absolute left-1/2 top-6 h-[440px] [transform-style:preserve-3d] motion-safe:animate-[ad-manege_48s_linear_infinite] group-hover/manege:[animation-play-state:paused]"
+        style={{ width: largeur, marginLeft: -largeur / 2 }}
+      >
+        {services.map((s, i) => (
+          <div key={s.id} className="absolute inset-0 [backface-visibility:hidden]" style={{ transform: `rotateY(${(i * 360) / n}deg) translateZ(${rayon}px)` }}>
+            <CarteService s={s} rdv={rdv} />
+          </div>
         ))}
-      </ul>
-      <div>
-        <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-[var(--ad-sable)]">
-          {services.map((sv, i) =>
-            sv.media ? (
-              <Image
-                key={sv.id}
-                src={sv.media.url}
-                alt={i === choisi ? sv.media.alt : ''}
-                fill
-                sizes="(max-width: 1024px) 100vw, 480px"
-                className={cn('object-cover transition-[opacity,transform] duration-[1.1s] ease-[cubic-bezier(0.22,1,0.36,1)]', i === choisi ? 'scale-100 opacity-100' : 'scale-[1.05] opacity-0')}
-              />
-            ) : null,
-          )}
-        </div>
-        {s && (
-          <div key={s.id} className="mt-6 motion-safe:animate-[ad-monter_0.8s_cubic-bezier(0.22,1,0.36,1)_backwards]">
-            <p className="text-[15.5px] leading-[1.7] text-[var(--ad-pierre)]">{propre(s.excerpt)}</p>
-            <a href={rdv} className="mt-3 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--ad-nuit)]">
-              {bouton} <ArrowUpRight className="h-4 w-4" />
-            </a>
-          </div>
-        )}
       </div>
     </div>
-  )
-}
-
-/** LES CHAPITRES — un accompagnement à la fois, comme les chapitres d'un
- *  livre : la photo se découvre, le texte monte, un filet marque où l'on
- *  en est. */
-export function Chapitres({ services, rdv, bouton }: { services: ServiceWithMedia[]; rdv: string; bouton: string }) {
-  const [i, setI] = useState(0)
-  const n = services.length
-  const s = services[i]
-  if (!s) return null
-  const aller = (d: number) => setI((k) => (k + d + n) % n)
-  return (
-    <div className="grid gap-10 lg:grid-cols-2 lg:items-center lg:gap-20">
-      <div className="relative aspect-[4/5] overflow-hidden rounded-[28px] bg-[var(--ad-sable)]">
-        {s.media && (
-          <div key={s.id} className="absolute inset-0 motion-safe:animate-[ad-rideau_1.2s_cubic-bezier(0.77,0,0.18,1)_backwards] [--ad-rayon:0px]">
-            <Image src={s.media.url} alt={s.media.alt} fill sizes="(max-width: 1024px) 100vw, 560px" className="object-cover" />
-          </div>
-        )}
-      </div>
-      <div>
-        <p className="text-[13px] tabular-nums tracking-[0.12em] text-[var(--ad-gris)]">
-          {n2(i)} <span className="text-[var(--ad-sable-fonce)]">/ {n2(n - 1)}</span>
-        </p>
-        <div key={s.id} className="mt-6">
-          <h3 className="text-[clamp(32px,4vw,52px)] leading-[1.05] motion-safe:animate-[ad-monter_0.9s_cubic-bezier(0.22,1,0.36,1)_0.15s_backwards]">{s.title}</h3>
-          {s.duration && <p className="mt-3 text-[14px] text-[var(--ad-gris)] motion-safe:animate-[ad-monter_0.9s_cubic-bezier(0.22,1,0.36,1)_0.25s_backwards]">{s.duration}</p>}
-          <p className="mt-5 max-w-[46ch] text-[16px] leading-[1.7] text-[var(--ad-pierre)] motion-safe:animate-[ad-monter_0.9s_cubic-bezier(0.22,1,0.36,1)_0.35s_backwards]">{propre(s.excerpt)}</p>
-          <a href={rdv} className="mt-6 inline-flex items-center gap-1.5 text-[14px] font-semibold text-[var(--ad-nuit)] motion-safe:animate-[ad-monter_0.9s_cubic-bezier(0.22,1,0.36,1)_0.45s_backwards]">
-            {bouton} <ArrowUpRight className="h-4 w-4" />
-          </a>
-        </div>
-        <div className="mt-12 flex items-center gap-6">
-          <span className="relative h-px flex-1 bg-[var(--ad-sable-fonce)]">
-            <span className="absolute inset-y-0 left-0 bg-[var(--ad-nuit)] transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ width: `${((i + 1) / n) * 100}%` }} />
-          </span>
-          <button type="button" onClick={() => aller(-1)} aria-label="Précédent" className="grid h-11 w-11 place-items-center rounded-full border border-[var(--ad-sable-fonce)] transition-colors hover:border-[var(--ad-nuit)]">
-            <ArrowLeft className="h-4 w-4" />
-          </button>
-          <button type="button" onClick={() => aller(1)} aria-label="Suivant" className="grid h-11 w-11 place-items-center rounded-full border border-[var(--ad-sable-fonce)] transition-colors hover:border-[var(--ad-nuit)]">
-            <ArrowRight className="h-4 w-4" />
-          </button>
-        </div>
-      </div>
-    </div>
+    </>
   )
 }
 
@@ -512,158 +526,144 @@ export function Chapitres({ services, rdv, bouton }: { services: ServiceWithMedi
    QUESTIONS
    ══════════════════════════════════════════════════════════════════════ */
 
-/** LE PLI — des questions à filets ; la réponse se déplie en douceur et
- *  la croix tourne d'un quart de tour. */
-export function Pli({ faq }: { faq: FaqItem[] }) {
-  const [ouvert, setOuvert] = useState<number | null>(0)
+function CarteQuestion({ f, className, ouverte = true }: { f: FaqItem; className?: string; ouverte?: boolean }) {
   return (
-    <ul className="mx-auto max-w-[820px] border-t border-[var(--ad-sable-fonce)]">
-      {faq.map((f, i) => {
-        const o = ouvert === i
-        return (
-          <li key={f.id} className="border-b border-[var(--ad-sable-fonce)]">
-            <button type="button" onClick={() => setOuvert(o ? null : i)} aria-expanded={o} className="flex w-full items-center justify-between gap-6 py-6 text-left">
-              <span className="font-[family-name:var(--ad-titre)] text-[clamp(19px,2vw,24px)] leading-[1.3] text-[var(--ad-nuit)]">{f.question}</span>
-              <span aria-hidden="true" className="relative h-4 w-4 shrink-0">
-                <span className="absolute left-0 top-1/2 h-px w-4 bg-[var(--ad-nuit)]" />
-                <span className={cn('absolute left-0 top-1/2 h-px w-4 bg-[var(--ad-nuit)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)]', o ? 'rotate-0' : 'rotate-90')} />
-              </span>
-            </button>
-            <div className={cn('grid transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]', o ? 'grid-rows-[1fr]' : 'grid-rows-[0fr]')}>
-              <div className="overflow-hidden">
-                <p className={cn('max-w-[62ch] whitespace-pre-line pb-7 text-[16px] leading-[1.75] text-[var(--ad-pierre)] transition-[opacity,transform] duration-700', o ? 'translate-y-0 opacity-100' : '-translate-y-2 opacity-0')}>
-                  {propre(f.answer)}
-                </p>
-              </div>
+    <div className={cn(CADRE, 'p-7 sm:p-8', className)}>
+      <p className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,24px)] leading-[1.25] text-[var(--ad-nuit)]">{f.question}</p>
+      {ouverte && <p className="mt-4 whitespace-pre-line text-[15px] leading-[1.7] text-[var(--ad-pierre)]">{propre(f.answer)}</p>}
+    </div>
+  )
+}
+
+/** LES FICHES — un paquet de fiches : toutes les quelques secondes, celle
+ *  du dessus glisse de côté et repart derrière. */
+export function Fiches({ faq }: { faq: FaqItem[] }) {
+  const [ref, vu] = useVu<HTMLDivElement>('0%')
+  const [tete, setTete] = useState(0)
+  const [part, setPart] = useState(false)
+  const [survol, setSurvol] = useState(false)
+  const n = faq.length
+  useEffect(() => {
+    if (!vu || survol || n < 2 || reduit()) return
+    const t = window.setTimeout(() => {
+      setPart(true)
+      window.setTimeout(() => {
+        setTete((x) => (x + 1) % n)
+        setPart(false)
+      }, 650)
+    }, 6500)
+    return () => window.clearTimeout(t)
+  }, [vu, survol, tete, n])
+  if (!n) return null
+  return (
+    <div ref={ref} className="mx-auto flex w-full max-w-[640px] flex-col items-center" onMouseEnter={() => setSurvol(true)} onMouseLeave={() => setSurvol(false)}>
+      <div className="relative h-[clamp(320px,40vh,380px)] w-full">
+        {Array.from({ length: Math.min(4, n) }, (_, k) => {
+          const i = (tete + k) % n
+          const dessus = k === 0
+          return (
+            <div
+              key={`${faq[i]!.id}-${k}`}
+              className="absolute inset-x-0 top-0"
+              style={{
+                zIndex: 10 - k,
+                transform: dessus && part ? 'translateX(115%) rotate(12deg)' : `translateY(${k * 16}px) scale(${1 - k * 0.045}) rotate(${k === 0 ? 0 : (k % 2 ? 2.2 : -2) * k * 0.7}deg)`,
+                opacity: dessus && part ? 0 : k === 3 ? 0 : 1,
+                transition: `transform 0.8s ${DOUX}, opacity 0.6s`,
+              }}
+            >
+              <CarteQuestion f={faq[i]!} className="min-h-[clamp(260px,32vh,310px)]" ouverte={k === 0} />
             </div>
-          </li>
-        )
-      })}
+          )
+        })}
+      </div>
+      <button type="button" onClick={() => setTete((x) => (x + 1) % n)} className="mt-6 inline-flex items-center gap-2 text-[14px] font-semibold text-[var(--ad-nuit)]">
+        Question suivante <ArrowRight className="h-4 w-4" />
+        <span className="ml-2 text-[13px] font-normal tabular-nums text-[var(--ad-gris)]">
+          {n2(tete)} / {n2(n - 1)}
+        </span>
+      </button>
+    </div>
+  )
+}
+
+/** LE MUR — deux rangées de questions qui défilent en sens contraire ;
+ *  survolée, une carte s'arrête, se lève et montre sa réponse. */
+export function Mur({ faq }: { faq: FaqItem[] }) {
+  const moitie = Math.ceil(faq.length / 2)
+  const rangees = [faq.slice(0, moitie), faq.slice(moitie).length ? faq.slice(moitie) : faq]
+  return (
+    <div className="flex flex-col gap-6 overflow-hidden py-6 [mask-image:linear-gradient(90deg,transparent,#000_6%,#000_94%,transparent)]">
+      {rangees.map((r, k) => (
+        <div key={k} className="group/rang">
+          <div
+            className="flex w-max items-start gap-6 px-3 group-hover/rang:[animation-play-state:paused]"
+            style={{ animation: `${k ? 'ad-defiler-inverse' : 'ad-defiler'} ${55 + k * 10}s linear infinite` }}
+          >
+            {[0, 1].map((tour) =>
+              r.map((f, i) => (
+                <div key={`${tour}-${f.id}`} aria-hidden={tour === 1 || undefined} className="group/q w-[320px] shrink-0 transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-2" style={{ transform: `rotate(${(i + k) % 2 ? 1.2 : -1.2}deg)` }}>
+                  <div className={cn(CADRE, 'p-6')}>
+                    <p className="font-[family-name:var(--ad-titre)] text-[19px] leading-[1.3] text-[var(--ad-nuit)]">{f.question}</p>
+                    <div className="grid grid-rows-[0fr] transition-[grid-template-rows] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/q:grid-rows-[1fr]">
+                      <div className="overflow-hidden">
+                        <p className="pt-3 text-[14px] leading-[1.65] text-[var(--ad-pierre)]">{propre(f.answer)}</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )),
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** LA LIASSE — les questions-réponses sur des cartes qui, au défilement,
+ *  viennent se poser les unes sur les autres en haut de l'écran. */
+export function Liasse({ faq }: { faq: FaqItem[] }) {
+  return (
+    <ul className="mx-auto max-w-[760px]">
+      {faq.map((f, i) => (
+        <li key={f.id} className="sticky mb-[12vh] last:mb-0" style={{ top: `calc(104px + ${Math.min(i, 6) * 14}px)` }}>
+          <div style={{ transform: `rotate(${i % 2 ? 0.8 : -0.8}deg)` }}>
+            <div className={cn(CADRE, 'p-7 sm:p-9')}>
+              <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--ad-gris)]">Question {n2(i)}</p>
+              <p className="mt-3 font-[family-name:var(--ad-titre)] text-[clamp(21px,2.2vw,27px)] leading-[1.25] text-[var(--ad-nuit)]">{f.question}</p>
+              <p className="mt-4 whitespace-pre-line text-[15.5px] leading-[1.7] text-[var(--ad-pierre)]">{propre(f.answer)}</p>
+            </div>
+          </div>
+        </li>
+      ))}
     </ul>
   )
 }
 
-/** LA MACHINE À ÉCRIRE — la question se tape, avec son curseur fin ;
- *  la réponse apparaît, puis la suivante. En pause hors de l'écran. */
-export function MachineAEcrire({ faq }: { faq: FaqItem[] }) {
-  const [ref, vu] = useVu<HTMLDivElement>('0%')
-  const [i, setI] = useState(0)
-  const [lettres, setLettres] = useState(0)
-  const q = faq[i]
-  const total = q?.question.length ?? 0
-  const fini = lettres >= total
-
-  useEffect(() => {
-    if (!vu || !q) return
-    if (reduit()) return setLettres(total)
-    if (!fini) {
-      const t = window.setTimeout(() => setLettres((l) => l + 1), 38)
-      return () => window.clearTimeout(t)
-    }
-    const t = window.setTimeout(() => {
-      setI((k) => (k + 1) % faq.length)
-      setLettres(0)
-    }, 9000)
-    return () => window.clearTimeout(t)
-  }, [vu, lettres, fini, total, q, faq.length])
-
-  if (!q) return null
-  return (
-    <div ref={ref} className="mx-auto max-w-[880px]">
-      <p className="min-h-[2.3em] font-[family-name:var(--ad-titre)] text-[clamp(30px,4.4vw,56px)] leading-[1.15] tracking-[-0.02em] text-[var(--ad-nuit)]" aria-live="polite">
-        {q.question.slice(0, lettres)}
-        <span aria-hidden="true" className="ml-1 inline-block h-[0.85em] w-[1.5px] translate-y-[0.1em] bg-[var(--ad-nuit)] motion-safe:animate-[ad-clignote_1.1s_steps(1)_infinite]" />
-      </p>
-      <p key={q.id} className={cn('mt-8 max-w-[60ch] whitespace-pre-line text-[17px] leading-[1.75] text-[var(--ad-pierre)] transition-[opacity,transform] duration-1000', fini ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0')}>
-        {propre(q.answer)}
-      </p>
-      <div className="mt-12 flex flex-wrap gap-x-5 gap-y-2">
-        {faq.map((f, k) => (
-          <button
-            key={f.id}
-            type="button"
-            onClick={() => {
-              setI(k)
-              setLettres(0)
-            }}
-            aria-label={f.question}
-            className={cn('text-[13px] tabular-nums transition-colors', k === i ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-sable-fonce)] hover:text-[var(--ad-gris)]')}
-          >
-            {n2(k)}
-          </button>
-        ))}
-      </div>
-    </div>
-  )
-}
-
-/** L'INDEX — les questions numérotées ; la réponse se dévoile à côté. En
- *  accordéon sur téléphone. */
-export function Index({ faq }: { faq: FaqItem[] }) {
-  const [i, setI] = useState(0)
-  const q = faq[i]
-  return (
-    <div className="grid gap-8 lg:grid-cols-2 lg:gap-16">
-      <ol className="border-t border-[var(--ad-sable-fonce)]">
-        {faq.map((f, k) => (
-          <li key={f.id} className="border-b border-[var(--ad-sable-fonce)]">
-            <button type="button" onMouseEnter={() => setI(k)} onFocus={() => setI(k)} onClick={() => setI(k)} className="flex w-full items-baseline gap-4 py-4 text-left">
-              <span className={cn('w-7 shrink-0 text-[13px] tabular-nums transition-colors', k === i ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-gris)]')}>{n2(k)}</span>
-              <span className={cn('text-[16.5px] leading-[1.4] transition-[color,transform] duration-500', k === i ? 'translate-x-1.5 text-[var(--ad-nuit)]' : 'text-[var(--ad-pierre)]')}>{f.question}</span>
-            </button>
-            {k === i && <p className="whitespace-pre-line pb-5 pl-11 text-[15px] leading-[1.7] text-[var(--ad-pierre)] lg:hidden">{propre(f.answer)}</p>}
-          </li>
-        ))}
-      </ol>
-      {q && (
-        <div className="hidden lg:block">
-          <div key={q.id} className="sticky top-28 motion-safe:animate-[ad-monter_0.8s_cubic-bezier(0.22,1,0.36,1)_backwards]">
-            <p className="font-[family-name:var(--ad-titre)] text-[30px] leading-[1.15] text-[var(--ad-nuit)]">{q.question}</p>
-            <p className="mt-6 whitespace-pre-line text-[16px] leading-[1.8] text-[var(--ad-pierre)]">{propre(q.answer)}</p>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
-
 /* ══════════════════════════════════════════════════════════════════════
-   PHOTOS
+   PHOTOS & VIDÉOS
    ══════════════════════════════════════════════════════════════════════ */
 
-/** LA LAMPE — la photo est en noir et blanc ; là où passe la souris, une
- *  lumière douce lui rend ses couleurs. Sur tactile, elle se promène seule. */
-export function Lampe({ photo, titre, texte }: { photo: Media | null; titre: string; texte: string }) {
-  const [main, setMain] = useState(false)
-  const bouge = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== 'mouse') return
-    const r = e.currentTarget.getBoundingClientRect()
-    e.currentTarget.style.setProperty('--lampe-x', `${((e.clientX - r.left) / r.width) * 100}%`)
-    e.currentTarget.style.setProperty('--lampe-y', `${((e.clientY - r.top) / r.height) * 100}%`)
-  }
-  const masque = 'radial-gradient(circle var(--lampe-r) at var(--lampe-x) var(--lampe-y), #000 30%, transparent 100%)'
+/** LE MOBILE — des photos suspendues à des fils, qui se balancent
+ *  doucement, chacune à son rythme. */
+const FILS = [70, 150, 40, 120, 90, 160, 60]
+export function Mobile({ photos }: { photos: Media[] }) {
+  const liste = photos.slice(0, 7)
   return (
-    <div
-      onPointerEnter={(e) => e.pointerType === 'mouse' && setMain(true)}
-      onPointerLeave={() => setMain(false)}
-      onPointerMove={bouge}
-      className={cn(
-        'relative isolate aspect-[4/5] w-full overflow-hidden rounded-[32px] bg-[var(--ad-sable)] [transition:--lampe-r_0.8s_ease] sm:aspect-[16/10]',
-        !main && 'motion-safe:animate-[ad-errance_16s_ease-in-out_infinite]',
-      )}
-      style={{ ['--lampe-r' as string]: main ? '320px' : '220px' }}
-    >
-      {photo && (
-        <>
-          <Image src={photo.url} alt={photo.alt} fill sizes="(max-width: 1024px) 100vw, 1100px" className="object-cover [filter:grayscale(1)_brightness(0.95)]" />
-          <Image src={photo.url} alt="" aria-hidden="true" fill sizes="(max-width: 1024px) 100vw, 1100px" className="object-cover" style={{ maskImage: masque, WebkitMaskImage: masque }} />
-        </>
-      )}
-      <div aria-hidden="true" className="absolute inset-x-0 bottom-0 h-1/2 bg-[linear-gradient(to_top,rgba(46,66,79,0.65),transparent)]" />
-      <div className="absolute inset-x-0 bottom-0 p-7 text-white sm:p-10">
-        <h3 className="max-w-[16ch] text-[clamp(28px,3.6vw,48px)] leading-[1.05] text-white [&_em]:[-webkit-text-fill-color:#dff1ef] [&_em]:[background:none]">{accent(titre)}</h3>
-        {texte && <p className="mt-3 max-w-[44ch] text-[15px] leading-[1.6] text-white/80">{texte}</p>}
-      </div>
+    <div className="flex items-start justify-center gap-[clamp(10px,2.4vw,36px)] overflow-x-clip">
+      {liste.map((p, i) => (
+        <div
+          key={p.id}
+          className={cn('flex origin-top flex-col items-center', i > 4 && 'hidden lg:flex', i > 2 && 'max-sm:hidden')}
+          style={{ animation: `ad-balancier ${5 + (i % 3) * 1.3}s ease-in-out ${-(i * 1.1)}s infinite alternate` }}
+        >
+          <span aria-hidden="true" className="w-px bg-[var(--ad-gris)]/50" style={{ height: FILS[i % FILS.length] }} />
+          <span aria-hidden="true" className="-mb-1.5 h-3 w-3 rounded-full border border-[var(--ad-gris)]/60 bg-[var(--ad-ivoire)]" />
+          <CartePhoto p={p} className={cn('w-[clamp(110px,14vw,190px)]', i % 2 ? 'aspect-[3/4]' : 'aspect-square')} sizes="190px" />
+          {p.caption && <span className="mt-3 max-w-[16ch] text-center text-[12.5px] text-[var(--ad-gris)]">{p.caption}</span>}
+        </div>
+      ))}
     </div>
   )
 }
@@ -724,129 +724,70 @@ export function Frise({ photos }: { photos: Media[] }) {
    TEXTES
    ══════════════════════════════════════════════════════════════════════ */
 
-/** LES LETTRES VIVANTES — les lettres arrivent en cascade, puis se
- *  soulèvent et s'épaississent à peine sous la souris. */
-export function LettresVivantes({ texte, className }: { texte: string; className?: string }) {
-  const [ref, vu] = useVu<HTMLHeadingElement>('-15%')
-  const edition = useContext(Edition)
-
-  useEffect(() => {
-    const el = ref.current
-    if (!el || edition || reduit()) return
-    const lettres = [...el.querySelectorAll<HTMLElement>('[data-l]')]
-    let centres: { x: number; y: number }[] = []
-    let image = 0
-    let pos: { x: number; y: number } | null = null
-    const mesurer = () => {
-      centres = lettres.map((l) => {
-        const r = l.getBoundingClientRect()
-        return { x: r.left + r.width / 2, y: r.top + r.height / 2 }
-      })
-    }
-    const peindre = () => {
-      image = 0
-      const rayon = Math.max(140, el.getBoundingClientRect().height * 0.9)
-      lettres.forEach((l, i) => {
-        const c = centres[i]
-        if (!c || !pos) return l.style.setProperty('--f', '0')
-        const f = Math.max(0, 1 - Math.hypot(c.x - pos.x, c.y - pos.y) / rayon)
-        l.style.setProperty('--f', (f * f).toFixed(3))
-      })
-    }
-    const bouge = (e: PointerEvent) => {
-      if (e.pointerType !== 'mouse') return
-      if (!pos) mesurer()
-      pos = { x: e.clientX, y: e.clientY }
-      if (!image) image = requestAnimationFrame(peindre)
-    }
-    const sort = () => {
-      pos = null
-      if (!image) image = requestAnimationFrame(peindre)
-    }
-    el.addEventListener('pointerenter', mesurer)
-    el.addEventListener('pointermove', bouge)
-    el.addEventListener('pointerleave', sort)
-    window.addEventListener('scroll', mesurer, { passive: true })
-    return () => {
-      cancelAnimationFrame(image)
-      el.removeEventListener('pointerenter', mesurer)
-      el.removeEventListener('pointermove', bouge)
-      el.removeEventListener('pointerleave', sort)
-      window.removeEventListener('scroll', mesurer)
-    }
-  }, [edition, ref])
-
-  let index = 0
-  const mots = texte.split(' ')
-  let dansAccent = false
-  return (
-    <h2 ref={ref} className={cn('leading-[0.98]', className)} aria-label={propre(texte)}>
-      {mots.map((mot, m) => {
-        if (mot.startsWith('*')) dansAccent = true
-        const estAccent = dansAccent
-        if (mot.endsWith('*')) dansAccent = false
-        return (
-          <span key={m} aria-hidden="true" className="inline-block whitespace-nowrap">
-            {[...mot.replace(/\*/g, '')].map((ch) => {
-              const i = index++
-              return (
-                <span
-                  key={i}
-                  data-l=""
-                  className={cn(
-                    'inline-block [--f:0] [transition:transform_0.7s_cubic-bezier(0.22,1,0.36,1),font-variation-settings_0.7s]',
-                    estAccent && 'italic text-[var(--ad-bleu)]',
-                    vu ? 'motion-safe:animate-[ad-lettre_1.2s_cubic-bezier(0.22,1,0.36,1)_backwards]' : 'opacity-0',
-                  )}
-                  style={{
-                    animationDelay: vu ? `${i * 0.03}s` : undefined,
-                    transform: 'translateY(calc(var(--f) * -0.1em))',
-                    fontVariationSettings: '"wght" calc(380 + var(--f) * 200)',
-                  }}
-                >
-                  {ch}
-                </span>
-              )
-            })}
-            {m < mots.length - 1 && <span className="inline-block w-[0.26em]" />}
-          </span>
-        )
-      })}
-    </h2>
-  )
-}
-
-/** LE RUBAN — une phrase écrite en cercle, qui tourne doucement au
- *  défilement, la conviction au centre. */
-export function Ruban({ ruban, phrase, auteur }: { ruban: string; phrase: string; auteur: string }) {
+/** LA CITATION POSÉE — la phrase sur une grande carte, deux photos glissées
+ *  dessous qui dépassent et flottent ; au défilement, tout se décale un peu. */
+export function CitationPosee({ phrase, auteur, photos }: { phrase: string; auteur: string; photos: Media[] }) {
   const ref = useAvancement<HTMLDivElement>('passage')
-  const r = 180
-  const tour = 2 * Math.PI * r
-  const motif = `${ruban.trim()}  ·  `
-  const fois = Math.max(1, Math.round(tour / (motif.length * 12 * 0.92)))
+  const [a, b] = photos
   return (
-    <div ref={ref} className="relative mx-auto aspect-square w-[min(620px,90vw)] [--p:0.5]">
-      <svg viewBox="0 0 400 400" aria-hidden="true" className="absolute inset-0 h-full w-full fill-[var(--ad-gris)]" style={{ transform: 'rotate(calc(var(--p) * 160deg))' }}>
-        <defs>
-          <path id="ad-ruban" d={`M200,200 m-${r},0 a${r},${r} 0 1,1 ${r * 2},0 a${r},${r} 0 1,1 -${r * 2},0`} />
-        </defs>
-        <text className="uppercase" style={{ fontSize: 12, letterSpacing: '0.2em' }}>
-          <textPath href="#ad-ruban" textLength={Math.floor(tour - 2)} lengthAdjust="spacing">
-            {motif.repeat(fois)}
-          </textPath>
-        </text>
-      </svg>
-      <span aria-hidden="true" className="absolute inset-[14%] rounded-full border border-[var(--ad-sable-fonce)]" />
-      <blockquote className="absolute inset-[22%] flex flex-col items-center justify-center text-center">
-        <p className="font-[family-name:var(--ad-titre)] text-[clamp(20px,3vw,34px)] leading-[1.2] tracking-[-0.01em] text-[var(--ad-nuit)]">{accent(phrase)}</p>
-        {auteur && <footer className="mt-4 text-[11px] uppercase tracking-[0.22em] text-[var(--ad-gris)]">{auteur}</footer>}
-      </blockquote>
+    <div ref={ref} className="relative mx-auto max-w-[760px] px-[6%] py-[8%] [--p:0.5]">
+      {a && (
+        <div className="absolute left-0 top-0 w-[30%] max-w-[220px]" style={{ transform: 'translateY(calc((var(--p) - 0.5) * -90px)) rotate(-9deg)' }}>
+          <div style={flotte(0)}>
+            <CartePhoto p={a} className="aspect-[3/4]" sizes="220px" />
+          </div>
+        </div>
+      )}
+      {b && (
+        <div className="absolute bottom-0 right-0 w-[28%] max-w-[200px]" style={{ transform: 'translateY(calc((var(--p) - 0.5) * 110px)) rotate(8deg)' }}>
+          <div style={flotte(3)}>
+            <CartePhoto p={b} className="aspect-square" sizes="200px" />
+          </div>
+        </div>
+      )}
+      <div className="relative z-10" style={{ transform: 'rotate(calc((var(--p) - 0.5) * -4deg))' }}>
+        <blockquote className={cn(CADRE, 'px-8 py-12 text-center sm:px-14 sm:py-16')}>
+          <span aria-hidden="true" className="block font-[family-name:var(--ad-titre)] text-[64px] leading-[0.5] text-[var(--ad-sable-fonce)]">
+            “
+          </span>
+          <p className="mt-4 font-[family-name:var(--ad-titre)] text-[clamp(22px,3vw,36px)] leading-[1.25] text-[var(--ad-nuit)]">{accent(phrase)}</p>
+          {auteur && <footer className="mt-6 text-[12px] uppercase tracking-[0.2em] text-[var(--ad-gris)]">{auteur}</footer>}
+        </blockquote>
+      </div>
     </div>
   )
 }
 
-/** LE MOT QUI CHANGE — « Un lieu pour [respirer] » : le dernier mot
- *  change, glisse et se floute ; la phrase s'ajuste à sa longueur. */
+/** LES ÉTIQUETTES — des mots sur de petites cartes, en rangées qui
+ *  défilent en sens contraire, légèrement penchées. */
+export function Etiquettes({ mots }: { mots: string[] }) {
+  const rangees = [mots, [...mots].reverse(), mots.slice(Math.ceil(mots.length / 2)).concat(mots.slice(0, Math.ceil(mots.length / 2)))]
+  const teintes = ['bg-white text-[var(--ad-nuit)]', 'bg-[var(--ad-sable)] text-[var(--ad-nuit)]', 'bg-[var(--ad-nuit)] text-white']
+  return (
+    <div className="flex flex-col gap-5 overflow-hidden py-8 [mask-image:linear-gradient(90deg,transparent,#000_8%,#000_92%,transparent)]">
+      {rangees.map((r, k) => (
+        <div key={k} style={{ transform: `rotate(${k === 1 ? 2 : -1.5}deg)` }}>
+          <div className="flex w-max gap-4" style={{ animation: `${k % 2 ? 'ad-defiler-inverse' : 'ad-defiler'} ${40 + k * 12}s linear infinite` }}>
+            {[0, 1, 2, 3].map((tour) =>
+              r.map((m, i) => (
+                <span
+                  key={`${tour}-${i}`}
+                  aria-hidden={tour > 0 || undefined}
+                  className={cn('shrink-0 rounded-full px-7 py-3.5 font-[family-name:var(--ad-titre)] text-[clamp(20px,2.6vw,34px)] ring-[5px] ring-[var(--ad-ivoire)] shadow-[0_18px_36px_-24px_rgba(46,66,79,0.5)]', teintes[(i + k) % 3], (i + tour) % 3 === 1 && 'italic')}
+                >
+                  {m}
+                </span>
+              )),
+            )}
+          </div>
+        </div>
+      ))}
+    </div>
+  )
+}
+
+/** LE MOT QUI CHANGE — « Un lieu pour [respirer] » : le dernier mot est
+ *  posé sur une carte qui bascule pour laisser place au suivant. */
 export function MotQuiChange({ debut, mots }: { debut: string; mots: string[] }) {
   const [ref, vu] = useVu<HTMLParagraphElement>('0%')
   const [k, setK] = useState(0)
@@ -857,28 +798,37 @@ export function MotQuiChange({ debut, mots }: { debut: string; mots: string[] })
     const t = window.setInterval(() => setK((x) => (x + 1) % mots.length), 2600)
     return () => window.clearInterval(t)
   }, [vu, mots.length])
+  /* La largeur suit le mot affiché — et se remesure quand la police arrive. */
   useEffect(() => {
-    if (mesure.current) setLargeur(mesure.current.getBoundingClientRect().width)
+    const el = mesure.current
+    if (!el) return
+    const lire = () => setLargeur(el.getBoundingClientRect().width)
+    lire()
+    const ro = new ResizeObserver(lire)
+    ro.observe(el)
+    return () => ro.disconnect()
   }, [k])
   return (
-    <p ref={ref} className="text-center font-[family-name:var(--ad-titre)] text-[clamp(44px,7.5vw,120px)] leading-[1.05] tracking-[-0.03em] text-[var(--ad-nuit)]">
+    <p ref={ref} className="text-center font-[family-name:var(--ad-titre)] text-[clamp(40px,7vw,112px)] leading-[1.2] tracking-[-0.03em] text-[var(--ad-nuit)]">
       <span className="block sm:inline">{debut} </span>
-      <span className="relative inline-block h-[1.15em] overflow-hidden align-bottom transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]" style={{ width: largeur ? `${largeur}px` : undefined }}>
+      <span
+        className={cn(CADRE, 'relative inline-block h-[1.25em] -rotate-2 align-middle transition-[width] duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] [perspective:600px]')}
+        style={{ width: largeur ? `${largeur}px` : undefined }}
+      >
         {mots.map((m, i) => (
           <span
             key={i}
             aria-hidden={i !== k || undefined}
-            className="absolute left-0 top-0 whitespace-nowrap italic text-[var(--ad-bleu)] transition-[transform,opacity,filter] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
+            className="absolute inset-0 grid place-items-center whitespace-nowrap pl-[0.35em] pr-[0.5em] italic text-[var(--ad-bleu)] [backface-visibility:hidden] [transform-origin:50%_100%] transition-[transform,opacity] duration-[800ms] ease-[cubic-bezier(0.22,1,0.36,1)]"
             style={{
-              transform: i === k ? 'translateY(0)' : i === (k - 1 + mots.length) % mots.length ? 'translateY(-70%)' : 'translateY(70%)',
+              transform: i === k ? 'rotateX(0)' : i === (k - 1 + mots.length) % mots.length ? 'rotateX(80deg) translateY(-20%)' : 'rotateX(-80deg) translateY(20%)',
               opacity: i === k ? 1 : 0,
-              filter: i === k ? 'blur(0)' : 'blur(6px)',
             }}
           >
             {m}
           </span>
         ))}
-        <span ref={mesure} aria-hidden="true" className="invisible whitespace-nowrap italic">
+        <span ref={mesure} aria-hidden="true" className="invisible absolute left-0 top-0 whitespace-nowrap pl-[0.35em] pr-[0.5em] italic">
           {mots[k]}
         </span>
       </span>
@@ -890,36 +840,37 @@ export function MotQuiChange({ debut, mots }: { debut: string; mots: string[] })
    CONTACT & RENDEZ-VOUS
    ══════════════════════════════════════════════════════════════════════ */
 
-/** L'ADRESSE — l'adresse en grand ; un filet se trace dessous et les
- *  coordonnées s'y posent une à une. */
-export function Adresse({ adresse, telephone, email, acces }: { adresse: string | null; telephone: string | null; email: string | null; acces: string | null }) {
-  const [ref, vu] = useVu<HTMLDivElement>()
-  const infos = [
-    telephone && { label: 'Téléphone', valeur: telephone, href: `tel:${toE164(telephone)}` },
-    email && { label: 'Courriel', valeur: email, href: `mailto:${email}` },
-    adresse && { label: 'Itinéraire', valeur: 'Ouvrir dans Maps', href: `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adresse)}` },
-    acces && { label: 'Accès', valeur: acces, href: null },
-  ].filter((x): x is { label: string; valeur: string; href: string | null } => Boolean(x))
+/** LA CARTE POSTALE — l'adresse écrite sur une carte postale, posée de
+ *  travers ; au défilement, elle se redresse ; elle flotte à peine. */
+export function CartePostale({ photo, adresse, telephone, email, nom }: { photo: Media | null; adresse: string | null; telephone: string | null; email: string | null; nom: string }) {
+  const ref = useAvancement<HTMLDivElement>('passage')
+  const lignes = [adresse, telephone, email].filter((x): x is string => Boolean(x))
   return (
-    <div ref={ref}>
-      <p className="max-w-[18ch] font-[family-name:var(--ad-titre)] text-[clamp(36px,5.5vw,80px)] leading-[1.05] tracking-[-0.02em] text-[var(--ad-nuit)]">{adresse}</p>
-      <span aria-hidden="true" className="mt-12 block h-px origin-left bg-[var(--ad-sable-fonce)]" style={{ transform: vu ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 1.6s ${DOUX} 0.2s` }} />
-      <dl className="mt-8 grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
-        {infos.map((x, i) => (
-          <div key={x.label} style={{ opacity: vu ? 1 : 0, transform: vu ? 'none' : 'translateY(10px)', transition: `opacity 1s ${0.6 + i * 0.12}s, transform 1s ${DOUX} ${0.6 + i * 0.12}s` }}>
-            <dt className="text-[12px] font-semibold uppercase tracking-[0.16em] text-[var(--ad-gris)]">{x.label}</dt>
-            <dd className="mt-2 text-[16px] leading-[1.55] text-[var(--ad-nuit)]">
-              {x.href ? (
-                <a href={x.href} target={x.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 hover:bg-[length:100%_1px]">
-                  {x.valeur}
-                </a>
-              ) : (
-                x.valeur
-              )}
-            </dd>
+    <div ref={ref} className="mx-auto max-w-[920px] [--p:0.5]" style={{ transform: 'rotate(calc(clamp(0, calc(0.55 - var(--p)), 0.4) * -10deg)) translateY(calc(clamp(0, calc(0.55 - var(--p)), 0.4) * 120px))' }}>
+      <div style={flotte(2)}>
+        <div className={cn(CADRE, 'grid md:grid-cols-[minmax(0,1fr)_minmax(0,1.1fr)]')}>
+          <div className="relative aspect-[4/3] bg-[var(--ad-sable)] md:aspect-auto">{photo && <Image src={photo.url} alt={photo.alt} fill sizes="460px" className="object-cover" />}</div>
+          <div className="relative p-7 sm:p-10">
+            <div aria-hidden="true" className="absolute right-6 top-6 grid h-16 w-14 place-items-center rounded-[6px] border-2 border-dashed border-[var(--ad-sable-fonce)] font-[family-name:var(--ad-titre)] text-[22px] italic text-[var(--ad-bleu)]">
+              {nom.slice(0, 1)}
+            </div>
+            <p className="text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--ad-gris)]">Le cabinet</p>
+            <p className="mt-2 max-w-[14ch] font-[family-name:var(--ad-titre)] text-[clamp(24px,2.6vw,32px)] leading-[1.15] text-[var(--ad-nuit)]">{nom}</p>
+            <ul className="mt-8">
+              {lignes.map((l) => (
+                <li key={l} className="border-b border-dashed border-[var(--ad-sable-fonce)] py-2.5 font-[family-name:var(--ad-titre)] text-[17px] italic text-[var(--ad-pierre)]">
+                  {l === telephone ? <a href={`tel:${toE164(l)}`}>{l}</a> : l === email ? <a href={`mailto:${l}`}>{l}</a> : l}
+                </li>
+              ))}
+            </ul>
+            {adresse && (
+              <a href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(adresse)}`} target="_blank" rel="noopener noreferrer" className="mt-7 inline-flex items-center gap-2 rounded-full bg-[var(--ad-nuit)] px-5 py-3 text-[14px] font-semibold text-white transition-transform duration-500 hover:-translate-y-0.5">
+                <MapPin className="h-4 w-4" /> Itinéraire
+              </a>
+            )}
           </div>
-        ))}
-      </dl>
+        </div>
+      </div>
     </div>
   )
 }
@@ -935,100 +886,113 @@ function plage(h: string | undefined): [number, number] | null {
 }
 const heureTexte = (h: number) => `${Math.floor(h)} h${h % 1 ? ` ${String(Math.round((h % 1) * 60)).padStart(2, '0')}` : ''}`
 
-/** L'HORLOGE — un cadran de 24 heures au trait : les heures du jour en
- *  arc, l'aiguille à l'heure qu'il est, et « Ouvert maintenant » en clair. */
-export function Horloge({ horaires }: { horaires: OpeningHour[] }) {
-  const [ref, vu] = useVu<HTMLDivElement>()
+/** LA SEMAINE — sept cartes, une par jour, qui s'ouvrent en éventail ;
+ *  celle d'aujourd'hui se lève, et l'on sait si c'est ouvert. */
+export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
+  const ref = useAvancement<HTMLDivElement>('passage')
   const [maintenant, setMaintenant] = useState<Date | null>(null)
   useEffect(() => {
     setMaintenant(new Date())
-    const t = window.setInterval(() => setMaintenant(new Date()), 30_000)
+    const t = window.setInterval(() => setMaintenant(new Date()), 60_000)
     return () => window.clearInterval(t)
   }, [])
-  const jourIndex = maintenant ? (maintenant.getDay() + 6) % 7 : 0
+  const auj = maintenant ? (maintenant.getDay() + 6) % 7 : -1
   const heureDe = (j: number) => horaires.find((x) => x.day.toLowerCase().startsWith(JOURS[j]!.slice(0, 3)))?.hours
-  const auj = plage(heureDe(jourIndex))
-  const h = maintenant ? maintenant.getHours() + maintenant.getMinutes() / 60 : 12
-  const ouvert = auj ? h >= auj[0] && h < auj[1] : false
-  const R = 86
-  const point = (t: number, r = R) => {
-    const a = ((t / 24) * 360 - 90) * (Math.PI / 180)
-    return [Math.round((100 + r * Math.cos(a)) * 100) / 100, Math.round((100 + r * Math.sin(a)) * 100) / 100] as const
-  }
-  const arc = (a: number, b: number) => `M ${point(a).join(' ')} A ${R} ${R} 0 ${b - a > 12 ? 1 : 0} 1 ${point(b).join(' ')}`
-  const prochain = (() => {
+  const h = maintenant ? maintenant.getHours() + maintenant.getMinutes() / 60 : 0
+  const pl = auj >= 0 ? plage(heureDe(auj)) : null
+  const ouvert = pl ? h >= pl[0] && h < pl[1] : false
+  const statut = (() => {
+    if (!maintenant) return ' '
+    if (ouvert) return 'Ouvert maintenant'
     for (let k = 0; k < 7; k++) {
-      const j = (jourIndex + k) % 7
-      const pl = plage(heureDe(j))
-      if (pl && (k > 0 || h < pl[0])) return `Ouvre ${k === 0 ? 'aujourd’hui' : k === 1 ? 'demain' : JOURS[j]} à ${heureTexte(pl[0])}`
+      const j = (auj + k) % 7
+      const p = plage(heureDe(j))
+      if (p && (k > 0 || h < p[0])) return `Ouvre ${k === 0 ? 'aujourd’hui' : k === 1 ? 'demain' : JOURS[j]} à ${heureTexte(p[0])}`
     }
     return 'Sur rendez-vous'
   })()
   return (
-    <div ref={ref} className="grid items-center gap-14 lg:grid-cols-2">
-      <div className="relative mx-auto aspect-square w-[min(400px,78vw)]">
-        <svg viewBox="0 0 200 200" className="h-full w-full" role="img" aria-label={ouvert ? 'Ouvert maintenant' : prochain}>
-          <circle cx="100" cy="100" r={R} fill="none" stroke="var(--ad-sable-fonce)" strokeWidth="1" />
-          {auj && (
-            <path
-              d={arc(auj[0], auj[1])}
-              fill="none"
-              stroke="var(--ad-nuit)"
-              strokeWidth="3"
-              strokeLinecap="round"
-              pathLength={1}
-              strokeDasharray="1"
-              style={{ strokeDashoffset: vu ? 0 : 1, transition: `stroke-dashoffset 2s ${DOUX} 0.3s` }}
-            />
-          )}
-          {Array.from({ length: 24 }, (_, i) => {
-            const [x, y] = point(i, 70)
-            return i % 6 === 0 ? (
-              <text key={i} x={x} y={y + 2.5} textAnchor="middle" className="fill-[var(--ad-gris)] text-[7px]">
-                {i}
-              </text>
-            ) : (
-              <circle key={i} cx={x} cy={y} r="0.8" className="fill-[var(--ad-sable-fonce)]" />
-            )
-          })}
-          {maintenant && (
-            <g style={{ transform: `rotate(${(h / 24) * 360}deg)`, transformOrigin: '100px 100px', transition: 'transform 1s' }}>
-              <line x1="100" y1="100" x2="100" y2="30" stroke="var(--ad-or)" strokeWidth="1.5" strokeLinecap="round" />
-            </g>
-          )}
-          <circle cx="100" cy="100" r="3" fill="var(--ad-nuit)" />
-        </svg>
+    <div>
+      <p className="mb-14 flex items-center justify-center gap-3 font-[family-name:var(--ad-titre)] text-[clamp(22px,2.6vw,30px)] text-[var(--ad-nuit)]">
+        <span className={cn('h-2.5 w-2.5 rounded-full', ouvert ? 'bg-[var(--ad-or)] shadow-[0_0_0_5px_rgba(79,169,166,0.18)]' : 'bg-[var(--ad-sable-fonce)]')} />
+        {statut}
+      </p>
+      <div className="-mx-[5vw] flex snap-x snap-mandatory gap-4 overflow-x-auto px-[5vw] pb-6 pt-8 [scrollbar-width:none] sm:hidden">
+        {JOURS.map((j, i) => {
+          const heures = heureDe(i) ?? 'Fermé'
+          const leve = i === auj
+          return (
+            <div key={j} className={cn(CADRE, 'flex aspect-[3/4] w-[132px] shrink-0 snap-center flex-col justify-between p-4', leve ? '-translate-y-4 bg-[var(--ad-nuit)] text-white' : /ferm/i.test(heures) && 'bg-[var(--ad-sable)]')}>
+              <span className="font-[family-name:var(--ad-titre)] text-[22px] capitalize leading-none">{j}</span>
+              <span className={cn('text-[13px] leading-[1.35]', leve ? 'text-white/80' : 'text-[var(--ad-pierre)]')}>{heures}</span>
+            </div>
+          )
+        })}
       </div>
-      <div>
-        <p className="flex items-center gap-3 font-[family-name:var(--ad-titre)] text-[clamp(24px,2.6vw,32px)] text-[var(--ad-nuit)]">
-          <span className={cn('h-2 w-2 rounded-full', ouvert ? 'bg-[var(--ad-or)]' : 'bg-[var(--ad-sable-fonce)]')} />
-          {maintenant ? (ouvert ? 'Ouvert maintenant' : prochain) : ' '}
-        </p>
-        <ul className="mt-8 border-t border-[var(--ad-sable-fonce)]">
-          {JOURS.map((j, i) => (
-            <li key={j} className={cn('flex justify-between border-b border-[var(--ad-sable-fonce)] py-3 text-[15px] capitalize', i === jourIndex && maintenant ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-pierre)]')}>
-              <span>{j}</span>
-              <span className="normal-case">{heureDe(i) ?? 'Fermé'}</span>
-            </li>
-          ))}
-        </ul>
+      <div ref={ref} className="relative mx-auto hidden h-[clamp(170px,20vw,250px)] w-full max-w-[1100px] [--p:1] [--pas:96%] sm:block">
+        {JOURS.map((j, i) => {
+          const k = i - 3
+          const ouv = `clamp(0, calc((var(--p) - ${(0.12 + Math.abs(k) * 0.03).toFixed(2)}) * 3), 1)`
+          const leve = i === auj
+          const heures = heureDe(i) ?? 'Fermé'
+          return (
+            <div
+              key={j}
+              className="absolute bottom-0 left-1/2 aspect-[3/4] w-[clamp(84px,12vw,160px)] origin-[50%_130%]"
+              style={{ zIndex: leve ? 30 : 10 + i, transform: `translateX(-50%) translateX(calc(${ouv} * ${k} * var(--pas))) rotate(calc(${ouv} * ${k * 3}deg))` }}
+            >
+              <div
+                className={cn(CADRE, 'flex h-full flex-col justify-between p-[11%] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)]', leve ? '-translate-y-6 bg-[var(--ad-nuit)] text-white' : /ferm/i.test(heures) && 'bg-[var(--ad-sable)]')}
+              >
+                <span className="font-[family-name:var(--ad-titre)] text-[clamp(16px,1.9vw,24px)] capitalize leading-none">{j.slice(0, 3)}.</span>
+                <span className={cn('text-[clamp(10px,1.05vw,13px)] leading-[1.3]', leve ? 'text-white/80' : 'text-[var(--ad-pierre)]')}>{heures}</span>
+              </div>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
 }
 
-/** L'INVITATION — un lien seul, très grand : le filet se trace sous le
- *  texte et la flèche avance quand on le survole. */
+/** L'INVITATION — la phrase au centre, et autour, quelques photos qui
+ *  flottent comme posées en l'air ; au défilement, elles dérivent. */
+const AUTOUR = [
+  { c: 'left-[2%] top-[6%] w-[clamp(90px,13vw,190px)]', r: -8, v: -90 },
+  { c: 'right-[3%] top-[2%] w-[clamp(80px,11vw,160px)]', r: 7, v: -50 },
+  { c: 'left-[8%] bottom-[2%] w-[clamp(80px,10vw,150px)] max-sm:hidden', r: 5, v: 80 },
+  { c: 'right-[6%] bottom-[6%] w-[clamp(90px,13vw,180px)] max-sm:hidden', r: -6, v: 120 },
+]
+export function InvitationFlottante({ photos, children }: { photos: Media[]; children: React.ReactNode }) {
+  const ref = useAvancement<HTMLDivElement>('passage')
+  return (
+    <div ref={ref} className="relative flex min-h-[clamp(520px,70vh,720px)] items-center justify-center [--p:0.5]">
+      {photos.slice(0, AUTOUR.length).map((p, i) => {
+        const a = AUTOUR[i]!
+        return (
+          <div key={p.id} className={cn('absolute', a.c)} style={{ transform: `translateY(calc((var(--p) - 0.5) * ${a.v}px)) rotate(${a.r}deg)` }}>
+            <div style={flotte(i)}>
+              <CartePhoto p={p} className={i % 2 ? 'aspect-square' : 'aspect-[3/4]'} sizes="190px" />
+            </div>
+          </div>
+        )
+      })}
+      <div className="relative z-10 px-6 text-center">{children}</div>
+    </div>
+  )
+}
+
+/** Le lien de l'invitation : le filet se trace sous le texte, la flèche avance. */
 export function Invitation({ libelle, href }: { libelle: string; href: string }) {
   return (
     <a href={href} className="group inline-flex items-center gap-5 text-[var(--ad-nuit)]">
-      <span className="relative font-[family-name:var(--ad-titre)] text-[clamp(26px,3.2vw,44px)] leading-none">
+      <span className="relative font-[family-name:var(--ad-titre)] text-[clamp(24px,3vw,40px)] leading-none">
         {libelle}
         <span aria-hidden="true" className="absolute -bottom-2 left-0 h-px w-full bg-[var(--ad-sable-fonce)]" />
         <span aria-hidden="true" className="absolute -bottom-2 left-0 h-px w-full origin-left scale-x-0 bg-[var(--ad-nuit)] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:scale-x-100" />
       </span>
-      <span className="grid h-14 w-14 place-items-center overflow-hidden rounded-full border border-[var(--ad-sable-fonce)] transition-colors duration-500 group-hover:border-[var(--ad-nuit)] group-hover:bg-[var(--ad-nuit)] group-hover:text-white">
-        <ArrowRight className="h-5 w-5 transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-0.5" />
+      <span className="grid h-14 w-14 place-items-center rounded-full bg-[var(--ad-nuit)] text-white shadow-[0_18px_36px_-18px_rgba(46,66,79,0.7)] transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover:translate-x-1">
+        <ArrowRight className="h-5 w-5" />
       </span>
     </a>
   )

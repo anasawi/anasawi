@@ -1090,3 +1090,34 @@
     opacity: 0;
   }
 }
+
+/* ── Modèles d’exception : des objets qui bougent ──────────────────── */
+/* Les colonnes de photos qui montent / descendent sans fin. */
+@keyframes ad-colonne {
+  to {
+    transform: translateY(-50%);
+  }
+}
+@keyframes ad-colonne-inverse {
+  from {
+    transform: translateY(-50%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+/* Le manège : un tour complet, lentement. */
+@keyframes ad-manege {
+  to {
+    transform: rotateY(-360deg);
+  }
+}
+/* Le mobile : une photo suspendue qui se balance. */
+@keyframes ad-balancier {
+  from {
+    transform: rotate(-3.5deg);
+  }
+  to {
+    transform: rotate(3.5deg);
+  }
+}
