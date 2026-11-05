@@ -17,6 +17,8 @@ import type { FaqItem, Media, ServiceWithMedia } from '@/server/db/schema'
  *   L'aube · La constellation · Le portrait en ondes · Le chemin ·
  *   Les bulles · Les volets · Le tambour · La porte · Le fil de lumière
  *
+ * Sobres : une idée, un geste, peu d'effets. Jamais plus d'un écran.
+ *
  * Vitrine : /moderne/signature. Rien ne bouge pour qui a demandé moins
  * d'animations ; dans l'éditeur, tout est figé à son état final.
  */
@@ -35,8 +37,8 @@ const REBOND = 'cubic-bezier(0.34,1.56,0.64,1)'
 const reduit = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 const propre = (t: string) => t.replace(/\*/g, '')
 /** Le cadre commun : exactement un écran. */
-/* Sur ordinateur, exactement un écran ; sur téléphone, au moins un écran (le contenu peut l'allonger). */
-export const PLEIN = 'relative min-h-[calc(var(--ad-vh)*100)] w-full overflow-hidden lg:h-[calc(var(--ad-vh)*100)] lg:min-h-[620px]'
+/* Un écran, jamais plus — sur ordinateur comme sur téléphone. */
+export const PLEIN = 'relative h-[calc(var(--ad-vh)*100)] max-h-[calc(var(--ad-vh)*100)] w-full overflow-hidden'
 
 /** Des mots, avec leurs accents « *mot* ». */
 function decoupe(texte: string) {
@@ -68,22 +70,12 @@ export function Aube({ surtitre, titre, intro, bouton, rdv }: { surtitre: string
     <div ref={ref} onPointerMove={bouge} className={cn(PLEIN, 'grid place-items-center [--sx:0] [--sy:0]')} style={{ background: NUIT }}>
       {/* Le ciel qui s'éclaircit. */}
       <div aria-hidden="true" className="absolute inset-0" style={{ background: `linear-gradient(to top, ${TRIO[1].fond} 0%, ${IVOIRE} 62%, ${TRIO[0].fond} 100%)`, opacity: vu ? 1 : 0, transition: 'opacity 4s cubic-bezier(0.4,0,0.2,1) 0.5s' }} />
-      {/* Les rayons, très lents. */}
-      <div aria-hidden="true" className="absolute left-1/2 top-[64%] h-[160vmax] w-[160vmax] -translate-x-1/2 -translate-y-1/2" style={{ opacity: vu ? 0.55 : 0, transition: 'opacity 3s 2s' }}>
-        <div className="h-full w-full rounded-full motion-safe:animate-[ad-tourner_120s_linear_infinite]" style={{ background: `repeating-conic-gradient(from 0deg, ${TRIO[1].vif}40 0deg 5deg, transparent 5deg 15deg)`, maskImage: 'radial-gradient(closest-side, #000 10%, transparent 70%)', WebkitMaskImage: 'radial-gradient(closest-side, #000 10%, transparent 70%)' }} />
-      </div>
       {/* Le soleil : il se lève, puis suit la souris. */}
       <div aria-hidden="true" className="absolute left-1/2 top-[64%]" style={{ transform: `translate(-50%, -50%) translateY(${vu ? '0' : '48vh'})`, transition: `transform 4.2s ${DOUX} 0.2s` }}>
-        <div className="h-[58vmin] w-[58vmin] rounded-full transition-transform duration-[1200ms] ease-out" style={{ transform: 'translate(calc(var(--sx) * 50px), calc(var(--sy) * 30px))', background: `radial-gradient(circle, #fff7ea 0%, ${TRIO[1].vif} 34%, ${TRIO[1].fond} 58%, transparent 70%)` }} />
+        <div className="h-[46vmin] w-[46vmin] rounded-full transition-transform duration-[1200ms] ease-out" style={{ transform: 'translate(calc(var(--sx) * 50px), calc(var(--sy) * 30px))', background: `radial-gradient(circle, #fffaf1 0%, ${TRIO[1].vif}cc 30%, ${TRIO[1].fond} 52%, transparent 68%)` }} />
       </div>
       {/* Les collines. */}
-      <div aria-hidden="true" className="absolute -bottom-[18vh] -left-[10vw] h-[40vh] w-[75vw] rounded-[50%]" style={{ background: TRIO[0].fond, transform: `translateY(${vu ? 0 : 12}vh)`, transition: `transform 3s ${DOUX} 0.6s, background-color 3s`, filter: 'saturate(1.1)' }} />
-      <div aria-hidden="true" className="absolute -bottom-[22vh] -right-[12vw] h-[46vh] w-[80vw] rounded-[50%]" style={{ background: TRIO[2].fond, transform: `translateY(${vu ? 0 : 14}vh)`, transition: `transform 3.2s ${DOUX} 0.4s` }} />
-      {/* Les poussières de lumière. */}
-      {vu &&
-        Array.from({ length: 22 }, (_, k) => (
-          <span key={k} aria-hidden="true" className="absolute bottom-0 h-1.5 w-1.5 rounded-full bg-white opacity-0 motion-safe:animate-[ad-poussiere_9s_linear_infinite]" style={{ left: `${(k * 41) % 100}%`, animationDelay: `${2 + ((k * 0.73) % 9)}s` }} />
-        ))}
+      <div aria-hidden="true" className="absolute -bottom-[26vh] left-1/2 h-[40vh] w-[140vw] -translate-x-1/2 rounded-[50%]" style={{ background: TRIO[0].fond, transform: `translateY(${vu ? 0 : 12}vh)`, transition: `transform 3s ${DOUX} 0.6s, background-color 3s`, filter: 'saturate(1.1)' }} />
       <div className="relative z-10 max-w-[1100px] px-6 text-center" style={{ transform: 'translate(calc(var(--sx) * -16px), calc(var(--sy) * -10px))' }}>
         {surtitre && (
           <p className="text-[13px] font-semibold uppercase tracking-[0.24em]" style={{ color: vu ? TRIO[0].encre : '#ffffff99', transition: 'color 3s 1s' }}>
@@ -183,7 +175,7 @@ export function Constellation({ mot, phrase, auteur }: { mot: string; phrase: st
         ph: Math.random() * 6.283,
       }))
       /* Quelques étoiles de fond, qui ne rejoignent rien. */
-      for (let k = 0; k < 90; k++) points.push({ x: Math.random() * W, y: Math.random() * H, tx: NaN, ty: NaN, vx: 0, vy: 0, r: 0.6 + Math.random(), c: '#ffffff', ph: Math.random() * 6.283 })
+      for (let k = 0; k < 30; k++) points.push({ x: Math.random() * W, y: Math.random() * H, tx: NaN, ty: NaN, vx: 0, vy: 0, r: 0.6 + Math.random(), c: '#ffffff', ph: Math.random() * 6.283 })
     }
 
     const peindre = (t: number) => {
@@ -203,7 +195,7 @@ export function Constellation({ mot, phrase, auteur }: { mot: string; phrase: st
         const d2 = dx * dx + dy * dy
         if (d2 < 120 * 120) {
           const d = Math.sqrt(d2) || 1
-          const f = (1 - d / 120) * 2.6
+          const f = (1 - d / 120) * 1.4
           ax += (dx / d) * f
           ay += (dy / d) * f
         }
@@ -211,7 +203,7 @@ export function Constellation({ mot, phrase, auteur }: { mot: string; phrase: st
         p.vy = (p.vy + ay) * 0.86
         p.x += p.vx
         p.y += p.vy
-        ctx.globalAlpha = 0.55 + 0.45 * Math.sin(t / 700 + p.ph)
+        ctx.globalAlpha = 0.75 + 0.25 * Math.sin(t / 1400 + p.ph)
         ctx.fillStyle = p.c
         ctx.beginPath()
         ctx.arc(p.x, p.y, p.r, 0, 6.283)
@@ -244,7 +236,7 @@ export function Constellation({ mot, phrase, auteur }: { mot: string; phrase: st
     const clic = () => {
       for (const p of points) {
         const a = Math.random() * 6.283
-        const v = 8 + Math.random() * 16
+        const v = 4 + Math.random() * 8
         p.vx += Math.cos(a) * v
         p.vy += Math.sin(a) * v
       }
@@ -270,7 +262,6 @@ export function Constellation({ mot, phrase, auteur }: { mot: string; phrase: st
           {propre(phrase)}
         </p>
         {auteur && <p className="mt-4 text-[12px] font-semibold uppercase tracking-[0.22em] text-white/50">{auteur}</p>}
-        <p className="mt-6 text-[12px] text-white/40">Passez la souris · cliquez pour disperser</p>
       </div>
     </div>
   )
@@ -294,20 +285,20 @@ export function PortraitOndes({ portrait, surtitre, titre, texte, signature }: {
     const m = ((e.clientY - r.top) / r.height) * N
     el.querySelectorAll<HTMLElement>('[data-bande]').forEach((b, i) => {
       const f = Math.exp(-((i + 0.5 - m) ** 2) / 3)
-      b.style.translate = `${(i % 2 ? 1 : -1) * f * 22}px 0`
+      b.style.translate = `${(i % 2 ? 1 : -1) * f * 10}px 0`
     })
   }
   const calme = () => cadre.current?.querySelectorAll<HTMLElement>('[data-bande]').forEach((b) => (b.style.translate = '0 0'))
   const mots = decoupe(titre)
   return (
-    <div ref={ref} className={cn(PLEIN, 'grid items-center gap-10 px-[6vw] py-24 lg:grid-cols-[1fr_0.9fr]')} style={{ background: IVOIRE }}>
+    <div ref={ref} className={cn(PLEIN, 'grid content-center items-center gap-6 px-[6vw] pb-8 pt-20 lg:grid-cols-[1fr_0.9fr] lg:gap-16 lg:py-24')} style={{ background: IVOIRE }}>
       <div className="relative z-10 max-lg:order-2">
         {surtitre && (
           <p className="text-[13px] font-semibold uppercase tracking-[0.22em]" style={{ color: TRIO[2].encre, opacity: vu ? 1 : 0, transition: 'opacity 1s .2s' }}>
             {surtitre}
           </p>
         )}
-        <h2 className="mt-4 text-[clamp(32px,4.4vw,64px)] leading-[1.08]">
+        <h2 className="mt-3 text-[clamp(24px,4vw,58px)] leading-[1.1]">
           {mots.map((m, i) => (
             <span key={i} className="inline-block overflow-hidden align-bottom">
               <span className={cn('inline-block whitespace-pre', m.accent && 'italic')} style={{ color: m.accent ? TRIO[2].encre : undefined, transform: vu ? 'none' : 'translateY(105%)', transition: `transform 1.1s ${DOUX} ${0.3 + i * 0.05}s` }}>
@@ -317,22 +308,20 @@ export function PortraitOndes({ portrait, surtitre, titre, texte, signature }: {
           ))}
         </h2>
         {texte && (
-          <p className="mt-7 line-clamp-[8] max-w-[52ch] whitespace-pre-line text-[16.5px] leading-[1.75] text-[var(--ad-pierre)]" style={{ opacity: vu ? 1 : 0, transition: 'opacity 1.4s 1.1s' }}>
+          <p className="mt-4 line-clamp-4 max-w-[52ch] whitespace-pre-line text-[15px] leading-[1.7] text-[var(--ad-pierre)] lg:mt-7 lg:line-clamp-[7] lg:text-[16.5px]" style={{ opacity: vu ? 1 : 0, transition: 'opacity 1.4s 1.1s' }}>
             {texte}
           </p>
         )}
         {signature && (
-          <p className="mt-6 font-[family-name:var(--ad-titre)] text-[24px] italic" style={{ color: TRIO[0].encre, opacity: vu ? 1 : 0, transition: 'opacity 1.4s 1.5s' }}>
+          <p className="mt-4 font-[family-name:var(--ad-titre)] text-[20px] italic lg:mt-6 lg:text-[24px]" style={{ color: TRIO[0].encre, opacity: vu ? 1 : 0, transition: 'opacity 1.4s 1.5s' }}>
             {signature}
           </p>
         )}
       </div>
-      <div className="relative mx-auto h-[min(74vh,720px)] w-full max-w-[520px] max-lg:h-[44vh] max-lg:max-w-[340px]" onPointerMove={bouge} onPointerLeave={calme}>
-        {/* Les trois bandes de couleur, derrière. */}
-        {[2, 1, 0].map((k) => (
-          <span key={k} aria-hidden="true" className="absolute inset-0 rounded-[36px]" style={{ background: TRIO[k]!.vif, transform: vu ? `translate(${(k + 1) * 18}px, ${(k + 1) * 18}px)` : 'translate(0,0)', opacity: vu ? 1 : 0, transition: `transform 1.4s ${REBOND} ${0.9 + (2 - k) * 0.12}s, opacity .6s ${0.8 + (2 - k) * 0.12}s` }} />
-        ))}
-        <div ref={cadre} role="img" aria-label={portrait?.alt ?? ''} className="absolute inset-0 overflow-hidden rounded-[36px] bg-[var(--ad-sable)]">
+      <div className="relative mx-auto h-[min(72vh,700px)] w-full max-w-[500px] max-lg:h-[34vh] max-lg:max-w-[260px]" onPointerMove={bouge} onPointerLeave={calme}>
+        {/* Une ombre de couleur, derrière. */}
+        <span aria-hidden="true" className="absolute inset-0 rounded-[32px]" style={{ background: TRIO[0].fond, transform: vu ? 'translate(20px, 20px)' : 'translate(0,0)', transition: `transform 1.4s ${DOUX} 0.9s` }} />
+        <div ref={cadre} role="img" aria-label={portrait?.alt ?? ''} className="absolute inset-0 overflow-hidden rounded-[32px] bg-[var(--ad-sable)]">
           {portrait &&
             Array.from({ length: N }, (_, i) => (
               <span
@@ -471,9 +460,9 @@ export function Chemin({ etapes }: { etapes: { titre: string; texte: string }[] 
     <div ref={zone} className={PLEIN} style={{ background: `linear-gradient(160deg, ${IVOIRE}, ${TRIO[0].fond})` }}>
       <svg aria-hidden="true" className="absolute inset-0 h-full w-full" viewBox={`0 0 ${taille.w} ${taille.h}`}>
         <path d={d} fill="none" stroke={TRIO[0].vif} strokeOpacity="0.35" strokeWidth="3" strokeDasharray="2 12" strokeLinecap="round" />
-        <path ref={trace} d={d} fill="none" stroke={TRIO[0].encre} strokeWidth="4" strokeLinecap="round" />
+        <path ref={trace} d={d} fill="none" stroke={TRIO[0].encre} strokeWidth="2" strokeLinecap="round" />
       </svg>
-      <span ref={lumiere} aria-hidden="true" className="absolute left-0 top-0 z-20 -ml-3 -mt-3 h-6 w-6 rounded-full bg-white" style={{ boxShadow: `0 0 0 6px ${TRIO[0].vif}88, 0 0 30px 10px ${TRIO[0].vif}` }} />
+      <span ref={lumiere} aria-hidden="true" className="absolute left-0 top-0 z-20 -ml-2 -mt-2 h-4 w-4 rounded-full bg-white" style={{ boxShadow: `0 0 0 4px ${TRIO[0].vif}66, 0 0 16px 4px ${TRIO[0].vif}88` }} />
       {pts.map((pt, k) => {
         const e = etapes[k]!
         const t = trio(k)
@@ -576,10 +565,10 @@ export function Bulles({ services, rdv }: { services: ServiceWithMedia[]; rdv: s
             }
           })
           const v = Math.hypot(c.vx, c.vy)
-          if (v > 1.1) {
+          if (v > 0.6) {
             c.vx *= 0.96
             c.vy *= 0.96
-          } else if (v < 0.25) {
+          } else if (v < 0.15) {
             c.vx *= 1.04
             c.vy *= 1.04
           }
@@ -630,7 +619,7 @@ export function Bulles({ services, rdv }: { services: ServiceWithMedia[]; rdv: s
   }
   const s = ouverte !== null ? services[ouverte] : null
   return (
-    <div ref={zone} className={PLEIN} style={{ background: `radial-gradient(ellipse at 30% 20%, ${TRIO[0].fond}, ${IVOIRE} 55%, ${TRIO[2].fond})` }}>
+    <div ref={zone} className={PLEIN} style={{ background: IVOIRE }}>
       <p className="pointer-events-none absolute inset-x-0 top-[10%] z-0 text-center font-[family-name:var(--ad-titre)] text-[clamp(26px,3.2vw,44px)] text-[var(--ad-nuit)]/70">
         Touchez une bulle.
       </p>
@@ -653,10 +642,10 @@ export function Bulles({ services, rdv }: { services: ServiceWithMedia[]; rdv: s
             style={{ width: 200, height: 200 }}
           >
             <span
-              className={cn('absolute inset-0 rounded-full transition-transform duration-500 group-hover/bulle:scale-110 motion-safe:animate-[ad-irise_7s_ease-in-out_infinite_alternate]', eclatee === i ? 'motion-safe:animate-[ad-eclate_.4s_ease-out_forwards]' : eclatee === null && ouverte === null ? '' : '')}
+              className={cn('absolute inset-0 rounded-full transition-transform duration-500 group-hover/bulle:scale-105', eclatee === i ? 'motion-safe:animate-[ad-eclate_.4s_ease-out_forwards]' : eclatee === null && ouverte === null ? '' : '')}
               style={{
-                background: `radial-gradient(circle at 30% 26%, rgba(255,255,255,0.95) 0 5%, rgba(255,255,255,0) 16%), radial-gradient(circle at 72% 78%, ${t.vif}66, transparent 55%), linear-gradient(135deg, ${TRIO[0].fond}cc, ${TRIO[2].fond}cc 50%, ${TRIO[1].fond}cc)`,
-                boxShadow: 'inset 0 0 0 1.5px rgba(255,255,255,0.85), inset 0 0 40px rgba(255,255,255,0.55), 0 30px 50px -30px rgba(46,66,79,0.45)',
+                background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.9) 0 4%, rgba(255,255,255,0) 14%), ${t.fond}b3`,
+                boxShadow: `inset 0 0 0 1.5px ${t.vif}, 0 24px 44px -30px rgba(46,66,79,0.4)`,
                 transitionTimingFunction: REBOND,
               }}
             />
@@ -737,18 +726,14 @@ export function Volets({ photos }: { photos: Media[] }) {
         </div>
       )}
       <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_top,rgba(46,66,79,0.55),transparent_45%)]" />
-      {/* Les trois volets. */}
-      {passage > 0 &&
-        TRIO.map((t, k) => (
-          <span key={`${passage}-${k}`} aria-hidden="true" className="absolute inset-y-0 left-0 z-10 w-full motion-safe:animate-[ad-volet_1.3s_cubic-bezier(0.77,0,0.18,1)_forwards]" style={{ background: t.vif, animationDelay: `${k * 0.09}s`, transform: 'translateX(-101%)' }} />
-        ))}
+      {/* Le volet : une seule couleur, à tour de rôle. */}
+      {passage > 0 && <span key={passage} aria-hidden="true" className="absolute inset-y-0 left-0 z-10 w-full motion-safe:animate-[ad-volet_1.3s_cubic-bezier(0.77,0,0.18,1)_forwards]" style={{ background: trio(passage).fond, transform: 'translateX(-101%)' }} />}
       {/* Navigation : moitié gauche, moitié droite. */}
       <button type="button" onClick={() => aller(-1)} aria-label="Photo précédente" className="absolute inset-y-0 left-0 z-20 w-1/2 cursor-w-resize" />
       <button type="button" onClick={() => aller(1)} aria-label="Photo suivante" className="absolute inset-y-0 right-0 z-20 w-1/2 cursor-e-resize" />
       <div className="pointer-events-none absolute inset-x-0 bottom-0 z-20 flex items-end justify-between gap-6 p-[clamp(20px,4vw,48px)] text-white">
         <div>
-          <p className="font-[family-name:var(--ad-titre)] text-[clamp(64px,9vw,128px)] leading-none tabular-nums">{String(i + 1).padStart(2, '0')}</p>
-          {photos[i]?.caption && <p className="mt-2 text-[16px] text-white/85">{photos[i]?.caption}</p>}
+          {photos[i]?.caption && <p className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2.2vw,30px)] text-white">{photos[i]?.caption}</p>}
         </div>
         <div className="flex items-center gap-3">
           <span className="text-[13px] tabular-nums text-white/70">
@@ -795,9 +780,9 @@ export function Tambour({ faq }: { faq: FaqItem[] }) {
   const q = faq[ici]
   const t = trio(ici)
   return (
-    <div ref={ref} className={cn(PLEIN, 'grid items-center gap-8 px-[6vw] py-24 lg:grid-cols-2')} style={{ background: IVOIRE }}>
+    <div ref={ref} className={cn(PLEIN, 'grid content-center items-center gap-4 px-[6vw] pb-8 pt-20 lg:grid-cols-2 lg:gap-12 lg:py-24')} style={{ background: IVOIRE }}>
       <div
-        className="relative h-[min(64vh,560px)] touch-none select-none [perspective:640px] max-lg:h-[42vh]"
+        className="relative h-[min(64vh,560px)] touch-none select-none [perspective:640px] max-lg:h-[32vh]"
         onMouseEnter={() => setMain(true)}
         onMouseLeave={() => setMain(false)}
         onPointerDown={(e) => {
@@ -810,7 +795,7 @@ export function Tambour({ faq }: { faq: FaqItem[] }) {
         }}
         onPointerUp={() => (tirer.current = null)}
       >
-        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-[92px] -translate-y-1/2 rounded-[22px] border-2" style={{ borderColor: t.vif, background: `${t.fond}66`, transition: 'border-color .6s, background-color .6s' }} />
+        <div aria-hidden="true" className="pointer-events-none absolute inset-x-0 top-1/2 z-10 h-[92px] -translate-y-1/2 border-y" style={{ borderColor: 'var(--ad-sable-fonce)' }} />
         <div aria-hidden="true" className="pointer-events-none absolute inset-0 z-20 bg-[linear-gradient(to_bottom,var(--ad-ivoire),transparent_30%,transparent_70%,var(--ad-ivoire))]" />
         <div className="absolute inset-x-0 top-1/2 h-[92px] [transform-style:preserve-3d]" style={{ transform: `translateY(-50%) rotateX(${k * angle}deg)`, transition: `transform 1s ${REBOND}` }}>
           {faq.map((f, i) => {
@@ -838,16 +823,16 @@ export function Tambour({ faq }: { faq: FaqItem[] }) {
           </button>
         </div>
       </div>
-      <div className="flex min-h-[min(54vh,460px)] flex-col justify-end rounded-[36px] p-[clamp(26px,4vw,52px)] transition-colors duration-700" style={{ background: t.fond }} aria-live="polite">
+      <div className="flex flex-col justify-end rounded-[28px] p-[clamp(20px,4vw,52px)] transition-colors duration-700 lg:min-h-[min(54vh,460px)]" style={{ background: t.fond }} aria-live="polite">
         {q && (
           <div key={q.id} className="motion-safe:animate-[ad-remonte_.8s_cubic-bezier(0.22,1,0.36,1)_backwards]">
             <p className="text-[13px] font-semibold uppercase tracking-[0.18em]" style={{ color: t.encre }}>
               Question {String(ici + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}
             </p>
-            <p className="mt-3 font-[family-name:var(--ad-titre)] text-[clamp(24px,2.6vw,36px)] leading-[1.2]" style={{ color: t.encre }}>
+            <p className="mt-2 font-[family-name:var(--ad-titre)] text-[clamp(20px,2.6vw,36px)] leading-[1.2]" style={{ color: t.encre }}>
               {q.question}
             </p>
-            <p className="mt-5 line-clamp-[9] whitespace-pre-line text-[16px] leading-[1.75] text-[var(--ad-nuit)]/80">{propre(q.answer)}</p>
+            <p className="mt-3 line-clamp-4 whitespace-pre-line text-[14.5px] leading-[1.65] text-[var(--ad-nuit)]/80 lg:mt-5 lg:line-clamp-[8] lg:text-[16px]">{propre(q.answer)}</p>
           </div>
         )}
       </div>
@@ -870,23 +855,23 @@ export function Porte({ photo, adresse, telephone, email, rdv, titre }: { photo:
   const t = TRIO[1]
   const mots = decoupe(titre)
   return (
-    <div className={cn(PLEIN, 'grid items-center gap-10 px-[6vw] py-24 lg:grid-cols-[0.9fr_1.1fr]')} style={{ background: `linear-gradient(to bottom, ${IVOIRE} 70%, ${TRIO[1].fond})` }}>
+    <div className={cn(PLEIN, 'grid content-center items-center gap-6 px-[6vw] pb-8 pt-20 lg:grid-cols-[0.9fr_1.1fr] lg:gap-10 lg:py-24')} style={{ background: IVOIRE }}>
       <div className="relative z-10 max-lg:text-center">
-        <h2 className="text-[clamp(36px,5vw,72px)] leading-[1.05]">
+        <h2 className="text-[clamp(30px,5vw,72px)] leading-[1.05]">
           {mots.map((m, i) => (
             <span key={i} className={cn('whitespace-pre', m.accent && 'italic')} style={{ color: m.accent ? t.encre : undefined }}>
               {m.mot}{' '}
             </span>
           ))}
         </h2>
-        <p className="mt-5 max-w-[40ch] text-[16.5px] leading-[1.7] text-[var(--ad-pierre)] max-lg:mx-auto">{ouvert ? 'Entrez, installez-vous. Voici comment me trouver.' : 'Touchez la porte : elle s’ouvre sur le cabinet.'}</p>
-        <button type="button" onClick={() => setOuverte((o) => !o)} className="mt-7 inline-flex rounded-full px-6 py-3.5 text-[14.5px] font-semibold text-white" style={{ background: NUIT }}>
+        <p className="mt-3 max-w-[40ch] text-[15px] leading-[1.7] text-[var(--ad-pierre)] max-lg:mx-auto lg:mt-5 lg:text-[16.5px]">{ouvert ? 'Entrez, installez-vous. Voici comment me trouver.' : 'Touchez la porte : elle s’ouvre sur le cabinet.'}</p>
+        <button type="button" onClick={() => setOuverte((o) => !o)} className="mt-4 inline-flex rounded-full px-6 py-3 text-[14.5px] font-semibold text-white lg:mt-7" style={{ background: NUIT }}>
           {ouvert ? 'Refermer la porte' : 'Ouvrir la porte'}
         </button>
       </div>
-      <div className="relative mx-auto h-[min(70vh,640px)] w-[min(460px,78vw)] max-lg:h-[50vh] max-lg:w-[min(340px,78vw)]">
+      <div className="relative mx-auto h-[min(68vh,620px)] w-[min(440px,78vw)] max-lg:h-[46vh] max-lg:w-[min(300px,74vw)]">
         {/* La lumière au sol. */}
-        <span aria-hidden="true" className="absolute -bottom-[14%] left-1/2 h-[18%] w-[170%] -translate-x-1/2 [clip-path:polygon(30%_0,70%_0,100%_100%,0_100%)]" style={{ background: `linear-gradient(to bottom, ${t.vif}, transparent)`, opacity: ouvert ? 0.8 : entrouverte ? 0.25 : 0, transition: 'opacity 1.2s' }} />
+        <span aria-hidden="true" className="absolute -bottom-[14%] left-1/2 h-[18%] w-[170%] -translate-x-1/2 [clip-path:polygon(30%_0,70%_0,100%_100%,0_100%)]" style={{ background: `linear-gradient(to bottom, ${t.vif}, transparent)`, opacity: ouvert ? 0.45 : entrouverte ? 0.15 : 0, transition: 'opacity 1.2s' }} />
         {/* Le cadre et la pièce derrière. */}
         <div className="absolute inset-0 overflow-hidden rounded-t-full border-[10px] bg-[var(--ad-sable)]" style={{ borderColor: '#fff', boxShadow: '0 40px 80px -40px rgba(46,66,79,0.5)' }}>
           {photo && <Image src={photo.url} alt={photo.alt} fill sizes="460px" className="object-cover" style={{ transform: ouvert ? 'scale(1)' : 'scale(1.15)', transition: `transform 1.8s ${DOUX}` }} />}
@@ -982,7 +967,7 @@ export function FilDeLumiere({ titre, texte, bouton, rdv }: { titre: string; tex
         const a = t / 1400
         pts.push({ x: W / 2 + Math.sin(a) * W * 0.32, y: H / 2 + Math.sin(a * 2) * H * 0.18, t })
       }
-      while (pts.length && t - pts[0]!.t > 900) pts.shift()
+      while (pts.length && t - pts[0]!.t > 1100) pts.shift()
       ctx.clearRect(0, 0, W, H)
       ctx.lineCap = 'round'
       ctx.lineJoin = 'round'
@@ -992,9 +977,9 @@ export function FilDeLumiere({ titre, texte, bouton, rdv }: { titre: string; tex
         const b = pts[i]!
         ctx.strokeStyle = melange(f)
         ctx.globalAlpha = f
-        ctx.lineWidth = 2 + f * 16
+        ctx.lineWidth = 1 + f * 5
         ctx.shadowColor = melange(f)
-        ctx.shadowBlur = 18
+        ctx.shadowBlur = 6
         ctx.beginPath()
         ctx.moveTo(a.x, a.y)
         ctx.lineTo(b.x, b.y)
@@ -1044,7 +1029,7 @@ export function FilDeLumiere({ titre, texte, bouton, rdv }: { titre: string; tex
             ))}
           </h2>
           {texte && <p className="mx-auto mt-6 max-w-[44ch] text-[17px] leading-[1.7] text-white/70">{texte}</p>}
-          <a href={rdv} onClick={ouvrir} className="group mt-10 inline-flex items-center gap-3 rounded-full bg-white py-2 pl-7 pr-2 text-[16px] font-semibold text-[var(--ad-nuit)] shadow-[0_0_60px_-10px_rgba(143,208,202,0.8)] transition-transform duration-500 hover:scale-105">
+          <a href={rdv} onClick={ouvrir} className="group mt-10 inline-flex items-center gap-3 rounded-full bg-white py-2 pl-7 pr-2 text-[16px] font-semibold text-[var(--ad-nuit)] shadow-[0_18px_40px_-20px_rgba(0,0,0,0.5)] transition-transform duration-500 hover:scale-105">
             {bouton}
             <span className="grid h-11 w-11 place-items-center rounded-full text-white transition-transform duration-500 group-hover:rotate-[-45deg]" style={{ background: TRIO[0].encre }}>
               <ArrowRight className="h-5 w-5" />
