@@ -1056,31 +1056,71 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
   )
 }
 
-/** La semaine en liste courte (carte « Consultations ») : chaque jour et ses heures, aujourd'hui surligné. */
+/**
+ * La semaine en liste courte (carte « Consultations ») : chaque jour et ses
+ * heures. À l'arrivée, les jours se posent l'un après l'autre ; puis le
+ * surlignage sable glisse sous aujourd'hui, et son point vert respire.
+ */
 export function SemaineListe({ horaires }: { horaires: OpeningHour[] }) {
+  const ref = useRef<HTMLOListElement>(null)
+  const edition = useContext(Edition)
+  const [vu, setVu] = useState(false)
   const [aujourdhui, setAujourdhui] = useState<number | null>(null)
   useEffect(() => setAujourdhui((new Date().getDay() + 6) % 7), [])
+  useEffect(() => {
+    const el = ref.current
+    if (!el) return
+    if (edition || window.matchMedia('(prefers-reduced-motion: reduce)').matches) return setVu(true)
+    const io = new IntersectionObserver(
+      ([e]) => {
+        if (e?.isIntersecting) {
+          setVu(true)
+          io.disconnect()
+        }
+      },
+      { rootMargin: '0px 0px -12% 0px' },
+    )
+    io.observe(el)
+    return () => io.disconnect()
+  }, [edition])
   const horaireDe = (j: string) => horaires.find((h) => h.day.toLowerCase().startsWith(j.slice(0, 3)))?.hours ?? null
+  const doux = 'cubic-bezier(0.22,1,0.36,1)'
+  const fin = 0.25 + JOURS.length * 0.07
   return (
-    <ol className="-mx-2 flex flex-col">
+    <ol ref={ref} className="-mx-2 flex flex-col">
       {JOURS.map((j, i) => {
         const h = horaireDe(j)
         const ferme = !h || /ferm/i.test(h)
         const actif = i === aujourdhui
+        const entree = { opacity: vu ? 1 : 0, transform: vu ? 'none' : 'translateY(6px)', transition: `opacity .9s ${0.25 + i * 0.07}s, transform 1s ${doux} ${0.25 + i * 0.07}s` }
         return (
           <li
             key={j}
             className={cn(
-              'flex items-center justify-between gap-3 rounded-full px-2 py-[3px] text-[13.5px] leading-[1.35] transition-colors duration-500',
-              actif && 'bg-[var(--ad-sable)]',
+              'group/jour relative flex items-center justify-between gap-3 rounded-full px-2 py-[3px] text-[13.5px] leading-[1.35]',
               ferme ? 'text-[var(--ad-gris)]/70' : 'text-[var(--ad-nuit)]',
             )}
           >
-            <span className="flex items-center gap-2 capitalize">
-              {actif && <span aria-hidden="true" className={cn('h-1.5 w-1.5 rounded-full', ferme ? 'bg-[var(--ad-gris)]' : 'bg-[#6e9a6b]')} />}
-              <span className={cn(actif && 'font-semibold')}>{j.slice(0, 3)}.</span>
+            {/* Le surlignage d'aujourd'hui : il glisse de gauche à droite, une fois les jours posés. */}
+            {actif && (
+              <span
+                aria-hidden="true"
+                className="absolute inset-0 -z-10 rounded-full bg-[var(--ad-sable)]"
+                style={{ transformOrigin: 'left center', transform: vu ? 'scaleX(1)' : 'scaleX(0)', opacity: vu ? 1 : 0, transition: `transform 1.1s ${doux} ${fin}s, opacity .4s ${fin}s` }}
+              />
+            )}
+            <span className="flex items-center gap-2 capitalize" style={entree}>
+              {actif && (
+                <span aria-hidden="true" className="relative grid h-1.5 w-1.5 place-items-center">
+                  {!ferme && vu && <span className="absolute inset-0 rounded-full bg-[#6e9a6b] motion-safe:animate-[ad-pouls_2.4s_ease-out_infinite]" style={{ animationDelay: `${fin + 0.8}s` }} />}
+                  <span className={cn('relative h-1.5 w-1.5 rounded-full', ferme ? 'bg-[var(--ad-gris)]' : 'bg-[#6e9a6b]')} />
+                </span>
+              )}
+              <span className={cn('transition-transform duration-500 group-hover/jour:translate-x-0.5', actif && 'font-semibold')}>{j.slice(0, 3)}.</span>
             </span>
-            <span className="whitespace-nowrap tabular-nums">{ferme ? 'Fermé' : h}</span>
+            <span className="whitespace-nowrap tabular-nums" style={{ ...entree, transition: `opacity .9s ${0.32 + i * 0.07}s, transform 1s ${doux} ${0.32 + i * 0.07}s` }}>
+              {ferme ? 'Fermé' : h}
+            </span>
           </li>
         )
       })}
