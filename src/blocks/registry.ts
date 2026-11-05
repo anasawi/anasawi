@@ -54,6 +54,7 @@ import {
   mRespirationBlock,
   mSeuilBlock,
 } from './moderne/blocs'
+import { MODELES_BLOCS, MODELES_CATEGORIES } from './moderne/modeles'
 import { quoteBlock } from './quote'
 import { servicesBlock } from './services'
 import {
@@ -236,6 +237,8 @@ export const blockRegistry = {
   mConversation: mConversationBlock,
   mRendezVous: mRendezVousBlock,
   mHorizon: mHorizonBlock,
+  /* Les modèles de la bibliothèque moderne (voir moderne/modeles.tsx). */
+  ...MODELES_BLOCS,
 } as const satisfies Record<string, AnyBlockDefinition>
 
 export type BlockType = keyof typeof blockRegistry
@@ -340,6 +343,7 @@ const CATEGORY_OF: Partial<Record<BlockType, TemplateCategory>> = {
   mEnPratique: 'Contact & rendez-vous',
   mRendezVous: 'Contact & rendez-vous',
   mHorizon: 'Contact & rendez-vous',
+  ...MODELES_CATEGORIES,
 
   heroPleinEcran: 'Ouverture',
   hero: 'Ouverture',

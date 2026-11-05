@@ -128,7 +128,7 @@ export function Porte({
 }
 
 /** La vapeur qui monte d'une tasse : trois volutes qui ondulent et s'effacent. */
-function Vapeur({ className }: { className?: string }) {
+export function Vapeur({ className }: { className?: string }) {
   return (
     <svg aria-hidden="true" viewBox="0 0 60 70" className={cn('pointer-events-none', className)} fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round">
       {[
