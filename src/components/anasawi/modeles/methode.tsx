@@ -19,7 +19,7 @@ export function MethodeColonnes({ etiquette, titre, intro, etapes, id }: Base) {
       <div className={CONTENEUR}>
         <Entete etiquette={etiquette} titre={titre} texte={intro} />
         <ol ref={ref} className={cn('relative grid gap-10 md:gap-8', liste.length >= 4 ? 'md:grid-cols-4' : 'md:grid-cols-3')}>
-          <span aria-hidden="true" className="absolute left-0 right-0 top-[38px] hidden h-px origin-left border-t border-dashed border-[var(--ad-accent-trait)] md:block" style={{ transform: vu ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 2.2s ${DOUX} .2s` }} />
+          <span aria-hidden="true" className="absolute left-0 right-0 top-[38px] hidden h-px origin-left border-t border-dashed border-[var(--ad-touche)] md:block" style={{ transform: vu ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 2.2s ${DOUX} .2s` }} />
           {liste.map((e, i) => (
             <li key={i} className="relative" style={apparait(vu, 0.25 + i * 0.18)}>
               <span className="relative grid h-[76px] w-[58px] place-items-center bg-[var(--ad-accent-pale)] font-[family-name:var(--ad-titre)] text-[24px] text-[var(--ad-accent)] ring-8 ring-[var(--ad-ivoire)]" style={{ borderRadius: ARCHE }}>
@@ -52,7 +52,7 @@ export function MethodeVerticale({ etiquette, titre, intro, etapes, id, bouton, 
         </div>
         <ol ref={ref} className="relative">
           <span aria-hidden="true" className="absolute bottom-6 left-[19px] top-6 w-px bg-[var(--ad-accent-pale)]" />
-          <span aria-hidden="true" className="absolute bottom-6 left-[19px] top-6 w-px origin-top bg-[var(--ad-accent)]" style={{ transform: vu ? 'scaleY(1)' : 'scaleY(0)', transition: `transform ${1 + liste.length * 0.5}s ${DOUX} .3s` }} />
+          <span aria-hidden="true" className="absolute bottom-6 left-[19px] top-6 w-px origin-top bg-[var(--ad-touche)]" style={{ transform: vu ? 'scaleY(1)' : 'scaleY(0)', transition: `transform ${1 + liste.length * 0.5}s ${DOUX} .3s` }} />
           {liste.map((e, i) => (
             <li key={i} className="relative flex gap-6 pb-8 last:pb-0" style={apparait(vu, 0.3 + i * 0.4)}>
               <span className="relative z-[1] grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--ad-accent)] text-[14px] font-semibold tabular-nums text-white ring-[6px] ring-[var(--ad-ivoire)]">{i + 1}</span>
@@ -114,7 +114,7 @@ export function MethodeSeance({ etiquette, titre, intro, id, moments, duree }: O
           <div className="mb-8 flex items-center gap-4">
             <span className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--ad-pierre)]">Arrivée</span>
             <span className="relative h-[3px] flex-1 overflow-hidden rounded-full bg-white">
-              <span className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-[var(--ad-accent)]" style={{ transform: vu ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 3.2s cubic-bezier(0.65,0,0.35,1) .4s` }} />
+              <span className="absolute inset-y-0 left-0 w-full origin-left rounded-full bg-[var(--ad-touche)]" style={{ transform: vu ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 3.2s cubic-bezier(0.65,0,0.35,1) .4s` }} />
             </span>
             <span className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--ad-pierre)]">{duree || 'Départ'}</span>
           </div>

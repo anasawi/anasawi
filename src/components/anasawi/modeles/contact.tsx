@@ -36,7 +36,7 @@ export function ContactMinimal(p: Base) {
             <li key={l.libelle} style={apparait(vu, 0.2 + i * 0.12)}>
               <a href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cn(ITALIQUE, 'group relative text-[clamp(22px,3vw,40px)] text-[var(--ad-nuit)] [overflow-wrap:anywhere]')}>
                 {l.texte}
-                <span aria-hidden="true" className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[var(--ad-accent)] transition-transform duration-500 group-hover:scale-x-100" />
+                <span aria-hidden="true" className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[var(--ad-touche)] transition-transform duration-500 group-hover:scale-x-100" />
               </a>
             </li>
           ))}

@@ -106,7 +106,7 @@ export function Bouton({ href, children, clair = false, discret = false, classNa
   if (discret)
     return (
       <a href={href} className={cn('group inline-flex items-center gap-1.5 py-2 text-[15px] font-semibold text-[var(--ad-nuit)] [&_svg]:text-[var(--ad-accent)]', className)}>
-        <span className="bg-[linear-gradient(var(--ad-accent),var(--ad-accent))] bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 group-hover:bg-[length:100%_2px]">{children}</span>
+        <span className="bg-[linear-gradient(var(--ad-touche),var(--ad-touche))] bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 group-hover:bg-[length:100%_2px]">{children}</span>
         <ArrowUpRight className="h-4 w-4 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
       </a>
     )

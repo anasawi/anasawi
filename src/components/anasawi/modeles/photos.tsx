@@ -150,7 +150,7 @@ export function PhotosLegende({ etiquette, titre, texte, photo, id, inverse }: {
           </p>
           {photo?.caption && (
             <p className={cn(ITALIQUE, 'mt-8 flex items-center gap-3 text-[16px] text-[var(--ad-gris)]')} style={apparait(vu, 0.6)}>
-              <span aria-hidden="true" className="h-px w-8 bg-[var(--ad-accent-trait)]" />
+              <span aria-hidden="true" className="h-px w-8 bg-[var(--ad-touche)]" />
               {photo.caption}
             </p>
           )}
@@ -216,7 +216,7 @@ export function PhotosFenetre({ etiquette, titre, texte, photos, id }: Base) {
             {liste.map((p, k) => (
               <li key={p.id} style={apparait(vu, 0.3 + k * 0.08)}>
                 <button type="button" onMouseEnter={() => setI(k)} onFocus={() => setI(k)} onClick={() => setI(k)} className="flex items-center gap-4 py-1.5 text-left">
-                  <span aria-hidden="true" className="h-px bg-[var(--ad-nuit)] transition-all duration-700 max-lg:hidden" style={{ width: k === i ? 36 : 12, opacity: k === i ? 1 : 0.25, background: 'var(--ad-accent)' }} />
+                  <span aria-hidden="true" className="h-px bg-[var(--ad-touche)] transition-all duration-700 max-lg:hidden" style={{ width: k === i ? 36 : 12, opacity: k === i ? 1 : 0.25, background: 'var(--ad-touche)' }} />
                   <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,28px)] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
                     {p.caption || p.alt}
                   </span>

@@ -156,7 +156,7 @@ export function ServicesFenetre({ etiquette, titre, bouton, rdv, services, photo
             {liste.map((s, k) => (
               <li key={s.id}>
                 <button type="button" onMouseEnter={() => setI(k)} onFocus={() => setI(k)} onClick={() => setI(k)} className="flex w-full items-center gap-4 py-2 text-left">
-                  <span aria-hidden="true" className="h-px bg-[var(--ad-nuit)] transition-all duration-700" style={{ width: k === i ? 32 : 10, opacity: k === i ? 1 : 0.25, background: 'var(--ad-accent)' }} />
+                  <span aria-hidden="true" className="h-px bg-[var(--ad-touche)] transition-all duration-700" style={{ width: k === i ? 32 : 10, opacity: k === i ? 1 : 0.25, background: 'var(--ad-touche)' }} />
                   <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,27px)] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
                     {s.title}
                   </span>

@@ -112,7 +112,7 @@ export function OuvertureMinimale({ etiquette, nom, phrase, bouton, rdv }: Base)
   const [ref, vu] = useVu<HTMLElement>('0%')
   return (
     <section ref={ref} className={cn(CONTENEUR, 'relative flex min-h-[min(calc(var(--ad-vh,1vh)*100),880px)] flex-col items-center justify-center pb-14 pt-28 text-center')}>
-      <svg aria-hidden="true" viewBox="0 0 400 520" preserveAspectRatio="none" className="pointer-events-none absolute left-1/2 top-[calc(50%+24px)] h-[min(78vh,700px)] w-[min(86vw,560px)] -translate-x-1/2 -translate-y-1/2 text-[var(--ad-accent-trait)]">
+      <svg aria-hidden="true" viewBox="0 0 400 520" preserveAspectRatio="none" className="pointer-events-none absolute left-1/2 top-[calc(50%+24px)] h-[min(78vh,700px)] w-[min(86vw,560px)] -translate-x-1/2 -translate-y-1/2 text-[var(--ad-touche)]">
         <path
           d="M 2 518 L 2 200 A 198 198 0 0 1 398 200 L 398 518"
           fill="none"

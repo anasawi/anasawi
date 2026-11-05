@@ -30,7 +30,7 @@ function Signature({ nom, vu, delai = 0.8 }: { nom?: string; vu: boolean; delai?
   return (
     <p className={cn(ITALIQUE, 'mt-8 flex items-center gap-4 text-[26px] text-[var(--ad-accent)]')} style={apparait(vu, delai)}>
       {nom}
-      <svg aria-hidden="true" viewBox="0 0 120 20" className="h-4 w-24 text-[var(--ad-accent)]/60">
+      <svg aria-hidden="true" viewBox="0 0 120 20" className="h-4 w-24 text-[var(--ad-touche)]">
         <path d="M2 14 C 22 2, 34 20, 54 10 S 92 4, 118 12" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" pathLength={1} strokeDasharray="1" style={{ strokeDashoffset: vu ? 0 : 1, transition: `stroke-dashoffset 1.6s ${DOUX} ${delai + 0.3}s` }} />
       </svg>
     </p>
@@ -152,10 +152,10 @@ export function AproposParcours({ etiquette, titre, texte, id, etapes, portrait 
           <Arche media={portrait} chambranle="aucun" sizes="200px" className="mt-10 h-[200px] w-[150px] max-lg:hidden" />
         </div>
         <ol ref={ref} className="relative ml-2 border-l border-transparent pl-10">
-          <span aria-hidden="true" className="absolute left-0 top-2 w-px origin-top bg-[var(--ad-accent-trait)]" style={{ bottom: 8, transform: vu ? 'scaleY(1)' : 'scaleY(0)', transition: `transform 2s ${DOUX} .2s` }} />
+          <span aria-hidden="true" className="absolute left-0 top-2 w-px origin-top bg-[var(--ad-touche)] opacity-60" style={{ bottom: 8, transform: vu ? 'scaleY(1)' : 'scaleY(0)', transition: `transform 2s ${DOUX} .2s` }} />
           {etapes.slice(0, 5).map((e, i) => (
             <li key={i} className="relative pb-9 last:pb-0" style={apparait(vu, 0.3 + i * 0.18)}>
-              <span aria-hidden="true" className="absolute -left-[45px] top-1.5 h-[11px] w-[11px] rounded-full border-2 border-[var(--ad-ivoire)] bg-[var(--ad-accent)] shadow-[0_0_0_1px_var(--ad-sable-fonce)]" />
+              <span aria-hidden="true" className="absolute -left-[45px] top-1.5 h-[11px] w-[11px] rounded-full border-2 border-[var(--ad-ivoire)] bg-[var(--ad-touche)] shadow-[0_0_0_1px_var(--ad-touche)]" />
               <p className="text-[13px] font-semibold uppercase tracking-[0.14em] text-[var(--ad-or)]">{e.annee}</p>
               <p className="mt-1 font-[family-name:var(--ad-titre)] text-[24px] leading-[1.2] text-[var(--ad-nuit)]">{e.titre}</p>
               {e.texte && <p className="mt-1.5 max-w-[52ch] text-[15px] leading-[1.65] text-[var(--ad-pierre)]">{e.texte}</p>}
