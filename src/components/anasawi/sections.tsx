@@ -1,7 +1,8 @@
 import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react'
 import Link from 'next/link'
 
-import { Accueil, CabinetPortes, RencontreDouce } from './accueil'
+import { Accueil, RencontreDouce } from './accueil'
+import { CabinetDefile } from './cabinet'
 import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes, Revele, Semaine, Souffle } from './vivant'
 import type { Contenu } from '@/blocks/moderne/contenu'
 import { photosPromenade, TEXTES } from '@/blocks/moderne/textes'
@@ -323,7 +324,7 @@ export function SectionPromenade({
 }: P & { t?: T<'mPromenade'>; photos?: Contenu['photos'] }) {
   /* L'ancienne légende (« pièces · défilez ») n'a plus de sens : une phrase d'accueil à la place. */
   const sousTitre = !t.legende || /d[ée]filez/i.test(t.legende) ? TEXTES.mPromenade().legende : t.legende
-  return <CabinetPortes photos={photos} titre={accent(t.titre)} sousTitre={sousTitre} />
+  return <CabinetDefile photos={photos} titre={t.titre} sousTitre={sousTitre} />
 }
 
 /* ── Conversation ───────────────────────────────────────────────────── */

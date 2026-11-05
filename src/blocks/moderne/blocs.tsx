@@ -300,12 +300,12 @@ const promenadeSchema = z.object({ rempli, menu: t, titre: t, legende: t, photos
 export const mPromenadeBlock: BlockDefinition<typeof promenadeSchema> = {
   ...commun,
   label: 'Moderne — Le cabinet',
-  description: 'Les photos du cabinet comme un couloir de portes en arche : l’une s’ouvre en grand, les autres attendent.',
+  description: 'Les photos du cabinet dans des portes en arche qui défilent très lentement, et s’arrêtent au survol.',
   schema: promenadeSchema,
   fields: [
     field.text('titre', 'Titre', { help: 'Le mot clé entre *astérisques*.' }),
     field.textarea('legende', 'Phrase d’accueil (à côté du titre)'),
-    field.mediaList('photos', 'Photos', { help: 'Six au plus (quatre sur téléphone), dans l’ordre des portes. La légende de chaque photo s’affiche quand sa porte s’ouvre.' }),
+    field.mediaList('photos', 'Photos', { help: 'Huit au plus, dans l’ordre de la promenade. La légende de chaque photo s’affiche sous sa porte.' }),
     field.text('menu', 'Dans le menu', { help: MENU }),
   ],
   defaults: vides(promenadeSchema),
