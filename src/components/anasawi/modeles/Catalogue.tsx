@@ -40,7 +40,7 @@ function Miniature({ type, data }: { type: string; data: SectionsViewData }) {
     return () => ro.disconnect()
   }, [])
   return (
-    <div ref={cadre} aria-hidden="true" className="pointer-events-none relative overflow-hidden rounded-[18px] bg-[var(--ad-ivoire)] ring-1 ring-[var(--ad-accent-trait)] transition-shadow duration-500 group-hover:shadow-[0_24px_50px_-28px_rgba(58,150,147,0.55)]" style={{ height: HAUTEUR }}>
+    <div ref={cadre} aria-hidden="true" className="pointer-events-none relative overflow-hidden rounded-[18px] bg-[var(--ad-ivoire)] ring-1 ring-[var(--ad-accent-trait)] transition-shadow duration-500 group-hover:shadow-[0_24px_50px_-28px_rgba(70,114,138,0.45)]" style={{ height: HAUTEUR }}>
       <div style={{ width: largeur, transform: `scale(${echelle})`, transformOrigin: 'top left', ['--ad-vh' as string]: '8.6px' }}>
         <SectionsView sections={[section]} data={data} />
       </div>
@@ -83,7 +83,7 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
         <section key={r.categorie} id={encodeURIComponent(r.categorie)} className={cn(CONTENEUR, 'ad-accentue scroll-mt-24 pt-16')}>
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--ad-sable-fonce)] pb-5">
             <h2 className="flex items-center gap-3 text-[clamp(32px,3.4vw,46px)] leading-[1.05]">
-              <span aria-hidden="true" className="h-3 w-3 rounded-full bg-[var(--ad-accent)]" />
+              <span aria-hidden="true" className="h-3 w-3 rounded-full bg-[var(--ad-touche)]" />
               {r.categorie}
             </h2>
             <p className="max-w-[44ch] text-[15px] leading-[1.6] text-[var(--ad-gris)]">{r.indice}</p>
@@ -111,7 +111,7 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
                     </p>
                     <p className="mt-2 text-[14.5px] leading-[1.6] text-[var(--ad-pierre)]">{f.description}</p>
                     <p className="mt-3 flex items-start gap-2 text-[13.5px] leading-[1.5] text-[var(--ad-accent)]">
-                      <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.8} />
+                      <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[var(--ad-touche)]" strokeWidth={1.8} />
                       {f.mouvement}
                     </p>
                   </div>

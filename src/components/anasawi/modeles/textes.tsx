@@ -153,7 +153,7 @@ export function TexteBandeau({ mots, id }: { mots: string[]; id?: string }) {
         {tour.map((m, i) => (
           <li key={i} aria-hidden={i >= mots.length} className="flex items-center gap-10">
             <span className={cn(ITALIQUE, 'whitespace-nowrap text-[clamp(30px,4vw,56px)] leading-none', i % 2 ? 'text-[var(--ad-accent)]' : 'text-[var(--ad-nuit)]')}>{m}</span>
-            <span aria-hidden="true" className="h-5 w-4 shrink-0 border-[1.5px] border-[var(--ad-accent-trait)]" style={{ borderRadius: ARCHE }} />
+            <span aria-hidden="true" className="h-5 w-4 shrink-0 border-[1.5px] border-[var(--ad-touche)]" style={{ borderRadius: ARCHE }} />
           </li>
         ))}
       </ul>
@@ -196,7 +196,7 @@ export function TexteAtouts({ etiquette, titre, texte, points, photo, id }: { et
           <ul ref={ref} className="mt-8 flex flex-col gap-3">
             {points.slice(0, 6).map((p, i) => (
               <li key={i} className="flex items-start gap-4 text-[16px] leading-[1.55] text-[var(--ad-nuit)]" style={apparait(vu, 0.2 + i * 0.12)}>
-                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-touche)]">
                   <Check className="h-3.5 w-3.5" strokeWidth={2.4} style={{ strokeDasharray: 30, strokeDashoffset: vu ? 0 : 30, transition: `stroke-dashoffset .6s ease ${0.5 + i * 0.12}s` }} />
                 </span>
                 {accentue(p)}
@@ -214,7 +214,7 @@ export function TexteAtouts({ etiquette, titre, texte, points, photo, id }: { et
 export function TexteSeparateur({ mot, id }: { mot: string; id?: string }) {
   const [ref, vu] = useVu<HTMLDivElement>('-5%')
   return (
-    <div id={id || undefined} ref={ref} className="flex items-center justify-center gap-5 py-12 text-[var(--ad-accent-trait)]">
+    <div id={id || undefined} ref={ref} className="flex items-center justify-center gap-5 py-12 text-[var(--ad-touche)]">
       <span className="h-px w-[min(18vw,160px)] origin-right bg-current" style={{ transform: vu ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 1.2s ${DOUX}` }} />
       {mot ? (
         <span className={cn(ITALIQUE, 'text-[18px] text-[var(--ad-gris)]')} style={apparait(vu, 0.3)}>

@@ -239,7 +239,7 @@ export function AproposApproches({ etiquette, titre, texte, id, approches, bouto
         <ul ref={ref} className="mx-auto mt-12 flex max-w-[1000px] flex-wrap items-center justify-center gap-x-6 gap-y-4">
           {approches.map((a, i) => (
             <li key={i} className="flex items-center gap-6" style={apparait(vu, 0.15 + i * 0.12)}>
-              {i > 0 && <span aria-hidden="true" className="h-4 w-3 border-[1.5px] border-[var(--ad-accent-trait)]" style={{ borderRadius: ARCHE }} />}
+              {i > 0 && <span aria-hidden="true" className="h-4 w-3 border-[1.5px] border-[var(--ad-touche)]" style={{ borderRadius: ARCHE }} />}
               <span className={cn(ITALIQUE, 'text-[clamp(26px,3.2vw,46px)] text-[var(--ad-nuit)] transition-colors duration-500 hover:text-[var(--ad-accent)]')}>{a}</span>
             </li>
           ))}

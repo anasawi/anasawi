@@ -191,7 +191,7 @@ export function AppelDoux({ texte, bouton, rdv, id }: { texte: string; bouton: s
     <section id={id || undefined} className="py-16 md:py-20">
       <div ref={ref} className={cn(CONTENEUR, 'flex flex-col items-center gap-5 text-center md:flex-row md:justify-center md:gap-8 md:text-left')}>
         <span className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]" style={apparait(vu, 0)}>
-          <Vapeur className="absolute -top-7 left-1/2 h-8 w-7 -translate-x-1/2 text-[var(--ad-accent-trait)]" />
+          <Vapeur className="absolute -top-7 left-1/2 h-8 w-7 -translate-x-1/2 text-[var(--ad-touche)]" />
           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z" />
             <path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16" />

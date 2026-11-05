@@ -1069,22 +1069,15 @@
   -webkit-text-fill-color: var(--ad-miel);
   color: var(--ad-miel);
 }
-/* LA JOIE DES MODÈLES — le turquoise de la marque en touches légères :
-   mots clés, traits qui se dessinent, chambranles des portes, icônes. Les
-   fonds restent ivoire et sable. */
+/* LES MODÈLES — la palette du site : le bleu nuit d'abord, le bleu clair
+   ensuite ; le turquoise de la marque seulement en petites touches
+   (puces, petites arches, coches, vapeur). */
 .ad .ad-joie,
 .ad .ad-accentue {
-  --ad-accent: #3a9693;
-  --ad-accent-pale: #e3f3f1;
-  --ad-accent-trait: rgb(79 169 166 / 0.55);
-}
-.ad .ad-joie em {
-  background: none;
-  -webkit-text-fill-color: var(--ad-accent);
-  color: var(--ad-accent);
-}
-.ad .ad-joie ::selection {
-  background: var(--ad-accent-pale);
+  --ad-accent: var(--ad-bleu);
+  --ad-accent-pale: var(--ad-brume);
+  --ad-accent-trait: rgb(70 114 138 / 0.32);
+  --ad-touche: #4fa9a6;
 }
 /* La légende d'une porte qui s'ouvre. */
 @keyframes ad-legende {
