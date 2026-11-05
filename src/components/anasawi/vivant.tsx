@@ -1097,7 +1097,7 @@ export function SemaineListe({ horaires }: { horaires: OpeningHour[] }) {
           <li
             key={j}
             className={cn(
-              'group/jour relative flex items-center justify-between gap-3 rounded-full px-2 py-[3px] text-[13.5px] leading-[1.35]',
+              'group/jour relative flex items-start justify-between gap-3 rounded-[12px] px-2 py-[3px] text-[13.5px] leading-[1.35]',
               ferme ? 'text-[var(--ad-gris)]/70' : 'text-[var(--ad-nuit)]',
             )}
           >
@@ -1105,20 +1105,23 @@ export function SemaineListe({ horaires }: { horaires: OpeningHour[] }) {
             {actif && (
               <span
                 aria-hidden="true"
-                className="absolute inset-0 -z-10 rounded-full bg-[var(--ad-sable)]"
+                className="absolute inset-0 -z-10 rounded-[12px] bg-[var(--ad-brume)]"
                 style={{ transformOrigin: 'left center', transform: vu ? 'scaleX(1)' : 'scaleX(0)', opacity: vu ? 1 : 0, transition: `transform 1.1s ${doux} ${fin}s, opacity .4s ${fin}s` }}
               />
             )}
-            <span className="flex items-center gap-2 capitalize" style={entree}>
+            <span className="flex shrink-0 items-center gap-2 capitalize" style={entree}>
               {actif && (
                 <span aria-hidden="true" className="relative grid h-1.5 w-1.5 place-items-center">
-                  {!ferme && vu && <span className="absolute inset-0 rounded-full bg-[#6e9a6b] motion-safe:animate-[ad-pouls_2.4s_ease-out_infinite]" style={{ animationDelay: `${fin + 0.8}s` }} />}
-                  <span className={cn('relative h-1.5 w-1.5 rounded-full', ferme ? 'bg-[var(--ad-gris)]' : 'bg-[#6e9a6b]')} />
+                  {!ferme && vu && <span className="absolute inset-0 rounded-full bg-[var(--ad-bleu)] motion-safe:animate-[ad-pouls_2.4s_ease-out_infinite]" style={{ animationDelay: `${fin + 0.8}s` }} />}
+                  <span className={cn('relative h-1.5 w-1.5 rounded-full', ferme ? 'bg-[var(--ad-gris)]' : 'bg-[var(--ad-bleu)]')} />
                 </span>
               )}
               <span className={cn('transition-transform duration-500 group-hover/jour:translate-x-0.5', actif && 'font-semibold')}>{j.slice(0, 3)}.</span>
             </span>
-            <span className="whitespace-nowrap tabular-nums" style={{ ...entree, transition: `opacity .9s ${0.32 + i * 0.07}s, transform 1s ${doux} ${0.32 + i * 0.07}s` }}>
+            <span
+              title={ferme ? undefined : (h ?? undefined)}
+              className={cn('line-clamp-2 min-w-0 text-right tabular-nums [overflow-wrap:anywhere]', !ferme && 'text-[var(--ad-bleu)]', actif && !ferme && 'font-semibold')}
+              style={{ ...entree, transition: `opacity .9s ${0.32 + i * 0.07}s, transform 1s ${doux} ${0.32 + i * 0.07}s` }}>
               {ferme ? 'Fermé' : h}
             </span>
           </li>
