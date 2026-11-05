@@ -35,7 +35,7 @@ export function QuestionsAccordeon({ etiquette, titre, texte, bouton, rdv, faq, 
               <li key={f.id} className="border-b border-[var(--ad-sable-fonce)]">
                 <button type="button" onClick={() => setOuvert(o ? -1 : i)} aria-expanded={o} className="flex w-full items-center gap-4 py-4 text-left">
                   <span className="min-w-0 flex-1 text-[17px] font-semibold tracking-[-0.01em] text-[var(--ad-nuit)]">{f.question}</span>
-                  <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-nuit)] text-white' : 'bg-[var(--ad-sable)] text-[var(--ad-nuit)]')}>
+                  <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-accent)] text-white' : 'bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]')}>
                     <Plus className="h-4 w-4" />
                   </span>
                 </button>
@@ -73,7 +73,7 @@ export function QuestionsEditoriale({ etiquette, titre, faq, id }: Base) {
             {liste.map((q, k) => (
               <li key={q.id}>
                 <button type="button" onClick={() => setI(k)} onMouseEnter={() => setI(k)} onFocus={() => setI(k)} className="group flex w-full items-baseline gap-4 py-2.5 text-left">
-                  <span className="w-7 shrink-0 text-[13px] font-semibold tabular-nums text-[var(--ad-gris)]">{String(k + 1).padStart(2, '0')}</span>
+                  <span className="w-7 shrink-0 text-[13px] font-semibold tabular-nums text-[var(--ad-accent)]">{String(k + 1).padStart(2, '0')}</span>
                   <span className="font-[family-name:var(--ad-titre)] text-[clamp(19px,1.9vw,25px)] leading-[1.3] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 75%, transparent)' }}>
                     {q.question}
                   </span>

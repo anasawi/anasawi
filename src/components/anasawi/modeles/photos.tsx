@@ -150,7 +150,7 @@ export function PhotosLegende({ etiquette, titre, texte, photo, id, inverse }: {
           </p>
           {photo?.caption && (
             <p className={cn(ITALIQUE, 'mt-8 flex items-center gap-3 text-[16px] text-[var(--ad-gris)]')} style={apparait(vu, 0.6)}>
-              <span aria-hidden="true" className="h-px w-8 bg-[var(--ad-sable-fonce)]" />
+              <span aria-hidden="true" className="h-px w-8 bg-[var(--ad-accent-trait)]" />
               {photo.caption}
             </p>
           )}
@@ -190,7 +190,7 @@ export function VideoArche({ etiquette, titre, texte, video, photo, id }: { etiq
           </p>
         </div>
         <div className="relative mx-auto h-[min(66vh,600px)] w-full max-w-[440px] max-lg:h-[52vh]">
-          <span aria-hidden="true" className="absolute inset-0 border-[1.5px] border-[var(--ad-sable-fonce)]" style={{ borderRadius: ARCHE, transform: vu ? 'translate(14px, 14px)' : 'none', transition: `transform 1.6s ${DOUX} .7s` }} />
+          <span aria-hidden="true" className="absolute inset-0 border-[1.5px] border-[var(--ad-accent-trait)]" style={{ borderRadius: ARCHE, transform: vu ? 'translate(14px, 14px)' : 'none', transition: `transform 1.6s ${DOUX} .7s` }} />
           <div className="absolute inset-0 overflow-hidden bg-[var(--ad-sable)]" style={{ borderRadius: ARCHE, clipPath: vu ? `inset(0 round ${ARCHE})` : `inset(100% 0 0 0 round ${ARCHE})`, transition: `clip-path 1.6s ${DOUX}` }}>
             <Video video={video} photo={photo} />
           </div>
@@ -216,7 +216,7 @@ export function PhotosFenetre({ etiquette, titre, texte, photos, id }: Base) {
             {liste.map((p, k) => (
               <li key={p.id} style={apparait(vu, 0.3 + k * 0.08)}>
                 <button type="button" onMouseEnter={() => setI(k)} onFocus={() => setI(k)} onClick={() => setI(k)} className="flex items-center gap-4 py-1.5 text-left">
-                  <span aria-hidden="true" className="h-px bg-[var(--ad-nuit)] transition-all duration-700 max-lg:hidden" style={{ width: k === i ? 36 : 12, opacity: k === i ? 1 : 0.25 }} />
+                  <span aria-hidden="true" className="h-px bg-[var(--ad-nuit)] transition-all duration-700 max-lg:hidden" style={{ width: k === i ? 36 : 12, opacity: k === i ? 1 : 0.25, background: 'var(--ad-accent)' }} />
                   <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,28px)] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
                     {p.caption || p.alt}
                   </span>
@@ -226,7 +226,7 @@ export function PhotosFenetre({ etiquette, titre, texte, photos, id }: Base) {
           </ul>
         </div>
         <div className="relative mx-auto h-[min(68vh,620px)] w-full max-w-[540px] max-lg:order-first max-lg:h-[54vh]">
-          <span aria-hidden="true" className="absolute inset-0 border-[1.5px] border-[var(--ad-sable-fonce)]" style={{ borderRadius: ARCHE, transform: vu ? 'translate(18px, 18px)' : 'none', opacity: vu ? 1 : 0, transition: `transform 1.6s ${DOUX} .8s, opacity 1s .7s` }} />
+          <span aria-hidden="true" className="absolute inset-0 border-[1.5px] border-[var(--ad-accent-trait)]" style={{ borderRadius: ARCHE, transform: vu ? 'translate(18px, 18px)' : 'none', opacity: vu ? 1 : 0, transition: `transform 1.6s ${DOUX} .8s, opacity 1s .7s` }} />
           <div className="absolute inset-0 overflow-hidden bg-[var(--ad-sable)] shadow-[0_30px_60px_-34px_rgba(46,66,79,0.45)]" style={{ borderRadius: ARCHE, clipPath: vu ? `inset(0 round ${ARCHE})` : `inset(100% 0 0 0 round ${ARCHE})`, transition: `clip-path 1.6s ${DOUX}` }}>
             <Fondu photos={liste} i={i} sizes="(max-width: 1024px) 90vw, 540px" />
           </div>
@@ -266,7 +266,7 @@ export function PhotosBattants({ etiquette, titre, texte, photos, id }: Base) {
       <div className={CONTENEUR}>
         <Entete etiquette={etiquette} titre={titre} texte={texte} centre />
         <div ref={ref} className="relative mx-auto h-[min(46vh,430px)] w-full max-w-[420px]" onMouseEnter={() => setPause(true)} onMouseLeave={() => setPause(false)}>
-          <span aria-hidden="true" className="absolute -inset-3 border-[1.5px] border-[var(--ad-sable-fonce)]" style={{ borderRadius: '999px 999px 28px 28px' }} />
+          <span aria-hidden="true" className="absolute -inset-3 border-[1.5px] border-[var(--ad-accent-trait)]" style={{ borderRadius: '999px 999px 28px 28px' }} />
           <div className="absolute inset-0 overflow-hidden bg-[var(--ad-nuit)] shadow-[0_30px_60px_-34px_rgba(46,66,79,0.5)]" style={{ borderRadius: ARCHE }}>
             <Fondu photos={liste} i={i} sizes="(max-width: 1024px) 90vw, 460px" />
             <Battant cote="g" ouvert={vu} />
@@ -296,7 +296,7 @@ export function PhotosBienvenue({ etiquette, titre, texte, photos, attentions, i
     <Section id={id}>
       <div ref={ref} className={cn(CONTENEUR, 'grid items-center gap-12 lg:grid-cols-2 lg:gap-20')}>
         <div className="relative mx-auto h-[min(66vh,600px)] w-full max-w-[480px] max-lg:h-[50vh]">
-          <span aria-hidden="true" className="absolute inset-0 border-[1.5px] border-[var(--ad-sable-fonce)]" style={{ borderRadius: ARCHE, transform: vu ? 'translate(-16px, 16px)' : 'none', transition: `transform 1.6s ${DOUX} .8s` }} />
+          <span aria-hidden="true" className="absolute inset-0 border-[1.5px] border-[var(--ad-accent-trait)]" style={{ borderRadius: ARCHE, transform: vu ? 'translate(-16px, 16px)' : 'none', transition: `transform 1.6s ${DOUX} .8s` }} />
           <div className="absolute inset-0 overflow-hidden bg-[var(--ad-sable)] shadow-[0_30px_60px_-34px_rgba(46,66,79,0.45)]" style={{ borderRadius: ARCHE, clipPath: vu ? `inset(0 round ${ARCHE})` : `inset(100% 0 0 0 round ${ARCHE})`, transition: `clip-path 1.6s ${DOUX}` }}>
             <Fondu photos={liste} i={i} sizes="(max-width: 1024px) 90vw, 480px" />
           </div>
@@ -315,7 +315,7 @@ export function PhotosBienvenue({ etiquette, titre, texte, photos, attentions, i
               const Icone = ICONES[k % ICONES.length]!
               return (
                 <li key={a} className="flex items-center gap-3.5 text-[15px] leading-[1.4] text-[var(--ad-pierre)]" style={apparait(vu, 0.35 + k * 0.1)}>
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--ad-sable)] text-[var(--ad-nuit)]">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]">
                     <Icone className="h-[18px] w-[18px]" strokeWidth={1.6} />
                   </span>
                   {a}
@@ -332,7 +332,7 @@ export function PhotosBienvenue({ etiquette, titre, texte, photos, attentions, i
                 onMouseEnter={() => setI(k)}
                 aria-label={p.caption || p.alt}
                 className="relative h-[72px] w-[54px] overflow-hidden transition-all duration-500"
-                style={{ borderRadius: ARCHE, opacity: k === i ? 1 : 0.55, transform: k === i ? 'translateY(-4px)' : 'none', outline: k === i ? '1.5px solid var(--ad-sable-fonce)' : 'none', outlineOffset: 3 }}
+                style={{ borderRadius: ARCHE, opacity: k === i ? 1 : 0.55, transform: k === i ? 'translateY(-4px)' : 'none', outline: k === i ? '1.5px solid var(--ad-accent-trait)' : 'none', outlineOffset: 3 }}
               >
                 <Image src={p.url} alt="" fill sizes="56px" className="object-cover" />
               </button>

@@ -57,7 +57,11 @@ export function modele<S extends Forme>(def: {
     Component: ({ data, ctx }) => {
       const c = contenuDe(ctx)
       const d = completer(data as Record<string, unknown>, def.depart(c) as Record<string, unknown>)
-      return <Enveloppe ctx={ctx}>{def.rendu(d as z.output<z.ZodObject<S>>, c, outils(ctx, c))}</Enveloppe>
+      return (
+        <Enveloppe ctx={ctx}>
+          <div className="ad-joie">{def.rendu(d as z.output<z.ZodObject<S>>, c, outils(ctx, c))}</div>
+        </Enveloppe>
+      )
     },
   }
   return bloc

@@ -33,7 +33,7 @@ export function ServicesListe({ etiquette, titre, texte, rdv, services, photos, 
           {services.slice(0, 6).map((s, i) => (
             <li key={s.id} className="border-b border-[var(--ad-sable-fonce)]" style={apparait(vu, i * 0.08)}>
               <a href={rdv} className="group relative isolate flex items-center gap-5 py-4 transition-[padding] duration-500 hover:px-4 md:gap-8 md:py-[18px]">
-                <span aria-hidden="true" className="absolute inset-0 -z-10 scale-y-75 rounded-[20px] bg-[var(--ad-sable)] opacity-0 transition-[opacity,transform] duration-500 group-hover:scale-y-100 group-hover:opacity-100" />
+                <span aria-hidden="true" className="absolute inset-0 -z-10 scale-y-75 rounded-[20px] bg-[var(--ad-accent-pale)] opacity-0 transition-[opacity,transform] duration-500 group-hover:scale-y-100 group-hover:opacity-100" />
                 <span className="w-8 shrink-0 text-[13px] font-semibold tabular-nums text-[var(--ad-gris)]">{num(i)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-[family-name:var(--ad-titre)] text-[clamp(22px,2.4vw,32px)] leading-[1.15] text-[var(--ad-nuit)]">{s.title}</span>
@@ -99,7 +99,7 @@ export function ServicesGrille({ etiquette, titre, texte, bouton, rdv, services,
               <p className="mt-4 font-[family-name:var(--ad-titre)] text-[23px] leading-[1.15] text-[var(--ad-nuit)]">{s.title}</p>
               {s.method && <p className="mt-1 text-[13px] font-semibold text-[var(--ad-or)]">{s.method}</p>}
               <p className="mt-2 line-clamp-2 text-[14.5px] leading-[1.6] text-[var(--ad-pierre)]">{s.excerpt}</p>
-              <a href={rdv} className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[14px] font-semibold text-[var(--ad-bleu)]">
+              <a href={rdv} className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[14px] font-semibold text-[var(--ad-accent)]">
                 {bouton}
                 <ArrowUpRight className="h-4 w-4 transition-transform duration-500 group-hover:rotate-45" />
               </a>
@@ -122,7 +122,7 @@ export function ServicesNumerotes({ etiquette, titre, texte, rdv, services, id }
           {services.slice(0, 6).map((s, i) => (
             <li key={s.id} className="border-t border-[var(--ad-sable-fonce)]" style={apparait(vu, i * 0.1)}>
               <a href={rdv} className="group flex gap-6 py-6">
-                <span className="font-[family-name:var(--ad-titre)] text-[54px] leading-[0.9] text-transparent transition-colors duration-500 [-webkit-text-stroke:1.2px_var(--ad-sable-fonce)] group-hover:text-[var(--ad-sable)]">{num(i)}</span>
+                <span className="font-[family-name:var(--ad-titre)] text-[54px] leading-[0.9] text-transparent transition-colors duration-500 [-webkit-text-stroke:1.2px_var(--ad-accent-trait)] group-hover:text-[var(--ad-accent-pale)]">{num(i)}</span>
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-baseline gap-x-3">
                     <span className="font-[family-name:var(--ad-titre)] text-[24px] leading-[1.2] text-[var(--ad-nuit)]">{s.title}</span>
@@ -156,7 +156,7 @@ export function ServicesFenetre({ etiquette, titre, bouton, rdv, services, photo
             {liste.map((s, k) => (
               <li key={s.id}>
                 <button type="button" onMouseEnter={() => setI(k)} onFocus={() => setI(k)} onClick={() => setI(k)} className="flex w-full items-center gap-4 py-2 text-left">
-                  <span aria-hidden="true" className="h-px bg-[var(--ad-nuit)] transition-all duration-700" style={{ width: k === i ? 32 : 10, opacity: k === i ? 1 : 0.25 }} />
+                  <span aria-hidden="true" className="h-px bg-[var(--ad-nuit)] transition-all duration-700" style={{ width: k === i ? 32 : 10, opacity: k === i ? 1 : 0.25, background: 'var(--ad-accent)' }} />
                   <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,27px)] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
                     {s.title}
                   </span>
@@ -207,7 +207,7 @@ export function ServicesDetail({ etiquette, titre, texte, bouton, rdv, services,
                 <button type="button" onClick={() => setOuvert(o ? -1 : i)} aria-expanded={o} className="flex w-full items-center gap-4 py-5 text-left">
                   <span className="min-w-0 flex-1 font-[family-name:var(--ad-titre)] text-[clamp(21px,2.2vw,28px)] text-[var(--ad-nuit)]">{s.title}</span>
                   <Duree s={s} className="max-sm:hidden" />
-                  <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-nuit)] text-white' : 'bg-[var(--ad-sable)] text-[var(--ad-nuit)]')}>
+                  <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-accent)] text-white' : 'bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]')}>
                     <Plus className="h-4 w-4" />
                   </span>
                 </button>

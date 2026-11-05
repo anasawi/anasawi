@@ -40,7 +40,7 @@ function Miniature({ type, data }: { type: string; data: SectionsViewData }) {
     return () => ro.disconnect()
   }, [])
   return (
-    <div ref={cadre} aria-hidden="true" className="pointer-events-none relative overflow-hidden rounded-[18px] bg-[var(--ad-ivoire)] ring-1 ring-[var(--ad-sable-fonce)]/60" style={{ height: HAUTEUR }}>
+    <div ref={cadre} aria-hidden="true" className="pointer-events-none relative overflow-hidden rounded-[18px] bg-[var(--ad-ivoire)] ring-1 ring-[var(--ad-accent-trait)] transition-shadow duration-500 group-hover:shadow-[0_24px_50px_-28px_rgba(58,150,147,0.55)]" style={{ height: HAUTEUR }}>
       <div style={{ width: largeur, transform: `scale(${echelle})`, transformOrigin: 'top left', ['--ad-vh' as string]: '8.6px' }}>
         <SectionsView sections={[section]} data={data} />
       </div>
@@ -55,7 +55,7 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
   let numero = 0
   return (
     <main className="pb-28">
-      <header className={cn(CONTENEUR, 'pb-10 pt-36')}>
+      <header className={cn(CONTENEUR, 'ad-joie pb-10 pt-36')}>
         <p className="text-[13px] font-semibold uppercase tracking-[0.18em] text-[var(--ad-gris)]">Catalogue</p>
         <h1 className="mt-3 text-[clamp(44px,6vw,80px)] leading-[1]">
           Les modèles <em>modernes</em>
@@ -70,19 +70,22 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
             <a
               key={r.categorie}
               href={`#${encodeURIComponent(r.categorie)}`}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[var(--ad-nuit)] shadow-[0_1px_2px_rgba(46,66,79,0.06),0_4px_14px_-6px_rgba(46,66,79,0.12)] transition-colors duration-300 hover:bg-[var(--ad-nuit)] hover:text-white"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[var(--ad-nuit)] shadow-[0_1px_2px_rgba(46,66,79,0.06),0_4px_14px_-6px_rgba(46,66,79,0.12)] transition-colors duration-300 hover:bg-[var(--ad-accent)] hover:text-white"
             >
               {r.categorie}
-              <span className="rounded-full bg-[var(--ad-sable)] px-2 py-0.5 text-[12px] tabular-nums text-[var(--ad-pierre)]">{r.fiches.length}</span>
+              <span className="rounded-full bg-[var(--ad-accent-pale)] px-2 py-0.5 text-[12px] tabular-nums text-[var(--ad-accent)]">{r.fiches.length}</span>
             </a>
           ))}
         </nav>
       </header>
 
       {rayons.map((r) => (
-        <section key={r.categorie} id={encodeURIComponent(r.categorie)} className={cn(CONTENEUR, 'scroll-mt-24 pt-16')}>
+        <section key={r.categorie} id={encodeURIComponent(r.categorie)} className={cn(CONTENEUR, 'ad-accentue scroll-mt-24 pt-16')}>
           <div className="mb-8 flex flex-wrap items-end justify-between gap-4 border-b border-[var(--ad-sable-fonce)] pb-5">
-            <h2 className="text-[clamp(32px,3.4vw,46px)] leading-[1.05]">{r.categorie}</h2>
+            <h2 className="flex items-center gap-3 text-[clamp(32px,3.4vw,46px)] leading-[1.05]">
+              <span aria-hidden="true" className="h-3 w-3 rounded-full bg-[var(--ad-accent)]" />
+              {r.categorie}
+            </h2>
             <p className="max-w-[44ch] text-[15px] leading-[1.6] text-[var(--ad-gris)]">{r.indice}</p>
           </div>
           <ul className="grid grid-cols-1 gap-x-6 gap-y-10 md:grid-cols-2 xl:grid-cols-3">
@@ -95,8 +98,8 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
                       <Miniature type={f.type} data={data} />
                     </div>
                     <div className="mt-4 flex items-center gap-2.5">
-                      <span className="rounded-full bg-[var(--ad-nuit)] px-2.5 py-0.5 text-[12px] font-semibold tabular-nums text-white">{String(numero).padStart(2, '0')}</span>
-                      <span className={cn('rounded-full px-2.5 py-0.5 text-[12px] font-semibold', f.enPlace ? 'bg-[var(--ad-sable)] text-[var(--ad-pierre)]' : 'bg-[var(--ad-brume)] text-[var(--ad-bleu)]')}>
+                      <span className="rounded-full bg-[var(--ad-accent)] px-2.5 py-0.5 text-[12px] font-semibold tabular-nums text-white">{String(numero).padStart(2, '0')}</span>
+                      <span className={cn('rounded-full px-2.5 py-0.5 text-[12px] font-semibold', f.enPlace ? 'bg-[var(--ad-sable)] text-[var(--ad-pierre)]' : 'bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]')}>
                         {f.enPlace ? 'Sur le site' : 'Nouveau'}
                       </span>
                     </div>
@@ -104,10 +107,10 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
                       <a href={f.lien} className="after:absolute after:inset-0 after:content-['']">
                         {f.label}
                       </a>
-                      <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-gris)] transition-transform duration-500 group-hover:rotate-45 group-hover:text-[var(--ad-nuit)]" />
+                      <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-gris)] transition-transform duration-500 group-hover:rotate-45 group-hover:text-[var(--ad-accent)]" />
                     </p>
                     <p className="mt-2 text-[14.5px] leading-[1.6] text-[var(--ad-pierre)]">{f.description}</p>
-                    <p className="mt-3 flex items-start gap-2 text-[13.5px] leading-[1.5] text-[var(--ad-bleu)]">
+                    <p className="mt-3 flex items-start gap-2 text-[13.5px] leading-[1.5] text-[var(--ad-accent)]">
                       <Sparkles className="mt-0.5 h-3.5 w-3.5 shrink-0" strokeWidth={1.8} />
                       {f.mouvement}
                     </p>

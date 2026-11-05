@@ -36,7 +36,7 @@ export function ContactMinimal(p: Base) {
             <li key={l.libelle} style={apparait(vu, 0.2 + i * 0.12)}>
               <a href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cn(ITALIQUE, 'group relative text-[clamp(22px,3vw,40px)] text-[var(--ad-nuit)] [overflow-wrap:anywhere]')}>
                 {l.texte}
-                <span aria-hidden="true" className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[var(--ad-bleu)] transition-transform duration-500 group-hover:scale-x-100" />
+                <span aria-hidden="true" className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[var(--ad-accent)] transition-transform duration-500 group-hover:scale-x-100" />
               </a>
             </li>
           ))}
@@ -59,7 +59,7 @@ export function ContactCartes(p: Base) {
         <div ref={ref} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {lignesDe(p).map((l, i) => (
             <a key={l.libelle} href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cn(CARTE, 'group isolate flex min-h-[220px] flex-col p-6 transition-transform duration-500 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--ad-brume)] text-[var(--ad-bleu)] transition-colors duration-500 group-hover:bg-[var(--ad-nuit)] group-hover:text-white">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)] transition-colors duration-500 group-hover:bg-[var(--ad-accent)] group-hover:text-white">
                 <l.Icone className="h-[18px] w-[18px]" strokeWidth={1.7} />
               </span>
               <span className="mt-auto pt-8 text-[13px] font-semibold text-[var(--ad-gris)]">{l.libelle}</span>
@@ -86,7 +86,7 @@ export function ContactPlan(p: Base) {
     <Section id={p.id}>
       <div ref={ref} className={cn(CONTENEUR, 'grid gap-6 lg:grid-cols-[1.25fr_0.75fr]')}>
         <div className={cn(CARTE, 'relative h-[min(64vh,580px)] overflow-hidden max-lg:h-[42vh]')} style={apparait(vu, 0)}>
-          {p.adresse ? <Carte adresse={p.adresse} className="absolute inset-0" /> : <div className="absolute inset-0 bg-[var(--ad-brume)]" />}
+          {p.adresse ? <Carte adresse={p.adresse} className="absolute inset-0" /> : <div className="absolute inset-0 bg-[var(--ad-accent-pale)]" />}
         </div>
         <div className="flex flex-col justify-center lg:pl-6">
           <Etiquette>{p.etiquette}</Etiquette>
@@ -102,7 +102,7 @@ export function ContactPlan(p: Base) {
           <div className="mt-8 flex flex-wrap items-center gap-4" style={apparait(vu, 0.5)}>
             <Bouton href={p.rdv}>{p.bouton}</Bouton>
             {p.telephone && (
-              <a href={`tel:${toE164(p.telephone)}`} className="text-[15px] font-semibold text-[var(--ad-bleu)]">
+              <a href={`tel:${toE164(p.telephone)}`} className="text-[15px] font-semibold text-[var(--ad-accent)]">
                 {p.telephone}
               </a>
             )}
@@ -190,8 +190,8 @@ export function AppelDoux({ texte, bouton, rdv, id }: { texte: string; bouton: s
   return (
     <section id={id || undefined} className="py-16 md:py-20">
       <div ref={ref} className={cn(CONTENEUR, 'flex flex-col items-center gap-5 text-center md:flex-row md:justify-center md:gap-8 md:text-left')}>
-        <span className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[var(--ad-sable)] text-[var(--ad-nuit)]" style={apparait(vu, 0)}>
-          <Vapeur className="absolute -top-7 left-1/2 h-8 w-7 -translate-x-1/2 text-[var(--ad-sable-fonce)]" />
+        <span className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]" style={apparait(vu, 0)}>
+          <Vapeur className="absolute -top-7 left-1/2 h-8 w-7 -translate-x-1/2 text-[var(--ad-accent-trait)]" />
           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z" />
             <path d="M16 11h1.5a2.5 2.5 0 0 1 0 5H16" />

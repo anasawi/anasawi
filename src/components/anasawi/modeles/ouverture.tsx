@@ -65,7 +65,7 @@ export function OuverturePortrait({ etiquette, nom, phrase, bouton, bouton2, rdv
         {mots.length > 0 && (
           <ul className="mt-12 flex flex-wrap gap-2">
             {mots.map((m, i) => (
-              <li key={m} className="rounded-full bg-[var(--ad-sable)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-nuit)]" style={apparait(vu, 0.8 + i * 0.1)}>
+              <li key={m} className="rounded-full bg-[var(--ad-accent-pale)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-accent)]" style={apparait(vu, 0.8 + i * 0.1)}>
                 {m}
               </li>
             ))}
@@ -112,7 +112,7 @@ export function OuvertureMinimale({ etiquette, nom, phrase, bouton, rdv }: Base)
   const [ref, vu] = useVu<HTMLElement>('0%')
   return (
     <section ref={ref} className={cn(CONTENEUR, 'relative flex min-h-[min(calc(var(--ad-vh,1vh)*100),880px)] flex-col items-center justify-center pb-14 pt-28 text-center')}>
-      <svg aria-hidden="true" viewBox="0 0 400 520" preserveAspectRatio="none" className="pointer-events-none absolute left-1/2 top-[calc(50%+24px)] h-[min(78vh,700px)] w-[min(86vw,560px)] -translate-x-1/2 -translate-y-1/2 text-[var(--ad-sable-fonce)]">
+      <svg aria-hidden="true" viewBox="0 0 400 520" preserveAspectRatio="none" className="pointer-events-none absolute left-1/2 top-[calc(50%+24px)] h-[min(78vh,700px)] w-[min(86vw,560px)] -translate-x-1/2 -translate-y-1/2 text-[var(--ad-accent-trait)]">
         <path
           d="M 2 518 L 2 200 A 198 198 0 0 1 398 200 L 398 518"
           fill="none"

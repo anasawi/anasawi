@@ -105,8 +105,8 @@ export function Bouton({ href, children, clair = false, discret = false, classNa
   if (!children) return null
   if (discret)
     return (
-      <a href={href} className={cn('group inline-flex items-center gap-1.5 py-2 text-[15px] font-semibold text-[var(--ad-nuit)]', className)}>
-        <span className="bg-[linear-gradient(currentColor,currentColor)] bg-[length:0%_1px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 group-hover:bg-[length:100%_1px]">{children}</span>
+      <a href={href} className={cn('group inline-flex items-center gap-1.5 py-2 text-[15px] font-semibold text-[var(--ad-nuit)] [&_svg]:text-[var(--ad-accent)]', className)}>
+        <span className="bg-[linear-gradient(var(--ad-accent),var(--ad-accent))] bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 group-hover:bg-[length:100%_2px]">{children}</span>
         <ArrowUpRight className="h-4 w-4 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
       </a>
     )
@@ -114,13 +114,13 @@ export function Bouton({ href, children, clair = false, discret = false, classNa
     <a
       href={href}
       className={cn(
-        'group inline-flex items-center gap-2.5 rounded-full py-2 pl-6 pr-2 text-[15px] font-semibold shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-transform duration-500 hover:-translate-y-0.5',
-        clair ? 'bg-white text-[var(--ad-nuit)]' : 'bg-[var(--ad-nuit)] text-white',
+        'group inline-flex items-center gap-2.5 rounded-full py-2 pl-6 pr-2 text-[15px] font-semibold shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-[transform,background-color] duration-500 hover:-translate-y-0.5',
+        clair ? 'bg-white text-[var(--ad-nuit)]' : 'bg-[var(--ad-nuit)] text-white hover:bg-[var(--ad-accent)]',
         className,
       )}
     >
       {children}
-      <span className={cn('grid h-9 w-9 place-items-center rounded-full transition-transform duration-500 group-hover:rotate-45', clair ? 'bg-[var(--ad-nuit)] text-white' : 'bg-white/15')}>
+      <span className={cn('grid h-9 w-9 place-items-center rounded-full transition-transform duration-500 group-hover:rotate-45', clair ? 'bg-[var(--ad-accent)] text-white' : 'bg-white/15')}>
         <ArrowUpRight className="h-4 w-4" />
       </span>
     </a>
@@ -161,7 +161,7 @@ export function Arche({
       {chambranle !== 'aucun' && (
         <span
           aria-hidden="true"
-          className="absolute inset-0 border-[1.5px] border-[var(--ad-sable-fonce)]"
+          className="absolute inset-0 border-[1.5px] border-[var(--ad-accent-trait)]"
           style={{ borderRadius: rayon, transform: vu ? `translate(${dx}px, 14px)` : 'none', opacity: vu ? 1 : 0, transition: `transform 1.6s ${DOUX} ${delai + 0.7}s, opacity 1s ${delai + 0.6}s` }}
         />
       )}
