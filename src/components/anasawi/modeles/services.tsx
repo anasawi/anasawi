@@ -33,7 +33,7 @@ export function ServicesListe({ etiquette, titre, texte, rdv, services, photos, 
           {services.slice(0, 6).map((s, i) => (
             <li key={s.id} className="border-b border-[var(--ad-sable-fonce)]" style={apparait(vu, i * 0.08)}>
               <a href={rdv} className="group relative isolate flex items-center gap-5 py-4 transition-[padding] duration-500 hover:px-4 md:gap-8 md:py-[18px]">
-                <span aria-hidden="true" className="absolute inset-0 -z-10 scale-y-75 rounded-[20px] bg-[var(--ad-accent-pale)] opacity-0 transition-[opacity,transform] duration-500 group-hover:scale-y-100 group-hover:opacity-100" />
+                <span aria-hidden="true" className="absolute inset-0 -z-10 scale-y-75 rounded-[20px] bg-[var(--ad-touche-pale)] opacity-0 transition-[opacity,transform] duration-500 group-hover:scale-y-100 group-hover:opacity-100" />
                 <span className="w-8 shrink-0 text-[13px] font-semibold tabular-nums text-[var(--ad-gris)]">{num(i)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-[family-name:var(--ad-titre)] text-[clamp(22px,2.4vw,32px)] leading-[1.15] text-[var(--ad-nuit)]">{s.title}</span>
@@ -47,7 +47,7 @@ export function ServicesListe({ etiquette, titre, texte, rdv, services, photos, 
                   {photoDe(s, photos, i) && <Image src={photoDe(s, photos, i)!.url} alt="" fill sizes="60px" className="object-cover" />}
                 </span>
                 <Duree s={s} className="max-sm:hidden" />
-                <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-nuit)] transition-transform duration-500 group-hover:rotate-45" />
+                <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-nuit)] transition-[transform,color] duration-500 group-hover:rotate-45 group-hover:text-[var(--ad-touche-fonce)]" />
               </a>
             </li>
           ))}
@@ -122,7 +122,7 @@ export function ServicesNumerotes({ etiquette, titre, texte, rdv, services, id }
           {services.slice(0, 6).map((s, i) => (
             <li key={s.id} className="border-t border-[var(--ad-sable-fonce)]" style={apparait(vu, i * 0.1)}>
               <a href={rdv} className="group flex gap-6 py-6">
-                <span className="font-[family-name:var(--ad-titre)] text-[54px] leading-[0.9] text-transparent transition-colors duration-500 [-webkit-text-stroke:1.2px_var(--ad-accent-trait)] group-hover:text-[var(--ad-accent-pale)]">{num(i)}</span>
+                <span className="font-[family-name:var(--ad-titre)] text-[54px] leading-[0.9] text-transparent transition-colors duration-500 [-webkit-text-stroke:1.2px_var(--ad-accent-trait)] group-hover:text-[var(--ad-touche-pale)] group-hover:[-webkit-text-stroke:1.2px_var(--ad-touche)]">{num(i)}</span>
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-baseline gap-x-3">
                     <span className="font-[family-name:var(--ad-titre)] text-[24px] leading-[1.2] text-[var(--ad-nuit)]">{s.title}</span>
@@ -207,7 +207,7 @@ export function ServicesDetail({ etiquette, titre, texte, bouton, rdv, services,
                 <button type="button" onClick={() => setOuvert(o ? -1 : i)} aria-expanded={o} className="flex w-full items-center gap-4 py-5 text-left">
                   <span className="min-w-0 flex-1 font-[family-name:var(--ad-titre)] text-[clamp(21px,2.2vw,28px)] text-[var(--ad-nuit)]">{s.title}</span>
                   <Duree s={s} className="max-sm:hidden" />
-                  <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-accent)] text-white' : 'bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]')}>
+                  <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-touche)] text-white' : 'bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]')}>
                     <Plus className="h-4 w-4" />
                   </span>
                 </button>
@@ -256,7 +256,7 @@ export function ServicesTarifs({ etiquette, titre, texte, bouton, rdv, services,
               <li key={s.id} className="py-2" style={apparait(vu, 0.2 + i * 0.08)}>
                 <div className="flex items-baseline gap-3">
                   <span className="font-[family-name:var(--ad-titre)] text-[21px] text-[var(--ad-nuit)]">{s.title}</span>
-                  <span aria-hidden="true" className="min-w-6 flex-1 translate-y-[-4px] border-b-2 border-dotted border-[var(--ad-sable-fonce)]" />
+                  <span aria-hidden="true" className="min-w-6 flex-1 translate-y-[-4px] border-b-2 border-dotted border-[var(--ad-touche)]/50" />
                   <span className="shrink-0 text-[15px] font-semibold tabular-nums text-[var(--ad-nuit)]">{duree(s) || '—'}</span>
                 </div>
                 {s.method && <p className={cn(ITALIQUE, 'text-[14px] text-[var(--ad-gris)]')}>{s.method}</p>}

@@ -315,7 +315,7 @@ export function PhotosBienvenue({ etiquette, titre, texte, photos, attentions, i
               const Icone = ICONES[k % ICONES.length]!
               return (
                 <li key={a} className="flex items-center gap-3.5 text-[15px] leading-[1.4] text-[var(--ad-pierre)]" style={apparait(vu, 0.35 + k * 0.1)}>
-                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]">
+                  <span className="grid h-10 w-10 shrink-0 place-items-center rounded-full bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]">
                     <Icone className="h-[18px] w-[18px]" strokeWidth={1.6} />
                   </span>
                   {a}

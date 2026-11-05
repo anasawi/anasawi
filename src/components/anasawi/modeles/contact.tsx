@@ -59,13 +59,13 @@ export function ContactCartes(p: Base) {
         <div ref={ref} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {lignesDe(p).map((l, i) => (
             <a key={l.libelle} href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cn(CARTE, 'group isolate flex min-h-[220px] flex-col p-6 transition-transform duration-500 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)] transition-colors duration-500 group-hover:bg-[var(--ad-accent)] group-hover:text-white">
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)] transition-colors duration-500 group-hover:bg-[var(--ad-touche)] group-hover:text-white">
                 <l.Icone className="h-[18px] w-[18px]" strokeWidth={1.7} />
               </span>
               <span className="mt-auto pt-8 text-[13px] font-semibold text-[var(--ad-gris)]">{l.libelle}</span>
               <span className="mt-1 flex items-end justify-between gap-2 text-[15.5px] font-semibold leading-[1.35] text-[var(--ad-nuit)] [overflow-wrap:anywhere]">
                 {l.texte}
-                <ArrowUpRight className="h-4 w-4 shrink-0 transition-transform duration-500 group-hover:rotate-45" />
+                <ArrowUpRight className="h-4 w-4 shrink-0 transition-[transform,color] duration-500 group-hover:rotate-45 group-hover:text-[var(--ad-touche)]" />
               </span>
             </a>
           ))}
@@ -190,7 +190,7 @@ export function AppelDoux({ texte, bouton, rdv, id }: { texte: string; bouton: s
   return (
     <section id={id || undefined} className="py-16 md:py-20">
       <div ref={ref} className={cn(CONTENEUR, 'flex flex-col items-center gap-5 text-center md:flex-row md:justify-center md:gap-8 md:text-left')}>
-        <span className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]" style={apparait(vu, 0)}>
+        <span className="relative grid h-16 w-16 shrink-0 place-items-center rounded-full bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]" style={apparait(vu, 0)}>
           <Vapeur className="absolute -top-7 left-1/2 h-8 w-7 -translate-x-1/2 text-[var(--ad-touche)]" />
           <svg aria-hidden="true" viewBox="0 0 24 24" className="h-6 w-6" fill="none" stroke="currentColor" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round">
             <path d="M4 9h12v5a5 5 0 0 1-5 5H9a5 5 0 0 1-5-5V9Z" />

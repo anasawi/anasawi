@@ -22,7 +22,7 @@ export function MethodeColonnes({ etiquette, titre, intro, etapes, id }: Base) {
           <span aria-hidden="true" className="absolute left-0 right-0 top-[38px] hidden h-px origin-left border-t border-dashed border-[var(--ad-touche)] md:block" style={{ transform: vu ? 'scaleX(1)' : 'scaleX(0)', transition: `transform 2.2s ${DOUX} .2s` }} />
           {liste.map((e, i) => (
             <li key={i} className="relative" style={apparait(vu, 0.25 + i * 0.18)}>
-              <span className="relative grid h-[76px] w-[58px] place-items-center bg-[var(--ad-accent-pale)] font-[family-name:var(--ad-titre)] text-[24px] text-[var(--ad-accent)] ring-8 ring-[var(--ad-ivoire)]" style={{ borderRadius: ARCHE }}>
+              <span className="relative grid h-[76px] w-[58px] place-items-center bg-[var(--ad-touche-pale)] font-[family-name:var(--ad-titre)] text-[24px] text-[var(--ad-touche-fonce)] ring-8 ring-[var(--ad-ivoire)]" style={{ borderRadius: ARCHE }}>
                 {i + 1}
               </span>
               <p className="mt-6 font-[family-name:var(--ad-titre)] text-[26px] leading-[1.15] text-[var(--ad-nuit)]">{e.titre}</p>
@@ -152,7 +152,7 @@ export function MethodeApproche({ etiquette, titre, intro, id, mots, photo, cita
           )}
           <ul className="mt-9 flex flex-wrap gap-2">
             {mots.map((m, i) => (
-              <li key={m} className="rounded-full bg-[var(--ad-accent-pale)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-accent)] transition-colors duration-500 hover:bg-[var(--ad-accent)] hover:text-white" style={apparait(vu, 0.6 + i * 0.1)}>
+              <li key={m} className="rounded-full bg-[var(--ad-touche-pale)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-touche-fonce)] transition-colors duration-500 hover:bg-[var(--ad-touche)] hover:text-white" style={apparait(vu, 0.6 + i * 0.1)}>
                 {m}
               </li>
             ))}

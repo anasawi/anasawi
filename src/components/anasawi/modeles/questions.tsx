@@ -35,7 +35,7 @@ export function QuestionsAccordeon({ etiquette, titre, texte, bouton, rdv, faq, 
               <li key={f.id} className="border-b border-[var(--ad-sable-fonce)]">
                 <button type="button" onClick={() => setOuvert(o ? -1 : i)} aria-expanded={o} className="flex w-full items-center gap-4 py-4 text-left">
                   <span className="min-w-0 flex-1 text-[17px] font-semibold tracking-[-0.01em] text-[var(--ad-nuit)]">{f.question}</span>
-                  <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-accent)] text-white' : 'bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]')}>
+                  <span className={cn('grid h-8 w-8 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-touche)] text-white' : 'bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]')}>
                     <Plus className="h-4 w-4" />
                   </span>
                 </button>
@@ -73,7 +73,7 @@ export function QuestionsEditoriale({ etiquette, titre, faq, id }: Base) {
             {liste.map((q, k) => (
               <li key={q.id}>
                 <button type="button" onClick={() => setI(k)} onMouseEnter={() => setI(k)} onFocus={() => setI(k)} className="group flex w-full items-baseline gap-4 py-2.5 text-left">
-                  <span className="w-7 shrink-0 text-[13px] font-semibold tabular-nums text-[var(--ad-accent)]">{String(k + 1).padStart(2, '0')}</span>
+                  <span className="w-7 shrink-0 text-[13px] font-semibold tabular-nums text-[var(--ad-touche-fonce)]">{String(k + 1).padStart(2, '0')}</span>
                   <span className="font-[family-name:var(--ad-titre)] text-[clamp(19px,1.9vw,25px)] leading-[1.3] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 75%, transparent)' }}>
                     {q.question}
                   </span>
@@ -125,7 +125,7 @@ export function QuestionsCartes({ etiquette, titre, texte, faq, id }: Base) {
                   <span className={cn(CARTE, 'absolute inset-0 flex flex-col justify-between p-6 [backface-visibility:hidden]')}>
                     <span className="text-[13px] font-semibold text-[var(--ad-or)]">Question {k + 1}</span>
                     <span className="font-[family-name:var(--ad-titre)] text-[22px] leading-[1.25] text-[var(--ad-nuit)]">{f.question}</span>
-                    <span className="text-[13px] font-semibold text-[var(--ad-gris)]">Lire la réponse →</span>
+                    <span className="text-[13px] font-semibold text-[var(--ad-touche-fonce)]">Lire la réponse →</span>
                   </span>
                   <span className="absolute inset-0 overflow-auto rounded-[28px] bg-[var(--ad-nuit)] p-6 text-[14.5px] leading-[1.65] text-white/90 [backface-visibility:hidden] [transform:rotateY(180deg)]">
                     {reponse(f).join(' ')}

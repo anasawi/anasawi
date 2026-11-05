@@ -65,7 +65,7 @@ export function OuverturePortrait({ etiquette, nom, phrase, bouton, bouton2, rdv
         {mots.length > 0 && (
           <ul className="mt-12 flex flex-wrap gap-2">
             {mots.map((m, i) => (
-              <li key={m} className="rounded-full bg-[var(--ad-accent-pale)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-accent)]" style={apparait(vu, 0.8 + i * 0.1)}>
+              <li key={m} className="rounded-full bg-[var(--ad-touche-pale)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-touche-fonce)]" style={apparait(vu, 0.8 + i * 0.1)}>
                 {m}
               </li>
             ))}

@@ -86,7 +86,7 @@ export function AproposMedaillon({ etiquette, titre, texte, signature, id, portr
     <Section id={id} serre>
       <div ref={ref} className={cn(CONTENEUR, 'flex flex-col items-center text-center')}>
         <div className="relative h-[190px] w-[190px] md:h-[210px] md:w-[210px]" style={apparait(vu, 0)}>
-          <svg aria-hidden="true" viewBox="0 0 200 200" className="absolute inset-0 text-[var(--ad-gris)] motion-safe:animate-[ad-tourner_50s_linear_infinite]">
+          <svg aria-hidden="true" viewBox="0 0 200 200" className="absolute inset-0 text-[var(--ad-touche-fonce)] motion-safe:animate-[ad-tourner_50s_linear_infinite]">
             <defs>
               <path id={idAnneau} d="M100,100 m-88,0 a88,88 0 1,1 176,0 a88,88 0 1,1 -176,0" />
             </defs>
@@ -187,6 +187,7 @@ export function AproposChiffres({ etiquette, titre, texte, id, chiffres }: Prese
                 <span className="font-[family-name:var(--ad-titre)] text-[clamp(48px,5.4vw,76px)] leading-none text-[var(--ad-accent)]">
                   {Number.isNaN(nombre) ? c.valeur : <><Compteur valeur={nombre} />{suite}</>}
                 </span>
+                <span aria-hidden="true" className="mt-4 h-[3px] w-7 rounded-full bg-[var(--ad-touche)]" />
                 <span className="mt-3 max-w-[18ch] text-[14px] font-semibold leading-[1.35] text-[var(--ad-pierre)]">{c.libelle}</span>
               </li>
             )
@@ -210,8 +211,9 @@ export function AproposEngagements({ etiquette, titre, texte, id, engagements }:
           {engagements.slice(0, 4).map((e, i) => {
             const Icone = ICONES[i % ICONES.length]!
             return (
-              <li key={i} className={cn(CARTE, 'group p-7 transition-transform duration-500 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
-                <span className="grid h-14 w-11 place-items-center bg-[var(--ad-accent-pale)] text-[var(--ad-accent)] transition-colors duration-500 group-hover:bg-[var(--ad-nuit)] group-hover:text-white" style={{ borderRadius: ARCHE }}>
+              <li key={i} className={cn(CARTE, 'group relative overflow-hidden p-7 transition-transform duration-500 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
+                <span aria-hidden="true" className="absolute inset-x-7 bottom-0 h-[3px] origin-left scale-x-0 rounded-full bg-[var(--ad-touche)] transition-transform duration-700 group-hover:scale-x-100" />
+                <span className="grid h-14 w-11 place-items-center bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)] transition-colors duration-500 group-hover:bg-[var(--ad-touche)] group-hover:text-white" style={{ borderRadius: ARCHE }}>
                   <Icone className="h-[18px] w-[18px]" strokeWidth={1.6} />
                 </span>
                 <p className="mt-6 text-[19px] font-semibold tracking-[-0.02em] text-[var(--ad-nuit)]">{e.titre}</p>

@@ -1078,6 +1078,8 @@
   --ad-accent-pale: var(--ad-brume);
   --ad-accent-trait: rgb(70 114 138 / 0.32);
   --ad-touche: #4fa9a6;
+  --ad-touche-pale: #e2f3f1;
+  --ad-touche-fonce: #2f8582;
 }
 /* La légende d'une porte qui s'ouvre. */
 @keyframes ad-legende {

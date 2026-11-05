@@ -73,7 +73,7 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
               className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[var(--ad-nuit)] shadow-[0_1px_2px_rgba(46,66,79,0.06),0_4px_14px_-6px_rgba(46,66,79,0.12)] transition-colors duration-300 hover:bg-[var(--ad-accent)] hover:text-white"
             >
               {r.categorie}
-              <span className="rounded-full bg-[var(--ad-accent-pale)] px-2 py-0.5 text-[12px] tabular-nums text-[var(--ad-accent)]">{r.fiches.length}</span>
+              <span className="rounded-full bg-[var(--ad-touche-pale)] px-2 py-0.5 text-[12px] tabular-nums text-[var(--ad-touche-fonce)]">{r.fiches.length}</span>
             </a>
           ))}
         </nav>
@@ -99,7 +99,7 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
                     </div>
                     <div className="mt-4 flex items-center gap-2.5">
                       <span className="rounded-full bg-[var(--ad-accent)] px-2.5 py-0.5 text-[12px] font-semibold tabular-nums text-white">{String(numero).padStart(2, '0')}</span>
-                      <span className={cn('rounded-full px-2.5 py-0.5 text-[12px] font-semibold', f.enPlace ? 'bg-[var(--ad-sable)] text-[var(--ad-pierre)]' : 'bg-[var(--ad-accent-pale)] text-[var(--ad-accent)]')}>
+                      <span className={cn('rounded-full px-2.5 py-0.5 text-[12px] font-semibold', f.enPlace ? 'bg-[var(--ad-sable)] text-[var(--ad-pierre)]' : 'bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]')}>
                         {f.enPlace ? 'Sur le site' : 'Nouveau'}
                       </span>
                     </div>

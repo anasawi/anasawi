@@ -196,7 +196,7 @@ export function TexteAtouts({ etiquette, titre, texte, points, photo, id }: { et
           <ul ref={ref} className="mt-8 flex flex-col gap-3">
             {points.slice(0, 6).map((p, i) => (
               <li key={i} className="flex items-start gap-4 text-[16px] leading-[1.55] text-[var(--ad-nuit)]" style={apparait(vu, 0.2 + i * 0.12)}>
-                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ad-accent-pale)] text-[var(--ad-touche)]">
+                <span className="mt-0.5 grid h-7 w-7 shrink-0 place-items-center rounded-full bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]">
                   <Check className="h-3.5 w-3.5" strokeWidth={2.4} style={{ strokeDasharray: 30, strokeDashoffset: vu ? 0 : 30, transition: `stroke-dashoffset .6s ease ${0.5 + i * 0.12}s` }} />
                 </span>
                 {accentue(p)}
