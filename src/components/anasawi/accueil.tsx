@@ -21,12 +21,12 @@ import type { Media } from '@/server/db/schema'
  */
 
 /** La forme de la porte : le haut en plein cintre, le bas presque droit. */
-const ARCHE = '999px 999px 22px 22px'
-const DOUX = 'cubic-bezier(0.22,1,0.36,1)'
-const reduit = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
+export const ARCHE = '999px 999px 22px 22px'
+export const DOUX = 'cubic-bezier(0.22,1,0.36,1)'
+export const reduit = () => typeof window !== 'undefined' && window.matchMedia('(prefers-reduced-motion: reduce)').matches
 
 /** Vrai une fois à l'écran (toujours vrai dans l'éditeur). */
-function useVu<T extends HTMLElement>(marge = '-10%') {
+export function useVu<T extends HTMLElement>(marge = '-10%') {
   const ref = useRef<T>(null)
   const edition = useContext(Edition)
   const [vu, setVu] = useState(false)
@@ -49,14 +49,14 @@ function useVu<T extends HTMLElement>(marge = '-10%') {
   return [ref, vu] as const
 }
 
-const apparait = (vu: boolean, delai = 0) => ({
+export const apparait = (vu: boolean, delai = 0) => ({
   opacity: vu ? 1 : 0,
   transform: vu ? 'none' : 'translateY(14px)',
   transition: `opacity 1.2s ${delai}s, transform 1.4s ${DOUX} ${delai}s`,
 })
 
 /** Un texte avec ses accents « *mot* » : le mot clé en italique. */
-function accent(texte: string) {
+export function accent(texte: string) {
   return texte.split('*').map((m, i) => (i % 2 ? <em key={i}>{m}</em> : m))
 }
 
