@@ -1056,8 +1056,40 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
   )
 }
 
+/** La semaine en liste courte (carte « Consultations ») : chaque jour et ses heures, aujourd'hui surligné. */
+export function SemaineListe({ horaires }: { horaires: OpeningHour[] }) {
+  const [aujourdhui, setAujourdhui] = useState<number | null>(null)
+  useEffect(() => setAujourdhui((new Date().getDay() + 6) % 7), [])
+  const horaireDe = (j: string) => horaires.find((h) => h.day.toLowerCase().startsWith(j.slice(0, 3)))?.hours ?? null
+  return (
+    <ol className="-mx-2 flex flex-col">
+      {JOURS.map((j, i) => {
+        const h = horaireDe(j)
+        const ferme = !h || /ferm/i.test(h)
+        const actif = i === aujourdhui
+        return (
+          <li
+            key={j}
+            className={cn(
+              'flex items-center justify-between gap-3 rounded-full px-2 py-[3px] text-[13.5px] leading-[1.35] transition-colors duration-500',
+              actif && 'bg-[var(--ad-sable)]',
+              ferme ? 'text-[var(--ad-gris)]/70' : 'text-[var(--ad-nuit)]',
+            )}
+          >
+            <span className="flex items-center gap-2 capitalize">
+              {actif && <span aria-hidden="true" className={cn('h-1.5 w-1.5 rounded-full', ferme ? 'bg-[var(--ad-gris)]' : 'bg-[#6e9a6b]')} />}
+              <span className={cn(actif && 'font-semibold')}>{j.slice(0, 3)}.</span>
+            </span>
+            <span className="whitespace-nowrap tabular-nums">{ferme ? 'Fermé' : h}</span>
+          </li>
+        )
+      })}
+    </ol>
+  )
+}
+
 /* ══════════════════════════════════════════════════════════════════════
-   LA LETTRE — le formulaire, comme une lettre : des lignes, pas des
+   LA LETTRE —le formulaire, comme une lettre : des lignes, pas des
    cases. Envoyée, elle s'envole ; une enveloppe se dessine à sa place.
    Le VRAI envoi : elle arrive dans « Messages » de l'administration.
    ══════════════════════════════════════════════════════════════════════ */

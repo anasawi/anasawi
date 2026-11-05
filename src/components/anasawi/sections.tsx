@@ -3,7 +3,7 @@ import Link from 'next/link'
 
 import { Accueil, RencontreDouce } from './accueil'
 import { CabinetDefile } from './cabinet'
-import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes, Revele, Semaine, Souffle } from './vivant'
+import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes, Revele, Semaine, SemaineListe, Souffle } from './vivant'
 import type { Contenu } from '@/blocks/moderne/contenu'
 import { photosPromenade, TEXTES } from '@/blocks/moderne/textes'
 import { LogoMark } from '@/components/site/Logo'
@@ -182,15 +182,9 @@ export function SectionArches({ c, t = TEXTES.mArches(c) }: P & { t?: T<'mArches
 
 /* ── En pratique ────────────────────────────────────────────────────── */
 
-const JOURS_COURTS = ['lun', 'mar', 'mer', 'jeu', 'ven', 'sam', 'dim']
-
 /** Un « bento » : tout ce qu'on cherche avant d'appeler, en cartes
     vivantes — le plan qui bat, l'onde de la visio, les séances. */
 export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPratique'> }) {
-  const ouverts = c.horaires.filter((h) => !/ferm/i.test(h.hours))
-  const indice = (j: string) => JOURS_COURTS.findIndex((d) => j.toLowerCase().startsWith(d))
-  const tries = [...ouverts].sort((a, b) => indice(a.day) - indice(b.day))
-  const plage = tries.length ? `${tries[0]!.day} → ${tries.at(-1)!.day}` : 'Sur rendez-vous'
   const carte =
     'relative isolate overflow-hidden rounded-[28px] bg-white p-7 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)] transition-[box-shadow,translate] duration-500 ease-[var(--ad-ease)] hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(46,66,79,0.06),0_30px_60px_-30px_rgba(46,66,79,0.35)]'
   return (
@@ -200,7 +194,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
         <h2 className="mb-12 text-[36px] md:text-[54px]">
           <Lignes lignes={enLignes(t.titre)} />
         </h2>
-        <div className="grid gap-4 md:auto-rows-[220px] md:grid-cols-4">
+        <div className="grid gap-4 md:auto-rows-[minmax(220px,auto)] md:grid-cols-4">
           {/* Le plan : une vraie carte, teintée aux couleurs du site. */}
           <Revele className={cn(carte, 'relative overflow-hidden p-0 md:col-span-2 md:row-span-2')}>
             {c.adresse ? (
@@ -266,13 +260,10 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
             </div>
           </Revele>
 
-          {/* Les jours. */}
-          <Revele delai={0.24} className={cn(carte, 'flex flex-col justify-between')}>
+          {/* Les jours : toute la semaine, aujourd'hui surligné. */}
+          <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6')}>
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.consultations}</p>
-            <div>
-              <p className="text-[24px] font-semibold capitalize tracking-[-0.03em]">{plage}</p>
-              {tries[0] && <p className="mt-1 text-[14px] text-[var(--ad-gris)]">{tries[0].hours}</p>}
-            </div>
+            <SemaineListe horaires={c.horaires} />
           </Revele>
         </div>
       </div>
