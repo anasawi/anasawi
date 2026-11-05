@@ -35,7 +35,7 @@ export default async function SignaturePage() {
         {sections.map((s, i) => (
           <div key={s.id} id={s.type} className="relative">
             {/* La pastille : numéro, nom, catégorie. */}
-            <p className="pointer-events-none absolute left-[3vw] top-24 z-40 inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-[12.5px] font-semibold text-[var(--ad-nuit)] shadow-[0_6px_20px_-10px_rgba(46,66,79,0.5)] backdrop-blur">
+            <p className="pointer-events-none absolute right-[3vw] top-24 z-40 inline-flex items-center gap-2 rounded-full bg-white/85 px-3.5 py-1.5 text-[12.5px] font-semibold text-[var(--ad-nuit)] shadow-[0_6px_20px_-10px_rgba(46,66,79,0.5)] backdrop-blur">
               <span className="tabular-nums text-[var(--ad-or)]">{String(i + 1).padStart(2, '0')}</span>
               {getBlock(s.type)?.label.replace('Signature — ', '')}
               <span className="font-normal text-[var(--ad-gris)]">· {categorie(s.type)}</span>

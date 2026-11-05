@@ -44,18 +44,18 @@ export const mSiAubeBlock: BlockDefinition<typeof aubeSchema> = {
   },
 }
 
-const constellationSchema = z.object({ mot: t, phrase: t, auteur: t })
+const constellationSchema = z.object({ surtitre: t, mot: t, phrase: t, auteur: t })
 export const mSiConstellationBlock: BlockDefinition<typeof constellationSchema> = {
   ...commun,
   label: 'Signature — La constellation',
   description: 'Plein écran, de nuit. Des milliers de points de lumière se rassemblent pour écrire un mot ; la souris les écarte, un clic les disperse.',
   schema: constellationSchema,
-  fields: [field.text('mot', 'Le mot', { help: 'Court : un mot.' }), field.textarea('phrase', 'Phrase dessous'), field.text('auteur', 'Signature')],
-  defaults: { mot: 'Écoute', phrase: '', auteur: '' },
-  preremplir: (c) => ({ mot: 'Écoute', phrase: c.citation.texte, auteur: c.citation.auteur }),
+  fields: [field.text('surtitre', 'Étiquette'), field.text('mot', 'Le mot', { help: 'Court : un mot.' }), field.textarea('phrase', 'Phrase dessous'), field.text('auteur', 'Signature')],
+  defaults: { surtitre: 'Une conviction', mot: 'Écoute', phrase: '', auteur: '' },
+  preremplir: (c) => ({ surtitre: 'Une conviction', mot: 'Écoute', phrase: c.citation.texte, auteur: c.citation.auteur }),
   Component: ({ data, ctx }) => (
     <Enveloppe ctx={ctx}>
-      <Constellation mot={data.mot || 'Écoute'} phrase={data.phrase} auteur={data.auteur} />
+      <Constellation surtitre={data.surtitre} mot={data.mot || 'Écoute'} phrase={data.phrase} auteur={data.auteur} />
     </Enveloppe>
   ),
 }
@@ -79,119 +79,120 @@ export const mSiPortraitBlock: BlockDefinition<typeof portraitSchema> = {
   },
 }
 
-const cheminSchema = z.object({ etapes: z.array(z.object({ titre: t, texte: t })).default([]) })
+const cheminSchema = z.object({ surtitre: t, titre: t, etapes: z.array(z.object({ titre: t, texte: t })).default([]) })
 export const mSiCheminBlock: BlockDefinition<typeof cheminSchema> = {
   ...commun,
   label: 'Signature — Le chemin',
   description: 'Plein écran. Un sentier serpente ; une petite lumière le parcourt seule, le trace derrière elle, et chaque étape s’ouvre à son passage.',
   schema: cheminSchema,
-  fields: [field.list('etapes', 'Étapes', [field.text('titre', 'Titre'), field.textarea('texte', 'Texte')], { addLabel: 'Ajouter une étape' })],
-  defaults: { etapes: [] },
-  preremplir: (c) => ({ etapes: c.methode.etapes }),
+  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: ACCENT }), field.list('etapes', 'Étapes', [field.text('titre', 'Titre'), field.textarea('texte', 'Texte')], { addLabel: 'Ajouter une étape' })],
+  defaults: { surtitre: 'Ma méthode', titre: 'Comment ça *se passe*', etapes: [] },
+  preremplir: (c) => ({ surtitre: c.methode.surtitre || 'Ma méthode', titre: 'Comment ça *se passe*', etapes: c.methode.etapes }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     const e = data.etapes.filter((x) => x.titre.trim())
     return (
       <Enveloppe ctx={ctx}>
-        <Chemin etapes={e.length ? e : c.methode.etapes} />
+        <Chemin surtitre={data.surtitre} titre={data.titre || 'Comment ça *se passe*'} etapes={e.length ? e : c.methode.etapes} />
       </Enveloppe>
     )
   },
 }
 
-const videSchema = z.object({})
-export const mSiBullesBlock: BlockDefinition<typeof videSchema> = {
+const enteteSchema = z.object({ surtitre: t, titre: t })
+const champsEntete = [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: ACCENT })]
+export const mSiBullesBlock: BlockDefinition<typeof enteteSchema> = {
   ...commun,
   label: 'Signature — Les bulles',
   description: 'Plein écran. Les accompagnements flottent en bulles irisées qui s’évitent et fuient la souris ; on en touche une, elle éclate et sa fiche apparaît.',
-  schema: videSchema,
-  fields: [],
-  defaults: {},
-  preremplir: () => ({}),
+  schema: enteteSchema,
+  fields: champsEntete,
+  defaults: { surtitre: 'Accompagnements', titre: 'Lequel vous *ressemble* ?' },
+  preremplir: () => ({ surtitre: 'Accompagnements', titre: 'Lequel vous *ressemble* ?' }),
   dataSource: { label: 'Les accompagnements', href: '/admin/accompagnements' },
-  Component: ({ ctx }) => {
+  Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <Bulles services={servicesIllustres(c)} rdv={c.rdv} />
+        <Bulles surtitre={data.surtitre} titre={data.titre || 'Lequel vous *ressemble* ?'} services={servicesIllustres(c)} rdv={c.rdv} />
       </Enveloppe>
     )
   },
 }
 
-const voletsSchema = z.object({ photos: z.array(z.string()).default([]) })
+const voletsSchema = z.object({ surtitre: t, titre: t, photos: z.array(z.string()).default([]) })
 export const mSiVoletsBlock: BlockDefinition<typeof voletsSchema> = {
   ...commun,
   label: 'Signature — Les volets',
   description: 'Plein écran. Un diaporama : la photo avance doucement, puis trois volets de couleur balaient l’écran et découvrent la suivante.',
   schema: voletsSchema,
-  fields: [field.mediaList('photos', 'Photos', { help: 'La légende de chaque photo s’affiche en bas.' })],
-  defaults: { photos: [] },
-  preremplir: (c) => ({ photos: sansSubstitution(c).slice(0, 8).map((p) => p.id) }),
+  fields: [...champsEntete, field.mediaList('photos', 'Photos', { help: 'La légende de chaque photo s’affiche en bas.' })],
+  defaults: { surtitre: 'En images', titre: 'Le *cabinet*', photos: [] },
+  preremplir: (c) => ({ surtitre: 'En images', titre: 'Le *cabinet*', photos: sansSubstitution(c).slice(0, 8).map((p) => p.id) }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     const choisies = data.photos.map((id) => ctx.resolveMedia(id)).filter((m): m is Media => Boolean(m))
     return (
       <Enveloppe ctx={ctx}>
-        <Volets photos={choisies.length ? choisies : sansSubstitution(c).slice(0, 8)} />
+        <Volets surtitre={data.surtitre} titre={data.titre || 'Le *cabinet*'} photos={choisies.length ? choisies : sansSubstitution(c).slice(0, 8)} />
       </Enveloppe>
     )
   },
 }
 
-export const mSiTambourBlock: BlockDefinition<typeof videSchema> = {
+export const mSiTambourBlock: BlockDefinition<typeof enteteSchema> = {
   ...commun,
   label: 'Signature — Le tambour',
   description: 'Plein écran. Les questions sur un cylindre en 3D qui tourne comme une molette ; la question de face s’ouvre à côté, dans sa couleur.',
-  schema: videSchema,
-  fields: [],
-  defaults: {},
-  preremplir: () => ({}),
+  schema: enteteSchema,
+  fields: champsEntete,
+  defaults: { surtitre: 'Questions', titre: 'Ce qu’on *se demande*' },
+  preremplir: () => ({ surtitre: 'Questions', titre: 'Ce qu’on *se demande*' }),
   dataSource: { label: 'Les questions', href: '/admin/questions' },
-  Component: ({ ctx }) => {
+  Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <Tambour faq={c.faq} />
+        <Tambour surtitre={data.surtitre} titre={data.titre || 'Ce qu’on *se demande*'} faq={c.faq} />
       </Enveloppe>
     )
   },
 }
 
-const porteSchema = z.object({ titre: t, mediaId: media })
+const porteSchema = z.object({ surtitre: t, titre: t, mediaId: media })
 export const mSiPorteBlock: BlockDefinition<typeof porteSchema> = {
   ...commun,
   label: 'Signature — La porte',
   description: 'Plein écran. Une porte en arche : survolée, elle s’entrouvre ; touchée, elle s’ouvre sur le cabinet, la lumière se répand et les coordonnées apparaissent.',
   schema: porteSchema,
-  fields: [field.textarea('titre', 'Titre', { help: ACCENT }), field.media('mediaId', 'Photo derrière la porte')],
-  defaults: { titre: 'Toquez, *c’est ouvert*', mediaId: null },
-  preremplir: (c) => ({ titre: 'Toquez, *c’est ouvert*', mediaId: c.ambiance?.id ?? null }),
+  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: ACCENT }), field.media('mediaId', 'Photo derrière la porte')],
+  defaults: { surtitre: 'Venir', titre: 'Toquez, *c’est ouvert*', mediaId: null },
+  preremplir: (c) => ({ surtitre: 'Venir', titre: 'Toquez, *c’est ouvert*', mediaId: c.ambiance?.id ?? null }),
   dataSource: { label: 'Les coordonnées', href: '/admin/reglages' },
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <Porte titre={data.titre || 'Toquez, *c’est ouvert*'} photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance} adresse={c.adresse} telephone={c.telephone} email={c.email} rdv={c.rdv} />
+        <Porte surtitre={data.surtitre} titre={data.titre || 'Toquez, *c’est ouvert*'} photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance} adresse={c.adresse} telephone={c.telephone} email={c.email} rdv={c.rdv} />
       </Enveloppe>
     )
   },
 }
 
-const filSchema = z.object({ titre: t, texte: t, bouton: t })
+const filSchema = z.object({ surtitre: t, titre: t, texte: t, bouton: t })
 export const mSiFilBlock: BlockDefinition<typeof filSchema> = {
   ...commun,
   label: 'Signature — Le fil de lumière',
   description: 'Plein écran, de nuit. La souris laisse un ruban de lumière aux trois couleurs ; le bouton ouvre un cercle de couleur qui remplit l’écran.',
   schema: filSchema,
-  fields: [field.textarea('titre', 'Titre', { help: ACCENT }), field.textarea('texte', 'Texte'), field.text('bouton', 'Bouton')],
-  defaults: { titre: 'Et si on *commençait* ?', texte: '', bouton: RDV },
-  preremplir: (c) => ({ titre: 'Et si on *commençait* ?', texte: c.accroche, bouton: RDV }),
+  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: ACCENT }), field.textarea('texte', 'Texte'), field.text('bouton', 'Bouton')],
+  defaults: { surtitre: 'Rendez-vous', titre: 'Et si on *commençait* ?', texte: '', bouton: RDV },
+  preremplir: (c) => ({ surtitre: 'Rendez-vous', titre: 'Et si on *commençait* ?', texte: c.accroche, bouton: RDV }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <FilDeLumiere titre={data.titre || 'Et si on *commençait* ?'} texte={data.texte} bouton={data.bouton || RDV} rdv={c.rdv} />
+        <FilDeLumiere surtitre={data.surtitre} titre={data.titre || 'Et si on *commençait* ?'} texte={data.texte} bouton={data.bouton || RDV} rdv={c.rdv} />
       </Enveloppe>
     )
   },
