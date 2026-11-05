@@ -1051,33 +1051,8 @@
     opacity: 0;
   }
 }
-/* La lumière du matin qui dérive sur l'ivoire. */
-@keyframes ad-lumiere {
-  from {
-    background-position: 0% 0%;
-  }
-  to {
-    background-position: 100% 60%;
-  }
-}
 
 /* ── La chaleur, sur tout le site moderne ─────────────────────────────── */
-/* Une lumière douce posée sur toute la page : du miel en haut à droite,
-   un rose sable en bas à gauche. Fixe : elle reste là pendant la lecture. */
-.ad {
-  position: relative;
-  isolation: isolate;
-}
-.ad::before {
-  content: '';
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  pointer-events: none;
-  background:
-    radial-gradient(55% 45% at 88% 8%, rgba(240, 200, 160, 0.26), transparent 70%),
-    radial-gradient(50% 45% at 4% 96%, rgba(236, 196, 178, 0.2), transparent 70%);
-}
 /* Les photos, au soleil de fin de journée : à peine dorées. */
 .ad img:not([src*='.svg']) {
   filter: sepia(0.07) saturate(1.05);

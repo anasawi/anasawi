@@ -2,7 +2,7 @@ import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react'
 import Link from 'next/link'
 
 import { Accueil, RencontreDouce } from './accueil'
-import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes, Lueur, Promenade, Revele, Semaine, Souffle } from './vivant'
+import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes, Promenade, Revele, Semaine, Souffle } from './vivant'
 import type { Contenu } from '@/blocks/moderne/contenu'
 import { photosPromenade, TEXTES } from '@/blocks/moderne/textes'
 import { LogoMark } from '@/components/site/Logo'
@@ -230,7 +230,6 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
 
           {/* Les séances. */}
           <Revele delai={0.08} className={cn(carte, 'md:col-span-2')}>
-            <Lueur />
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.seances}</p>
             <ul className="mt-4 flex flex-col gap-2.5">
               {c.services.slice(0, 4).map((s) => (
@@ -251,7 +250,6 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
 
           {/* La visio, et son onde. */}
           <Revele delai={0.16} className={cn(carte, 'flex flex-col justify-between')}>
-            <Lueur />
             <div aria-hidden="true" className="flex h-12 items-center gap-1">
               {[0.1, 0.35, 0.6, 0.2, 0.45, 0.7, 0.3].map((d, i) => (
                 <span
@@ -269,7 +267,6 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
 
           {/* Les jours. */}
           <Revele delai={0.24} className={cn(carte, 'flex flex-col justify-between')}>
-            <Lueur />
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.consultations}</p>
             <div>
               <p className="text-[24px] font-semibold capitalize tracking-[-0.03em]">{plage}</p>
@@ -402,9 +399,6 @@ export function Horizon({
     /* Derrière la courbe du pied de page : le fond du site, le même partout. */
     <div className="bg-[var(--ad-ivoire)]">
     <footer className="relative isolate overflow-hidden rounded-t-[40px] bg-[var(--ad-nuit)] px-[5vw] pb-10 pt-28 text-white md:rounded-t-[56px] md:pt-40">
-      <div aria-hidden="true" className="absolute -top-40 left-1/2 -z-10 h-80 w-[60vw] -translate-x-1/2 rounded-full bg-[var(--ad-miel)]/35 blur-3xl motion-safe:animate-[ad-aurore_16s_ease-in-out_infinite]" />
-      {/* Une lumière lagon qui suit la souris dans la nuit. */}
-      <Lueur couleur="rgba(79,169,166,0.16)" taille={620} />
       <div className="relative mx-auto max-w-[1200px]">
         <p className="text-center font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[clamp(48px,8.5vw,136px)] leading-[0.98] ad-em-miel">
           <Lignes lignes={enLignes(t.titre)} />

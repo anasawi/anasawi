@@ -16,8 +16,7 @@ import type { Media } from '@/server/db/schema'
  * photo est une porte qui s'ouvre — elle se découvre de bas en haut —,
  * doublée d'un fin chambranle couleur sable, décalé, comme un encadrement.
  *
- * Tout est doux : une lumière du matin qui dérive lentement sur l'ivoire,
- * une tasse dont la vapeur monte, du texte à taille humaine, des
+ * Tout est doux : l'ivoire crème, une tasse dont la vapeur monte, du texte à taille humaine, des
  * apparitions lentes. Rien de brut.
  */
 
@@ -144,7 +143,7 @@ function Vapeur({ className }: { className?: string }) {
 }
 
 /* ══════════════════════════════════════════════════════════════════════
-   L'ACCUEIL — une lumière du matin sur l'ivoire ; à gauche, le prénom,
+   L'ACCUEIL — sur l'ivoire crème : à gauche, le prénom,
    quelques mots, deux boutons et une invitation à s'installer ; à
    droite, la porte du cabinet, et une petite porte avec une tasse.
    ══════════════════════════════════════════════════════════════════════ */
@@ -177,15 +176,6 @@ export function Accueil({
   const [ref, vu] = useVu<HTMLElement>('0%')
   return (
     <section ref={ref} id="haut" className="relative isolate overflow-hidden">
-      {/* La lumière du matin, qui dérive très lentement. */}
-      <div
-        aria-hidden="true"
-        className="absolute inset-0 -z-10 motion-safe:animate-[ad-lumiere_22s_ease-in-out_infinite_alternate]"
-        style={{
-          background: 'radial-gradient(60% 55% at 78% 30%, rgba(246,226,206,0.9), transparent 70%), radial-gradient(45% 40% at 12% 85%, rgba(217,240,238,0.7), transparent 70%), var(--ad-ivoire)',
-          backgroundSize: '120% 120%',
-        }}
-      />
       <div className="mx-auto grid min-h-[calc(var(--ad-vh)*100)] max-w-[1240px] items-center gap-12 px-[6vw] pb-16 pt-32 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-20 lg:pt-28">
         <div>
           {surtitre && (
