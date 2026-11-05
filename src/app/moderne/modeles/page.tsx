@@ -53,7 +53,7 @@ export default async function ModelesModernesPage() {
             {g.sections.map((s) => {
               n += 1
               return (
-                <div key={s.id} className="mt-8 border-t border-[var(--ad-sable-fonce)]">
+                <div key={s.id} id={s.type} className="mt-8 scroll-mt-20 border-t border-[var(--ad-sable-fonce)]">
                   <div className="mx-auto flex max-w-[1240px] flex-wrap items-baseline gap-x-4 gap-y-1 px-[6vw] pt-6 lg:px-12">
                     <span className="rounded-full bg-[var(--ad-nuit)] px-3 py-1 text-[13px] font-semibold tabular-nums text-white">{n}</span>
                     <span className="text-[17px] font-semibold text-[var(--ad-nuit)]">{getBlock(s.type)?.label.replace('Moderne — ', '')}</span>

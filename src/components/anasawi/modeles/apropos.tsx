@@ -1,7 +1,6 @@
 'use client'
 
 import { Clock, Feather, HeartHandshake, Lock, type LucideIcon, Sparkles, Sprout } from 'lucide-react'
-import { useId } from 'react'
 
 import { accentue, apparait, ARCHE, Arche, Bouton, CARTE, CONTENEUR, DOUX, Entete, Etiquette, ITALIQUE, paragraphes, Section, TEXTE, Titre, useVu } from './socle'
 import { Compteur } from '../vivant'
@@ -81,7 +80,8 @@ export function AproposAsymetrique({ etiquette, titre, texte, signature, id, pho
 export function AproposMedaillon({ etiquette, titre, texte, signature, id, portrait, anneau }: Presentation & { portrait: Media | null; anneau: string }) {
   const [ref, vu] = useVu<HTMLDivElement>()
   const mots = `${anneau} · `.repeat(3)
-  const idAnneau = `anneau-${useId().replace(/:/g, '')}`
+  /* Un identifiant stable (le même côté serveur et navigateur), tiré des mots. */
+  const idAnneau = `anneau-${[...anneau].reduce((h, ch) => (h * 31 + ch.charCodeAt(0)) >>> 0, 7).toString(36)}`
   return (
     <Section id={id} serre>
       <div ref={ref} className={cn(CONTENEUR, 'flex flex-col items-center text-center')}>
