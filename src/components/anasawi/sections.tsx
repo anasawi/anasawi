@@ -1,8 +1,8 @@
 import { ArrowUpRight, Mail, MapPin, Phone } from 'lucide-react'
-import Image from 'next/image'
 import Link from 'next/link'
 
-import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Encre, Incline, Lettre, Lignes, Lueur, Parallaxe, Promenade, Revele, Rideau, Semaine, Seuil, Souffle } from './vivant'
+import { Accueil, RencontreDouce } from './accueil'
+import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes, Lueur, Promenade, Revele, Semaine, Souffle } from './vivant'
 import type { Contenu } from '@/blocks/moderne/contenu'
 import { photosPromenade, TEXTES } from '@/blocks/moderne/textes'
 import { LogoMark } from '@/components/site/Logo'
@@ -65,18 +65,23 @@ export function Surtitre({ children, clair = false }: { children: React.ReactNod
 /* ── Seuil ──────────────────────────────────────────────────────────── */
 
 export function SectionSeuil({ c, t = TEXTES.mSeuil(c) }: P & { t?: T<'mSeuil'> }) {
+  const photo = c.ambiance ?? c.portrait
+  /* La petite porte : une tasse si la photothèque en a une, sinon une autre photo du cabinet. */
+  const autres = c.photos.filter((p) => p.id !== photo?.id && p.id !== c.portrait?.id && !/substitution/i.test(p.alt))
+  const tasse = autres.find((p) => /tasse|th[ée]|caf[ée]|tea|coffee|cup/i.test(p.alt)) ?? autres[0] ?? null
   return (
-    <Seuil
+    <Accueil
+      surtitre={t.surtitre}
       prenom={prenomDe(t.nom)}
       nom={nomDe(t.nom)}
-      metier={c.metier}
-      ville={c.ville}
-      accroche={t.accroche}
-      photo={c.ambiance ?? c.portrait}
-      rdv={c.rdv}
-      horaires={c.horaires}
       intro={t.intro}
-      textes={t}
+      photo={photo}
+      tasse={tasse}
+      pastilles={[t.pastille2, t.pastille3].filter(Boolean)}
+      rdv={c.rdv}
+      bouton={t.bouton}
+      bouton2={t.bouton2}
+      invitation={t.invitation}
     />
   )
 }
@@ -106,47 +111,19 @@ export function Respiration({ t = TEXTES.mRespiration() }: Partial<P> & { t?: T<
 /* ── Rencontre ──────────────────────────────────────────────────────── */
 
 export function Rencontre({ c, t = TEXTES.mRencontre(c) }: P & { t?: T<'mRencontre'> }) {
-  const anneau = t.anneau
+  /* Une petite porte sur le cabinet : une fenêtre, une plante, une lampe… */
+  const autres = c.photos.filter((p) => p.id !== c.portrait?.id && p.id !== c.ambiance?.id && !/substitution|tasse|th[ée]/i.test(p.alt))
+  const cabinet = autres.find((p) => /fen[eê]tre|plante|lampe|lumi[eè]re|porte|fauteuil/i.test(p.alt)) ?? autres[0] ?? null
   return (
-    <section id="a-propos" className="scroll-mt-24 py-28 md:py-40">
-      <div className="mx-auto grid max-w-[1200px] items-center gap-16 px-[5vw] md:grid-cols-[minmax(0,0.85fr)_minmax(0,1.15fr)] md:gap-24">
-        <Revele className="relative mx-auto w-full max-w-[440px]">
-          <Incline max={8} className="aspect-[3/4]">
-            {/* Le portrait se dévoile comme un rideau qu'on lève, puis
-                glisse un peu moins vite que la page. */}
-            <Rideau className="h-full w-full bg-[var(--ad-sable-fonce)]">
-              <Parallaxe amplitude={56}>
-                {c.portrait && <Image src={c.portrait.url} alt={c.portrait.alt} fill sizes="440px" className="object-cover" />}
-              </Parallaxe>
-            </Rideau>
-          </Incline>
-          {/* Le sceau : le métier écrit en cercle, qui tourne lentement. */}
-          <div aria-hidden="true" className="absolute -bottom-10 -right-6 grid h-36 w-36 place-items-center rounded-full bg-[var(--ad-ivoire)] shadow-[0_20px_50px_-20px_rgba(46,66,79,0.4)] md:-right-12">
-            <svg viewBox="0 0 100 100" className="absolute inset-2 motion-safe:animate-[ad-tourner_28s_linear_infinite]">
-              <defs>
-                <path id="ad-cercle" d="M50,50 m-38,0 a38,38 0 1,1 76,0 a38,38 0 1,1 -76,0" />
-              </defs>
-              <text className="fill-[var(--ad-nuit)] text-[8.6px] uppercase tracking-[0.2em]">
-                <textPath href="#ad-cercle">{anneau}</textPath>
-              </text>
-            </svg>
-            <LogoMark src={c.logo} className="h-12 w-12" />
-          </div>
-        </Revele>
-        <div>
-          {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
-          <h2 className="text-[36px] md:text-[54px]">
-            <Lignes lignes={enLignes(t.titre)} />
-          </h2>
-          <Encre texte={t.texte.replace(/\*/g, '')} className="mt-10 font-[family-name:var(--ad-titre)] text-[21px] font-medium leading-[1.55] tracking-[-0.015em] text-[var(--ad-nuit)] md:text-[24px]" />
-          {t.citation && (
-            <Revele delai={0.1}>
-              <p className="mt-8 border-l border-[var(--ad-or)] pl-5 text-[16px] leading-[1.7] text-[var(--ad-pierre)]">{t.citation}</p>
-            </Revele>
-          )}
-        </div>
-      </div>
-    </section>
+    <RencontreDouce
+      surtitre={t.surtitre}
+      titre={t.titre}
+      texte={t.texte}
+      citation={t.citation}
+      signature={prenomDe(c.nom)}
+      portrait={c.portrait}
+      cabinet={cabinet}
+    />
   )
 }
 

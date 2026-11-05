@@ -1032,3 +1032,28 @@
     filter: blur(4px);
   }
 }
+
+/* ── L'accueil et la rencontre (components/anasawi/accueil.tsx) ─────── */
+/* La vapeur d'une tasse : une volute qui monte et s'efface. */
+@keyframes ad-vapeur {
+  0% {
+    stroke-dashoffset: 1;
+    opacity: 0;
+  }
+  30% {
+    opacity: 0.85;
+  }
+  100% {
+    stroke-dashoffset: -0.5;
+    opacity: 0;
+  }
+}
+/* La lumière du matin qui dérive sur l'ivoire. */
+@keyframes ad-lumiere {
+  from {
+    background-position: 0% 0%;
+  }
+  to {
+    background-position: 100% 60%;
+  }
+}
