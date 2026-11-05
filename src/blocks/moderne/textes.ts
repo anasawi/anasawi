@@ -108,7 +108,7 @@ export const TEXTES = {
   mPromenade: () => ({
     menu: 'Le cabinet',
     titre: 'Le *cabinet*',
-    legende: 'pièces · défilez',
+    legende: 'Entrez, regardez autour de vous : chaque porte ouvre sur un coin du cabinet.',
   }),
   mConversation: (c: Contenu) => ({
     menu: 'Questions',

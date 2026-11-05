@@ -1069,3 +1069,10 @@
   -webkit-text-fill-color: var(--ad-miel);
   color: var(--ad-miel);
 }
+/* La légende d'une porte qui s'ouvre. */
+@keyframes ad-legende {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
