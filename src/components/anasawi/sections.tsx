@@ -91,11 +91,11 @@ export function SectionSeuil({ c, t = TEXTES.mSeuil(c) }: P & { t?: T<'mSeuil'> 
 
 export function Respiration({ t = TEXTES.mRespiration() }: Partial<P> & { t?: T<'mRespiration'> }) {
   return (
-    <section className="relative overflow-hidden py-24 md:py-32">
-      <div className="mx-auto grid max-w-[1200px] items-center gap-16 px-[5vw] md:grid-cols-2">
+    <section className="relative overflow-hidden py-20 md:py-28">
+      <div className="mx-auto grid max-w-[1240px] items-center gap-16 px-[6vw] lg:px-12 md:grid-cols-2">
         <div>
           {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
-          <h2 className="text-[38px] md:text-[56px]">
+          <h2 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
             <Lignes lignes={enLignes(t.titre)} />
           </h2>
           <Revele delai={0.3}>
@@ -132,13 +132,13 @@ export function Rencontre({ c, t = TEXTES.mRencontre(c) }: P & { t?: T<'mRencont
 
 export function SectionChemin({ c, t = TEXTES.mChemin(c) }: P & { t?: T<'mChemin'> }) {
   return (
-    <section id="methode" className="scroll-mt-24 py-24 md:py-36">
-      <div className="mx-auto max-w-[1100px] px-[5vw]">
+    <section id="methode" className="scroll-mt-24 py-20 md:py-28">
+      <div className="mx-auto max-w-[1100px] px-[6vw] lg:px-12">
         <div className="mb-16 text-center md:mb-24">
           <div className="flex justify-center">
             {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
           </div>
-          <h2 className="text-[36px] md:text-[54px]">
+          <h2 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
             <Lignes lignes={enLignes(t.titre)} />
           </h2>
           {t.intro && (
@@ -157,12 +157,12 @@ export function SectionChemin({ c, t = TEXTES.mChemin(c) }: P & { t?: T<'mChemin
 
 export function SectionArches({ c, t = TEXTES.mArches(c) }: P & { t?: T<'mArches'> }) {
   return (
-    <section id="accompagnements" className="scroll-mt-24 py-24 md:py-36">
-      <div className="mx-auto max-w-[1320px] px-[5vw]">
+    <section id="accompagnements" className="scroll-mt-24 py-20 md:py-28">
+      <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         <div className="mb-14 flex flex-wrap items-end justify-between gap-6">
           <div>
             {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
-            <h2 className="text-[36px] md:text-[54px]">
+            <h2 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
               <Lignes lignes={enLignes(t.titre)} />
             </h2>
           </div>
@@ -188,10 +188,10 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
   const carte =
     'relative isolate overflow-hidden rounded-[28px] bg-white p-7 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)] transition-[box-shadow,translate] duration-500 ease-[var(--ad-ease)] hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(46,66,79,0.06),0_30px_60px_-30px_rgba(46,66,79,0.35)]'
   return (
-    <section className="py-24 md:py-32">
-      <div className="mx-auto max-w-[1200px] px-[5vw]">
+    <section className="py-20 md:py-28">
+      <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
-        <h2 className="mb-12 text-[36px] md:text-[54px]">
+        <h2 className="mb-12 text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
           <Lignes lignes={enLignes(t.titre)} />
         </h2>
         <div className="grid gap-4 md:auto-rows-[minmax(220px,auto)] md:grid-cols-4">
@@ -289,7 +289,7 @@ export function Phrase({ c, t = TEXTES.mPhrase(c) }: P & { t?: T<'mPhrase'> }) {
     })
   return (
     <section className="py-28 md:py-44">
-      <div className="mx-auto max-w-[1200px] px-[5vw] text-center">
+      <div className="mx-auto max-w-[1240px] px-[6vw] text-center lg:px-12">
         <span aria-hidden="true" className="mx-auto mb-10 block h-16 w-px bg-gradient-to-b from-transparent to-[var(--ad-or)]" />
         <blockquote>
           {/* Les mots s'allument un à un, à la vitesse où l'on descend. */}
@@ -315,7 +315,7 @@ export function SectionPromenade({
 }: P & { t?: T<'mPromenade'>; photos?: Contenu['photos'] }) {
   /* L'ancienne légende (« pièces · défilez ») n'a plus de sens : une phrase d'accueil à la place. */
   const sousTitre = !t.legende || /d[ée]filez/i.test(t.legende) ? TEXTES.mPromenade().legende : t.legende
-  return <CabinetDefile photos={photos} titre={t.titre} sousTitre={sousTitre} />
+  return <CabinetDefile photos={photos} surtitre={t.surtitre ?? TEXTES.mPromenade().surtitre} titre={t.titre} sousTitre={sousTitre} />
 }
 
 /* ── Conversation ───────────────────────────────────────────────────── */
@@ -323,10 +323,10 @@ export function SectionPromenade({
 export function SectionConversation({ c, t = TEXTES.mConversation(c) }: P & { t?: T<'mConversation'> }) {
   if (!c.faq.length) return null
   return (
-    <section id="questions" className="scroll-mt-24 py-24 md:py-36">
-      <div className="mx-auto max-w-[1200px] px-[5vw]">
+    <section id="questions" className="scroll-mt-24 py-20 md:py-28">
+      <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
-        <h2 className="mb-14 text-[36px] md:text-[54px]">
+        <h2 className="mb-14 text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
           <Lignes lignes={enLignes(t.titre)} />
         </h2>
         <Revele>
@@ -346,11 +346,11 @@ export function RendezVous({ c, t = TEXTES.mRendezVous(c) }: P & { t?: T<'mRende
     c.adresse && { icone: <MapPin />, texte: c.adresse, href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.adresse)}` },
   ].filter(Boolean) as { icone: React.ReactNode; texte: string; href: string }[]
   return (
-    <section id="contact" className="scroll-mt-24 py-24 md:py-36">
-      <div className="mx-auto grid max-w-[1200px] gap-16 px-[5vw] lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+    <section id="contact" className="scroll-mt-24 py-20 md:py-28">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 px-[6vw] lg:px-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div>
           {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
-          <h2 className="text-[36px] md:text-[54px]">
+          <h2 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
             <Lignes lignes={enLignes(t.titre)} />
           </h2>
           <Revele delai={0.2} className="mt-12">
@@ -362,7 +362,7 @@ export function RendezVous({ c, t = TEXTES.mRendezVous(c) }: P & { t?: T<'mRende
                 <li key={l.texte}>
                   <a href={l.href} className="group flex items-center gap-4 py-4 text-[15px] text-[var(--ad-nuit)] [&_svg]:h-4 [&_svg]:w-4">
                     <span className="text-[var(--ad-or)]">{l.icone}</span>
-                    <span className="min-w-0 flex-1 truncate">{l.texte}</span>
+                    <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{l.texte}</span>
                     <ArrowUpRight className="opacity-0 transition-[opacity,transform] duration-500 ease-[var(--ad-ease)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" />
                   </a>
                 </li>

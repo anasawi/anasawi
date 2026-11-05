@@ -1033,7 +1033,7 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
           </>
         )}
       </p>
-      <ol className="grid grid-cols-7 gap-1.5">
+      <ol className="grid grid-cols-7 gap-1 sm:gap-1.5">
         {JOURS.map((j, i) => {
           const h = horaireDe(j)
           const actif = i === aujourdhui
@@ -1042,11 +1042,11 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
               key={j}
               title={h ?? 'Fermé'}
               className={cn(
-                'flex flex-col items-center gap-2 rounded-full px-1 py-4 text-center transition-colors duration-500',
+                'flex min-w-0 flex-col items-center gap-2 rounded-full px-0.5 py-4 text-center transition-colors duration-500 sm:px-1',
                 actif ? 'bg-[var(--ad-nuit)] text-white' : ferme(h) ? 'bg-transparent text-[var(--ad-gris)]/60' : 'bg-[var(--ad-sable)] text-[var(--ad-nuit)]',
               )}
             >
-              <span className="font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[20px] capitalize leading-none">{j.slice(0, 2)}</span>
+              <span className="font-[family-name:var(--ad-titre)] text-[17px] font-semibold capitalize leading-none tracking-[-0.03em] sm:text-[20px]">{j.slice(0, 2)}</span>
               <span className={cn('h-1 w-1 rounded-full', ferme(h) ? 'bg-current/30' : actif ? 'bg-[var(--ad-or)]' : 'bg-[var(--ad-bleu)]')} />
             </li>
           )
@@ -1330,6 +1330,8 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
   useEffect(() => {
     const io = new IntersectionObserver(
       (entrees) => {
+        /* Une section qui sort éteint son lien (en haut de page, ou entre deux sections sans lien, rien n'est allumé). */
+        for (const e of entrees) if (!e.isIntersecting) setActif((a) => (a === `#${e.target.id}` ? null : a))
         for (const e of entrees) if (e.isIntersecting) setActif(`#${e.target.id}`)
       },
       { rootMargin: '-45% 0px -50% 0px' },
@@ -1568,9 +1570,9 @@ export function Souffle({ bouton = 'Respirer une minute' }: { bouton?: string })
         <span
           key={`c-${debut ?? 'repos'}`}
           aria-hidden="true"
-          className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_38%_32%,#ffffff_0%,var(--ad-brume)_48%,#d8e5ea_100%)] shadow-[0_40px_100px_-30px_rgba(70,114,138,0.45)] motion-safe:animate-[ad-souffle_8s_var(--ad-ease-lent)_infinite]"
+          className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_40%_34%,#fbf8f2_0%,var(--ad-brume)_58%,#dfe9ed_100%)] shadow-[0_26px_50px_-32px_rgba(46,66,79,0.35)] motion-safe:animate-[ad-souffle_8s_var(--ad-ease-lent)_infinite]"
         />
-        <span key={`t-${debut ?? 'repos'}`} className="relative grid place-items-center text-[30px] font-semibold tracking-[-0.03em] text-[var(--ad-nuit)]">
+        <span key={`t-${debut ?? 'repos'}`} className="relative grid place-items-center font-[family-name:var(--ad-titre)] text-[32px] italic text-[var(--ad-nuit)]">
           <span className="col-start-1 row-start-1 motion-safe:animate-[ad-inspirez_8s_linear_infinite]">Inspirez</span>
           <span className="col-start-1 row-start-1 opacity-0 motion-safe:animate-[ad-expirez_8s_linear_infinite]">Expirez</span>
         </span>

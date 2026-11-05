@@ -303,6 +303,7 @@ export const mPromenadeBlock: BlockDefinition<typeof promenadeSchema> = {
   description: 'Les photos du cabinet dans des portes en arche qui défilent très lentement, et s’arrêtent au survol.',
   schema: promenadeSchema,
   fields: [
+    field.text('surtitre', 'Petite étiquette (au-dessus du titre)'),
     field.text('titre', 'Titre', { help: 'Le mot clé entre *astérisques*.' }),
     field.textarea('legende', 'Phrase d’accueil (à côté du titre)'),
     field.mediaList('photos', 'Photos', { help: 'Huit au plus, dans l’ordre de la promenade. La légende de chaque photo s’affiche sous sa porte.' }),

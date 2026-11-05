@@ -290,7 +290,7 @@ export function RencontreDouce({
           {cabinet && (
             <figure className="absolute -bottom-10 -right-3 w-[42%] max-w-[180px] lg:-right-16" style={apparait(vu, 1)}>
               <Porte media={cabinet} vu={vu} delai={0.8} chambranle="aucun" lisere sizes="180px" className="aspect-[3/4] w-full" />
-              <figcaption className="mt-3 text-center font-[family-name:var(--ad-titre)] text-[15px] italic text-[var(--ad-pierre)]">Le cabinet, le matin</figcaption>
+              <figcaption className="mt-3 whitespace-nowrap text-center font-[family-name:var(--ad-titre)] text-[15px] italic text-[var(--ad-pierre)]">Le cabinet, le matin</figcaption>
             </figure>
           )}
         </div>
@@ -301,7 +301,7 @@ export function RencontreDouce({
               {surtitre}
             </p>
           )}
-          <h2 className="mt-6 text-[clamp(40px,4.8vw,68px)] leading-[1.02]">
+          <h2 className="mt-6 text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
             {lignes.map((l, i) => (
               <span key={i} className="block" style={apparait(vu, 0.25 + i * 0.12)}>
                 {accent(l)}
