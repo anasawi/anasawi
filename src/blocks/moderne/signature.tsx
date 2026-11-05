@@ -25,20 +25,20 @@ const servicesIllustres = (c: Contenu) => {
   return c.services.map((s, i) => ({ ...s, media: s.media ?? photos[i % Math.max(1, photos.length)] ?? null }))
 }
 
-const aubeSchema = z.object({ surtitre: t, titre: t, intro: t, bouton: t })
+const aubeSchema = z.object({ surtitre: t, titre: t, intro: t, bouton: t, mediaId: media })
 export const mSiAubeBlock: BlockDefinition<typeof aubeSchema> = {
   ...commun,
   label: 'Signature — L’aube',
-  description: 'Plein écran. On arrive de nuit : un soleil se lève derrière le titre, le ciel s’éclaircit, les mots s’allument un à un.',
+  description: 'Plein écran. On arrive de nuit : le ciel s’éclaircit, la photo du cabinet monte comme un horizon et le soleil se lève derrière elle.',
   schema: aubeSchema,
-  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: ACCENT }), field.textarea('intro', 'Introduction'), field.text('bouton', 'Bouton')],
-  defaults: { surtitre: '', titre: 'Un espace pour *respirer*', intro: '', bouton: RDV },
-  preremplir: (c) => ({ surtitre: c.ouverture.surtitre, titre: 'Un espace pour *respirer*', intro: c.ouverture.intro, bouton: RDV }),
+  fields: [field.text('surtitre', 'Étiquette'), field.textarea('titre', 'Titre', { help: ACCENT }), field.textarea('intro', 'Introduction'), field.text('bouton', 'Bouton'), field.media('mediaId', 'Photo de l’horizon')],
+  defaults: { surtitre: '', titre: 'Un espace pour *respirer*', intro: '', bouton: RDV, mediaId: null },
+  preremplir: (c) => ({ surtitre: c.ouverture.surtitre, titre: 'Un espace pour *respirer*', intro: c.ouverture.intro, bouton: RDV, mediaId: c.ambiance?.id ?? null }),
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (
       <Enveloppe ctx={ctx}>
-        <Aube surtitre={data.surtitre} titre={data.titre || 'Un espace pour *respirer*'} intro={data.intro} bouton={data.bouton || RDV} rdv={c.rdv} />
+        <Aube surtitre={data.surtitre} titre={data.titre || 'Un espace pour *respirer*'} intro={data.intro} bouton={data.bouton || RDV} rdv={c.rdv} photo={photoDe(data.mediaId, ctx.resolveMedia) ?? c.ambiance} />
       </Enveloppe>
     )
   },
@@ -93,7 +93,7 @@ export const mSiCheminBlock: BlockDefinition<typeof cheminSchema> = {
     const e = data.etapes.filter((x) => x.titre.trim())
     return (
       <Enveloppe ctx={ctx}>
-        <Chemin surtitre={data.surtitre} titre={data.titre || 'Comment ça *se passe*'} etapes={e.length ? e : c.methode.etapes} />
+        <Chemin surtitre={data.surtitre} titre={data.titre || 'Comment ça *se passe*'} etapes={e.length ? e : c.methode.etapes} photos={sansSubstitution(c).filter((p) => p.id !== c.portrait?.id)} />
       </Enveloppe>
     )
   },

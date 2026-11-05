@@ -12,16 +12,14 @@ import type { FaqItem, Media, ServiceWithMedia } from '@/server/db/schema'
 /**
  * LA SÉRIE SIGNATURE — neuf sections plein écran, chacune une idée.
  *
- * LA DIRECTION ARTISTIQUE, en cinq règles :
+ * LA DIRECTION ARTISTIQUE (choisie par Valentin) :
  *  1. Un écran, jamais plus (ordinateur et téléphone).
- *  2. Trois couleurs — lagon, abricot, lavande — et UNE seule par section,
- *     en alternance ; le bleu nuit et l'ivoire pour tout le reste. Deux
- *     moments de nuit seulement (la constellation, le fil de lumière).
- *  3. Un seul système typographique : l'étiquette (point + capitales
- *     espacées), le titre serif qui monte mot à mot, le texte courant.
- *  4. Un seul bouton (pilule nuit, pastille flèche), un seul rayon (28 px),
- *     un même cadre (marges, hauteur de la barre de navigation).
- *  5. Un grain de papier très léger sur chaque fond : la matière.
+ *  2. Trois pastels — lagon, abricot, lavande — UNE seule par section ; le
+ *     bleu nuit et l'ivoire chaud pour le reste ; deux moments de nuit.
+ *  3. Titres ronds et doux (Nunito), une seule taille de titre, le mot clé
+ *     en couleur ; une étiquette (petit carré + capitales espacées).
+ *  4. Formes presque droites : 4 à 6 px de rayon partout, un seul bouton.
+ *  5. Peu de choses par écran, plus de photos, des animations calmes.
  *
  * Vitrine : /moderne/signature. Rien ne bouge pour qui a demandé moins
  * d'animations ; dans l'éditeur, tout est figé à son état final.
@@ -64,24 +62,18 @@ function decoupe(texte: string) {
    LE SYSTÈME — grain, étiquette, titre, texte, bouton
    ══════════════════════════════════════════════════════════════════════ */
 
-const BRUIT = `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='2' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")`
-
-/** Le grain de papier, très léger. */
-function Grain({ nuit = false }: { nuit?: boolean }) {
-  return <span aria-hidden="true" className={cn('pointer-events-none absolute inset-0 z-[1]', nuit ? 'opacity-[0.07] mix-blend-soft-light' : 'opacity-[0.05] mix-blend-multiply')} style={{ backgroundImage: BRUIT }} />
-}
-
 /** L'étiquette : un point de couleur, des capitales espacées. */
 function Etiquette({ children, teinte, nuit = false, vu = true, className }: { children: React.ReactNode; teinte: Teinte; nuit?: boolean; vu?: boolean; className?: string }) {
   return (
     <p className={cn('inline-flex items-center gap-2.5 text-[11.5px] font-semibold uppercase tracking-[0.22em]', className)} style={{ color: nuit ? 'rgba(255,255,255,0.7)' : teinte.encre, opacity: vu ? 1 : 0, transition: 'opacity 1s .1s' }}>
-      <span className="h-1.5 w-1.5 rounded-full" style={{ background: nuit ? teinte.vif : teinte.encre }} />
+      <span className="h-1.5 w-1.5 rounded-[1px]" style={{ background: nuit ? teinte.vif : teinte.encre }} />
       {children}
     </p>
   )
 }
 
-/** Le titre : serif, les mots montent l'un après l'autre derrière un masque. */
+/** Le titre : rond et doux (Nunito), le mot clé en couleur ; les mots
+ *  apparaissent l'un après l'autre, sans masque, en douceur. */
 function Titre({
   texte,
   teinte,
@@ -106,19 +98,20 @@ function Titre({
   const couleur = nuit ? '#ffffff' : NUIT
   const accent = nuit ? teinte.vif : teinte.encre
   return (
-    <Balise className={cn('text-[clamp(32px,4.6vw,68px)] leading-[1.06] tracking-[-0.025em]', className)}>
+    /* En style direct : la règle `.ad h1, h2` (police serif) passerait sinon devant les classes. */
+    <Balise className={cn('text-[clamp(28px,3.4vw,48px)]', className)} style={{ fontFamily: 'var(--ad-texte)', fontWeight: 600, lineHeight: 1.1, letterSpacing: '-0.025em' }}>
       {mots.map((m, i) => (
-        <span key={i} className="inline-block overflow-hidden pb-[0.08em] align-bottom">
-          <span
-            className={cn('inline-block whitespace-pre', m.accent && 'italic')}
-            style={{
-              color: vu ? (m.accent ? accent : couleur) : (depart ?? (m.accent ? accent : couleur)),
-              transform: vu ? 'none' : 'translateY(110%)',
-              transition: `transform 1.1s ${DOUX} ${delai + i * 0.05}s, color 2.6s ${delai + 0.6 + i * 0.08}s`,
-            }}
-          >
-            {m.mot}{' '}
-          </span>
+        <span
+          key={i}
+          className="inline-block whitespace-pre"
+          style={{
+            color: vu ? (m.accent ? accent : couleur) : (depart ?? (m.accent ? accent : couleur)),
+            opacity: vu ? 1 : 0,
+            transform: vu ? 'none' : 'translateY(12px)',
+            transition: `opacity 1.2s ${delai + i * 0.04}s, transform 1.4s ${DOUX} ${delai + i * 0.04}s, color 2.4s ${delai + 0.5 + i * 0.06}s`,
+          }}
+        >
+          {m.mot}{' '}
         </span>
       ))}
     </Balise>
@@ -134,19 +127,17 @@ function Texte({ children, vu, nuit = false, delai = 0.7, className }: { childre
   )
 }
 
-/** Le bouton unique : une pilule, une pastille flèche. */
+/** Le bouton unique : presque droit, une flèche qui avance au survol. */
 function Bouton({ href, onClick, children, teinte, clair = false, className }: { href?: string; onClick?: (e: React.MouseEvent<HTMLAnchorElement | HTMLButtonElement>) => void; children: React.ReactNode; teinte: Teinte; clair?: boolean; className?: string }) {
   const classe = cn(
-    'group inline-flex items-center gap-3 rounded-full py-1.5 pl-6 pr-1.5 text-[14.5px] font-semibold transition-[transform,box-shadow] duration-500 hover:-translate-y-0.5',
-    clair ? 'bg-white text-[var(--ad-nuit)] shadow-[0_18px_40px_-22px_rgba(0,0,0,0.6)]' : 'bg-[var(--ad-nuit)] text-white shadow-[0_18px_40px_-22px_rgba(46,66,79,0.9)]',
+    'group inline-flex items-center gap-3 rounded-[4px] px-5 py-3.5 text-[14.5px] font-semibold transition-colors duration-500',
+    clair ? 'bg-white text-[var(--ad-nuit)] hover:bg-[var(--ad-ivoire)]' : 'bg-[var(--ad-nuit)] text-white hover:bg-[#24353f]',
     className,
   )
   const contenu = (
     <>
       {children}
-      <span className="grid h-9 w-9 place-items-center rounded-full transition-transform duration-500 group-hover:translate-x-0.5" style={{ background: clair ? teinte.encre : teinte.fond, color: clair ? '#fff' : teinte.encre }}>
-        <ArrowRight className="h-4 w-4" />
-      </span>
+      <ArrowRight className="h-4 w-4 transition-transform duration-500 group-hover:translate-x-1" style={{ color: clair ? teinte.encre : teinte.vif }} />
     </>
   )
   return href ? (
@@ -166,39 +157,37 @@ function Bouton({ href, onClick, children, teinte, clair = false, className }: {
    au bleu nuit. Le soleil suit un peu la souris.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Aube({ surtitre, titre, intro, bouton, rdv }: { surtitre: string; titre: string; intro: string; bouton: string; rdv: string }) {
+export function Aube({ surtitre, titre, intro, bouton, rdv, photo }: { surtitre: string; titre: string; intro: string; bouton: string; rdv: string; photo: Media | null }) {
   const [ref, vu] = useVu<HTMLDivElement>('0%')
   const t = ABRICOT
-  const bouge = (e: React.PointerEvent<HTMLDivElement>) => {
-    if (e.pointerType !== 'mouse') return
-    const r = e.currentTarget.getBoundingClientRect()
-    e.currentTarget.style.setProperty('--sx', ((e.clientX - r.left) / r.width - 0.5).toFixed(3))
-    e.currentTarget.style.setProperty('--sy', ((e.clientY - r.top) / r.height - 0.5).toFixed(3))
-  }
   return (
-    <div ref={ref} onPointerMove={bouge} className={cn(PLEIN, '[--sx:0] [--sy:0]')} style={{ background: NUIT }}>
-      <div aria-hidden="true" className="absolute inset-0" style={{ background: `linear-gradient(to top, ${t.fond} 0%, ${IVOIRE} 70%)`, opacity: vu ? 1 : 0, transition: 'opacity 3.6s cubic-bezier(0.4,0,0.2,1) 0.4s' }} />
-      <div aria-hidden="true" className="absolute left-1/2 top-[70%]" style={{ transform: `translate(-50%, -50%) translateY(${vu ? '0' : '50vh'})`, transition: `transform 4s ${DOUX} 0.2s` }}>
-        <div className="h-[44vmin] w-[44vmin] rounded-full transition-transform duration-[1400ms] ease-out" style={{ transform: 'translate(calc(var(--sx) * 40px), calc(var(--sy) * 24px))', background: `radial-gradient(circle, #fffaf1 0%, ${t.vif} 34%, ${t.fond} 56%, transparent 70%)` }} />
-      </div>
-      <div aria-hidden="true" className="absolute -bottom-[28vh] left-1/2 h-[42vh] w-[150vw] rounded-[50%]" style={{ background: `color-mix(in srgb, ${t.vif} 30%, ${t.fond})`, transform: `translateX(-50%) translateY(${vu ? 0 : 14}vh)`, transition: `transform 3s ${DOUX} 0.5s` }} />
-      <Grain />
-      <div className={cn(CADRE, 'items-center justify-center text-center')}>
-        {surtitre && (
-          <Etiquette teinte={t} vu={vu}>
-            {surtitre}
-          </Etiquette>
-        )}
-        <Titre as="h1" texte={titre} teinte={t} vu={vu} depart="#ffffff" delai={0.4} className="mt-6 max-w-[16ch] text-[clamp(42px,7.6vw,120px)] leading-[1.02]" />
-        {intro && (
-          <Texte vu={vu} delai={2.4} className="mt-7 text-center">
-            {intro}
-          </Texte>
-        )}
-        <div className="mt-9" style={{ opacity: vu ? 1 : 0, transition: 'opacity 1.2s 2.8s' }}>
-          <Bouton href={rdv} teinte={t}>
-            {bouton}
-          </Bouton>
+    <div ref={ref} className={PLEIN} style={{ background: NUIT }}>
+      <div aria-hidden="true" className="absolute inset-0" style={{ background: `linear-gradient(to top, ${t.fond} 0%, ${IVOIRE} 75%)`, opacity: vu ? 1 : 0, transition: 'opacity 3.6s cubic-bezier(0.4,0,0.2,1) 0.3s' }} />
+      <div className={cn(CADRE, 'items-center pb-0 text-center lg:pb-0')}>
+        <div className="flex flex-1 flex-col items-center justify-center">
+          {surtitre && (
+            <Etiquette teinte={t} vu={vu}>
+              {surtitre}
+            </Etiquette>
+          )}
+          <Titre as="h1" texte={titre} teinte={t} vu={vu} depart="#ffffff" delai={0.4} className="mt-5 max-w-[18ch] text-[clamp(36px,5.6vw,84px)] leading-[1.05]" />
+          {intro && (
+            <Texte vu={vu} delai={2} className="mt-5 text-center">
+              {intro}
+            </Texte>
+          )}
+          <div className="mt-7" style={{ opacity: vu ? 1 : 0, transition: 'opacity 1.2s 2.4s' }}>
+            <Bouton href={rdv} teinte={t}>
+              {bouton}
+            </Bouton>
+          </div>
+        </div>
+        {/* L'horizon : la photo du cabinet ; le soleil se lève derrière elle. */}
+        <div className="relative mt-8 h-[30vh] w-full shrink-0">
+          <div aria-hidden="true" className="absolute left-1/2 top-0 h-[26vmin] w-[26vmin] -translate-x-1/2 rounded-full" style={{ background: `radial-gradient(circle, #fffaf1 0%, ${t.vif} 40%, transparent 70%)`, transform: `translate(-50%, ${vu ? '-55%' : '20%'})`, transition: `transform 3.6s ${DOUX} 0.3s` }} />
+          <div className="absolute inset-0 overflow-hidden rounded-t-[6px] bg-[var(--ad-sable)]" style={{ transform: vu ? 'none' : 'translateY(40%)', transition: `transform 2.4s ${DOUX} 0.6s` }}>
+            {photo && <Image src={photo.url} alt={photo.alt} fill sizes="100vw" className="object-cover" priority />}
+          </div>
         </div>
       </div>
     </div>
@@ -267,7 +256,7 @@ export function Constellation({ mot, phrase, auteur, surtitre }: { mot: string; 
         const d2 = dx * dx + dy * dy
         if (d2 < 110 * 110) {
           const d = Math.sqrt(d2) || 1
-          const f = (1 - d / 110) * 1.3
+          const f = (1 - d / 110) * 0.8
           ax += (dx / d) * f
           ay += (dy / d) * f
         }
@@ -327,7 +316,6 @@ export function Constellation({ mot, phrase, auteur, surtitre }: { mot: string; 
   return (
     <div ref={zone} className={cn(PLEIN, 'cursor-crosshair')} style={{ background: NUIT }}>
       <canvas ref={toile} aria-hidden="true" className="absolute inset-0 h-full w-full" />
-      <Grain nuit />
       <span className="sr-only">{mot}</span>
       <div ref={vuRef} className={cn(CADRE, 'pointer-events-none items-center justify-end text-center')}>
         {surtitre && (
@@ -335,7 +323,7 @@ export function Constellation({ mot, phrase, auteur, surtitre }: { mot: string; 
             {surtitre}
           </Etiquette>
         )}
-        <p ref={police} className="mt-5 max-w-[34ch] font-[family-name:var(--ad-titre)] text-[clamp(19px,2.2vw,28px)] leading-[1.4] text-white/90" style={{ opacity: vu ? 1 : 0, transition: 'opacity 1.6s 1.6s' }}>
+        <p ref={police} className="mt-5 max-w-[34ch] font-[family-name:var(--ad-texte)] text-[clamp(18px,2vw,26px)] font-semibold leading-[1.45] text-white/90" style={{ opacity: vu ? 1 : 0, transition: 'opacity 1.6s 1.6s' }}>
           {propre(phrase)}
         </p>
         {auteur && (
@@ -365,13 +353,12 @@ export function PortraitOndes({ portrait, surtitre, titre, texte, signature }: {
     const m = ((e.clientY - r.top) / r.height) * N
     el.querySelectorAll<HTMLElement>('[data-bande]').forEach((b, i) => {
       const f = Math.exp(-((i + 0.5 - m) ** 2) / 3)
-      b.style.translate = `${(i % 2 ? 1 : -1) * f * 9}px 0`
+      b.style.translate = `${(i % 2 ? 1 : -1) * f * 6}px 0`
     })
   }
   const calme = () => cadre.current?.querySelectorAll<HTMLElement>('[data-bande]').forEach((b) => (b.style.translate = '0 0'))
   return (
     <div ref={ref} className={PLEIN} style={{ background: IVOIRE }}>
-      <Grain />
       <div className={cn(CADRE, 'grid content-center items-center gap-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20')}>
         <div className="max-lg:order-2">
           {surtitre && (
@@ -379,21 +366,21 @@ export function PortraitOndes({ portrait, surtitre, titre, texte, signature }: {
               {surtitre}
             </Etiquette>
           )}
-          <Titre texte={titre} teinte={t} vu={vu} className="mt-4 text-[clamp(24px,3.6vw,54px)]" />
+          <Titre texte={titre} teinte={t} vu={vu} className="mt-4" />
           {texte && (
             <Texte vu={vu} delai={0.9} className="mt-4 line-clamp-4 whitespace-pre-line lg:mt-7 lg:line-clamp-[6]">
               {texte}
             </Texte>
           )}
           {signature && (
-            <p className="mt-4 font-[family-name:var(--ad-titre)] text-[20px] italic lg:mt-7 lg:text-[24px]" style={{ color: t.encre, opacity: vu ? 1 : 0, transition: 'opacity 1.4s 1.4s' }}>
+            <p className="mt-4 text-[17px] font-semibold lg:mt-7 lg:text-[19px]" style={{ color: t.encre, opacity: vu ? 1 : 0, transition: 'opacity 1.4s 1.4s' }}>
               {signature}
             </p>
           )}
         </div>
         <div className="relative mx-auto h-[min(66vh,660px)] w-full max-w-[480px] max-lg:h-[32vh] max-lg:max-w-[250px]" onPointerMove={bouge} onPointerLeave={calme}>
-          <span aria-hidden="true" className="absolute inset-0 rounded-[28px]" style={{ background: t.fond, transform: vu ? 'translate(18px, 18px)' : 'translate(0,0)', transition: `transform 1.4s ${DOUX} 0.9s` }} />
-          <div ref={cadre} role="img" aria-label={portrait?.alt ?? ''} className="absolute inset-0 overflow-hidden rounded-[28px] bg-[var(--ad-sable)]">
+          <span aria-hidden="true" className="absolute inset-0 rounded-[6px]" style={{ background: t.fond, transform: vu ? 'translate(18px, 18px)' : 'translate(0,0)', transition: `transform 1.4s ${DOUX} 0.9s` }} />
+          <div ref={cadre} role="img" aria-label={portrait?.alt ?? ''} className="absolute inset-0 overflow-hidden rounded-[6px] bg-[var(--ad-sable)]">
             {portrait &&
               Array.from({ length: N }, (_, i) => (
                 <span
@@ -419,7 +406,7 @@ export function PortraitOndes({ portrait, surtitre, titre, texte, signature }: {
    parcourt seule, le trace derrière elle et ouvre chaque étape.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Chemin({ etapes, surtitre, titre }: { etapes: { titre: string; texte: string }[]; surtitre: string; titre: string }) {
+export function Chemin({ etapes, surtitre, titre, photos }: { etapes: { titre: string; texte: string }[]; surtitre: string; titre: string; photos: Media[] }) {
   const zone = useRef<HTMLDivElement>(null)
   const trace = useRef<SVGPathElement>(null)
   const lumiere = useRef<HTMLSpanElement>(null)
@@ -432,7 +419,7 @@ export function Chemin({ etapes, surtitre, titre }: { etapes: { titre: string; t
   const vertical = taille.w < 768
   const pts = etapes.map((_, k) => {
     const f = n > 1 ? k / (n - 1) : 0.5
-    return vertical ? { x: taille.w * (k % 2 ? 0.72 : 0.28), y: taille.h * (0.1 + f * 0.62) } : { x: taille.w * (0.15 + f * 0.7), y: taille.h * (k % 2 ? 0.66 : 0.34) }
+    return vertical ? { x: taille.w * (k % 2 ? 0.72 : 0.28), y: taille.h * (0.1 + f * 0.62) } : { x: taille.w * (0.15 + f * 0.7), y: taille.h * (k % 2 ? 0.3 : 0.12) }
   })
   let d = pts[0] ? `M ${vertical ? pts[0].x : -40} ${vertical ? -40 : pts[0].y} L ${pts[0].x} ${pts[0].y}` : ''
   for (let k = 1; k < pts.length; k++) {
@@ -480,8 +467,8 @@ export function Chemin({ etapes, surtitre, titre }: { etapes: { titre: string; t
     placer(0)
     let image = 0
     let debut = 0
-    const MARCHE = 2200
-    const PAUSE = 1900
+    const MARCHE = 3000
+    const PAUSE = 2600
     const cycle = reperes.length * (MARCHE + PAUSE) + 2400
     const boucle = (temps: number) => {
       if (!debut) debut = temps
@@ -522,7 +509,6 @@ export function Chemin({ etapes, surtitre, titre }: { etapes: { titre: string; t
   }, [d, edition])
   return (
     <div className={PLEIN} style={{ background: IVOIRE }}>
-      <Grain />
       <div ref={vuRef} className={CADRE}>
         <div className="shrink-0">
           {surtitre && (
@@ -530,7 +516,7 @@ export function Chemin({ etapes, surtitre, titre }: { etapes: { titre: string; t
               {surtitre}
             </Etiquette>
           )}
-          <Titre texte={titre} teinte={t} vu={vu} className="mt-4 text-[clamp(26px,3.6vw,52px)]" />
+          <Titre texte={titre} teinte={t} vu={vu} className="mt-4" />
         </div>
         <div ref={zone} className="relative min-h-0 flex-1">
           <svg aria-hidden="true" className="absolute inset-0 h-full w-full overflow-visible" viewBox={`0 0 ${taille.w} ${taille.h}`}>
@@ -542,17 +528,22 @@ export function Chemin({ etapes, surtitre, titre }: { etapes: { titre: string; t
             const e = etapes[k]!
             const ok = k <= atteinte
             const actif = k === atteinte
-            const dessous = vertical ? false : k % 2 === 1
+            const dessous = !vertical
             return (
               <div key={k} className="absolute z-10" style={{ left: pt.x, top: pt.y }}>
-                <span className="absolute -left-[15px] -top-[15px] grid h-[30px] w-[30px] place-items-center rounded-full border text-[12px] font-semibold tabular-nums transition-colors duration-500" style={{ borderColor: t.encre, background: ok ? t.encre : IVOIRE, color: ok ? '#fff' : t.encre }}>
+                <span className="absolute -left-[15px] -top-[15px] grid h-[30px] w-[30px] place-items-center rounded-[4px] border text-[12px] font-semibold tabular-nums transition-colors duration-500" style={{ borderColor: t.encre, background: ok ? t.encre : IVOIRE, color: ok ? '#fff' : t.encre }}>
                   {k + 1}
                 </span>
                 <div
-                  className={cn('absolute w-[clamp(190px,21vw,290px)] rounded-[28px] border p-5 transition-[opacity,background-color,border-color] duration-700', vertical ? (k % 2 ? 'right-7 top-[-30px]' : 'left-7 top-[-30px]') : dessous ? 'left-0 top-9 -translate-x-1/2' : 'bottom-9 left-0 -translate-x-1/2')}
+                  className={cn('absolute w-[clamp(190px,20vw,270px)] overflow-hidden rounded-[6px] border p-5 transition-[opacity,background-color,border-color] duration-700', vertical ? (k % 2 ? 'right-7 top-[-30px]' : 'left-7 top-[-30px]') : dessous ? 'left-0 top-9 -translate-x-1/2' : 'bottom-9 left-0 -translate-x-1/2')}
                   style={{ background: actif ? t.fond : '#ffffffcc', borderColor: actif ? 'transparent' : 'var(--ad-sable)', opacity: ok ? 1 : 0.45 }}
                 >
-                  <p className="font-[family-name:var(--ad-titre)] text-[clamp(18px,1.7vw,23px)] leading-[1.2] text-[var(--ad-nuit)]">{e.titre}</p>
+                  {photos[k % Math.max(1, photos.length)] && (
+                    <div className="relative -mx-5 -mt-5 mb-4 aspect-[16/9] overflow-hidden rounded-t-[6px] max-lg:hidden">
+                      <Image src={photos[k % photos.length]!.url} alt="" fill sizes="290px" className="object-cover" />
+                    </div>
+                  )}
+                  <p className="text-[clamp(16px,1.4vw,19px)] font-semibold leading-[1.25] text-[var(--ad-nuit)]">{e.titre}</p>
                   {e.texte && <p className={cn('mt-1.5 text-[13.5px] leading-[1.55] text-[var(--ad-pierre)]', !actif && 'line-clamp-2')}>{e.texte}</p>}
                 </div>
               </div>
@@ -630,10 +621,10 @@ export function Bulles({ services, rdv, surtitre, titre }: { services: ServiceWi
             }
           })
           const v = Math.hypot(c.vx, c.vy)
-          if (v > 0.55) {
+          if (v > 0.35) {
             c.vx *= 0.96
             c.vy *= 0.96
-          } else if (v < 0.12) {
+          } else if (v < 0.08) {
             c.vx *= 1.04
             c.vy *= 1.04
           }
@@ -685,15 +676,14 @@ export function Bulles({ services, rdv, surtitre, titre }: { services: ServiceWi
   const s = ouverte !== null ? services[ouverte] : null
   return (
     <div className={PLEIN} style={{ background: IVOIRE }}>
-      <Grain />
       <div ref={vuRef} className={CADRE}>
-        <div className="shrink-0 text-center">
+        <div className="shrink-0">
           {surtitre && (
             <Etiquette teinte={t} vu={vu}>
               {surtitre}
             </Etiquette>
           )}
-          <Titre texte={titre} teinte={t} vu={vu} className="mt-4 text-[clamp(26px,3.6vw,52px)]" />
+          <Titre texte={titre} teinte={t} vu={vu} className="mt-4" />
         </div>
         <div ref={zone} className="relative mt-4 min-h-0 flex-1">
           {services.map((sv, i) => (
@@ -706,16 +696,19 @@ export function Bulles({ services, rdv, surtitre, titre }: { services: ServiceWi
               onPointerEnter={() => (survol.current = i)}
               onPointerLeave={() => (survol.current = null)}
               onClick={() => eclater(i)}
-              className={cn('group/bulle absolute left-0 top-0 grid place-items-center rounded-full p-[13%] text-center', eclatee === i && 'pointer-events-none')}
+              className={cn('group/bulle absolute left-0 top-0 rounded-full text-center', eclatee === i && 'pointer-events-none')}
               style={{ width: 180, height: 180 }}
             >
               <span
-                className={cn('absolute inset-0 rounded-full transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/bulle:scale-[1.04]', eclatee === i && 'motion-safe:animate-[ad-eclate_.4s_ease-out_forwards]')}
-                style={{ background: `radial-gradient(circle at 32% 28%, rgba(255,255,255,0.95) 0 3%, rgba(255,255,255,0) 12%), ${t.fond}99`, boxShadow: `inset 0 0 0 1px ${t.vif}, 0 22px 40px -30px rgba(46,66,79,0.35)` }}
-              />
+                className={cn('absolute inset-0 overflow-hidden rounded-full bg-[var(--ad-sable)] transition-transform duration-700 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/bulle:scale-[1.04]', eclatee === i && 'motion-safe:animate-[ad-eclate_.4s_ease-out_forwards]')}
+                style={{ boxShadow: `0 0 0 1px ${t.vif}, 0 22px 40px -30px rgba(46,66,79,0.45)` }}
+              >
+                {sv.media && <Image src={sv.media.url} alt="" fill sizes="260px" className="object-cover" />}
+                <span className="absolute inset-0" style={{ background: `linear-gradient(to top, ${IVOIRE} 8%, ${IVOIRE}cc 32%, transparent 62%)` }} />
+              </span>
               {eclatee === i && <span aria-hidden="true" className="absolute inset-0 rounded-full border opacity-0 motion-safe:animate-[ad-ride_.8s_ease-out_forwards]" style={{ borderColor: t.vif }} />}
-              <span className={cn('relative transition-opacity duration-200', eclatee === i && 'opacity-0')}>
-                <span className="block font-[family-name:var(--ad-titre)] text-[clamp(15px,1.5vw,21px)] leading-[1.15] text-[var(--ad-nuit)]">{sv.title}</span>
+              <span className={cn('absolute inset-x-[12%] bottom-[13%] transition-opacity duration-200', eclatee === i && 'opacity-0')}>
+                <span className="block text-[clamp(14px,1.3vw,18px)] font-semibold leading-[1.15] text-[var(--ad-nuit)]">{sv.title}</span>
                 {sv.duration && <span className="mt-1.5 block text-[11px] text-[var(--ad-gris)]">{sv.duration}</span>}
               </span>
             </button>
@@ -724,7 +717,7 @@ export function Bulles({ services, rdv, surtitre, titre }: { services: ServiceWi
       </div>
       {s && ouverte !== null && (
         <div className="absolute inset-0 z-30 grid place-items-center bg-[rgba(46,66,79,0.16)] p-5 backdrop-blur-[3px] motion-safe:animate-[ad-fondu_.3s_ease-out_backwards]" onClick={fermer}>
-          <div onClick={(e) => e.stopPropagation()} className="relative grid w-[min(760px,100%)] overflow-hidden rounded-[28px] bg-white shadow-[0_40px_80px_-40px_rgba(46,66,79,0.6)] motion-safe:animate-[ad-remonte_.6s_cubic-bezier(0.22,1,0.36,1)_backwards] sm:grid-cols-[0.9fr_1.1fr]">
+          <div onClick={(e) => e.stopPropagation()} className="relative grid w-[min(760px,100%)] overflow-hidden rounded-[6px] bg-white shadow-[0_40px_80px_-40px_rgba(46,66,79,0.6)] motion-safe:animate-[ad-remonte_.6s_cubic-bezier(0.22,1,0.36,1)_backwards] sm:grid-cols-[0.9fr_1.1fr]">
             {s.media && (
               <div className="relative aspect-[16/9] sm:aspect-auto">
                 <Image src={s.media.url} alt="" fill sizes="340px" className="object-cover" />
@@ -732,13 +725,13 @@ export function Bulles({ services, rdv, surtitre, titre }: { services: ServiceWi
             )}
             <div className="p-7 sm:p-9">
               <Etiquette teinte={t}>{s.duration ?? 'Accompagnement'}</Etiquette>
-              <p className="mt-3 font-[family-name:var(--ad-titre)] text-[30px] leading-[1.1] text-[var(--ad-nuit)]">{s.title}</p>
+              <p className="mt-3 text-[28px] font-semibold leading-[1.15] tracking-[-0.02em] text-[var(--ad-nuit)]">{s.title}</p>
               <p className="mt-3 text-[15px] leading-[1.7] text-[var(--ad-pierre)]">{propre(s.excerpt)}</p>
               <Bouton href={rdv} teinte={t} className="mt-6">
                 Prendre rendez-vous
               </Bouton>
             </div>
-            <button type="button" onClick={fermer} aria-label="Fermer" className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-full bg-white/90 text-[var(--ad-nuit)] shadow">
+            <button type="button" onClick={fermer} aria-label="Fermer" className="absolute right-4 top-4 grid h-10 w-10 place-items-center rounded-[4px] bg-white/90 text-[var(--ad-nuit)] shadow">
               <X className="h-5 w-5" />
             </button>
           </div>
@@ -774,7 +767,7 @@ export function Volets({ photos, surtitre, titre }: { photos: Media[]; surtitre:
   })
   useEffect(() => {
     if (!vu || n < 2 || reduit()) return
-    const minuteur = window.setInterval(() => rappel.current(1), 6500)
+    const minuteur = window.setInterval(() => rappel.current(1), 8000)
     return () => window.clearInterval(minuteur)
   }, [vu, n])
   const p = photos[affichee]
@@ -787,7 +780,6 @@ export function Volets({ photos, surtitre, titre }: { photos: Media[]; surtitre:
       )}
       <div aria-hidden="true" className="absolute inset-0 bg-[linear-gradient(to_top,rgba(46,66,79,0.7),rgba(46,66,79,0.05)_55%,rgba(46,66,79,0.25))]" />
       {passage > 0 && <span key={passage} aria-hidden="true" className="absolute inset-y-0 left-0 z-10 w-full motion-safe:animate-[ad-volet_1.3s_cubic-bezier(0.77,0,0.18,1)_forwards]" style={{ background: t.fond, transform: 'translateX(-101%)' }} />}
-      <Grain nuit />
       <button type="button" onClick={() => aller(-1)} aria-label="Photo précédente" className="absolute inset-y-0 left-0 z-20 w-1/2 cursor-w-resize" />
       <button type="button" onClick={() => aller(1)} aria-label="Photo suivante" className="absolute inset-y-0 right-0 z-20 w-1/2 cursor-e-resize" />
       <div className={cn(CADRE, 'pointer-events-none z-20 justify-end')}>
@@ -806,13 +798,13 @@ export function Volets({ photos, surtitre, titre }: { photos: Media[]; surtitre:
               {String(i + 1).padStart(2, '0')} / {String(n).padStart(2, '0')}
             </span>
             <span className="relative h-[2px] w-[clamp(70px,12vw,180px)] overflow-hidden rounded-full bg-white/25">
-              {vu && <span key={`${i}-${passage}`} className="absolute inset-y-0 left-0 w-full origin-left bg-white motion-safe:animate-[ad-remplir_6.5s_linear_forwards]" />}
+              {vu && <span key={`${i}-${passage}`} className="absolute inset-y-0 left-0 w-full origin-left bg-white motion-safe:animate-[ad-remplir_8s_linear_forwards]" />}
             </span>
             <span className="pointer-events-auto flex gap-2">
-              <button type="button" onClick={() => aller(-1)} aria-label="Précédente" className="grid h-10 w-10 place-items-center rounded-full border border-white/40 text-white transition-colors hover:bg-white hover:text-[var(--ad-nuit)]">
+              <button type="button" onClick={() => aller(-1)} aria-label="Précédente" className="grid h-10 w-10 place-items-center rounded-[4px] border border-white/40 text-white transition-colors hover:bg-white hover:text-[var(--ad-nuit)]">
                 <ArrowLeft className="h-4 w-4" />
               </button>
-              <button type="button" onClick={() => aller(1)} aria-label="Suivante" className="grid h-10 w-10 place-items-center rounded-full bg-white text-[var(--ad-nuit)]">
+              <button type="button" onClick={() => aller(1)} aria-label="Suivante" className="grid h-10 w-10 place-items-center rounded-[4px] bg-white text-[var(--ad-nuit)]">
                 <ArrowRight className="h-4 w-4" />
               </button>
             </span>
@@ -840,14 +832,13 @@ export function Tambour({ faq, surtitre, titre }: { faq: FaqItem[]; surtitre: st
   const tirer = useRef<{ y: number; k: number } | null>(null)
   useEffect(() => {
     if (!vu || main || n < 2 || reduit()) return
-    const minuteur = window.setInterval(() => setK((x) => x + 1), 5600)
+    const minuteur = window.setInterval(() => setK((x) => x + 1), 7000)
     return () => window.clearInterval(minuteur)
   }, [vu, main, n])
   const ici = ((k % n) + n) % n
   const q = faq[ici]
   return (
     <div ref={ref} className={PLEIN} style={{ background: IVOIRE }}>
-      <Grain />
       <div className={cn(CADRE, 'grid content-center gap-4 lg:grid-cols-2 lg:items-center lg:gap-16')}>
         <div>
           {surtitre && (
@@ -855,7 +846,7 @@ export function Tambour({ faq, surtitre, titre }: { faq: FaqItem[]; surtitre: st
               {surtitre}
             </Etiquette>
           )}
-          <Titre texte={titre} teinte={t} vu={vu} className="mt-4 text-[clamp(26px,3.6vw,52px)]" />
+          <Titre texte={titre} teinte={t} vu={vu} className="mt-4" />
           <div
             className="relative mt-2 h-[min(44vh,400px)] touch-none select-none [perspective:620px] max-lg:h-[26vh]"
             onMouseEnter={() => setMain(true)}
@@ -887,25 +878,25 @@ export function Tambour({ faq, surtitre, titre }: { faq: FaqItem[]; surtitre: st
                     <span className="w-7 shrink-0 text-[12px] tabular-nums" style={{ color: t.encre }}>
                       {String(i + 1).padStart(2, '0')}
                     </span>
-                    <span className={cn('line-clamp-2 font-[family-name:var(--ad-titre)] text-[clamp(16px,1.7vw,22px)] leading-[1.25]', ecart === 0 ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-gris)]')}>{f.question}</span>
+                    <span className={cn('line-clamp-2 text-[clamp(15px,1.5vw,19px)] font-semibold leading-[1.3]', ecart === 0 ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-gris)]')}>{f.question}</span>
                   </button>
                 )
               })}
             </div>
             <div className="absolute bottom-0 right-0 z-30 flex gap-2">
-              <button type="button" onClick={() => setK(k - 1)} aria-label="Question précédente" className="grid h-10 w-10 place-items-center rounded-full border border-[var(--ad-sable-fonce)] bg-white text-[var(--ad-nuit)]">
+              <button type="button" onClick={() => setK(k - 1)} aria-label="Question précédente" className="grid h-10 w-10 place-items-center rounded-[4px] border border-[var(--ad-sable-fonce)] bg-white text-[var(--ad-nuit)]">
                 <ArrowUp className="h-4 w-4" />
               </button>
-              <button type="button" onClick={() => setK(k + 1)} aria-label="Question suivante" className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ad-nuit)] text-white">
+              <button type="button" onClick={() => setK(k + 1)} aria-label="Question suivante" className="grid h-10 w-10 place-items-center rounded-[4px] bg-[var(--ad-nuit)] text-white">
                 <ArrowDown className="h-4 w-4" />
               </button>
             </div>
           </div>
         </div>
-        <div className="flex flex-col justify-end rounded-[28px] p-[clamp(20px,3.6vw,48px)] lg:min-h-[min(56vh,480px)]" style={{ background: t.fond }} aria-live="polite">
+        <div className="flex flex-col justify-end rounded-[6px] p-[clamp(20px,3.6vw,48px)] lg:min-h-[min(56vh,480px)]" style={{ background: t.fond }} aria-live="polite">
           {q && (
             <div key={q.id} className="motion-safe:animate-[ad-remonte_.8s_cubic-bezier(0.22,1,0.36,1)_backwards]">
-              <p className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2.4vw,32px)] leading-[1.2] text-[var(--ad-nuit)]">{q.question}</p>
+              <p className="text-[clamp(19px,2.1vw,28px)] font-semibold leading-[1.25] tracking-[-0.01em] text-[var(--ad-nuit)]">{q.question}</p>
               <p className="mt-3 line-clamp-4 whitespace-pre-line text-[14.5px] leading-[1.7] text-[var(--ad-pierre)] lg:mt-5 lg:line-clamp-[8] lg:text-[16px]">{propre(q.answer)}</p>
             </div>
           )}
@@ -930,7 +921,6 @@ export function Porte({ photo, adresse, telephone, email, rdv, surtitre, titre }
   const t = ABRICOT
   return (
     <div ref={ref} className={PLEIN} style={{ background: IVOIRE }}>
-      <Grain />
       <div className={cn(CADRE, 'grid content-center items-center gap-6 lg:grid-cols-[1fr_1fr] lg:gap-16')}>
         <div className="max-lg:text-center">
           {surtitre && (
@@ -950,10 +940,10 @@ export function Porte({ photo, adresse, telephone, email, rdv, surtitre, titre }
         </div>
         <div className="relative mx-auto h-[min(62vh,600px)] w-[min(420px,78vw)] max-lg:h-[44vh] max-lg:w-[min(280px,70vw)]">
           <span aria-hidden="true" className="absolute -bottom-[12%] left-1/2 h-[14%] w-[160%] -translate-x-1/2 [clip-path:polygon(30%_0,70%_0,100%_100%,0_100%)]" style={{ background: `linear-gradient(to bottom, ${t.vif}, transparent)`, opacity: ouvert ? 0.35 : entrouverte ? 0.12 : 0, transition: 'opacity 1.2s' }} />
-          <div className="absolute inset-0 overflow-hidden rounded-t-full bg-[var(--ad-sable)] shadow-[0_0_0_8px_#fff,0_40px_80px_-40px_rgba(46,66,79,0.45)]">
+          <div className="absolute inset-0 overflow-hidden rounded-[6px] bg-[var(--ad-sable)] shadow-[0_0_0_8px_#fff,0_40px_80px_-40px_rgba(46,66,79,0.45)]">
             {photo && <Image src={photo.url} alt={photo.alt} fill sizes="420px" className="object-cover" style={{ transform: ouvert ? 'scale(1)' : 'scale(1.12)', transition: `transform 1.8s ${DOUX}` }} />}
             <div className="absolute inset-0" style={{ background: `linear-gradient(to top, ${t.fond} 0%, ${t.fond}80 40%, transparent 70%)` }} />
-            <ul className="absolute inset-x-4 bottom-4 flex flex-col gap-2 rounded-[22px] bg-white/95 p-4 text-[13.5px] text-[var(--ad-nuit)]" style={{ opacity: ouvert ? 1 : 0, transform: ouvert ? 'none' : 'translateY(16px)', transition: `opacity .8s .7s, transform 1s ${DOUX} .7s` }}>
+            <ul className="absolute inset-x-4 bottom-4 flex flex-col gap-2 rounded-[4px] bg-white/95 p-4 text-[13.5px] text-[var(--ad-nuit)]" style={{ opacity: ouvert ? 1 : 0, transform: ouvert ? 'none' : 'translateY(16px)', transition: `opacity .8s .7s, transform 1s ${DOUX} .7s` }}>
               {adresse && (
                 <li className="flex gap-2">
                   <MapPin className="mt-0.5 h-4 w-4 shrink-0" style={{ color: t.encre }} /> {adresse}
@@ -987,11 +977,11 @@ export function Porte({ photo, adresse, telephone, email, rdv, surtitre, titre }
               onClick={() => setOuverte(true)}
               onMouseEnter={() => setEntrouverte(true)}
               onMouseLeave={() => setEntrouverte(false)}
-              className="absolute inset-0 origin-left rounded-t-full [transform-style:preserve-3d]"
+              className="absolute inset-0 origin-left rounded-[6px] [transform-style:preserve-3d]"
               style={{ transform: `rotateY(${angle}deg)`, transition: `transform ${ouvert ? 1.6 : 0.9}s cubic-bezier(0.65,0,0.35,1)`, background: t.fond, boxShadow: `0 0 0 8px #fff${entrouverte && !ouvert ? `, 14px 0 40px -8px ${t.vif}` : ''}` }}
             >
-              <span aria-hidden="true" className="absolute inset-x-[15%] top-[10%] h-[36%] rounded-t-full border" style={{ borderColor: `${t.encre}30` }} />
-              <span aria-hidden="true" className="absolute inset-x-[15%] bottom-[8%] h-[34%] rounded-[16px] border" style={{ borderColor: `${t.encre}30` }} />
+              <span aria-hidden="true" className="absolute inset-x-[15%] top-[10%] h-[36%] rounded-[3px] border" style={{ borderColor: `${t.encre}30` }} />
+              <span aria-hidden="true" className="absolute inset-x-[15%] bottom-[8%] h-[34%] rounded-[3px] border" style={{ borderColor: `${t.encre}30` }} />
               <span aria-hidden="true" className="absolute right-[9%] top-[54%] h-4 w-4 rounded-full [backface-visibility:hidden]" style={{ background: t.encre }} />
             </button>
           </div>
@@ -1086,14 +1076,13 @@ export function FilDeLumiere({ titre, texte, bouton, rdv, surtitre }: { titre: s
   return (
     <div ref={zone} className={PLEIN} style={{ background: NUIT }}>
       <canvas ref={toile} aria-hidden="true" className="absolute inset-0 h-full w-full" />
-      <Grain nuit />
       <div ref={vuRef} className={cn(CADRE, 'items-center justify-center text-center')}>
         {surtitre && (
           <Etiquette teinte={t} nuit vu={vu}>
             {surtitre}
           </Etiquette>
         )}
-        <Titre texte={titre} teinte={t} vu={vu} nuit className="mt-5 max-w-[16ch] text-[clamp(38px,6.4vw,96px)] leading-[1.02]" />
+        <Titre texte={titre} teinte={t} vu={vu} nuit className="mt-5 max-w-[18ch] text-[clamp(34px,5vw,72px)] leading-[1.06]" />
         {texte && (
           <Texte vu={vu} nuit className="mt-6 text-center">
             {texte}
@@ -1107,7 +1096,7 @@ export function FilDeLumiere({ titre, texte, bouton, rdv, surtitre }: { titre: s
       </div>
       {cercle && (
         <div className="absolute inset-0 z-30 grid place-items-center motion-safe:animate-[ad-cercle_1s_cubic-bezier(0.65,0,0.35,1)_forwards]" style={{ background: t.fond, ['--cx' as string]: `${cercle.x}px`, ['--cy' as string]: `${cercle.y}px` }}>
-          <p className="font-[family-name:var(--ad-titre)] text-[clamp(40px,7vw,96px)] italic motion-safe:animate-[ad-remonte_.8s_cubic-bezier(0.22,1,0.36,1)_.35s_backwards]" style={{ color: t.encre }}>
+          <p className="text-[clamp(36px,6vw,80px)] font-semibold tracking-[-0.02em] motion-safe:animate-[ad-remonte_.8s_cubic-bezier(0.22,1,0.36,1)_.35s_backwards]" style={{ color: t.encre }}>
             À très vite.
           </p>
         </div>
