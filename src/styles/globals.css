@@ -765,22 +765,25 @@
    ══════════════════════════════════════════════════════════════════════ */
 :root:has(.ad),
 :root:has(.ad) body {
-  background: #fbf8f2;
+  background: #fbf6ee;
 }
 .ad {
   /* Les couleurs du site CLASSIQUE, réchauffées : blancs ivoire et
      sable, encre nuit, bleu profond d'Anasawi — et un turquoise clair pour
      les petits accents (pastilles, traits, pouls). */
-  --ad-ivoire: #fbf8f2;
-  --ad-sable: #f4eee3;
-  --ad-sable-fonce: #e8dfcf;
+  /* Réchauffées encore : un ivoire crème, un sable couleur lin, des gris
+     qui tirent vers le brun — l'ambiance d'un salon au soleil du matin. */
+  --ad-ivoire: #fbf6ee;
+  --ad-sable: #f5ecdf;
+  --ad-sable-fonce: #e9dac5;
+  --ad-miel: #f0c8a0;
   --ad-nuit: #2e424f;
   --ad-bleu: #46728a;
   --ad-bleu-clair: #7ba3b6;
   --ad-brume: #eaf1f4;
   --ad-or: #4fa9a6;
-  --ad-pierre: #4f524d;
-  --ad-gris: #77746c;
+  --ad-pierre: #574d45;
+  --ad-gris: #857869;
   /* Typographie DOUCE : Fraunces en version légère et arrondie (axe
      « SOFT » au maximum) pour les titres, Nunito — une sans-serif aux
      terminaisons rondes — pour le texte. */
@@ -1056,4 +1059,38 @@
   to {
     background-position: 100% 60%;
   }
+}
+
+/* ── La chaleur, sur tout le site moderne ─────────────────────────────── */
+/* Une lumière douce posée sur toute la page : du miel en haut à droite,
+   un rose sable en bas à gauche. Fixe : elle reste là pendant la lecture. */
+.ad {
+  position: relative;
+  isolation: isolate;
+}
+.ad::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(55% 45% at 88% 8%, rgba(240, 200, 160, 0.26), transparent 70%),
+    radial-gradient(50% 45% at 4% 96%, rgba(236, 196, 178, 0.2), transparent 70%);
+}
+/* Les photos, au soleil de fin de journée : à peine dorées. */
+.ad img:not([src*='.svg']) {
+  filter: sepia(0.07) saturate(1.05);
+}
+/* Le texte qu'on sélectionne : couleur miel. */
+.ad ::selection {
+  background: #f3dcc4;
+  color: var(--ad-nuit);
+}
+/* Dans la nuit du pied de page, le mot clé couleur miel (la règle `.ad em`
+   passerait sinon devant une classe utilitaire). */
+.ad .ad-em-miel em {
+  background: none;
+  -webkit-text-fill-color: var(--ad-miel);
+  color: var(--ad-miel);
 }

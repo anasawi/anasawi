@@ -402,11 +402,11 @@ export function Horizon({
     /* Derrière la courbe du pied de page : le fond du site, le même partout. */
     <div className="bg-[var(--ad-ivoire)]">
     <footer className="relative isolate overflow-hidden rounded-t-[40px] bg-[var(--ad-nuit)] px-[5vw] pb-10 pt-28 text-white md:rounded-t-[56px] md:pt-40">
-      <div aria-hidden="true" className="absolute -top-40 left-1/2 -z-10 h-80 w-[60vw] -translate-x-1/2 rounded-full bg-[var(--ad-bleu)]/30 blur-3xl motion-safe:animate-[ad-aurore_16s_ease-in-out_infinite]" />
+      <div aria-hidden="true" className="absolute -top-40 left-1/2 -z-10 h-80 w-[60vw] -translate-x-1/2 rounded-full bg-[var(--ad-miel)]/35 blur-3xl motion-safe:animate-[ad-aurore_16s_ease-in-out_infinite]" />
       {/* Une lumière lagon qui suit la souris dans la nuit. */}
       <Lueur couleur="rgba(79,169,166,0.16)" taille={620} />
       <div className="relative mx-auto max-w-[1200px]">
-        <p className="text-center font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[clamp(48px,8.5vw,136px)] leading-[0.98] [&_em]:[background:none] [&_em]:[-webkit-text-fill-color:var(--ad-or)]">
+        <p className="text-center font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[clamp(48px,8.5vw,136px)] leading-[0.98] ad-em-miel">
           <Lignes lignes={enLignes(t.titre)} />
         </p>
         <Revele delai={0.3} className="mt-12 flex justify-center">
