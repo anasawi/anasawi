@@ -42,6 +42,9 @@ export default async function ImaginationPage() {
             mot doux, regarder pousser un jardin, voir le ciel du moment, faire des ricochets, ouvrir une lettre, préparer un rendez-vous, feuilleter
             un nuancier. Toutes s’ajoutent depuis l’éditeur et se modifient entièrement.
           </p>
+          <a href="/moderne/signature" className="mt-6 inline-flex items-center gap-2 rounded-full bg-[var(--ad-nuit)] px-5 py-3 text-[14px] font-semibold text-white">
+            Découvrir la série signature, en plein écran →
+          </a>
           <ol className="mt-10 grid gap-x-8 gap-y-2 text-[14px] text-[var(--ad-pierre)] sm:grid-cols-2">
             {sections.map((s, i) => (
               <li key={s.id}>
