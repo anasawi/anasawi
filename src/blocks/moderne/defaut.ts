@@ -31,22 +31,3 @@ export function sectionsEnMemoire(types: readonly string[], prefixe = 'moderne')
 export function sectionsModernesParDefaut(): Section[] {
   return sectionsEnMemoire(PAGE_MODERNE_PAR_DEFAUT)
 }
-
-/** Les modèles supplémentaires, dans l'ordre de la vitrine /moderne/modeles. */
-export const MODELES_MODERNES = [
-  'mOuverturePleine',
-  'mOuverturePartagee',
-  'mDefilant',
-  'mPortraitChiffres',
-  'mParcours',
-  'mPile',
-  'mEngagements',
-  'mServicesListe',
-  'mServicesGrille',
-  'mTexteImage',
-  'mMosaique',
-  'mVideo',
-  'mQuestionsAccordeon',
-  'mCarte',
-  'mAppel',
-] as const
