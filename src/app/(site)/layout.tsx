@@ -7,6 +7,7 @@ import { PRELOADER_BOOT_SCRIPT } from '@/components/site/preloader-boot'
 import { SmoothScroll } from '@/components/site/SmoothScroll'
 import { MotionProvider } from '@/components/motion/MotionProvider'
 import { identityCss } from '@/lib/identity'
+import { lirePied } from '@/lib/pied'
 import { getMediaByIds, getNavigationItems, getSettings } from '@/server/queries'
 
 /**
@@ -36,6 +37,17 @@ export default async function SiteLayout({
   const [logo] = settings.logoMediaId
     ? await getMediaByIds([settings.logoMediaId])
     : []
+
+  /* Le pied de page des Réglages : organismes (et leurs logos), déontologie, collègues. */
+  const pied = lirePied(settings.pied)
+  const idsLogos = pied.organismes.map((o) => o.logoMediaId).filter((id): id is string => Boolean(id))
+  const mediasLogos = idsLogos.length ? await getMediaByIds(idsLogos) : []
+  const logosOrganismes = Object.fromEntries(
+    pied.organismes.flatMap((o) => {
+      const m = mediasLogos.find((x) => x.id === o.logoMediaId)
+      return m ? [[o.id, m] as const] : []
+    }),
+  )
 
   /* Identité globale : les surcharges de variables CSS choisies dans
      l'admin — vide si le site suit la charte telle quelle. */
@@ -83,7 +95,7 @@ export default async function SiteLayout({
         <main id="contenu" tabIndex={-1} className="outline-none">
           {children}
         </main>
-        <Footer settings={settings} items={navItems} logoUrl={logo?.url ?? null} />
+        <Footer settings={settings} items={navItems} logoUrl={logo?.url ?? null} pied={pied} logos={logosOrganismes} />
       </SmoothScroll>
       <AdminBar />
     </MotionProvider>

@@ -20,6 +20,7 @@ import { ActionLink } from '@/components/site/ActionLink'
 import { Reveal } from '@/components/site/anim'
 import { cn } from '@/lib/utils'
 import { optionalSafeHrefSchema } from '@/lib/links'
+import { ContenuTiers, serviceDeVideo } from '@/components/site/consentement'
 
 /**
  * Bibliothèque étendue de blocs de contenu.
@@ -375,14 +376,16 @@ function Video({ data, ctx }: BlockProps<z.output<typeof videoSchema>>) {
   }
 
   return (
-    <iframe
-      src={src}
-      title={data.title || 'Vidéo'}
-      loading="lazy"
-      allow="accelerometer; encrypted-media; picture-in-picture"
-      allowFullScreen
-      className="h-full w-full rounded-[3px] border-0"
-    />
+    <ContenuTiers service={serviceDeVideo(src)} className="rounded-[3px]">
+      <iframe
+        src={src}
+        title={data.title || 'Vidéo'}
+        loading="lazy"
+        allow="accelerometer; encrypted-media; picture-in-picture"
+        allowFullScreen
+        className="h-full w-full rounded-[3px] border-0"
+      />
+    </ContenuTiers>
   )
 }
 
@@ -428,12 +431,14 @@ function Acces({ data, ctx }: BlockProps<z.output<typeof accesSchema>>) {
   }
 
   return (
-    <iframe
-      src={`https://www.google.com/maps?q=${encodeURIComponent(query)}&z=${data.zoom}&output=embed`}
-      title="Plan d’accès au cabinet"
-      loading="lazy"
-      className="h-full w-full rounded-[3px] border-0 grayscale-[0.3]"
-    />
+    <ContenuTiers service="google-maps" className="rounded-[3px]">
+      <iframe
+        src={`https://www.google.com/maps?q=${encodeURIComponent(query)}&z=${data.zoom}&output=embed`}
+        title="Plan d’accès au cabinet"
+        loading="lazy"
+        className="h-full w-full rounded-[3px] border-0 grayscale-[0.3]"
+      />
+    </ContenuTiers>
   )
 }
 

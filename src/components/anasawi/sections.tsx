@@ -7,6 +7,7 @@ import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes
 import type { Contenu } from '@/blocks/moderne/contenu'
 import { photosPromenade, TEXTES } from '@/blocks/moderne/textes'
 import { LogoMark } from '@/components/site/Logo'
+import { LiensLegaux, PiedExtras } from '@/components/site/PiedExtras'
 import { cn, toE164 } from '@/lib/utils'
 
 /**
@@ -420,7 +421,9 @@ export function Horizon({
             </a>
           )}
         </Revele>
-        <div className="mt-24 flex flex-wrap items-end justify-between gap-8 border-t border-white/15 pt-8 text-[14px] text-white/60">
+        {/* Organismes, déontologie, collègues : tout se règle dans Réglages › Pied de page. */}
+        <PiedExtras pied={c.pied} logos={c.logosOrganismes} ton="sombre" className="mt-24" />
+        <div className="mt-16 flex flex-wrap items-end justify-between gap-8 border-t border-white/15 pt-8 text-[14px] text-white/60">
           <span className="flex items-center gap-3 text-[26px] font-bold tracking-[-0.03em] text-white">
             <span className="grid h-12 w-12 place-items-center rounded-[16px] bg-white">
               <LogoMark src={c.logo} className="h-9 w-9" />
@@ -443,6 +446,7 @@ export function Horizon({
             </Link>
           </span>
         </div>
+        <LiensLegaux base="/moderne" ton="sombre" className="mt-5 justify-center text-[13px] text-white/45 md:justify-end" />
       </div>
     </footer>
     </div>

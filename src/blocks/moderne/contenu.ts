@@ -1,4 +1,5 @@
 import { isVideoMimeType } from '@/lib/media-kind'
+import { lirePied, type Pied } from '@/lib/pied'
 import type {
   FaqItem,
   Media,
@@ -53,6 +54,10 @@ export type Contenu = {
   logo: string | null
   /** Le menu du site moderne (sections qui y figurent), posé par la page. */
   menu?: { href: string; label: string }[]
+  /** Le pied de page des Réglages (organismes, déontologie, collègues, pages légales). */
+  pied: Pied
+  /** Les logos des organismes, par identifiant d'organisme. */
+  logosOrganismes: Record<string, Media>
 }
 
 
@@ -129,7 +134,16 @@ export function construireContenu({ settings, services, faq, media, dossiers, se
     return []
   }
 
-  const photos = media.filter((m) => !isVideoMimeType(m.mimeType))
+  /* Les logos (dossier « Logos », logo du site) ne sont pas des photos du cabinet. */
+  const dossierLogos = dossiers.find((d) => /^logos?$/i.test(d.name.trim()))
+  const photos = media.filter((m) => !isVideoMimeType(m.mimeType) && m.id !== settings.logoMediaId && (!dossierLogos || m.folderId !== dossierLogos.id))
+  const pied = lirePied(settings.pied)
+  const logosOrganismes = Object.fromEntries(
+    pied.organismes.flatMap((o) => {
+      const m = o.logoMediaId ? media.find((x) => x.id === o.logoMediaId) : undefined
+      return m ? [[o.id, m] as const] : []
+    }),
+  )
   const dossierPortraits = dossiers.find((d) => /portrait/i.test(d.name))
   const portrait =
     photos.find((m) => dossierPortraits && m.folderId === dossierPortraits.id && !/substitution/i.test(m.alt)) ??
@@ -200,5 +214,7 @@ export function construireContenu({ settings, services, faq, media, dossiers, se
     portrait,
     ambiance,
     logo: media.find((m) => m.id === settings.logoMediaId)?.url ?? null,
+    pied,
+    logosOrganismes,
   }
 }

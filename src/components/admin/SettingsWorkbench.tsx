@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeftRight, Check, IdCard, Menu, Palette, Search } from 'lucide-react'
+import { ArrowLeftRight, Check, IdCard, Menu, PanelBottom, Palette, Search } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -24,6 +24,7 @@ import {
 } from './SeoEditor'
 import { ApparenceTab, type Spacing } from './settings/ApparenceTab'
 import { CoordonneesTab, type CoordonneesForm } from './settings/CoordonneesTab'
+import { PiedTab } from './settings/PiedTab'
 import { useSaveState } from './settings/hooks/useSaveState'
 import { Button } from '@/components/ui/button'
 import type { Identity } from '@/lib/identity'
@@ -35,6 +36,8 @@ import {
 } from '@/lib/palette'
 import { cn } from '@/lib/utils'
 import { updateSettings } from '@/server/actions/content'
+import { updatePied } from '@/server/actions/pied'
+import { lirePied, type Pied } from '@/lib/pied'
 import { updateIdentity } from '@/server/actions/identity'
 import { updateNavigation } from '@/server/actions/navigation'
 import { updateSeo } from '@/server/actions/seo'
@@ -90,6 +93,14 @@ const ONGLETS = [
     tone: PASTELS[1]!,
   },
   {
+    id: 'pied',
+    label: 'Pied de page',
+    resume: 'Organismes, collègues, légal',
+    description: 'Les logos des organismes, vos engagements, les sites de collègues, les mentions légales.',
+    icone: PanelBottom,
+    tone: PASTELS[3]!,
+  },
+  {
     id: 'referencement',
     label: 'Référencement',
     resume: 'Ce que Google affiche',
@@ -119,6 +130,9 @@ function ongletDepuisAdresse(): Onglet {
     formes: 'apparence',
     seo: 'referencement',
     navigation: 'menu',
+    organismes: 'pied',
+    mentions: 'pied',
+    footer: 'pied',
   }
   const cible = correspondances[hash] ?? hash
   return ONGLETS.some((o) => o.id === cible) ? (cible as Onglet) : 'coordonnees'
@@ -127,9 +141,9 @@ function ongletDepuisAdresse(): Onglet {
 const DEFAULT_RADIUS = 2
 
 /** Les trois jeux de données, chacun avec son propre enregistrement. */
-type Groupe = 'formulaire' | 'menu' | 'referencement'
+type Groupe = 'formulaire' | 'menu' | 'referencement' | 'pied'
 const groupeDe = (o: Onglet): Groupe =>
-  o === 'menu' ? 'menu' : o === 'referencement' ? 'referencement' : 'formulaire'
+  o === 'menu' ? 'menu' : o === 'referencement' ? 'referencement' : o === 'pied' ? 'pied' : 'formulaire'
 
 export function SettingsWorkbench({
   settings,
@@ -152,6 +166,7 @@ export function SettingsWorkbench({
     coordonnees: null,
     apparence: null,
     menu: null,
+    pied: null,
     referencement: null,
     synchronisation: null,
   })
@@ -342,12 +357,31 @@ export function SettingsWorkbench({
       return null
     })
 
+  /* ── Pied de page ───────────────────────────────────────────────── */
+
+  const [dirtyPied, setDirtyPied] = useState(false)
+  const [pied, setPied] = useState<Pied>(() => lirePied(settings.pied))
+  const piedSauvegarde = useSaveState()
+  const enregistrerPied = () =>
+    piedSauvegarde.lancer(async () => {
+      const result = await updatePied(pied)
+      if (!result.ok) {
+        toast.error(result.error)
+        return result.error
+      }
+      setDirtyPied(false)
+      toast.success('Pied de page enregistré — le site est à jour.')
+      router.refresh()
+      return null
+    })
+
   /* ── La barre, selon l'onglet ───────────────────────────────────── */
 
   const dirtyDe: Record<Groupe, boolean> = {
     formulaire: dirtyForm,
     menu: dirtyMenu,
     referencement: dirtySeo,
+    pied: dirtyPied,
   }
   const groupe = groupeDe(onglet)
   const barre =
@@ -360,7 +394,9 @@ export function SettingsWorkbench({
             ? null
             : 'Chaque lien doit avoir un texte et une destination.',
         }
-      : groupe === 'referencement'
+      : groupe === 'pied'
+        ? { etat: piedSauvegarde, dirty: dirtyPied, onSave: enregistrerPied, bloque: null }
+        : groupe === 'referencement'
         ? {
             etat: seoSauvegarde,
             dirty: dirtySeo,
@@ -376,7 +412,7 @@ export function SettingsWorkbench({
 
   /* Quitter avec des modifications non enregistrées, dans n'importe quel
      onglet : le navigateur demande confirmation. */
-  const dirtyQuelquePart = dirtyForm || dirtyMenu || dirtySeo
+  const dirtyQuelquePart = dirtyForm || dirtyMenu || dirtySeo || dirtyPied
   useEffect(() => {
     if (!dirtyQuelquePart) return
     const garde = (event: BeforeUnloadEvent) => {
@@ -545,6 +581,17 @@ export function SettingsWorkbench({
                        modification les rend caduques. */
                     setMenuErrors({})
                     setMenuItems(next)
+                  }}
+                />
+              </Panneau>
+
+              <Panneau id="pied" actif={onglet === 'pied'}>
+                <PiedTab
+                  pied={pied}
+                  library={library}
+                  onChange={(next) => {
+                    setDirtyPied(true)
+                    setPied(next)
                   }}
                 />
               </Panneau>

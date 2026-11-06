@@ -11,6 +11,7 @@ import { Eyebrow } from '@/components/site/Eyebrow'
 import { GalleryRail } from '@/components/site/GalleryRail'
 import { Aster, Dots } from '@/components/site/SectionMarks'
 import { cn } from '@/lib/utils'
+import { ContenuTiers, serviceDeVideo } from '@/components/site/consentement'
 
 /*
  * Sections de contenu — les briques libres de la bibliothèque :
@@ -583,13 +584,15 @@ function VideoArche({ data }: BlockProps<z.output<typeof videoArcheSchema>>) {
         <Reveal>
           <div className="relative aspect-video w-full overflow-hidden rounded-[28px] bg-night">
             {src ? (
-              <iframe
-                src={src}
-                title={data.title || 'Vidéo'}
-                allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                allowFullScreen
-                className="absolute inset-0 h-full w-full border-0"
-              />
+              <ContenuTiers service={serviceDeVideo(src)} className="absolute inset-0 text-white">
+                <iframe
+                  src={src}
+                  title={data.title || 'Vidéo'}
+                  allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                  allowFullScreen
+                  className="absolute inset-0 h-full w-full border-0"
+                />
+              </ContenuTiers>
             ) : (
               <div className="absolute inset-0 grid place-items-center">
                 <Aster className="text-[28px] text-blue" />

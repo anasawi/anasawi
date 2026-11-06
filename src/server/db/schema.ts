@@ -414,6 +414,13 @@ export const settings = pgTable(
      */
     identity: jsonb('identity').$type<unknown>(),
 
+    /**
+     * Le pied de page au-delà des coordonnées : organismes (logos),
+     * déontologie, sites de collègues, informations des pages légales.
+     * Null = valeurs de départ (voir `lib/pied.ts`, qui lit et complète).
+     */
+    pied: jsonb('pied').$type<unknown>(),
+
     ...timestamps,
   },
   (t) => [

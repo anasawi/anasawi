@@ -1,4 +1,4 @@
-import { and, asc, count, desc, eq, inArray, sql } from 'drizzle-orm'
+import { and, asc, count, desc, eq, getTableColumns, inArray, sql } from 'drizzle-orm'
 import { unstable_cache } from 'next/cache'
 import { cache } from 'react'
 
@@ -112,6 +112,7 @@ const FALLBACK_SETTINGS: Settings = {
   defaultOgMediaId: null,
   navigation: null,
   identity: null,
+  pied: null,
   createdAt: new Date(),
   updatedAt: new Date(),
 }
@@ -123,8 +124,20 @@ const FALLBACK_SETTINGS: Settings = {
 export const getSettings = cache(
   cached(
     async (): Promise<Settings> => {
-      const [row] = await db.select().from(settings).limit(1)
-      return row ?? FALLBACK_SETTINGS
+      try {
+        const [row] = await db.select().from(settings).limit(1)
+        return row ?? FALLBACK_SETTINGS
+      } catch (erreur) {
+        /* La colonne `pied` (migration 0014) n'existe pas encore : on lit
+           tout le reste, le pied de page prend ses valeurs de départ. Le
+           site reste en ligne en attendant `npm run db:migrate`. */
+        if (!/pied/.test(String((erreur as Error)?.message ?? erreur))) throw erreur
+        const colonnes = Object.fromEntries(
+          Object.entries(getTableColumns(settings)).filter(([cle]) => cle !== 'pied'),
+        ) as Omit<ReturnType<typeof getTableColumns<typeof settings>>, 'pied'>
+        const [row] = await db.select(colonnes).from(settings).limit(1)
+        return row ? { ...row, pied: null } : FALLBACK_SETTINGS
+      }
     },
     ['settings'],
     [tags.settings],

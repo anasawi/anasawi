@@ -3,6 +3,9 @@ import { navHref, toE164 } from '@/lib/utils'
 import type { Settings, SocialLink } from '@/server/db/schema'
 import type { NavItem } from './Header'
 import { LogoMark } from './Logo'
+import { LiensLegaux, PiedExtras } from './PiedExtras'
+import type { Pied } from '@/lib/pied'
+import type { Media } from '@/server/db/schema'
 
 /**
  * Pied de page — style M de la planche V8.
@@ -15,11 +18,16 @@ export function Footer({
   settings,
   items,
   logoUrl = null,
+  pied,
+  logos = {},
 }: {
   settings: Settings
   items: NavItem[]
   /** Logo choisi dans les Réglages (absent : celui livré avec le site). */
   logoUrl?: string | null
+  /** Organismes, déontologie, collègues (Réglages › Pied de page). */
+  pied?: Pied
+  logos?: Record<string, Media>
 }) {
   const year = new Date().getFullYear()
   const socials = (settings.socialLinks as SocialLink[]) ?? []
@@ -108,6 +116,8 @@ export function Footer({
           )}
         </div>
 
+        {pied && <PiedExtras pied={pied} logos={logos} ton="clair" className="mx-auto mt-14 max-w-5xl border-t border-line pt-12" />}
+
         {settings.tagline && (
           <p className="mx-auto mt-10 max-w-[46ch] font-serif text-[18px] font-light italic text-ink-soft md:mt-12">
             {settings.tagline}
@@ -132,6 +142,7 @@ export function Footer({
           {settings.siteName ? ` · ${settings.siteName}` : ''} · Tous droits
           réservés
         </p>
+        <LiensLegaux ton="clair" className="mt-3 justify-center text-[12px] text-stone" />
       </div>
     </footer>
   )

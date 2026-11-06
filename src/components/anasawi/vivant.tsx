@@ -6,6 +6,7 @@ import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState
 
 import { lettreParDefaut, type TextesLettre } from '@/blocks/moderne/textes'
 import { BasculeVersion } from '@/components/site/BasculeVersion'
+import { useConsentement } from '@/components/site/consentement'
 import { LogoMark } from '@/components/site/Logo'
 import { cn } from '@/lib/utils'
 import type { FaqItem, Media, OpeningHour, ServiceWithMedia } from '@/server/db/schema'
@@ -1787,6 +1788,8 @@ export function Carte({ adresse, zoom = 15, className }: { adresse: string; zoom
   const [vue, setVue] = useState(0)
   const [prochaine, setProchaine] = useState<number | null>(null)
   const src = `https://www.google.com/maps?q=${encodeURIComponent(adresse)}&z=${zoom}&output=embed`
+  /* Google Maps dépose des cookies : le plan ne se charge qu'après un clic (voir consentement.tsx). */
+  const [accorde, accorder] = useConsentement('google-maps')
 
   useEffect(() => {
     const el = ref.current
@@ -1822,7 +1825,19 @@ export function Carte({ adresse, zoom = 15, className }: { adresse: string; zoom
 
   return (
     <div ref={ref} className={cn('relative isolate overflow-hidden bg-[var(--ad-brume)]', className)} onMouseLeave={() => setActive(false)}>
-      {proche && (
+      {!accorde && (
+        /* En attendant l'accord : un plan dessiné, des rues à peine tracées. */
+        <svg aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full text-white" preserveAspectRatio="xMidYMid slice" viewBox="0 0 400 300">
+          <g fill="none" stroke="currentColor" strokeLinecap="round">
+            <path d="M-20 210 C 80 190, 150 230, 240 180 S 360 120, 430 140" strokeWidth="9" opacity=".9" />
+            <path d="M120 -10 C 130 80, 100 160, 150 320" strokeWidth="6" opacity=".8" />
+            <path d="M-10 80 L 420 40" strokeWidth="4" opacity=".7" />
+            <path d="M260 -10 C 250 90, 300 170, 280 320" strokeWidth="4" opacity=".7" />
+            <path d="M-10 130 L 130 120 M 160 260 L 420 230 M 40 -10 L 70 320 M 330 -10 L 360 320" strokeWidth="2.5" opacity=".6" />
+          </g>
+        </svg>
+      )}
+      {proche && accorde && (
         <iframe key={vue} title={`Plan d’accès : ${adresse}`} src={src} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className={cn(cadre, !active && 'pointer-events-none')} />
       )}
       {prochaine !== null && (
@@ -1860,7 +1875,15 @@ export function Carte({ adresse, zoom = 15, className }: { adresse: string; zoom
           <span className="h-3 w-3 rounded-full bg-[var(--ad-or)] [transform:rotate(-45deg)]" />
         </span>
       </span>
-      {proche && (
+      {!accorde && (
+        <div className="absolute right-4 top-4 z-10 flex max-w-[240px] flex-col items-end gap-1.5 text-right">
+          <button type="button" onClick={accorder} className={bouton}>
+            Afficher le plan
+          </button>
+          <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] leading-[1.3] text-[var(--ad-pierre)] backdrop-blur">Google Maps peut déposer des cookies</span>
+        </div>
+      )}
+      {proche && accorde && (
         <div className="absolute right-4 top-4 z-10 flex gap-2">
           {decalee && (
             <button type="button" onClick={recentrer} disabled={prochaine !== null} className={bouton}>
