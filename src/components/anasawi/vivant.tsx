@@ -345,7 +345,7 @@ export function Seuil({
           }}
         >
           <div
-            className="relative h-full w-full overflow-hidden bg-[var(--ad-sable-fonce)] shadow-[0_50px_120px_-50px_rgba(46,66,79,0.55)] transition-[transform,box-shadow] duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[survol=oui]/incline:duration-200 group-data-[survol=oui]/incline:shadow-[0_60px_120px_-40px_rgba(46,66,79,0.6)]"
+            className="relative h-full w-full overflow-hidden bg-[var(--ad-sable-fonce)] shadow-[0_50px_120px_-50px_rgba(46,66,79,0.55)] transition-[transform,box-shadow,translate,scale,rotate] duration-[700ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-data-[survol=oui]/incline:duration-200 group-data-[survol=oui]/incline:shadow-[0_60px_120px_-40px_rgba(46,66,79,0.6)]"
             style={{
               borderRadius: 'calc((1 - var(--e)) * 32px)',
               transform: 'rotateX(calc(var(--rx) * (1 - var(--e)))) rotateY(calc(var(--ry) * (1 - var(--e))))',
@@ -935,7 +935,7 @@ export function Conversation({
               onClick={() => setChoisie(i)}
               aria-pressed={choisie === i}
               className={cn(
-                'rounded-full border px-4 py-2.5 text-left text-[14.5px] leading-[1.35] transition-[background-color,border-color,color,transform] duration-500 ease-[var(--ad-ease)] hover:-translate-y-0.5 active:scale-[0.96] active:duration-150',
+                'rounded-full border px-4 py-2.5 text-left text-[14.5px] leading-[1.35] transition-[background-color,border-color,color,transform,translate,scale,rotate] duration-500 ease-[var(--ad-ease)] hover:-translate-y-0.5 active:scale-[0.96] active:duration-150',
                 choisie === i
                   ? 'border-[var(--ad-nuit)] bg-[var(--ad-nuit)] text-white'
                   : 'border-[var(--ad-sable-fonce)] bg-transparent text-[var(--ad-nuit)] hover:border-[var(--ad-nuit)]',
@@ -1501,7 +1501,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
               onClick={() => setOuvert(false)}
               tabIndex={ouvert ? 0 : -1}
               className={cn(
-                'font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[46px] leading-[1.15] text-[var(--ad-nuit)] transition-[opacity,transform] duration-700 ease-[var(--ad-ease)]',
+                'font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[46px] leading-[1.15] text-[var(--ad-nuit)] transition-[opacity,transform,translate,scale,rotate] duration-700 ease-[var(--ad-ease)]',
                 ouvert ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
               )}
               style={{ transitionDelay: ouvert ? `${0.15 + i * 0.06}s` : '0s' }}

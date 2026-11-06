@@ -363,7 +363,7 @@ export function RendezVous({ c, t = TEXTES.mRendezVous(c) }: P & { t?: T<'mRende
                   <a href={l.href} className="group flex items-center gap-4 py-4 text-[15px] text-[var(--ad-nuit)] [&_svg]:h-4 [&_svg]:w-4">
                     <span className="text-[var(--ad-or)]">{l.icone}</span>
                     <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{l.texte}</span>
-                    <ArrowUpRight className="opacity-0 transition-[opacity,transform] duration-500 ease-[var(--ad-ease)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" />
+                    <ArrowUpRight className="opacity-0 transition-[opacity,transform,translate,scale,rotate] duration-500 ease-[var(--ad-ease)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" />
                   </a>
                 </li>
               ))}

@@ -211,9 +211,9 @@ export function AproposEngagements({ etiquette, titre, texte, id, engagements }:
           {engagements.slice(0, 4).map((e, i) => {
             const Icone = ICONES[i % ICONES.length]!
             return (
-              <li key={i} className={cn(CARTE, 'group relative overflow-hidden p-7 transition-transform duration-500 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
-                <span aria-hidden="true" className="absolute inset-x-7 bottom-0 h-[3px] origin-left scale-x-0 rounded-full bg-[var(--ad-touche)] transition-transform duration-700 group-hover:scale-x-100" />
-                <span className="grid h-14 w-11 place-items-center bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)] transition-colors duration-500 group-hover:bg-[var(--ad-touche)] group-hover:text-white" style={{ borderRadius: ARCHE }}>
+              <li key={i} className={cn(CARTE, 'group relative overflow-hidden p-7 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
+                <span aria-hidden="true" className="absolute inset-x-7 bottom-0 h-[3px] origin-left scale-x-0 rounded-full bg-[var(--ad-touche)] transition-transform duration-700 ease-[var(--ad-ease)] group-hover:scale-x-100" />
+                <span className="grid h-14 w-11 place-items-center bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)] transition-colors duration-500 ease-[var(--ad-ease)] group-hover:bg-[var(--ad-touche)] group-hover:text-white" style={{ borderRadius: ARCHE }}>
                   <Icone className="h-[18px] w-[18px]" strokeWidth={1.6} />
                 </span>
                 <p className="mt-6 text-[19px] font-semibold tracking-[-0.02em] text-[var(--ad-nuit)]">{e.titre}</p>
@@ -242,7 +242,7 @@ export function AproposApproches({ etiquette, titre, texte, id, approches, bouto
           {approches.map((a, i) => (
             <li key={i} className="flex items-center gap-6" style={apparait(vu, 0.15 + i * 0.12)}>
               {i > 0 && <span aria-hidden="true" className="h-4 w-3 border-[1.5px] border-[var(--ad-touche)]" style={{ borderRadius: ARCHE }} />}
-              <span className={cn(ITALIQUE, 'text-[clamp(26px,3.2vw,46px)] text-[var(--ad-nuit)] transition-colors duration-500 hover:text-[var(--ad-accent)]')}>{a}</span>
+              <span className={cn(ITALIQUE, 'text-[clamp(26px,3.2vw,46px)] text-[var(--ad-nuit)] transition-colors duration-500 ease-[var(--ad-ease)] hover:text-[var(--ad-accent)]')}>{a}</span>
             </li>
           ))}
         </ul>

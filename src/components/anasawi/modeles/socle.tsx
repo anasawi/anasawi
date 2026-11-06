@@ -24,7 +24,9 @@ export const CONTENEUR = 'mx-auto w-full max-w-[1240px] px-[6vw] lg:px-12'
 export const TITRE = 'text-[clamp(38px,4.6vw,62px)] leading-[1.04]'
 export const TEXTE = 'text-[16.5px] leading-[1.75] text-[var(--ad-pierre)]'
 export const ITALIQUE = 'font-[family-name:var(--ad-titre)] italic'
-export const CARTE = 'rounded-[28px] bg-white shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)]'
+/** Une carte blanche ; au survol, elle se soulève doucement et son ombre s'allonge (comme les cartes d'« En pratique »). */
+export const CARTE =
+  'rounded-[28px] bg-white shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)] transition-[box-shadow,translate] duration-500 ease-[var(--ad-ease)] hover:shadow-[0_2px_4px_rgba(46,66,79,0.06),0_30px_60px_-30px_rgba(46,66,79,0.35)]'
 
 /** « Ce que je vous / *propose* » : une ligne par retour, le mot clé en accent. */
 export function accentue(texte: string) {
@@ -106,21 +108,21 @@ export function Bouton({ href, children, clair = false, discret = false, classNa
   if (discret)
     return (
       <a href={href} className={cn('group inline-flex items-center gap-1.5 py-2 text-[15px] font-semibold text-[var(--ad-nuit)] [&_svg]:text-[var(--ad-accent)]', className)}>
-        <span className="bg-[linear-gradient(var(--ad-touche),var(--ad-touche))] bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 group-hover:bg-[length:100%_2px]">{children}</span>
-        <ArrowUpRight className="h-4 w-4 transition-transform duration-500 group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
+        <span className="bg-[linear-gradient(var(--ad-touche),var(--ad-touche))] bg-[length:0%_2px] bg-left-bottom bg-no-repeat pb-0.5 transition-[background-size] duration-500 ease-[var(--ad-ease)] group-hover:bg-[length:100%_2px]">{children}</span>
+        <ArrowUpRight className="h-4 w-4 transition-transform duration-500 ease-[var(--ad-ease)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5" />
       </a>
     )
   return (
     <a
       href={href}
       className={cn(
-        'group inline-flex items-center gap-2.5 rounded-full py-2 pl-6 pr-2 text-[15px] font-semibold shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-[transform,background-color] duration-500 hover:-translate-y-0.5',
+        'group inline-flex items-center gap-2.5 rounded-full py-2 pl-6 pr-2 text-[15px] font-semibold shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-[translate,background-color,box-shadow] duration-500 ease-[var(--ad-ease)] hover:-translate-y-0.5',
         clair ? 'bg-white text-[var(--ad-nuit)]' : 'bg-[var(--ad-nuit)] text-white hover:bg-[var(--ad-accent)]',
         className,
       )}
     >
       {children}
-      <span className={cn('grid h-9 w-9 place-items-center rounded-full transition-transform duration-500 group-hover:rotate-45', clair ? 'bg-[var(--ad-accent)] text-white' : 'bg-white/15')}>
+      <span className={cn('grid h-9 w-9 place-items-center rounded-full transition-transform duration-500 ease-[var(--ad-ease)] group-hover:rotate-45', clair ? 'bg-[var(--ad-accent)] text-white' : 'bg-white/15')}>
         <ArrowUpRight className="h-4 w-4" />
       </span>
     </a>

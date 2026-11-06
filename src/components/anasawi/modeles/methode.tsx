@@ -152,7 +152,7 @@ export function MethodeApproche({ etiquette, titre, intro, id, mots, photo, cita
           )}
           <ul className="mt-9 flex flex-wrap gap-2">
             {mots.map((m, i) => (
-              <li key={m} className="rounded-full bg-[var(--ad-touche-pale)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-touche-fonce)] transition-colors duration-500 hover:bg-[var(--ad-touche)] hover:text-white" style={apparait(vu, 0.6 + i * 0.1)}>
+              <li key={m} className="rounded-full bg-[var(--ad-touche-pale)] px-4 py-2 text-[14px] font-semibold text-[var(--ad-touche-fonce)] transition-colors duration-500 ease-[var(--ad-ease)] hover:bg-[var(--ad-touche)] hover:text-white" style={apparait(vu, 0.6 + i * 0.1)}>
                 {m}
               </li>
             ))}

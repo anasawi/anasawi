@@ -72,11 +72,11 @@ export function PhotosMur({ etiquette, titre, texte, photos, id }: Base) {
             return (
               <figure key={ph.id} className="group lg:absolute" style={{ '--l': `${m.l}%`, '--t': `${m.t}%`, '--w': `${m.w}%`, '--h': `${m.h}%`, transform: `translateY(${p * m.v}px)` } as React.CSSProperties}>
                 <div
-                  className="relative aspect-[3/4] bg-[var(--ad-ivoire)] p-[7px] shadow-[0_22px_40px_-26px_rgba(46,66,79,0.55)] transition-transform duration-700 group-hover:-translate-y-1.5 lg:aspect-auto lg:h-full"
-                  style={{ borderRadius: m.r, opacity: vu ? 1 : 0, transition: `opacity 1.2s ${0.2 + k * 0.12}s, transform .7s`, ...(k === 2 ? { aspectRatio: '1' } : {}) }}
+                  className="relative aspect-[3/4] bg-[var(--ad-ivoire)] p-[7px] shadow-[0_22px_40px_-26px_rgba(46,66,79,0.55)] transition-transform duration-700 ease-[var(--ad-ease)] group-hover:-translate-y-1.5 lg:aspect-auto lg:h-full"
+                  style={{ borderRadius: m.r, opacity: vu ? 1 : 0, transition: `opacity 1.2s ${0.2 + k * 0.12}s, transform .7s ${DOUX}, translate .7s ${DOUX}`, ...(k === 2 ? { aspectRatio: '1' } : {}) }}
                 >
                   <div className="relative h-full w-full overflow-hidden" style={{ borderRadius: m.r }}>
-                    <Image src={ph.url} alt={ph.alt} fill sizes="(max-width: 1024px) 45vw, 340px" className="object-cover transition-transform duration-[1400ms] group-hover:scale-[1.05]" />
+                    <Image src={ph.url} alt={ph.alt} fill sizes="(max-width: 1024px) 45vw, 340px" className="object-cover transition-transform duration-[1400ms] ease-[var(--ad-ease)] group-hover:scale-[1.05]" />
                   </div>
                 </div>
                 {ph.caption && <figcaption className={cn(ITALIQUE, 'mt-2.5 text-center text-[14px] text-[var(--ad-pierre)] lg:absolute lg:inset-x-0 lg:top-full')}>{ph.caption}</figcaption>}
@@ -105,8 +105,8 @@ export function PhotosMosaique({ etiquette, titre, texte, photos, id }: Base) {
               className={cn('group relative overflow-hidden bg-[var(--ad-sable)]', cases[i], i === 0 && 'max-md:col-span-2 max-md:row-span-1', i > 2 && 'max-md:hidden')}
               style={{ borderRadius: i === 0 ? ARCHE : '24px', clipPath: vu ? `inset(0 round ${i === 0 ? ARCHE : '24px'})` : `inset(100% 0 0 0 round ${i === 0 ? ARCHE : '24px'})`, transition: `clip-path 1.4s ${DOUX} ${i * 0.14}s` }}
             >
-              <Image src={p.url} alt={p.alt} fill sizes="(max-width: 768px) 50vw, 400px" className="object-cover transition-transform duration-[1400ms] group-hover:scale-[1.05]" />
-              {p.caption && <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[12.5px] font-semibold text-[var(--ad-nuit)] opacity-0 transition-opacity duration-500 group-hover:opacity-100">{p.caption}</span>}
+              <Image src={p.url} alt={p.alt} fill sizes="(max-width: 768px) 50vw, 400px" className="object-cover transition-transform duration-[1400ms] ease-[var(--ad-ease)] group-hover:scale-[1.05]" />
+              {p.caption && <span className="absolute bottom-3 left-3 rounded-full bg-white/90 px-3 py-1 text-[12.5px] font-semibold text-[var(--ad-nuit)] opacity-0 transition-opacity duration-500 ease-[var(--ad-ease)] group-hover:opacity-100">{p.caption}</span>}
             </div>
           ))}
         </div>
@@ -216,8 +216,8 @@ export function PhotosFenetre({ etiquette, titre, texte, photos, id }: Base) {
             {liste.map((p, k) => (
               <li key={p.id} style={apparait(vu, 0.3 + k * 0.08)}>
                 <button type="button" onMouseEnter={() => setI(k)} onFocus={() => setI(k)} onClick={() => setI(k)} className="flex items-center gap-4 py-1.5 text-left">
-                  <span aria-hidden="true" className="h-px bg-[var(--ad-touche)] transition-all duration-700 max-lg:hidden" style={{ width: k === i ? 36 : 12, opacity: k === i ? 1 : 0.25, background: 'var(--ad-touche)' }} />
-                  <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,28px)] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
+                  <span aria-hidden="true" className="h-px bg-[var(--ad-touche)] transition-all duration-700 ease-[var(--ad-ease)] max-lg:hidden" style={{ width: k === i ? 36 : 12, opacity: k === i ? 1 : 0.25, background: 'var(--ad-touche)' }} />
+                  <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,28px)] transition-colors duration-500 ease-[var(--ad-ease)]" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
                     {p.caption || p.alt}
                   </span>
                 </button>
@@ -275,7 +275,7 @@ export function PhotosBattants({ etiquette, titre, texte, photos, id }: Base) {
         </div>
         <div className="mt-8 flex flex-wrap justify-center gap-x-1 gap-y-2" style={apparait(vu, 2.4)}>
           {liste.map((p, k) => (
-            <button key={p.id} type="button" onClick={() => setI(k)} onMouseEnter={() => setI(k)} className={cn(ITALIQUE, 'rounded-full px-3.5 py-1.5 text-[16px] transition-colors duration-500')} style={{ background: k === i ? 'var(--ad-sable)' : 'transparent', color: k === i ? 'var(--ad-nuit)' : 'var(--ad-gris)' }}>
+            <button key={p.id} type="button" onClick={() => setI(k)} onMouseEnter={() => setI(k)} className={cn(ITALIQUE, 'rounded-full px-3.5 py-1.5 text-[16px] transition-colors duration-500 ease-[var(--ad-ease)]')} style={{ background: k === i ? 'var(--ad-sable)' : 'transparent', color: k === i ? 'var(--ad-nuit)' : 'var(--ad-gris)' }}>
               {p.caption || p.alt}
             </button>
           ))}
@@ -331,7 +331,7 @@ export function PhotosBienvenue({ etiquette, titre, texte, photos, attentions, i
                 onClick={() => setI(k)}
                 onMouseEnter={() => setI(k)}
                 aria-label={p.caption || p.alt}
-                className="relative h-[72px] w-[54px] overflow-hidden transition-all duration-500"
+                className="relative h-[72px] w-[54px] overflow-hidden transition-all duration-500 ease-[var(--ad-ease)]"
                 style={{ borderRadius: ARCHE, opacity: k === i ? 1 : 0.55, transform: k === i ? 'translateY(-4px)' : 'none', outline: k === i ? '1.5px solid var(--ad-accent-trait)' : 'none', outlineOffset: 3 }}
               >
                 <Image src={p.url} alt="" fill sizes="56px" className="object-cover" />

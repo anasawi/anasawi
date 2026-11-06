@@ -49,10 +49,13 @@ export function useVu<T extends HTMLElement>(marge = '-10%') {
   return [ref, vu] as const
 }
 
+/** Les propriétés des survols (soulèvement, ombre, couleurs) : elles gardent leur douceur, sans le délai de l'apparition. */
+const SURVOL = ['translate', 'scale', 'rotate', 'box-shadow', 'background-color', 'color', 'border-color', 'outline-color'].map((p) => `${p} .6s ${DOUX}`).join(', ')
+
 export const apparait = (vu: boolean, delai = 0) => ({
   opacity: vu ? 1 : 0,
   transform: vu ? 'none' : 'translateY(14px)',
-  transition: `opacity 1.2s ${delai}s, transform 1.4s ${DOUX} ${delai}s`,
+  transition: `opacity 1.2s ${delai}s, transform 1.4s ${DOUX} ${delai}s, ${SURVOL}`,
 })
 
 /** Un texte avec ses accents « *mot* » : le mot clé en italique. */

@@ -40,7 +40,7 @@ function Miniature({ type, data }: { type: string; data: SectionsViewData }) {
     return () => ro.disconnect()
   }, [])
   return (
-    <div ref={cadre} aria-hidden="true" className="pointer-events-none relative overflow-hidden rounded-[18px] bg-[var(--ad-ivoire)] ring-1 ring-[var(--ad-accent-trait)] transition-shadow duration-500 group-hover:shadow-[0_24px_50px_-28px_rgba(70,114,138,0.45)]" style={{ height: HAUTEUR }}>
+    <div ref={cadre} aria-hidden="true" className="pointer-events-none relative overflow-hidden rounded-[18px] bg-[var(--ad-ivoire)] ring-1 ring-[var(--ad-accent-trait)] transition-shadow duration-500 ease-[var(--ad-ease)] group-hover:shadow-[0_24px_50px_-28px_rgba(70,114,138,0.45)]" style={{ height: HAUTEUR }}>
       <div style={{ width: largeur, transform: `scale(${echelle})`, transformOrigin: 'top left', ['--ad-vh' as string]: '8.6px' }}>
         <SectionsView sections={[section]} data={data} />
       </div>
@@ -70,7 +70,7 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
             <a
               key={r.categorie}
               href={`#${encodeURIComponent(r.categorie)}`}
-              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[var(--ad-nuit)] shadow-[0_1px_2px_rgba(46,66,79,0.06),0_4px_14px_-6px_rgba(46,66,79,0.12)] transition-colors duration-300 hover:bg-[var(--ad-accent)] hover:text-white"
+              className="inline-flex items-center gap-2 rounded-full bg-white px-4 py-2 text-[14px] font-semibold text-[var(--ad-nuit)] shadow-[0_1px_2px_rgba(46,66,79,0.06),0_4px_14px_-6px_rgba(46,66,79,0.12)] transition-colors duration-300 ease-[var(--ad-ease)] hover:bg-[var(--ad-accent)] hover:text-white"
             >
               {r.categorie}
               <span className="rounded-full bg-[var(--ad-touche-pale)] px-2 py-0.5 text-[12px] tabular-nums text-[var(--ad-touche-fonce)]">{r.fiches.length}</span>
@@ -107,7 +107,7 @@ export function Catalogue({ rayons, data }: { rayons: Rayon[]; data: SectionsVie
                       <a href={f.lien} className="after:absolute after:inset-0 after:content-['']">
                         {f.label}
                       </a>
-                      <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-gris)] transition-transform duration-500 group-hover:rotate-45 group-hover:text-[var(--ad-accent)]" />
+                      <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-gris)] transition-transform duration-500 ease-[var(--ad-ease)] group-hover:rotate-45 group-hover:text-[var(--ad-accent)]" />
                     </p>
                     <p className="mt-2 text-[14.5px] leading-[1.6] text-[var(--ad-pierre)]">{f.description}</p>
                     <p className="mt-3 flex items-start gap-2 text-[13.5px] leading-[1.5] text-[var(--ad-accent)]">

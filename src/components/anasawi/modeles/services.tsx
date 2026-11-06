@@ -32,8 +32,8 @@ export function ServicesListe({ etiquette, titre, texte, rdv, services, photos, 
         <ul ref={ref} className="border-t border-[var(--ad-sable-fonce)]">
           {services.slice(0, 6).map((s, i) => (
             <li key={s.id} className="border-b border-[var(--ad-sable-fonce)]" style={apparait(vu, i * 0.08)}>
-              <a href={rdv} className="group relative isolate flex items-center gap-5 py-4 transition-[padding] duration-500 hover:px-4 md:gap-8 md:py-[18px]">
-                <span aria-hidden="true" className="absolute inset-0 -z-10 scale-y-75 rounded-[20px] bg-[var(--ad-touche-pale)] opacity-0 transition-[opacity,transform] duration-500 group-hover:scale-y-100 group-hover:opacity-100" />
+              <a href={rdv} className="group relative isolate flex items-center gap-5 py-4 transition-[padding] duration-500 ease-[var(--ad-ease)] hover:px-4 md:gap-8 md:py-[18px]">
+                <span aria-hidden="true" className="absolute inset-0 -z-10 scale-y-75 rounded-[20px] bg-[var(--ad-touche-pale)] opacity-0 transition-[opacity,translate,scale] duration-500 ease-[var(--ad-ease)] group-hover:scale-y-100 group-hover:opacity-100" />
                 <span className="w-8 shrink-0 text-[13px] font-semibold tabular-nums text-[var(--ad-gris)]">{num(i)}</span>
                 <span className="min-w-0 flex-1">
                   <span className="block font-[family-name:var(--ad-titre)] text-[clamp(22px,2.4vw,32px)] leading-[1.15] text-[var(--ad-nuit)]">{s.title}</span>
@@ -41,13 +41,13 @@ export function ServicesListe({ etiquette, titre, texte, rdv, services, photos, 
                 </span>
                 <span
                   aria-hidden="true"
-                  className="relative hidden h-[60px] w-[46px] shrink-0 overflow-hidden opacity-0 transition-[opacity,transform] duration-500 group-hover:-translate-y-1 group-hover:opacity-100 md:block"
+                  className="relative hidden h-[60px] w-[46px] shrink-0 overflow-hidden opacity-0 transition-[opacity,translate,scale] duration-500 ease-[var(--ad-ease)] group-hover:-translate-y-1 group-hover:opacity-100 md:block"
                   style={{ borderRadius: ARCHE }}
                 >
                   {photoDe(s, photos, i) && <Image src={photoDe(s, photos, i)!.url} alt="" fill sizes="60px" className="object-cover" />}
                 </span>
                 <Duree s={s} className="max-sm:hidden" />
-                <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-nuit)] transition-[transform,color] duration-500 group-hover:rotate-45 group-hover:text-[var(--ad-touche-fonce)]" />
+                <ArrowUpRight className="h-5 w-5 shrink-0 text-[var(--ad-nuit)] transition-[rotate,color] duration-500 ease-[var(--ad-ease)] group-hover:rotate-45 group-hover:text-[var(--ad-touche-fonce)]" />
               </a>
             </li>
           ))}
@@ -68,7 +68,7 @@ export function ServicesPortes({ etiquette, titre, texte, rdv, services, photos,
           {liste.map((s, i) => (
             <li key={s.id}>
               <a href={rdv} className="group block">
-                <Arche media={photoDe(s, photos, i)} delai={i * 0.12} chambranle="aucun" sizes="280px" className="h-[min(36vh,330px)] transition-transform max-md:h-[26vh] duration-700 group-hover:-translate-y-1.5" />
+                <Arche media={photoDe(s, photos, i)} delai={i * 0.12} chambranle="aucun" sizes="280px" className="h-[min(36vh,330px)] transition-transform max-md:h-[26vh] duration-700 ease-[var(--ad-ease)] group-hover:-translate-y-1.5" />
                 <p className="mt-4 font-[family-name:var(--ad-titre)] text-[22px] leading-[1.2] text-[var(--ad-nuit)]">{s.title}</p>
                 <p className="mt-1 text-[13.5px] text-[var(--ad-gris)]">{duree(s)}</p>
               </a>
@@ -89,7 +89,7 @@ export function ServicesGrille({ etiquette, titre, texte, bouton, rdv, services,
         <Entete etiquette={etiquette} titre={titre} texte={texte} />
         <ul ref={ref} className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           {services.slice(0, 6).map((s, i) => (
-            <li key={s.id} className={cn(CARTE, 'group flex flex-col p-5 transition-transform duration-500 hover:-translate-y-1')} style={apparait(vu, i * 0.08)}>
+            <li key={s.id} className={cn(CARTE, 'group flex flex-col p-5 hover:-translate-y-1')} style={apparait(vu, i * 0.08)}>
               <div className="flex items-start justify-between gap-4">
                 <span className="relative h-[52px] w-[40px] overflow-hidden" style={{ borderRadius: ARCHE }}>
                   {photoDe(s, photos, i) && <Image src={photoDe(s, photos, i)!.url} alt="" fill sizes="50px" className="object-cover" />}
@@ -101,7 +101,7 @@ export function ServicesGrille({ etiquette, titre, texte, bouton, rdv, services,
               <p className="mt-2 line-clamp-2 text-[14.5px] leading-[1.6] text-[var(--ad-pierre)]">{s.excerpt}</p>
               <a href={rdv} className="mt-auto inline-flex items-center gap-1.5 pt-4 text-[14px] font-semibold text-[var(--ad-accent)]">
                 {bouton}
-                <ArrowUpRight className="h-4 w-4 transition-transform duration-500 group-hover:rotate-45" />
+                <ArrowUpRight className="h-4 w-4 transition-transform duration-500 ease-[var(--ad-ease)] group-hover:rotate-45" />
               </a>
             </li>
           ))}
@@ -122,7 +122,7 @@ export function ServicesNumerotes({ etiquette, titre, texte, rdv, services, id }
           {services.slice(0, 6).map((s, i) => (
             <li key={s.id} className="border-t border-[var(--ad-sable-fonce)]" style={apparait(vu, i * 0.1)}>
               <a href={rdv} className="group flex gap-6 py-6">
-                <span className="font-[family-name:var(--ad-titre)] text-[54px] leading-[0.9] text-transparent transition-colors duration-500 [-webkit-text-stroke:1.2px_var(--ad-accent-trait)] group-hover:text-[var(--ad-touche-pale)] group-hover:[-webkit-text-stroke:1.2px_var(--ad-touche)]">{num(i)}</span>
+                <span className="font-[family-name:var(--ad-titre)] text-[54px] leading-[0.9] text-transparent transition-colors duration-500 ease-[var(--ad-ease)] [-webkit-text-stroke:1.2px_var(--ad-accent-trait)] group-hover:text-[var(--ad-touche-pale)] group-hover:[-webkit-text-stroke:1.2px_var(--ad-touche)]">{num(i)}</span>
                 <span className="min-w-0">
                   <span className="flex flex-wrap items-baseline gap-x-3">
                     <span className="font-[family-name:var(--ad-titre)] text-[24px] leading-[1.2] text-[var(--ad-nuit)]">{s.title}</span>
@@ -156,8 +156,8 @@ export function ServicesFenetre({ etiquette, titre, bouton, rdv, services, photo
             {liste.map((s, k) => (
               <li key={s.id}>
                 <button type="button" onMouseEnter={() => setI(k)} onFocus={() => setI(k)} onClick={() => setI(k)} className="flex w-full items-center gap-4 py-2 text-left">
-                  <span aria-hidden="true" className="h-px bg-[var(--ad-touche)] transition-all duration-700" style={{ width: k === i ? 32 : 10, opacity: k === i ? 1 : 0.25, background: 'var(--ad-touche)' }} />
-                  <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,27px)] transition-colors duration-500" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
+                  <span aria-hidden="true" className="h-px bg-[var(--ad-touche)] transition-all duration-700 ease-[var(--ad-ease)]" style={{ width: k === i ? 32 : 10, opacity: k === i ? 1 : 0.25, background: 'var(--ad-touche)' }} />
+                  <span className="font-[family-name:var(--ad-titre)] text-[clamp(20px,2vw,27px)] transition-colors duration-500 ease-[var(--ad-ease)]" style={{ color: k === i ? 'var(--ad-nuit)' : 'color-mix(in srgb, var(--ad-gris) 70%, transparent)' }}>
                     {s.title}
                   </span>
                 </button>
@@ -207,11 +207,11 @@ export function ServicesDetail({ etiquette, titre, texte, bouton, rdv, services,
                 <button type="button" onClick={() => setOuvert(o ? -1 : i)} aria-expanded={o} className="flex w-full items-center gap-4 py-5 text-left">
                   <span className="min-w-0 flex-1 font-[family-name:var(--ad-titre)] text-[clamp(21px,2.2vw,28px)] text-[var(--ad-nuit)]">{s.title}</span>
                   <Duree s={s} className="max-sm:hidden" />
-                  <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-full transition-[background,transform] duration-500', o ? 'rotate-45 bg-[var(--ad-touche)] text-white' : 'bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]')}>
+                  <span className={cn('grid h-9 w-9 shrink-0 place-items-center rounded-full transition-[background-color,rotate] duration-500 ease-[var(--ad-ease)]', o ? 'rotate-45 bg-[var(--ad-touche)] text-white' : 'bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)]')}>
                     <Plus className="h-4 w-4" />
                   </span>
                 </button>
-                <div className="grid transition-[grid-template-rows] duration-700" style={{ gridTemplateRows: o ? '1fr' : '0fr', transitionTimingFunction: DOUX }}>
+                <div className="grid transition-[grid-template-rows] duration-700 ease-[var(--ad-ease)]" style={{ gridTemplateRows: o ? '1fr' : '0fr', transitionTimingFunction: DOUX }}>
                   <div className="overflow-hidden">
                     <div className="flex gap-6 pb-6">
                       <span className="relative hidden h-[110px] w-[82px] shrink-0 overflow-hidden sm:block" style={{ borderRadius: ARCHE }}>

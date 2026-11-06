@@ -36,7 +36,7 @@ export function ContactMinimal(p: Base) {
             <li key={l.libelle} style={apparait(vu, 0.2 + i * 0.12)}>
               <a href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cn(ITALIQUE, 'group relative text-[clamp(22px,3vw,40px)] text-[var(--ad-nuit)] [overflow-wrap:anywhere]')}>
                 {l.texte}
-                <span aria-hidden="true" className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[var(--ad-touche)] transition-transform duration-500 group-hover:scale-x-100" />
+                <span aria-hidden="true" className="absolute -bottom-1 left-0 h-px w-full origin-left scale-x-0 bg-[var(--ad-touche)] transition-transform duration-500 ease-[var(--ad-ease)] group-hover:scale-x-100" />
               </a>
             </li>
           ))}
@@ -58,14 +58,14 @@ export function ContactCartes(p: Base) {
         <Entete etiquette={p.etiquette} titre={p.titre} texte={p.texte} />
         <div ref={ref} className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
           {lignesDe(p).map((l, i) => (
-            <a key={l.libelle} href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cn(CARTE, 'group isolate flex min-h-[220px] flex-col p-6 transition-transform duration-500 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
-              <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)] transition-colors duration-500 group-hover:bg-[var(--ad-touche)] group-hover:text-white">
+            <a key={l.libelle} href={l.href} target={l.href.startsWith('http') ? '_blank' : undefined} rel="noopener noreferrer" className={cn(CARTE, 'group isolate flex min-h-[220px] flex-col p-6 hover:-translate-y-1')} style={apparait(vu, i * 0.1)}>
+              <span className="grid h-11 w-11 place-items-center rounded-full bg-[var(--ad-touche-pale)] text-[var(--ad-touche-fonce)] transition-colors duration-500 ease-[var(--ad-ease)] group-hover:bg-[var(--ad-touche)] group-hover:text-white">
                 <l.Icone className="h-[18px] w-[18px]" strokeWidth={1.7} />
               </span>
               <span className="mt-auto pt-8 text-[13px] font-semibold text-[var(--ad-gris)]">{l.libelle}</span>
               <span className="mt-1 flex items-end justify-between gap-2 text-[15.5px] font-semibold leading-[1.35] text-[var(--ad-nuit)] [overflow-wrap:anywhere]">
                 {l.texte}
-                <ArrowUpRight className="h-4 w-4 shrink-0 transition-[transform,color] duration-500 group-hover:rotate-45 group-hover:text-[var(--ad-touche)]" />
+                <ArrowUpRight className="h-4 w-4 shrink-0 transition-[rotate,color] duration-500 ease-[var(--ad-ease)] group-hover:rotate-45 group-hover:text-[var(--ad-touche)]" />
               </span>
             </a>
           ))}
