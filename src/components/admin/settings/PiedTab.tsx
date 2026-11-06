@@ -205,7 +205,7 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
         </div>
       </SectionCard>
 
-      <SectionCard id="deontologie" title="Déontologie" note="Le paragraphe sous les logos : vos engagements, votre adhésion, votre assurance." layout="stack">
+      <SectionCard id="deontologie" title="Déontologie" note="Vos engagements, votre adhésion, votre assurance : affichés dans les mentions légales." layout="stack">
         <div className="mt-4">
           <Zone
             label="Texte"
@@ -273,7 +273,7 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
       <SectionCard
         id="confidentialite"
         title="Confidentialité et cookies"
-        note="La politique de confidentialité est rédigée pour vous. Le site ne dépose aucun cookie de statistiques ni de publicité : pas de bandeau. Le plan Google Maps et les vidéos ne se chargent qu’après un clic du visiteur."
+        note="La politique de confidentialité est rédigée pour vous. Le site ne dépose aucun cookie de statistiques ni de publicité : pas de bandeau à afficher. Le plan Google Maps et les vidéos ne se chargent qu’au clic du visiteur."
         actions={
           <a href="/moderne/confidentialite" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 text-[13px] font-medium text-[#176c79] hover:underline">
             Voir la page <ExternalLink className="h-3.5 w-3.5" />

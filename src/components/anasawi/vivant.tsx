@@ -1789,7 +1789,7 @@ export function Carte({ adresse, zoom = 15, className }: { adresse: string; zoom
   const [prochaine, setProchaine] = useState<number | null>(null)
   const src = `https://www.google.com/maps?q=${encodeURIComponent(adresse)}&z=${zoom}&output=embed`
   /* Google Maps dépose des cookies : le plan ne se charge qu'après un clic (voir consentement.tsx). */
-  const [accorde, accorder] = useConsentement('google-maps')
+  const [accorde, accorder] = useConsentement()
 
   useEffect(() => {
     const el = ref.current

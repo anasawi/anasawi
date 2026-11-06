@@ -3,7 +3,7 @@ import { navHref, toE164 } from '@/lib/utils'
 import type { Settings, SocialLink } from '@/server/db/schema'
 import type { NavItem } from './Header'
 import { LogoMark } from './Logo'
-import { LiensLegaux, PiedExtras } from './PiedExtras'
+import { Collegues, LiensLegaux, Organismes } from './PiedExtras'
 import type { Pied } from '@/lib/pied'
 import type { Media } from '@/server/db/schema'
 
@@ -116,7 +116,19 @@ export function Footer({
           )}
         </div>
 
-        {pied && <PiedExtras pied={pied} logos={logos} ton="clair" className="mx-auto mt-14 max-w-5xl border-t border-line pt-12" />}
+        {/* Organismes et collègues (Réglages › Pied de page). */}
+        {pied && pied.organismes.length > 0 && (
+          <div className="mx-auto mt-12 flex max-w-4xl flex-col items-center gap-4 border-t border-line pt-10">
+            {pied.organismesTitre && <p className={columnLabel}>{pied.organismesTitre}</p>}
+            <Organismes pied={pied} logos={logos} ton="clair" className="justify-center" />
+          </div>
+        )}
+        {pied && pied.amis.some((a) => a.nom && a.url) && (
+          <div className="mx-auto mt-8 flex max-w-4xl flex-col items-center gap-3">
+            {pied.amisTitre && <p className={columnLabel}>{pied.amisTitre}</p>}
+            <Collegues pied={pied} ton="clair" className="flex flex-wrap justify-center gap-x-6 space-y-0 text-[14.5px]" />
+          </div>
+        )}
 
         {settings.tagline && (
           <p className="mx-auto mt-10 max-w-[46ch] font-serif text-[18px] font-light italic text-ink-soft md:mt-12">

@@ -1,4 +1,3 @@
-import { GererCookies } from './consentement'
 import { addressLines } from '@/lib/settings-helpers'
 import { lirePied, morceaux, type Pied } from '@/lib/pied'
 import { cn } from '@/lib/utils'
@@ -200,10 +199,9 @@ export function Confidentialite({ settings, ton }: { settings: Settings; ton: To
       </ul>
       <p>Les transferts vers les États-Unis sont encadrés par le cadre de protection des données UE–États-Unis (Data Privacy Framework) ou par les clauses contractuelles types de la Commission européenne.</p>
 
-      <h2>Cookies et contenus d’autres sites</h2>
+      <h2>Cookies</h2>
       <p>
-        Ce site ne dépose aucun cookie de mesure d’audience ni de publicité : il n’y a donc pas de bandeau à accepter. Seuls deux types de contenus, fournis par d’autres sites, peuvent déposer des cookies : le plan d’accès (Google Maps) et, le cas échéant, une vidéo (YouTube ou Vimeo). Ils ne se chargent qu’après un clic de votre part ; votre choix est retenu dans votre navigateur, et vous pouvez le modifier à tout moment :{' '}
-        <GererCookies className="font-semibold underline underline-offset-[3px]" libelle="gérer les cookies" />.
+        Ce site ne dépose aucun cookie de mesure d’audience ni de publicité : il n’y a donc rien à accepter en arrivant. Le plan d’accès (Google Maps) et, le cas échéant, une vidéo (YouTube ou Vimeo) sont fournis par d’autres sites qui peuvent déposer leurs propres cookies : ils ne se chargent que si vous cliquez pour les afficher, et seulement pour la page consultée.
       </p>
       <p>Un cookie strictement nécessaire est utilisé uniquement pour l’espace d’administration du site (connexion de l’éditrice) ; il ne concerne pas les visiteurs.</p>
 

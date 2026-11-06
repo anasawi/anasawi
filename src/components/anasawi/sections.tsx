@@ -7,7 +7,7 @@ import { Aimant, Arches, Carte, Chemin, Conversation, Conviction, Lettre, Lignes
 import type { Contenu } from '@/blocks/moderne/contenu'
 import { photosPromenade, TEXTES } from '@/blocks/moderne/textes'
 import { LogoMark } from '@/components/site/Logo'
-import { LiensLegaux, PiedExtras } from '@/components/site/PiedExtras'
+import { Collegues, LiensLegaux, Organismes } from '@/components/site/PiedExtras'
 import { cn, toE164 } from '@/lib/utils'
 
 /**
@@ -381,74 +381,134 @@ export function RendezVous({ c, t = TEXTES.mRendezVous(c) }: P & { t?: T<'mRende
 
 /* ── Horizon ────────────────────────────────────────────────────────── */
 
+/**
+ * Le pied de page : l'invitation en haut (le grand mot de la fin et le
+ * rendez-vous), puis tout ce qu'on y cherche, rangé en colonnes — qui,
+ * comment joindre, le site, les collègues — la rangée des organismes, et
+ * la ligne légale. Compact : tout tient en un écran.
+ */
 export function Horizon({
   c,
   liens,
   t = TEXTES.mHorizon(),
 }: P & { liens: { href: string; label: string }[]; t?: T<'mHorizon'> }) {
+  const titreColonne = 'text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40'
+  const lien = '-my-1 inline-block py-1 text-white/75 transition-colors duration-300 hover:text-white'
+  const amis = c.pied.amis.filter((a) => a.nom && a.url)
   return (
     /* Derrière la courbe du pied de page : le fond du site, le même partout. */
     <div className="bg-[var(--ad-ivoire)]">
-    <footer className="relative isolate overflow-hidden rounded-t-[40px] bg-[var(--ad-nuit)] px-[5vw] pb-10 pt-28 text-white md:rounded-t-[56px] md:pt-40">
-      <div className="relative mx-auto max-w-[1200px]">
-        <p className="text-center font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[clamp(48px,8.5vw,136px)] leading-[0.98] ad-em-miel">
-          <Lignes lignes={enLignes(t.titre)} />
-        </p>
-        <Revele delai={0.3} className="mt-12 flex justify-center">
-          <Aimant>
-          <a
-            href={c.rdv}
-            className="group inline-flex items-center gap-3 rounded-full bg-white py-2 pl-7 pr-2 text-[16px] font-medium text-[var(--ad-nuit)]"
-          >
-            {t.bouton}
-            <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ad-nuit)] text-white transition-transform duration-500 ease-[var(--ad-ease)] group-hover:rotate-45">
-              <ArrowUpRight className="h-4 w-4" />
-            </span>
-          </a>
-          </Aimant>
-        </Revele>
-        <Revele delai={0.4} className="mt-8 flex flex-wrap justify-center gap-2">
-          {c.telephone && (
-            <a href={`tel:${toE164(c.telephone)}`} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[14px] text-white/85 transition-colors hover:bg-white/15">
-              <Phone className="h-3.5 w-3.5" />
-              {c.telephone}
-            </a>
+      <footer className="relative isolate overflow-hidden rounded-t-[40px] bg-[var(--ad-nuit)] px-[6vw] pb-8 pt-16 text-white md:rounded-t-[56px] md:pt-20 lg:px-12">
+        <div className="relative mx-auto max-w-[1240px]">
+          {/* L'invitation. */}
+          <div className="flex flex-wrap items-end justify-between gap-x-10 gap-y-8 border-b border-white/[0.12] pb-12">
+            <p className="font-[family-name:var(--ad-titre)] text-[clamp(44px,6vw,92px)] font-semibold leading-[0.98] tracking-[-0.03em] ad-em-miel">
+              <Lignes lignes={enLignes(t.titre)} />
+            </p>
+            <Revele delai={0.3}>
+              <Aimant>
+                <a href={c.rdv} className="group inline-flex items-center gap-3 rounded-full bg-white py-2 pl-7 pr-2 text-[16px] font-medium text-[var(--ad-nuit)]">
+                  {t.bouton}
+                  <span className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ad-nuit)] text-white transition-transform duration-500 ease-[var(--ad-ease)] group-hover:rotate-45">
+                    <ArrowUpRight className="h-4 w-4" />
+                  </span>
+                </a>
+              </Aimant>
+            </Revele>
+          </div>
+
+          {/* Tout ce qu'on cherche, en colonnes. */}
+          <div className={cn('grid gap-x-10 gap-y-10 py-12 text-[14.5px] sm:grid-cols-2', amis.length ? 'lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]' : 'lg:grid-cols-[1.4fr_1fr_1fr]')}>
+            <div>
+              <span className="flex items-center gap-3 text-[24px] font-bold tracking-[-0.03em]">
+                <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-white">
+                  <LogoMark src={c.logo} className="h-8 w-8" />
+                </span>
+                <span>
+                  Anasawi<span className="text-[var(--ad-or)]">.</span>
+                </span>
+              </span>
+              <p className="mt-4 text-white/85">{c.nom}</p>
+              <p className="text-white/55">{c.metier}</p>
+              {c.adresse && (
+                <a
+                  href={`https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(c.adresse)}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-3 inline-flex max-w-[30ch] items-start gap-2 leading-[1.5] text-white/55 transition-colors hover:text-white"
+                >
+                  <MapPin className="mt-[3px] h-3.5 w-3.5 shrink-0 text-[var(--ad-or)]" />
+                  {c.adresse}
+                </a>
+              )}
+            </div>
+            <div>
+              <p className={titreColonne}>Me joindre</p>
+              <ul className="mt-4 space-y-2.5">
+                {c.telephone && (
+                  <li>
+                    <a href={`tel:${toE164(c.telephone)}`} className={cn(lien, 'inline-flex items-center gap-2')}>
+                      <Phone className="h-3.5 w-3.5 text-[var(--ad-or)]" />
+                      {c.telephone}
+                    </a>
+                  </li>
+                )}
+                {c.email && (
+                  <li>
+                    <a href={`mailto:${c.email}`} className={cn(lien, 'inline-flex items-center gap-2 [overflow-wrap:anywhere]')}>
+                      <Mail className="h-3.5 w-3.5 shrink-0 text-[var(--ad-or)]" />
+                      {c.email}
+                    </a>
+                  </li>
+                )}
+                <li>
+                  <a href={c.rdv} className={lien}>
+                    Écrire un message
+                  </a>
+                </li>
+              </ul>
+            </div>
+            {liens.length > 0 && (
+              <nav aria-label="Pied de page">
+                <p className={titreColonne}>Le site</p>
+                <ul className="mt-4 space-y-2.5">
+                  {liens.map((l) => (
+                    <li key={l.href}>
+                      <a href={l.href} className={lien}>
+                        {l.label}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </nav>
+            )}
+            {amis.length > 0 && (
+              <div>
+                <p className={titreColonne}>{c.pied.amisTitre || 'Collègues'}</p>
+                <Collegues pied={c.pied} ton="sombre" className="mt-4" />
+              </div>
+            )}
+          </div>
+
+          {/* Les organismes : leur logo mène à leur site. */}
+          {c.pied.organismes.length > 0 && (
+            <div className="flex flex-wrap items-center gap-x-6 gap-y-4 border-t border-white/[0.12] pt-8">
+              {c.pied.organismesTitre && <p className={titreColonne}>{c.pied.organismesTitre}</p>}
+              <Organismes pied={c.pied} logos={c.logosOrganismes} ton="sombre" />
+            </div>
           )}
-          {c.email && (
-            <a href={`mailto:${c.email}`} className="inline-flex items-center gap-2 rounded-full bg-white/10 px-4 py-2 text-[14px] text-white/85 transition-colors hover:bg-white/15">
-              <Mail className="h-3.5 w-3.5" />
-              {c.email}
-            </a>
-          )}
-        </Revele>
-        {/* Organismes, déontologie, collègues : tout se règle dans Réglages › Pied de page. */}
-        <PiedExtras pied={c.pied} logos={c.logosOrganismes} ton="sombre" className="mt-24" />
-        <div className="mt-16 flex flex-wrap items-end justify-between gap-8 border-t border-white/15 pt-8 text-[14px] text-white/60">
-          <span className="flex items-center gap-3 text-[26px] font-bold tracking-[-0.03em] text-white">
-            <span className="grid h-12 w-12 place-items-center rounded-[16px] bg-white">
-              <LogoMark src={c.logo} className="h-9 w-9" />
-            </span>
+
+          <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 text-[13px] text-white/45">
             <span>
-              Anasawi<span className="text-[var(--ad-or)]">.</span>
+              © {new Date().getFullYear()} {c.nom} ·{' '}
+              <Link href="/" className="underline-offset-2 hover:text-white hover:underline">
+                {t.mention}
+              </Link>
             </span>
-          </span>
-          <nav aria-label="Pied de page" className="flex flex-wrap gap-x-6 gap-y-2">
-            {liens.map((l) => (
-              <a key={l.href} href={l.href} className="-my-1.5 py-1.5 transition-colors hover:text-white">
-                {l.label}
-              </a>
-            ))}
-          </nav>
-          <span>
-            © {new Date().getFullYear()} {c.nom} ·{' '}
-            <Link href="/" className="underline-offset-2 hover:text-white hover:underline">
-              {t.mention}
-            </Link>
-          </span>
+            <LiensLegaux base="/moderne" ton="sombre" />
+          </div>
         </div>
-        <LiensLegaux base="/moderne" ton="sombre" className="mt-5 justify-center text-[13px] text-white/45 md:justify-end" />
-      </div>
-    </footer>
+      </footer>
     </div>
   )
 }

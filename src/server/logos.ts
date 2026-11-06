@@ -117,6 +117,10 @@ export async function trouverLogo(site: string): Promise<LogoTrouve> {
 
   const sharp = (await import('sharp')).default
   let derniere = 'Aucun logo trouvé sur la page.'
+  /* Un logo tout blanc (fait pour un bandeau foncé) serait invisible sur
+     sa carte blanche : on garde l'image en réserve, on cherche mieux, et
+     à défaut on l'assombrit. */
+  let reserve: LogoTrouve | null = null
   for (const adresse of candidats(html, page.url)) {
     try {
       const image = await telecharger(adresse, MAX_IMAGE)
@@ -127,10 +131,37 @@ export async function trouverLogo(site: string): Promise<LogoTrouve> {
         .png({ compressionLevel: 9 })
         .toBuffer({ resolveWithObject: true })
       if (sortie.info.width < 24 || sortie.info.height < 16) continue
-      return { png: sortie.data, largeur: sortie.info.width, hauteur: sortie.info.height, source: adresse }
+      const trouve = { png: sortie.data, largeur: sortie.info.width, hauteur: sortie.info.height, source: adresse }
+      if (await toutBlanc(sharp, sortie.data)) {
+        reserve ??= trouve
+        continue
+      }
+      return trouve
     } catch (erreur) {
       derniere = (erreur as Error).message
     }
   }
+  if (reserve) {
+    /* Blanc sur transparent : on le passe en bleu nuit (la couleur des textes du site). */
+    const { data: alpha, info } = await sharp(reserve.png).ensureAlpha().extractChannel(3).raw().toBuffer({ resolveWithObject: true })
+    const nuit = await sharp({ create: { width: info.width, height: info.height, channels: 3, background: { r: 46, g: 66, b: 79 } } })
+      .joinChannel(alpha, { raw: { width: info.width, height: info.height, channels: 1 } })
+      .png({ compressionLevel: 9 })
+      .toBuffer()
+    return { ...reserve, png: nuit }
+  }
   throw new Error(derniere)
+}
+
+/** Le logo est-il (presque) tout blanc là où il est visible ? */
+async function toutBlanc(sharp: (typeof import('sharp'))['default'], png: Buffer): Promise<boolean> {
+  const { data, info } = await sharp(png).ensureAlpha().raw().toBuffer({ resolveWithObject: true })
+  let visibles = 0
+  let clarte = 0
+  for (let i = 0; i < data.length; i += info.channels) {
+    if (data[i + 3]! < 40) continue
+    visibles++
+    clarte += (data[i]! + data[i + 1]! + data[i + 2]!) / 3
+  }
+  return visibles > 0 && clarte / visibles > 235
 }
