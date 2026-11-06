@@ -37,7 +37,7 @@ function Cadre({ ton, surtitre, titre, majour, children }: { ton: Ton; surtitre:
   return (
     <article
       className={cn(
-        'mx-auto w-full max-w-[820px] px-[6vw] pb-28 pt-36 md:px-0',
+        'mx-auto w-full max-w-[880px] px-6 pb-28 pt-36 sm:px-10',
         '[&_h2]:mt-12 [&_h2]:mb-3 [&_h2]:leading-[1.15] [&_p]:mt-3 [&_li]:mt-1.5 [&_ul]:mt-3 [&_ul]:list-disc [&_ul]:pl-5 [&_a]:underline [&_a]:underline-offset-[3px]',
         moderne
           ? '[&_h2]:text-[clamp(24px,2.6vw,32px)] [&_p]:text-[16px] [&_p]:leading-[1.75] [&_p]:text-[var(--ad-pierre)] [&_li]:text-[16px] [&_li]:leading-[1.7] [&_li]:text-[var(--ad-pierre)] [&_a]:decoration-[var(--ad-or)] [&_dt]:text-[var(--ad-gris)]'

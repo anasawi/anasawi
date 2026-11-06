@@ -126,7 +126,13 @@ export async function trouverLogo(site: string): Promise<LogoTrouve> {
       const image = await telecharger(adresse, MAX_IMAGE)
       const svg = image.type.includes('svg') || /^\s*(<\?xml|<svg)/.test(image.octets.subarray(0, 200).toString('utf8'))
       if (!svg && !image.type.startsWith('image/')) continue
-      const sortie = await sharp(image.octets, { density: svg ? 300 : 72, limitInputPixels: 40_000_000 })
+      /* Les marges vides autour du logo sont rognées : il remplit sa carte. */
+      const rogne = await sharp(image.octets, { density: svg ? 300 : 72, limitInputPixels: 40_000_000 })
+        .trim({ threshold: 18 })
+        .png()
+        .toBuffer()
+        .catch(() => image.octets)
+      const sortie = await sharp(rogne, { density: svg ? 300 : 72, limitInputPixels: 40_000_000 })
         .resize({ width: 600, height: 300, fit: 'inside', withoutEnlargement: !svg })
         .png({ compressionLevel: 9 })
         .toBuffer({ resolveWithObject: true })
