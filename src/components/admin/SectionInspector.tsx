@@ -843,77 +843,74 @@ export function SectionInspector({
   )
 }
 
-/* ── Fond d'une section moderne : les teintes de la DA, pas une pipette ── */
+/* ── Fond et panneaux d'une section moderne : deux nuanciers identiques ── */
+
+type Teinte<V extends string> = { value: V; hex: string; nom: string }
+
+/** Un nuancier : cinq pastilles de même forme, en colonnes égales, le nom dessous. */
+function Nuancier<V extends string>({ titre, aide, teintes, value, onChange }: { titre: string; aide: string; teintes: readonly Teinte<V>[]; value: V; onChange: (v: V) => void }) {
+  return (
+    <div>
+      <p className="mb-2.5 text-[12.5px] font-medium text-[#6b8186]">{titre}</p>
+      <div role="radiogroup" aria-label={titre} className="grid grid-cols-5 gap-2">
+        {teintes.map((t) => {
+          const actif = value === t.value
+          return (
+            <button key={t.value} type="button" role="radio" aria-checked={actif} title={t.nom} onClick={() => onChange(t.value)} className="group flex min-w-0 flex-col items-center gap-1.5">
+              <span
+                className={
+                  'block h-10 w-10 rounded-full ring-1 ring-black/10 transition-shadow duration-300 ' +
+                  (actif ? 'shadow-[0_0_0_3px_#fff,0_0_0_5px_#176c79]' : 'group-hover:shadow-[0_0_0_3px_#fff,0_0_0_4px_#cfd9db]')
+                }
+                style={{ background: t.hex }}
+              />
+              <span className={'w-full truncate text-center text-[11.5px] leading-4 ' + (actif ? 'font-semibold text-foreground' : 'text-muted-foreground')}>{t.nom}</span>
+            </button>
+          )
+        })}
+      </div>
+      <p className="mt-2 text-[12px] leading-[1.5] text-muted-foreground">{aide}</p>
+    </div>
+  )
+}
 
 const FONDS_MODERNES = [
-  { hex: '#fbf6ee', nom: 'Fond du site' },
-  { hex: '#f5ecdf', nom: 'Sable' },
-  { hex: '#eaf1f4', nom: 'Bleu brume' },
-  { hex: '#e2f3f1', nom: 'Turquoise pâle' },
-  { hex: '#ffffff', nom: 'Blanc' },
+  { value: '#fbf6ee', hex: '#fbf6ee', nom: 'Fond' },
+  { value: '#f5ecdf', hex: '#f5ecdf', nom: 'Sable' },
+  { value: '#eaf1f4', hex: '#eaf1f4', nom: 'Brume' },
+  { value: '#e2f3f1', hex: '#e2f3f1', nom: 'Turquoise' },
+  { value: '#ffffff', hex: '#ffffff', nom: 'Blanc' },
 ] as const
 
 function FondModerne({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
   const courant = (value || '#fbf6ee').toLowerCase()
   return (
-    <div>
-      <p className="mb-2 text-[12.5px] font-medium text-[#6b8186]">Fond de la section</p>
-      <div role="radiogroup" aria-label="Fond de la section" className="flex flex-wrap gap-2">
-        {FONDS_MODERNES.map((f) => {
-          const actif = courant === f.hex || (f.hex === '#fbf6ee' && courant === '#fcfaf7')
-          return (
-            <button
-              key={f.hex}
-              type="button"
-              role="radio"
-              aria-checked={actif}
-              title={f.nom}
-              onClick={() => onChange(f.hex)}
-              className="group flex flex-col items-center gap-1.5"
-            >
-              <span
-                className={'grid h-11 w-11 place-items-center rounded-full ring-1 ring-black/10 transition-shadow ' + (actif ? 'shadow-[0_0_0_3px_#fff,0_0_0_5px_#176c79]' : 'group-hover:shadow-[0_0_0_3px_#fff,0_0_0_4px_#cfd9db]')}
-                style={{ background: f.hex }}
-              />
-              <span className={'text-[11.5px] ' + (actif ? 'font-semibold text-foreground' : 'text-muted-foreground')}>{f.nom}</span>
-            </button>
-          )
-        })}
-      </div>
-      <p className="mt-2 text-[12px] leading-[1.5] text-muted-foreground">Les teintes suivent les couleurs choisies dans Réglages › Apparence.</p>
-    </div>
+    <Nuancier
+      titre="Fond de la section"
+      aide="Les teintes suivent les couleurs choisies dans Réglages › Apparence."
+      teintes={FONDS_MODERNES}
+      value={(courant === '#fcfaf7' ? '#fbf6ee' : courant) as (typeof FONDS_MODERNES)[number]['value']}
+      onChange={onChange}
+    />
   )
 }
 
-/* ── Teinte des panneaux et cadres d'une section moderne ─────────────── */
-
 const PANNEAUX = [
+  { value: 'ivoire', hex: '#fbf6ee', nom: 'Fond' },
   { value: 'sable', hex: '#f5ecdf', nom: 'Sable' },
-  { value: 'brume', hex: '#eaf1f4', nom: 'Bleu brume' },
-  { value: 'turquoise', hex: '#e2f3f1', nom: 'Turquoise pâle' },
+  { value: 'brume', hex: '#eaf1f4', nom: 'Brume' },
+  { value: 'turquoise', hex: '#e2f3f1', nom: 'Turquoise' },
   { value: 'blanc', hex: '#ffffff', nom: 'Blanc' },
-  { value: 'ivoire', hex: '#fbf6ee', nom: 'Fond du site' },
 ] as const
 
 function PanneauModerne({ value, onChange }: { value: SectionSettings['panneau']; onChange: (v: SectionSettings['panneau']) => void }) {
   return (
-    <div>
-      <p className="mb-2 text-[12.5px] font-medium text-[#6b8186]">Panneaux et cadres</p>
-      <div role="radiogroup" aria-label="Panneaux et cadres" className="flex flex-wrap gap-2">
-        {PANNEAUX.map((p) => {
-          const actif = value === p.value
-          return (
-            <button key={p.value} type="button" role="radio" aria-checked={actif} title={p.nom} onClick={() => onChange(p.value)} className="group flex flex-col items-center gap-1.5">
-              <span
-                className={'grid h-11 w-11 place-items-center rounded-[12px] ring-1 ring-black/10 transition-shadow ' + (actif ? 'shadow-[0_0_0_3px_#fff,0_0_0_5px_#176c79]' : 'group-hover:shadow-[0_0_0_3px_#fff,0_0_0_4px_#cfd9db]')}
-                style={{ background: p.hex }}
-              />
-              <span className={'text-[11.5px] ' + (actif ? 'font-semibold text-foreground' : 'text-muted-foreground')}>{p.nom}</span>
-            </button>
-          )
-        })}
-      </div>
-      <p className="mt-2 text-[12px] leading-[1.5] text-muted-foreground">La couleur des blocs posés dans la section : le cadre derrière une photo, les cartes de couleur, les étiquettes.</p>
-    </div>
+    <Nuancier
+      titre="Panneaux et cadres"
+      aide="La couleur des blocs posés dans la section : le cadre derrière une photo, les cartes de couleur, les étiquettes."
+      teintes={PANNEAUX}
+      value={value}
+      onChange={onChange}
+    />
   )
 }
