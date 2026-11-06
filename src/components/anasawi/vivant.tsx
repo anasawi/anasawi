@@ -39,7 +39,7 @@ export const Edition = createContext(false)
 export function ModeEdition({ actif, children }: { actif: boolean; children: React.ReactNode }) {
   return (
     <Edition.Provider value={actif}>
-      <div className="ad" style={actif ? ({ '--ad-vh': '8.6px' } as React.CSSProperties) : undefined}>
+      <div className="ad" data-edition={actif ? '' : undefined} style={actif ? ({ '--ad-vh': '8.6px' } as React.CSSProperties) : undefined}>
         {children}
       </div>
     </Edition.Provider>

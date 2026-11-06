@@ -1115,3 +1115,13 @@
 .ad [data-panneau='ivoire'] {
   --ad-sable: var(--ad-ivoire);
 }
+
+/* Dans l'aperçu de l'éditeur, un changement de couleur (fond, panneaux,
+   couleurs du site) doit être NET : les couleurs ne s'animent pas — sans
+   quoi certains éléments fondent pendant que d'autres basculent d'un
+   coup. Les mouvements, eux, gardent leurs transitions. */
+.ad[data-edition] *,
+.ad[data-edition] *::before,
+.ad[data-edition] *::after {
+  transition-property: transform, translate, scale, rotate, opacity, clip-path, grid-template-rows, width, height, stroke-dashoffset, filter !important;
+}
