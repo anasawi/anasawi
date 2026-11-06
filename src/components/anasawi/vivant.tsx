@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowUpRight, Check, Menu, Plus, X } from 'lucide-react'
+import { ArrowUpRight, Check, Menu, Plus, Sparkles, X } from 'lucide-react'
 import Image from 'next/image'
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
@@ -1453,6 +1453,14 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
               </a>
             ))}
           </nav>
+          {/* TEMPORAIRE : accès au catalogue des modèles, le temps de les choisir. À retirer ensuite. */}
+          <a
+            href="/moderne/catalogue"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#e2f3f1] px-3.5 py-2 text-[13px] font-semibold text-[#2f8582] transition-colors duration-500 ease-[var(--ad-ease)] hover:bg-[#4fa9a6] hover:text-white max-lg:hidden"
+          >
+            <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
+            Modèles
+          </a>
           <BasculeVersion actuelle="moderne" className="mr-1 text-[var(--ad-pierre)] max-lg:hidden" />
           <Aimant force={0.25} className="max-lg:hidden">
           <a
@@ -1512,7 +1520,12 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
           ))}
         </nav>
         <BasculeVersion actuelle="moderne" className="mt-8 self-start text-[var(--ad-pierre)]" />
-        <a href={rdv} onClick={() => setOuvert(false)} tabIndex={ouvert ? 0 : -1} className="mt-6 rounded-full bg-[var(--ad-nuit)] py-4 text-center text-[16px] font-medium text-white">
+        {/* TEMPORAIRE : le catalogue des modèles. */}
+        <a href="/moderne/catalogue" tabIndex={ouvert ? 0 : -1} className="mt-6 inline-flex items-center justify-center gap-2 rounded-full bg-[#e2f3f1] py-3.5 text-[15px] font-semibold text-[#2f8582]">
+          <Sparkles className="h-4 w-4" strokeWidth={1.8} />
+          Voir tous les modèles
+        </a>
+        <a href={rdv} onClick={() => setOuvert(false)} tabIndex={ouvert ? 0 : -1} className="mt-3 rounded-full bg-[var(--ad-nuit)] py-4 text-center text-[16px] font-medium text-white">
           Prendre rendez-vous
         </a>
       </div>
