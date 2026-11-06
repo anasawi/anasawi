@@ -104,6 +104,8 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
     let racine: HTMLDivElement | null = null
     let observateur: MutationObserver | null = null
     let copies: Node[] = []
+    /** La copie (dans le cadre) de chaque feuille du parent. */
+    const copieDe = new WeakMap<Node, Node>()
 
     const preparer = () => {
       const doc = frame.contentDocument
@@ -125,19 +127,44 @@ export const StageFrame = forwardRef<StageFrameHandle, Props>(function StageFram
         'html,body{margin:0;padding:0}body{overflow:hidden}'
       doc.head.appendChild(base)
 
-      /* Copie des feuilles de style du parent — et recopie à chaque
-         changement (rechargement à chaud en développement). */
+      /* Copie des feuilles de style du parent, tenue à jour à chaque
+         changement de <head> (rechargement à chaud, styles ajoutés par
+         l'outil). Synchronisation FINE : une feuille déjà copiée et
+         inchangée reste en place. Tout retirer puis tout recopier faisait
+         clignoter l'aperçu (les <link> se rechargent : la page restait
+         une fraction de seconde sans mise en forme). */
       const recopier = () => {
-        for (const n of copies) n.parentNode?.removeChild(n)
-        copies = []
-        const sources = document.querySelectorAll(
-          'head link[rel="stylesheet"], head style',
+        const sources = Array.from(
+          document.querySelectorAll<HTMLLinkElement | HTMLStyleElement>('head link[rel="stylesheet"], head style'),
         )
+        const vivantes = new Set<Node>()
         for (const source of sources) {
+          const deja = copieDe.get(source)
+          if (deja && deja.parentNode === doc.head) {
+            if (source instanceof HTMLStyleElement) {
+              if (deja.textContent !== source.textContent) deja.textContent = source.textContent
+            } else if ((deja as HTMLLinkElement).href !== source.href) {
+              /* Nouvelle adresse : la nouvelle feuille se charge avant que
+                 l'ancienne parte — pas de trou. */
+              const nouvelle = source.cloneNode(true) as HTMLLinkElement
+              const ancienne = deja
+              nouvelle.addEventListener('load', () => ancienne.parentNode?.removeChild(ancienne), { once: true })
+              doc.head.appendChild(nouvelle)
+              copieDe.set(source, nouvelle)
+              vivantes.add(nouvelle)
+              vivantes.add(ancienne)
+              continue
+            }
+            vivantes.add(deja)
+            continue
+          }
           const copie = source.cloneNode(true)
           doc.head.appendChild(copie)
-          copies.push(copie)
+          copieDe.set(source, copie)
+          vivantes.add(copie)
         }
+        for (const n of copies) if (!vivantes.has(n)) n.parentNode?.removeChild(n)
+        copies = Array.from(vivantes)
       }
       recopier()
       observateur?.disconnect()
