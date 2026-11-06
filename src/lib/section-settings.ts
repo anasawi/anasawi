@@ -58,6 +58,8 @@ export const sectionSettingsSchema = z
     ornamentSize: z.enum(ORNAMENT_SIZES).default('moyen'),
     /** Bord bas de la section — dessiné en haut de la suivante. */
     edge: z.enum(SECTION_EDGES).default('aucun'),
+    /** Site moderne : la teinte des panneaux et cadres de la section (le « sable » par défaut). */
+    panneau: z.enum(['sable', 'brume', 'turquoise', 'blanc', 'ivoire']).default('sable'),
   })
   .strict()
 
@@ -71,6 +73,7 @@ export const DEFAULT_SECTION_SETTINGS: SectionSettings = {
   ornamentPosition: 'haut-droite',
   ornamentSize: 'moyen',
   edge: 'aucun',
+  panneau: 'sable',
 }
 
 export function parseSectionSettings(input: unknown): SectionSettings {

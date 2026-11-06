@@ -515,6 +515,8 @@ export function SectionRootView({
         data-block-root={editable ? 'true' : undefined}
         data-block-inactive={editable && !section.isActive ? 'true' : undefined}
         className={cn('relative', nodeClass(section.id), editable && !section.isActive && 'opacity-40')}
+        data-fond-moderne={fondModerne(section.backgroundColor) ? '' : undefined}
+        data-panneau={parseSectionSettings(section.settings).panneau}
         style={{ background: fondModerne(section.backgroundColor) }}
       >
         {renderBlock(section, index, env)}

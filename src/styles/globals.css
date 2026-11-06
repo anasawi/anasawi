@@ -1088,3 +1088,30 @@
     transform: translateY(6px);
   }
 }
+
+/* SECTIONS MODERNES — réglages de la section (Apparence) :
+   - un fond choisi : le bloc (son enveloppe `.ad`) devient transparent, le
+     fond de la section se voit ;
+   - la teinte des panneaux et cadres (le « sable » de la charte, par
+     défaut) : on la remplace pour toute la section. */
+[data-fond-moderne] .ad {
+  background-color: transparent;
+}
+[data-panneau='brume'] .ad,
+.ad [data-panneau='brume'] {
+  --ad-sable: var(--ad-brume);
+  --ad-sable-fonce: color-mix(in srgb, var(--ad-bleu) 22%, white);
+}
+[data-panneau='turquoise'] .ad,
+.ad [data-panneau='turquoise'] {
+  --ad-sable: var(--ad-touche-pale, #e2f3f1);
+  --ad-sable-fonce: color-mix(in srgb, var(--ad-or) 35%, white);
+}
+[data-panneau='blanc'] .ad,
+.ad [data-panneau='blanc'] {
+  --ad-sable: #ffffff;
+}
+[data-panneau='ivoire'] .ad,
+.ad [data-panneau='ivoire'] {
+  --ad-sable: var(--ad-ivoire);
+}

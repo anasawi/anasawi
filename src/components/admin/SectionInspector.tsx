@@ -554,7 +554,10 @@ export function SectionInspector({
               )}
 
               {isRoot && block.theme === 'moderne' && (
-                <FondModerne value={meta.backgroundColor} onChange={(hex) => setMeta((m) => ({ ...m, backgroundColor: hex }))} />
+                <>
+                  <FondModerne value={meta.backgroundColor} onChange={(hex) => setMeta((m) => ({ ...m, backgroundColor: hex }))} />
+                  <PanneauModerne value={anim.panneau} onChange={(panneau) => writeAnim({ panneau })} />
+                </>
               )}
 
               {isRoot && block.theme !== 'moderne' && (
@@ -878,6 +881,39 @@ function FondModerne({ value, onChange }: { value: string; onChange: (hex: strin
         })}
       </div>
       <p className="mt-2 text-[12px] leading-[1.5] text-muted-foreground">Les teintes suivent les couleurs choisies dans Réglages › Apparence.</p>
+    </div>
+  )
+}
+
+/* ── Teinte des panneaux et cadres d'une section moderne ─────────────── */
+
+const PANNEAUX = [
+  { value: 'sable', hex: '#f5ecdf', nom: 'Sable' },
+  { value: 'brume', hex: '#eaf1f4', nom: 'Bleu brume' },
+  { value: 'turquoise', hex: '#e2f3f1', nom: 'Turquoise pâle' },
+  { value: 'blanc', hex: '#ffffff', nom: 'Blanc' },
+  { value: 'ivoire', hex: '#fbf6ee', nom: 'Fond du site' },
+] as const
+
+function PanneauModerne({ value, onChange }: { value: SectionSettings['panneau']; onChange: (v: SectionSettings['panneau']) => void }) {
+  return (
+    <div>
+      <p className="mb-2 text-[12.5px] font-medium text-[#6b8186]">Panneaux et cadres</p>
+      <div role="radiogroup" aria-label="Panneaux et cadres" className="flex flex-wrap gap-2">
+        {PANNEAUX.map((p) => {
+          const actif = value === p.value
+          return (
+            <button key={p.value} type="button" role="radio" aria-checked={actif} title={p.nom} onClick={() => onChange(p.value)} className="group flex flex-col items-center gap-1.5">
+              <span
+                className={'grid h-11 w-11 place-items-center rounded-[12px] ring-1 ring-black/10 transition-shadow ' + (actif ? 'shadow-[0_0_0_3px_#fff,0_0_0_5px_#176c79]' : 'group-hover:shadow-[0_0_0_3px_#fff,0_0_0_4px_#cfd9db]')}
+                style={{ background: p.hex }}
+              />
+              <span className={'text-[11.5px] ' + (actif ? 'font-semibold text-foreground' : 'text-muted-foreground')}>{p.nom}</span>
+            </button>
+          )
+        })}
+      </div>
+      <p className="mt-2 text-[12px] leading-[1.5] text-muted-foreground">La couleur des blocs posés dans la section : le cadre derrière une photo, les cartes de couleur, les étiquettes.</p>
     </div>
   )
 }
