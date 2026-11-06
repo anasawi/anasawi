@@ -5,6 +5,7 @@ import type { BlockContext, BlockDefinition } from '../types'
 import { construireContenu, type Contenu } from './contenu'
 import { photosPromenade, TEXTES, textesDe } from './textes'
 import {
+  cabinetParDefaut,
   EnPratique,
   Horizon,
   Phrase,
@@ -16,6 +17,7 @@ import {
   SectionConversation,
   SectionPromenade,
   SectionSeuil,
+  tasseParDefaut,
 } from '@/components/anasawi/sections'
 import { ModeEdition } from '@/components/anasawi/vivant'
 import type { Media } from '@/server/db/schema'
@@ -84,6 +86,7 @@ const seuilSchema = z.object({ rempli,
   intro: t,
   accroche: t,
   mediaId: media,
+  tasseId: media,
   pastille2: t,
   pastille3: t,
   bouton: t,
@@ -92,14 +95,15 @@ const seuilSchema = z.object({ rempli,
 })
 export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
   ...commun,
-  label: 'Moderne — Le seuil',
+  label: 'Le seuil',
   description: 'L’accueil : votre nom, quelques mots, et la porte du cabinet qui s’ouvre — avec une tasse dont la vapeur monte.',
   schema: seuilSchema,
   fields: [
     field.text('surtitre', 'Étiquette au-dessus du nom', { help: SUIT }),
     field.text('nom', 'Nom', { help: 'Le premier mot en noir, la suite en accent.' }),
     field.textarea('intro', 'Présentation (sous le nom)'),
-    field.media('mediaId', 'Photo de la porte'),
+    field.media('mediaId', 'Photo de la grande porte'),
+    field.media('tasseId', 'Photo de la petite porte', { help: 'La petite porte posée devant la grande (une tasse, un détail du cabinet).' }),
     field.text('pastille2', 'Pastille du haut', { help: 'Vide : pastille masquée.' }),
     field.text('pastille3', 'Pastille du bas', { help: 'Vide : pastille masquée.' }),
     field.text('bouton', 'Bouton principal'),
@@ -107,15 +111,16 @@ export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
     field.text('invitation', 'Invitation à défiler'),
   ],
   defaults: vides(seuilSchema),
-  preremplir: (c) => ({ rempli: true, ...TEXTES.mSeuil(c), mediaId: (c.ambiance ?? c.portrait)?.id ?? null }),
+  preremplir: (c) => ({ rempli: true, ...TEXTES.mSeuil(c), mediaId: (c.ambiance ?? c.portrait)?.id ?? null, tasseId: tasseParDefaut(c)?.id ?? null }),
   dataSource: { label: 'Le métier, la ville et les horaires (pastille « ouvert aujourd’hui »)', href: '/admin/reglages' },
   Component: ({ data, ctx }) => {
     const base = contenuDe(ctx)
     const photo = data.mediaId ? ctx.resolveMedia(data.mediaId) : null
     const c: Contenu = { ...base, ambiance: photo ?? base.ambiance }
+    const tasse = data.tasseId ? ctx.resolveMedia(data.tasseId) : null
     return (
       <Enveloppe ctx={ctx}>
-        <SectionSeuil c={c} t={textesDe('mSeuil', base, data)} />
+        <SectionSeuil c={c} t={textesDe('mSeuil', base, data)} tasse={tasse ?? tasseParDefaut(c)} />
       </Enveloppe>
     )
   },
@@ -126,7 +131,7 @@ export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
 const respirationSchema = z.object({ rempli, surtitre: t, titre: t, texte: t, bouton: t })
 export const mRespirationBlock: BlockDefinition<typeof respirationSchema> = {
   ...commun,
-  label: 'Moderne — Respiration',
+  label: 'Respiration',
   description: 'Un cercle qui respire, et un exercice guidé d’une minute.',
   schema: respirationSchema,
   fields: [
@@ -154,10 +159,12 @@ const rencontreSchema = z.object({ rempli,
   citation: t,
   anneau: t,
   mediaId: media,
+  cabinetId: media,
+  legendeCabinet: t,
 })
 export const mRencontreBlock: BlockDefinition<typeof rencontreSchema> = {
   ...commun,
-  label: 'Moderne — Rencontre',
+  label: 'Rencontre',
   description: 'Votre portrait dans sa porte, une petite porte sur le cabinet, votre présentation, la citation et votre signature.',
   schema: rencontreSchema,
   fields: [
@@ -166,16 +173,22 @@ export const mRencontreBlock: BlockDefinition<typeof rencontreSchema> = {
     field.richtext('texte', 'Présentation'),
     field.textarea('citation', 'Citation', { help: 'Vide : pas de citation.' }),
     field.media('mediaId', 'Portrait'),
+    field.media('cabinetId', 'Petite photo du cabinet', { help: 'La petite porte posée devant votre portrait.' }),
+    field.text('legendeCabinet', 'Légende de la petite photo', { help: 'Vide : pas de légende.' }),
     field.text('menu', 'Dans le menu', { help: MENU }),
   ],
   defaults: vides(rencontreSchema),
-  preremplir: (c) => ({ rempli: true, ...TEXTES.mRencontre(c), mediaId: c.portrait?.id ?? null }),
+  preremplir: (c) => ({ rempli: true, ...TEXTES.mRencontre(c), mediaId: c.portrait?.id ?? null, cabinetId: cabinetParDefaut(c)?.id ?? null }),
   Component: ({ data, ctx }) => {
     const base = contenuDe(ctx)
     const portrait = data.mediaId ? ctx.resolveMedia(data.mediaId) : null
     return (
       <Enveloppe ctx={ctx}>
-        <Rencontre c={{ ...base, portrait: portrait ?? base.portrait }} t={textesDe('mRencontre', base, data)} />
+        <Rencontre
+          c={{ ...base, portrait: portrait ?? base.portrait }}
+          t={textesDe('mRencontre', base, data)}
+          cabinet={(data.cabinetId ? ctx.resolveMedia(data.cabinetId) : null) ?? cabinetParDefaut(base)}
+        />
       </Enveloppe>
     )
   },
@@ -192,7 +205,7 @@ const cheminSchema = z.object({ rempli,
 })
 export const mCheminBlock: BlockDefinition<typeof cheminSchema> = {
   ...commun,
-  label: 'Moderne — Le chemin',
+  label: 'Le chemin',
   description: 'Vos étapes reliées par un trait qui se dessine à la lecture.',
   schema: cheminSchema,
   fields: [
@@ -216,7 +229,7 @@ export const mCheminBlock: BlockDefinition<typeof cheminSchema> = {
 const archesSchema = z.object({ rempli, menu: t, surtitre: t, titre: t, texte: t, bouton: t })
 export const mArchesBlock: BlockDefinition<typeof archesSchema> = {
   ...commun,
-  label: 'Moderne — Accompagnements',
+  label: 'Accompagnements',
   description: 'Une carte par accompagnement ; survolée, elle s’ouvre en fiche.',
   schema: archesSchema,
   fields: [
@@ -250,7 +263,7 @@ const pratiqueSchema = z.object({ rempli,
 })
 export const mEnPratiqueBlock: BlockDefinition<typeof pratiqueSchema> = {
   ...commun,
-  label: 'Moderne — En pratique',
+  label: 'En pratique',
   description: 'Le plan, les séances, la visio, les jours : tout ce qu’on cherche avant d’appeler.',
   schema: pratiqueSchema,
   fields: [
@@ -278,7 +291,7 @@ export const mEnPratiqueBlock: BlockDefinition<typeof pratiqueSchema> = {
 const phraseSchema = z.object({ rempli, texte: t, auteur: t })
 export const mPhraseBlock: BlockDefinition<typeof phraseSchema> = {
   ...commun,
-  label: 'Moderne — Phrase',
+  label: 'Phrase',
   description: 'Une conviction, en très grand, qui s’allume mot à mot.',
   schema: phraseSchema,
   fields: [
@@ -296,10 +309,10 @@ export const mPhraseBlock: BlockDefinition<typeof phraseSchema> = {
 
 /* ── Promenade ────────────────────────────────────────────────────────── */
 
-const promenadeSchema = z.object({ rempli, menu: t, titre: t, legende: t, photos: z.array(z.string()).default([]) })
+const promenadeSchema = z.object({ rempli, menu: t, surtitre: t, titre: t, legende: t, photos: z.array(z.string()).default([]) })
 export const mPromenadeBlock: BlockDefinition<typeof promenadeSchema> = {
   ...commun,
-  label: 'Moderne — Le cabinet',
+  label: 'Le cabinet',
   description: 'Les photos du cabinet dans des portes en arche qui défilent très lentement, et s’arrêtent au survol.',
   schema: promenadeSchema,
   fields: [
@@ -327,7 +340,7 @@ export const mPromenadeBlock: BlockDefinition<typeof promenadeSchema> = {
 const conversationSchema = z.object({ rempli, menu: t, surtitre: t, titre: t, signature: t, suivante: t })
 export const mConversationBlock: BlockDefinition<typeof conversationSchema> = {
   ...commun,
-  label: 'Moderne — Questions',
+  label: 'Questions',
   description: 'Vos questions fréquentes, comme une messagerie.',
   schema: conversationSchema,
   fields: [
@@ -365,7 +378,7 @@ const rdvSchema = z.object({ rempli,
 })
 export const mRendezVousBlock: BlockDefinition<typeof rdvSchema> = {
   ...commun,
-  label: 'Moderne — Rendez-vous',
+  label: 'Rendez-vous',
   description: 'La semaine allumée, vos coordonnées, et une lettre plutôt qu’un formulaire.',
   schema: rdvSchema,
   fields: [
@@ -394,10 +407,10 @@ export const mRendezVousBlock: BlockDefinition<typeof rdvSchema> = {
 
 /* ── Pied de page ─────────────────────────────────────────────────────── */
 
-const horizonSchema = z.object({ rempli, titre: t, bouton: t, mention: t })
+const horizonSchema = z.object({ rempli, titre: t, bouton: t, mention: t, colonneContact: t, colonneSite: t, lienMessage: t })
 export const mHorizonBlock: BlockDefinition<typeof horizonSchema> = {
   ...commun,
-  label: 'Moderne — Pied de page',
+  label: 'Pied de page',
   description: 'Le grand mot de la fin, le rendez-vous, vos coordonnées et le menu.',
   schema: horizonSchema,
   piedDePage: true,
@@ -405,10 +418,13 @@ export const mHorizonBlock: BlockDefinition<typeof horizonSchema> = {
     field.textarea('titre', 'Grand titre', { help: TITRE }),
     field.text('bouton', 'Bouton'),
     field.text('mention', 'Lien vers le site classique'),
+    field.text('colonneContact', 'Titre de la colonne « contact »'),
+    field.text('lienMessage', 'Lien vers le formulaire'),
+    field.text('colonneSite', 'Titre de la colonne « menu »'),
   ],
   defaults: vides(horizonSchema),
   preremplir: () => ({ rempli: true, ...TEXTES.mHorizon() }),
-  dataSource: { label: 'Téléphone, e-mail et logo', href: '/admin/reglages' },
+  dataSource: { label: 'Téléphone, e-mail, organismes et collègues', href: '/admin/reglages#pied' },
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (

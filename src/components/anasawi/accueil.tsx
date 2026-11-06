@@ -271,6 +271,7 @@ export function RencontreDouce({
   signature,
   portrait,
   cabinet,
+  legendeCabinet = 'Le cabinet, le matin',
 }: {
   surtitre: string
   titre: string
@@ -279,6 +280,8 @@ export function RencontreDouce({
   signature: string
   portrait: Media | null
   cabinet: Media | null
+  /** La légende sous la petite porte du cabinet (vide : pas de légende). */
+  legendeCabinet?: string
 }) {
   const [ref, vu] = useVu<HTMLElement>()
   const lignes = titre.split('\n').filter((l) => l.trim())
@@ -293,7 +296,7 @@ export function RencontreDouce({
           {cabinet && (
             <figure className="absolute -bottom-10 -right-3 w-[42%] max-w-[180px] lg:-right-16" style={apparait(vu, 1)}>
               <Porte media={cabinet} vu={vu} delai={0.8} chambranle="aucun" lisere sizes="180px" className="aspect-[3/4] w-full" />
-              <figcaption className="mt-3 whitespace-nowrap text-center font-[family-name:var(--ad-titre)] text-[15px] italic text-[var(--ad-pierre)]">Le cabinet, le matin</figcaption>
+              {legendeCabinet && <figcaption className="mt-3 whitespace-nowrap text-center font-[family-name:var(--ad-titre)] text-[15px] italic text-[var(--ad-pierre)]">{legendeCabinet}</figcaption>}
             </figure>
           )}
         </div>

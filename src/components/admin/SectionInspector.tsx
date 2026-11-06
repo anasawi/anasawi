@@ -553,7 +553,11 @@ export function SectionInspector({
                 />
               )}
 
-              {isRoot && (
+              {isRoot && block.theme === 'moderne' && (
+                <FondModerne value={meta.backgroundColor} onChange={(hex) => setMeta((m) => ({ ...m, backgroundColor: hex }))} />
+              )}
+
+              {isRoot && block.theme !== 'moderne' && (
                 <>
                   <ColorPicker
                     label="Couleur de fond"
@@ -833,5 +837,47 @@ export function SectionInspector({
         </p>
       </div>
     </>
+  )
+}
+
+/* ── Fond d'une section moderne : les teintes de la DA, pas une pipette ── */
+
+const FONDS_MODERNES = [
+  { hex: '#fbf6ee', nom: 'Fond du site' },
+  { hex: '#f5ecdf', nom: 'Sable' },
+  { hex: '#eaf1f4', nom: 'Bleu brume' },
+  { hex: '#e2f3f1', nom: 'Turquoise pâle' },
+  { hex: '#ffffff', nom: 'Blanc' },
+] as const
+
+function FondModerne({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
+  const courant = (value || '#fbf6ee').toLowerCase()
+  return (
+    <div>
+      <p className="mb-2 text-[12.5px] font-medium text-[#6b8186]">Fond de la section</p>
+      <div role="radiogroup" aria-label="Fond de la section" className="flex flex-wrap gap-2">
+        {FONDS_MODERNES.map((f) => {
+          const actif = courant === f.hex || (f.hex === '#fbf6ee' && courant === '#fcfaf7')
+          return (
+            <button
+              key={f.hex}
+              type="button"
+              role="radio"
+              aria-checked={actif}
+              title={f.nom}
+              onClick={() => onChange(f.hex)}
+              className="group flex flex-col items-center gap-1.5"
+            >
+              <span
+                className={'grid h-11 w-11 place-items-center rounded-full ring-1 ring-black/10 transition-shadow ' + (actif ? 'shadow-[0_0_0_3px_#fff,0_0_0_5px_#176c79]' : 'group-hover:shadow-[0_0_0_3px_#fff,0_0_0_4px_#cfd9db]')}
+                style={{ background: f.hex }}
+              />
+              <span className={'text-[11.5px] ' + (actif ? 'font-semibold text-foreground' : 'text-muted-foreground')}>{f.nom}</span>
+            </button>
+          )
+        })}
+      </div>
+      <p className="mt-2 text-[12px] leading-[1.5] text-muted-foreground">Les teintes suivent les couleurs choisies dans Réglages › Apparence.</p>
+    </div>
   )
 }

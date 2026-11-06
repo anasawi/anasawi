@@ -3,6 +3,7 @@ import { PageHeader } from '@/components/admin/PageHeader'
 import { TemplateEditor } from '@/components/admin/TemplateEditor'
 import { PoliceModerne } from '@/components/anasawi/PoliceModerne'
 import { chargerContenu } from '@/components/anasawi/charger'
+import { parseIdentity } from '@/lib/identity'
 import { assurerPageModerne, menuModerne } from '@/server/moderne'
 import {
   getAllFaq,
@@ -61,7 +62,7 @@ export default async function HomeBuilderPage({
 
   return (
     <>
-      {theme === 'moderne' && <PoliceModerne />}
+      {theme === 'moderne' && <PoliceModerne style={parseIdentity(settings.identity).moderne} />}
     <TemplateEditor
       key={`${theme}-${page.id}`}
       pageId={page.id}

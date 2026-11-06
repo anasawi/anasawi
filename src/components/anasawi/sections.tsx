@@ -9,6 +9,7 @@ import { photosPromenade, TEXTES } from '@/blocks/moderne/textes'
 import { LogoMark } from '@/components/site/Logo'
 import { Collegues, LiensLegaux, Organismes } from '@/components/site/PiedExtras'
 import { cn, toE164 } from '@/lib/utils'
+import type { Media } from '@/server/db/schema'
 
 /**
  * Les sections de la nouvelle DA d’Anasawi (couleurs chaudes du classique), responsives. Chacune a une idée, une
@@ -66,11 +67,21 @@ export function Surtitre({ children, clair = false }: { children: React.ReactNod
 
 /* ── Seuil ──────────────────────────────────────────────────────────── */
 
-export function SectionSeuil({ c, t = TEXTES.mSeuil(c) }: P & { t?: T<'mSeuil'> }) {
+/** La petite porte de l'accueil, par défaut : une tasse si la photothèque en a une, sinon une autre photo du cabinet. */
+export function tasseParDefaut(c: Contenu) {
   const photo = c.ambiance ?? c.portrait
-  /* La petite porte : une tasse si la photothèque en a une, sinon une autre photo du cabinet. */
   const autres = c.photos.filter((p) => p.id !== photo?.id && p.id !== c.portrait?.id && !/substitution/i.test(p.alt))
-  const tasse = autres.find((p) => /tasse|th[ée]|caf[ée]|tea|coffee|cup/i.test(p.alt)) ?? autres[0] ?? null
+  return autres.find((p) => /tasse|th[ée]|caf[ée]|tea|coffee|cup/i.test(p.alt)) ?? autres[0] ?? null
+}
+
+/** La petite photo du cabinet de « Rencontre », par défaut : une fenêtre, une plante, une lampe… */
+export function cabinetParDefaut(c: Contenu) {
+  const autres = c.photos.filter((p) => p.id !== c.portrait?.id && p.id !== c.ambiance?.id && !/substitution|tasse|th[ée]/i.test(p.alt))
+  return autres.find((p) => /fen[eê]tre|plante|lampe|lumi[eè]re|porte|fauteuil/i.test(p.alt)) ?? autres[0] ?? null
+}
+
+export function SectionSeuil({ c, t = TEXTES.mSeuil(c), tasse = tasseParDefaut(c) }: P & { t?: T<'mSeuil'>; tasse?: Media | null }) {
+  const photo = c.ambiance ?? c.portrait
   return (
     <Accueil
       surtitre={t.surtitre}
@@ -112,10 +123,7 @@ export function Respiration({ t = TEXTES.mRespiration() }: Partial<P> & { t?: T<
 
 /* ── Rencontre ──────────────────────────────────────────────────────── */
 
-export function Rencontre({ c, t = TEXTES.mRencontre(c) }: P & { t?: T<'mRencontre'> }) {
-  /* Une petite porte sur le cabinet : une fenêtre, une plante, une lampe… */
-  const autres = c.photos.filter((p) => p.id !== c.portrait?.id && p.id !== c.ambiance?.id && !/substitution|tasse|th[ée]/i.test(p.alt))
-  const cabinet = autres.find((p) => /fen[eê]tre|plante|lampe|lumi[eè]re|porte|fauteuil/i.test(p.alt)) ?? autres[0] ?? null
+export function Rencontre({ c, t = TEXTES.mRencontre(c), cabinet = cabinetParDefaut(c) }: P & { t?: T<'mRencontre'>; cabinet?: Media | null }) {
   return (
     <RencontreDouce
       surtitre={t.surtitre}
@@ -125,6 +133,7 @@ export function Rencontre({ c, t = TEXTES.mRencontre(c) }: P & { t?: T<'mRencont
       signature={prenomDe(c.nom)}
       portrait={c.portrait}
       cabinet={cabinet}
+      legendeCabinet={t.legendeCabinet}
     />
   )
 }
@@ -443,7 +452,7 @@ export function Horizon({
               )}
             </div>
             <div>
-              <p className={titreColonne}>Me joindre</p>
+              <p className={titreColonne}>{t.colonneContact}</p>
               <ul className="mt-4 space-y-2.5">
                 {c.telephone && (
                   <li>
@@ -463,14 +472,14 @@ export function Horizon({
                 )}
                 <li>
                   <a href={c.rdv} className={lien}>
-                    Écrire un message
+                    {t.lienMessage}
                   </a>
                 </li>
               </ul>
             </div>
             {liens.length > 0 && (
               <nav aria-label="Pied de page">
-                <p className={titreColonne}>Le site</p>
+                <p className={titreColonne}>{t.colonneSite}</p>
                 <ul className="mt-4 space-y-2.5">
                   {liens.map((l) => (
                     <li key={l.href}>

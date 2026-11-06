@@ -32,8 +32,7 @@ export default async function TyposPage() {
       </h1>
       <p className="mt-4 max-w-[60ch] text-[16px] leading-[1.7] text-[var(--ad-pierre)]">
         {TYPOS.length} associations choisies pour leur douceur, toutes gratuites et libres. Chacune est montrée sur votre vrai
-        contenu. « Essayer sur le site » l’applique à toute la version moderne : vous pouvez alors parcourir les pages, et changer
-        d’un clic grâce au bouton en bas à droite. Notez simplement le numéro de celle que vous préférez.
+        contenu. Le choix se fait dans Réglages › Apparence : il s’applique alors à toute la version moderne, pour tous les visiteurs.
       </p>
 
       <ul className="mt-14 grid gap-6 md:grid-cols-2">
@@ -62,11 +61,11 @@ export default async function TyposPage() {
               {t.esprit}
             </p>
             <Link
-              href={`/moderne?typo=${t.id}`}
+              href="/admin/reglages#apparence"
               className="group mt-6 inline-flex w-fit items-center gap-2 rounded-full bg-[var(--ad-nuit)] py-1.5 pl-4 pr-1.5 text-[13px] font-semibold text-white"
               style={{ fontFamily: 'var(--ad-texte)' }}
             >
-              Essayer sur le site
+              Choisir dans les Réglages
               <span className="grid h-7 w-7 place-items-center rounded-full bg-white/15 transition-transform duration-500 group-hover:rotate-45">
                 <ArrowUpRight className="h-3.5 w-3.5" />
               </span>

@@ -1,12 +1,13 @@
 'use client'
 
-import { ArrowDown, ArrowUp, Download, ExternalLink, ImageOff, Loader2, Plus, Trash2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Download, ExternalLink, GripVertical, ImageOff, Loader2, Plus, Trash2 } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
 import { toast } from 'sonner'
 
 import { Field } from '../form/Field'
 import { SectionCard } from '../form/SectionCard'
+import { CLASSES_GLISSER, useGlisser } from '../form/useGlisser'
 import { MediaPicker } from '../MediaPicker'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -14,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { initiales, type Ami, type Organisme, type Pied } from '@/lib/pied'
 import { recupererLogo } from '@/server/actions/pied'
+import { cn } from '@/lib/utils'
 import type { Media } from '@/server/db/schema'
 
 /**
@@ -108,6 +110,8 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
   }
 
   const manquants = pied.organismes.filter((o) => !o.logoMediaId && o.url).length
+  const glisserOrganismes = useGlisser(pied.organismes, (next) => set('organismes', next))
+  const glisserAmis = useGlisser(pied.amis, (next) => set('amis', next))
 
   return (
     <>
@@ -132,8 +136,11 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
               const logo = medias.find((m) => m.id === o.logoMediaId)
               const charge = enCours.has(o.id)
               return (
-                <li key={o.id} className="rounded-[16px] bg-white p-4 shadow-[0_1px_2px_rgba(22,73,81,0.06)]">
+                <li key={o.id} {...glisserOrganismes.element(index)} className={cn('rounded-[16px] bg-white p-4 shadow-[0_1px_2px_rgba(22,73,81,0.06)]', CLASSES_GLISSER)}>
                   <div className="flex flex-wrap items-start gap-4">
+                    <span {...glisserOrganismes.poignee(index)} className="-ml-1 mt-6 grid h-8 w-6 shrink-0 place-items-center rounded-[6px] text-muted-foreground hover:bg-muted">
+                      <GripVertical className="h-4 w-4" />
+                    </span>
                     <div className="grid h-[72px] w-[120px] shrink-0 place-items-center overflow-hidden rounded-[12px] border border-border bg-white p-2">
                       {logo ? (
                         <Image src={logo.url} alt={logo.alt} width={logo.width || 120} height={logo.height || 60} className="max-h-full w-auto object-contain" />
@@ -223,7 +230,10 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
           {pied.amis.length > 0 && (
             <ul className="grid gap-2">
               {pied.amis.map((a, index) => (
-                <li key={a.id} className="flex flex-wrap items-center gap-2 rounded-[14px] bg-white p-3 shadow-[0_1px_2px_rgba(22,73,81,0.06)]">
+                <li key={a.id} {...glisserAmis.element(index)} className={cn('flex flex-wrap items-center gap-2 rounded-[14px] bg-white p-3 shadow-[0_1px_2px_rgba(22,73,81,0.06)]', CLASSES_GLISSER)}>
+                  <span {...glisserAmis.poignee(index)} className="grid h-8 w-6 shrink-0 place-items-center rounded-[6px] text-muted-foreground hover:bg-muted">
+                    <GripVertical className="h-4 w-4" />
+                  </span>
                   <Input className="min-w-[160px] flex-1" value={a.nom} placeholder="Nom" aria-label={`Nom du collègue ${index + 1}`} onChange={(e) => setAmi(a.id, { nom: e.target.value })} />
                   <Input className="min-w-[160px] flex-1" value={a.description} placeholder="Psychologue à Rennes" aria-label={`Métier du collègue ${index + 1}`} onChange={(e) => setAmi(a.id, { description: e.target.value })} />
                   <Input className="min-w-[200px] flex-[1.4]" value={a.url} placeholder="https://…" aria-label={`Site du collègue ${index + 1}`} onChange={(e) => setAmi(a.id, { url: e.target.value })} />

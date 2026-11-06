@@ -47,7 +47,7 @@ export function modele<S extends Forme>(def: {
     group: 'Sections',
     theme: 'moderne',
     bleed: true,
-    label: `Moderne — ${def.label}`,
+    label: def.label,
     description: def.description,
     schema,
     fields: def.champs,

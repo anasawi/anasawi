@@ -1,8 +1,9 @@
 import type { Metadata } from 'next'
 
-import { EssaiTypo } from '@/components/anasawi/EssaiTypo'
 import { PoliceModerne } from '@/components/anasawi/PoliceModerne'
 import { AdminBar } from '@/components/site/AdminBar'
+import { parseIdentity } from '@/lib/identity'
+import { getSettings } from '@/server/queries'
 
 /**
  * `/moderne` — le site d'Anne dans sa NOUVELLE direction artistique, en
@@ -15,13 +16,14 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 }
 
-export default function ModerneLayout({ children }: { children: React.ReactNode }) {
+export default async function ModerneLayout({ children }: { children: React.ReactNode }) {
+  /* Couleurs, polices et animations : Réglages › Apparence. */
+  const settings = await getSettings()
+  const style = parseIdentity(settings.identity).moderne
   return (
     <div className="ad min-h-screen overflow-x-clip bg-[var(--ad-ivoire)] antialiased">
-      <PoliceModerne />
+      <PoliceModerne style={style} />
       {children}
-      {/* Banc d'essai typographique (temporaire, voir typos.ts). */}
-      <EssaiTypo />
       {/* Connecté : la pastille « Aperçu · Modifier », vers l'éditeur moderne. */}
       <AdminBar editHref="/admin/accueil?theme=moderne" className="bottom-5 lg:bottom-7" />
     </div>

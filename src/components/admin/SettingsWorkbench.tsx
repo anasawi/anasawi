@@ -38,6 +38,7 @@ import { cn } from '@/lib/utils'
 import { updateSettings } from '@/server/actions/content'
 import { updatePied } from '@/server/actions/pied'
 import { lirePied, type Pied } from '@/lib/pied'
+import type { StyleModerne } from '@/lib/style-moderne'
 import { updateIdentity } from '@/server/actions/identity'
 import { updateNavigation } from '@/server/actions/navigation'
 import { updateSeo } from '@/server/actions/seo'
@@ -79,8 +80,8 @@ const ONGLETS = [
   {
     id: 'apparence',
     label: 'Apparence',
-    resume: 'Couleurs et formes',
-    description: 'Les couleurs du site, l’arrondi des boutons, la respiration.',
+    resume: 'Couleurs, polices, animations',
+    description: 'Les couleurs, les polices et les animations du site.',
     icone: Palette,
     tone: PASTELS[2]!,
   },
@@ -244,6 +245,7 @@ export function SettingsWorkbench({
   const [spacing, setSpacing] = useState<Spacing>(
     initialIdentity.spacing ?? 'normal',
   )
+  const [styleModerne, setStyleModerne] = useState<StyleModerne>(initialIdentity.moderne ?? {})
 
   const set = (key: keyof typeof form, value: string) => {
     setDirtyForm(true)
@@ -281,7 +283,7 @@ export function SettingsWorkbench({
           socialLinks: socials.filter((s) => s.label && s.url),
           logoMediaId,
         }),
-        updateIdentity({ palette, buttonRadius, spacing }),
+        updateIdentity({ palette, buttonRadius, spacing, moderne: styleModerne }),
       ])
 
       if (!content.ok) {
@@ -567,6 +569,12 @@ export function SettingsWorkbench({
                     setDirtyForm(true)
                     setSpacing(value)
                   }}
+                  styleModerne={styleModerne}
+                  onStyleModerne={(next) => {
+                    setDirtyForm(true)
+                    setStyleModerne(next)
+                  }}
+                  nom={form.practitionerName}
                 />
               </Panneau>
 

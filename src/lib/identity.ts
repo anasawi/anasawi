@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 import { paletteCss, paletteSchema } from '@/lib/palette'
+import { styleModerneSchema } from '@/lib/style-moderne'
 
 /**
  * Identité globale du site — les quelques curseurs qui pilotent tous les
@@ -38,6 +39,9 @@ export const identitySchema = z
     buttonRadius: z.number().int().min(0).max(24).optional(),
     /** Respiration verticale des sections. */
     spacing: z.enum(['compact', 'normal', 'aere']).optional(),
+
+    /** Le style du site MODERNE : couleurs, polices, animations (voir lib/style-moderne.ts). */
+    moderne: styleModerneSchema.optional(),
   })
   .strict()
 

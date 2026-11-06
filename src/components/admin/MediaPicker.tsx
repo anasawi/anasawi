@@ -266,6 +266,8 @@ export function MediaLibraryDialog({
   onSelect,
   trigger,
   kind = 'image',
+  multiple = false,
+  onSelectMany,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
@@ -274,9 +276,20 @@ export function MediaLibraryDialog({
   onSelect: (id: string) => void
   trigger?: React.ReactNode
   kind?: MediaKind
+  /** Plusieurs images d'un coup (galeries) : on coche, puis « Ajouter ». */
+  multiple?: boolean
+  onSelectMany?: (ids: string[]) => void
 }) {
   const visibles = items.filter((media) => estDuGenre(media, kind))
   const nom = kind === 'video' ? 'vidéo' : 'image'
+  const [coches, setCoches] = useState<string[]>([])
+  useEffect(() => {
+    if (!open) setCoches([])
+  }, [open])
+  const choisir = (id: string) => {
+    if (!multiple) return onSelect(id)
+    setCoches((c) => (c.includes(id) ? c.filter((x) => x !== id) : [...c, id]))
+  }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
@@ -286,9 +299,11 @@ export function MediaLibraryDialog({
           d'une tablette, c'est une fenêtre centrée de hauteur bornée. */}
       <DialogContent className="flex h-[100dvh] max-h-[100dvh] w-screen max-w-none flex-col gap-4 rounded-none sm:h-auto sm:max-h-[90vh] sm:w-full sm:max-w-3xl sm:rounded-[8px]">
         <DialogHeader>
-          <DialogTitle>Choisir une {nom}</DialogTitle>
+          <DialogTitle>{multiple ? `Choisir des ${nom}s` : `Choisir une ${nom}`}</DialogTitle>
           <DialogDescription>
-            Cliquez sur une {nom} pour l’utiliser, ou ajoutez-en une nouvelle.
+            {multiple
+              ? `Cochez les ${nom}s dans l’ordre voulu, puis « Ajouter ». Vous pourrez encore les réordonner en les faisant glisser.`
+              : `Cliquez sur une ${nom} pour l’utiliser, ou ajoutez-en une nouvelle.`}
           </DialogDescription>
         </DialogHeader>
 
@@ -305,11 +320,20 @@ export function MediaLibraryDialog({
                 <li key={media.id}>
                   <button
                     type="button"
-                    onClick={() => onSelect(media.id)}
-                    className="group block w-full overflow-hidden rounded-[8px] border border-border bg-card text-left transition-colors hover:border-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                    onClick={() => choisir(media.id)}
+                    aria-pressed={multiple ? coches.includes(media.id) : undefined}
+                    className={cn(
+                      'group block w-full overflow-hidden rounded-[8px] border bg-card text-left transition-colors hover:border-blue-deep focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring/50',
+                      multiple && coches.includes(media.id) ? 'border-[#176c79] ring-2 ring-[#176c79]' : 'border-border',
+                    )}
                   >
                     <span className="relative block aspect-square bg-muted">
                       <MediaThumb media={media} sizes="180px" />
+                      {multiple && coches.includes(media.id) && (
+                        <span className="absolute left-2 top-2 grid h-7 min-w-7 place-items-center rounded-full bg-[#176c79] px-1.5 text-[13px] font-semibold text-white shadow">
+                          {coches.indexOf(media.id) + 1}
+                        </span>
+                      )}
                     </span>
                     <span
                       className="block truncate px-2.5 py-2 text-[12px] text-ink-soft"
@@ -323,6 +347,14 @@ export function MediaLibraryDialog({
             </ul>
           )}
         </div>
+        {multiple && (
+          <div className="flex items-center justify-end gap-3 border-t border-border pt-3">
+            <span className="text-[13px] text-muted-foreground">{coches.length ? `${coches.length} sélectionnée${coches.length > 1 ? 's' : ''}` : 'Aucune sélection'}</span>
+            <Button type="button" disabled={!coches.length} onClick={() => onSelectMany?.(coches)}>
+              Ajouter{coches.length ? ` (${coches.length})` : ''}
+            </Button>
+          </div>
+        )}
       </DialogContent>
     </Dialog>
   )

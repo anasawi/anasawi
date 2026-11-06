@@ -1,9 +1,10 @@
 'use client'
 
-import { Plus, X } from 'lucide-react'
+import { GripVertical, Plus, X } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
 
+import { CLASSES_GLISSER, useGlisser } from './form/useGlisser'
 import { LinkField } from './LinkField'
 import { MediaLibraryDialog } from './MediaPicker'
 import { MediaThumb } from './MediaThumb'
@@ -21,6 +22,7 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Textarea } from '@/components/ui/textarea'
 import { cn } from '@/lib/utils'
+import { updateMedia } from '@/server/actions/media'
 import type { Media } from '@/server/db/schema'
 
 type Payload = Record<string, unknown>
@@ -384,13 +386,8 @@ function ListField({
       ]),
     ) as Payload
 
-  const move = (from: number, to: number) => {
-    if (to < 0 || to >= value.length) return
-    const next = [...value]
-    const [item] = next.splice(from, 1)
-    if (item) next.splice(to, 0, item)
-    onChange(next)
-  }
+  const glisser = useGlisser(value, onChange)
+  const move = glisser.deplacer
 
   return (
     <div>
@@ -425,8 +422,9 @@ function ListField({
             const sub = itemFields[0]
             if (!sub) return null
             return (
-              <li key={index} className="flex items-center gap-1.5">
-                <span className="w-4 shrink-0 text-right text-[12px] font-semibold tabular-nums text-[#8aa4a8]">
+              <li key={index} {...glisser.element(index)} className={cn('flex items-center gap-1.5 rounded-[10px]', CLASSES_GLISSER)}>
+                <span {...glisser.poignee(index)} className="flex w-6 shrink-0 items-center justify-end gap-0.5 text-[12px] font-semibold tabular-nums text-[#8aa4a8]">
+                  <GripVertical className="h-3.5 w-3.5 opacity-60" />
                   {index + 1}
                 </span>
                 <input
@@ -458,12 +456,14 @@ function ListField({
           {value.map((item, index) => (
             <li
               key={index}
+              {...glisser.element(index)}
               /* Une rangée blanche du répéteur Qeeps ; ses champs prennent
-                 le liseré (fond blanc). */
-              className="field-on-white rounded-[16px] bg-white p-3.5 animate-[adm-pop_0.35s_cubic-bezier(0.22,1,0.36,1)]"
+                 le liseré (fond blanc). On la déplace par sa poignée. */
+              className={cn('field-on-white rounded-[16px] bg-white p-3.5 animate-[adm-pop_0.35s_cubic-bezier(0.22,1,0.36,1)]', CLASSES_GLISSER)}
             >
               <div className="mb-2.5 flex items-center justify-between">
-                <span className="text-[12px] font-semibold tabular-nums text-[#8aa4a8]">
+                <span {...glisser.poignee(index)} className="-ml-1 flex items-center gap-1 rounded-[6px] px-1 py-0.5 text-[12px] font-semibold tabular-nums text-[#8aa4a8] hover:bg-muted">
+                  <GripVertical className="h-3.5 w-3.5" />
                   {index + 1}
                 </span>
                 <RowControls
@@ -560,69 +560,105 @@ function MediaListField({
   const [open, setOpen] = useState(false)
   const [items, setItems] = useState(library)
   const byId = new Map(items.map((m) => [m.id, m]))
+  const glisser = useGlisser(value, onChange)
+
+  /** La légende d'une photo (celle de la médiathèque : elle suit la photo partout). */
+  const enregistrerLegende = async (media: Media, caption: string) => {
+    const propre = caption.trim() || null
+    if (propre === (media.caption ?? null)) return
+    setItems((prev) => prev.map((m) => (m.id === media.id ? { ...m, caption: propre } : m)))
+    await updateMedia(media.id, { alt: media.alt, caption: propre })
+  }
 
   return (
     <div>
-      <div className="mb-2 flex items-center justify-between">
-        <Label className="text-[13px] font-medium text-foreground/80">
+      <div className="mb-2 flex items-center justify-between gap-3">
+        <Label className="text-[12.5px] font-medium leading-4 text-[#6b8186]">
           {field.label}
         </Label>
-        <Button
-          type="button"
-          variant="outline"
-          size="sm"
-          onClick={() => setOpen(true)}
-        >
+        <Button type="button" variant="outline" size="sm" onClick={() => setOpen(true)}>
           <Plus />
-          Ajouter une image
+          Ajouter des photos
         </Button>
       </div>
+      {field.help && <p className="mb-2.5 text-[12px] leading-[17px] text-muted-foreground">{field.help}</p>}
 
       {value.length === 0 ? (
-        <p className="rounded-[8px] border border-dashed border-line-strong px-3 py-5 text-center text-xs text-muted-foreground">
-          Aucune image.
-        </p>
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          className="w-full rounded-[16px] border-[1.5px] border-dashed border-[#cfd9db] px-3 py-6 text-center text-[13px] text-muted-foreground transition-colors hover:border-[#176c79] hover:text-foreground"
+        >
+          Aucune photo — cliquez pour en choisir.
+        </button>
       ) : (
-        <ul className="grid grid-cols-3 gap-2.5">
-          {value.map((id, index) => {
-            const media = byId.get(id)
-            return (
-              <li
-                key={`${id}-${index}`}
-                className="group relative overflow-hidden rounded-md border border-border"
-              >
-                <span className="relative block aspect-square bg-muted">
+        <>
+          <p className="mb-2 text-[12px] text-muted-foreground">Faites glisser les photos pour changer leur ordre.</p>
+          <ul className="grid grid-cols-2 gap-2.5">
+            {value.map((id, index) => {
+              const media = byId.get(id)
+              return (
+                <li
+                  key={`${id}-${index}`}
+                  {...glisser.element(index)}
+                  className="group relative rounded-[12px] bg-white p-1.5 shadow-[0_1px_2px_rgba(22,73,81,0.08)] transition-[opacity,box-shadow] duration-200 data-[cible]:shadow-[0_0_0_2px_#176c79] data-[glisse=oui]:opacity-40"
+                >
+                  <span {...glisser.poignee(index)} className="relative block aspect-[4/3] overflow-hidden rounded-[8px] bg-muted">
+                    {media && <Image src={media.url} alt={media.alt} fill sizes="160px" draggable={false} className="pointer-events-none object-cover" />}
+                    <span className="absolute left-1.5 top-1.5 grid h-6 min-w-6 place-items-center rounded-full bg-white/90 px-1 text-[11.5px] font-semibold tabular-nums text-foreground shadow-sm">
+                      {index + 1}
+                    </span>
+                    <span className="absolute right-1.5 top-1.5 grid h-6 w-6 place-items-center rounded-full bg-white/90 text-foreground opacity-0 shadow-sm transition-opacity group-hover:opacity-100">
+                      <GripVertical className="h-3.5 w-3.5" />
+                    </span>
+                  </span>
                   {media && (
-                    <Image
-                      src={media.url}
-                      alt={media.alt}
-                      fill
-                      sizes="140px"
-                      className="object-cover"
+                    <input
+                      defaultValue={media.caption ?? ''}
+                      placeholder="Légende"
+                      aria-label={`Légende de la photo ${index + 1}`}
+                      onBlur={(e) => enregistrerLegende(media, e.target.value)}
+                      onKeyDown={(e) => e.key === 'Enter' && (e.target as HTMLInputElement).blur()}
+                      className="mt-1.5 h-8 w-full rounded-[7px] border-0 bg-[#f4f7f8] px-2 text-[12.5px] outline-none placeholder:text-[#a5b4b7] focus:bg-white focus:shadow-[0_0_0_1.5px_#176c79]"
                     />
                   )}
-                </span>
-                <button
-                  type="button"
-                  aria-label="Retirer l’image"
-                  onClick={() => onChange(value.filter((_, i) => i !== index))}
-                  className="absolute right-1 top-1 rounded-full bg-background/90 p-1 opacity-0 transition-opacity group-hover:opacity-100 focus-visible:opacity-100"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </li>
-            )
-          })}
-        </ul>
+                  <span className="mt-1 flex items-center justify-between">
+                    <span className="flex">
+                      <button type="button" aria-label="Avancer" disabled={index === 0} onClick={() => glisser.deplacer(index, index - 1)} className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] text-muted-foreground hover:bg-muted disabled:opacity-25">
+                        ←
+                      </button>
+                      <button type="button" aria-label="Reculer" disabled={index === value.length - 1} onClick={() => glisser.deplacer(index, index + 1)} className="grid h-6 w-6 place-items-center rounded-[5px] text-[11px] text-muted-foreground hover:bg-muted disabled:opacity-25">
+                        →
+                      </button>
+                    </span>
+                    <button
+                      type="button"
+                      aria-label="Retirer la photo"
+                      onClick={() => onChange(value.filter((_, i) => i !== index))}
+                      className="grid h-6 w-6 place-items-center rounded-[5px] text-muted-foreground hover:bg-red-50 hover:text-red-600"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
+                </li>
+              )
+            })}
+          </ul>
+        </>
       )}
 
       <MediaLibraryDialog
         open={open}
         onOpenChange={setOpen}
         items={items}
+        multiple
         onAdd={(media) => setItems((prev) => [media, ...prev])}
         onSelect={(id) => {
           onChange([...value, id])
+          setOpen(false)
+        }}
+        onSelectMany={(ids) => {
+          onChange([...value, ...ids.filter((id) => !value.includes(id))])
           setOpen(false)
         }}
       />

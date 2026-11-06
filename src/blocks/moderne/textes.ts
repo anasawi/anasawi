@@ -75,6 +75,7 @@ export const TEXTES = {
     titre: `${prenomDe(c.nom)}\n*${nomDe(c.nom)}*`,
     texte: c.apropos.texte,
     citation: c.apropos.citation ?? '',
+    legendeCabinet: 'Le cabinet, le matin',
     anneau: `${c.metier} · ${c.ville} · ${[...new Set(c.services.map((s) => s.method).filter(Boolean))].slice(0, 2).join(' · ')} · `,
   }),
   mChemin: (c: Contenu) => ({
@@ -127,6 +128,9 @@ export const TEXTES = {
     titre: 'Prenons\n*le temps.*',
     bouton: 'Prendre rendez-vous',
     mention: 'version classique',
+    colonneContact: 'Me joindre',
+    colonneSite: 'Le site',
+    lienMessage: 'Écrire un message',
   }),
 } as const
 

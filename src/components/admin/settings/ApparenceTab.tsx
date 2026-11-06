@@ -4,6 +4,7 @@ import { RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 
 import { SectionCard } from '../form/SectionCard'
+import { StyleModerneCard } from './StyleModerneCard'
 import { Button } from '@/components/ui/button'
 import { Label } from '@/components/ui/label'
 import {
@@ -14,6 +15,7 @@ import {
   type Palette,
   type PaletteRole,
 } from '@/lib/palette'
+import type { StyleModerne } from '@/lib/style-moderne'
 import { cn } from '@/lib/utils'
 
 export type Spacing = 'compact' | 'normal' | 'aere'
@@ -30,6 +32,9 @@ export function ApparenceTab({
   onReset,
   onRadius,
   onSpacing,
+  styleModerne,
+  onStyleModerne,
+  nom,
 }: {
   palette: Palette
   buttonRadius: number
@@ -38,9 +43,14 @@ export function ApparenceTab({
   onReset: () => void
   onRadius: (px: number) => void
   onSpacing: (value: Spacing) => void
+  styleModerne: StyleModerne
+  onStyleModerne: (next: StyleModerne) => void
+  nom: string
 }) {
   return (
     <>
+      <StyleModerneCard style={styleModerne} onChange={onStyleModerne} nom={nom} />
+      <p className="px-1 pt-6 text-[12px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Site classique</p>
       <PaletteCard
         palette={palette}
         buttonRadius={buttonRadius}
