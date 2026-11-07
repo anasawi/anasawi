@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { CONFIDENTIALITE_DEPART, CONFIDENTIALITE_INTRO_DEPART, MENTIONS_DEPART, rubriqueSchema } from './pages-legales'
+
 /**
  * LE PIED DE PAGE — ce que les Réglages y mettent, au-delà des
  * coordonnées : les organismes (logos cliquables), les engagements
@@ -59,6 +61,15 @@ export const piedSchema = z.object({
   conservation: texte(300),
   complementConfidentialite: texte(4000),
   complementMentions: texte(4000),
+  /* Le TEXTE des pages légales, rubrique par rubrique (voir lib/pages-legales.ts). */
+  mentionsSurtitre: texte(80),
+  mentionsTitre: texte(120),
+  editeurTitre: texte(120),
+  mentionsRubriques: z.array(rubriqueSchema).max(40),
+  confidentialiteSurtitre: texte(80),
+  confidentialiteTitre: texte(120),
+  confidentialiteIntro: texte(3000),
+  confidentialiteRubriques: z.array(rubriqueSchema).max(40),
   /** « Qui y a accès ? » : les prestataires techniques, un par ligne. */
   prestataires: texte(2000),
   /* Les libellés du site moderne hors sections : barre du haut, ligne légale. */
@@ -91,6 +102,14 @@ export const PIED_DEPART: Pied = {
   conservation: '3 ans après notre dernier échange',
   complementConfidentialite: '',
   complementMentions: '',
+  mentionsSurtitre: 'Informations légales',
+  mentionsTitre: 'Mentions légales',
+  editeurTitre: 'Éditrice du site',
+  mentionsRubriques: MENTIONS_DEPART,
+  confidentialiteSurtitre: 'Vos données',
+  confidentialiteTitre: 'Politique de confidentialité',
+  confidentialiteIntro: CONFIDENTIALITE_INTRO_DEPART,
+  confidentialiteRubriques: CONFIDENTIALITE_DEPART,
   prestataires: [
     'Netlify (hébergement du site), États-Unis',
     'Neon (base de données où sont enregistrés les messages), serveurs situés dans l’Union européenne (Francfort)',

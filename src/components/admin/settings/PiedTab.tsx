@@ -9,11 +9,12 @@ import { Field } from '../form/Field'
 import { SectionCard } from '../form/SectionCard'
 import { CLASSES_GLISSER, useGlisser } from '../form/useGlisser'
 import { MediaPicker } from '../MediaPicker'
+import { RubriquesEditor } from './RubriquesEditor'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import { initiales, type Ami, type Organisme, type Pied } from '@/lib/pied'
+import { initiales, PIED_DEPART, type Ami, type Organisme, type Pied } from '@/lib/pied'
 import { recupererLogo } from '@/server/actions/pied'
 import { cn } from '@/lib/utils'
 import type { Media } from '@/server/db/schema'
@@ -277,7 +278,20 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
         />
         <Zone label="Hébergeur" value={pied.hebergeur} onChange={(v) => set('hebergeur', v)} rows={2} />
         <Zone label="Crédits (photos, réalisation)" value={pied.credits} onChange={(v) => set('credits', v)} rows={2} help="Par ex. : Photos : Unsplash. Pour un lien : [texte](https://…)." />
-        <Zone label="Texte complémentaire" value={pied.complementMentions} onChange={(v) => set('complementMentions', v)} rows={3} help="Ajouté à la fin de la page. Un paragraphe par ligne vide." />
+        {pied.complementMentions && (
+          <Zone label="Texte complémentaire (ancien)" value={pied.complementMentions} onChange={(v) => set('complementMentions', v)} rows={3} help="Ajouté à la fin de la page. Vous pouvez le déplacer dans une rubrique ci-dessous, puis vider ce champ." />
+        )}
+      </SectionCard>
+
+      <SectionCard id="texte-mentions" title="Texte des mentions légales" note="Toute la page se modifie ici : son titre, et chaque rubrique sous le tableau de vos informations." layout="stack">
+        <div className="mt-1 grid gap-3.5 sm:grid-cols-3">
+          <Field label="Petit titre" value={pied.mentionsSurtitre} onChange={(v) => set('mentionsSurtitre', v)} placeholder="Informations légales" />
+          <Field label="Titre de la page" value={pied.mentionsTitre} onChange={(v) => set('mentionsTitre', v)} placeholder="Mentions légales" />
+          <Field label="Titre du tableau" value={pied.editeurTitre} onChange={(v) => set('editeurTitre', v)} placeholder="Éditrice du site" />
+        </div>
+        <div className="mt-4">
+          <RubriquesEditor page="mentions légales" rubriques={pied.mentionsRubriques} depart={PIED_DEPART.mentionsRubriques} onChange={(v) => set('mentionsRubriques', v)} />
+        </div>
       </SectionCard>
 
       <SectionCard
@@ -290,7 +304,7 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
           </a>
         }
       >
-        <Field label="Durée de conservation des messages" value={pied.conservation} onChange={(v) => set('conservation', v)} help="Complète la phrase « Vos messages sont conservés … »." />
+        <Field label="Durée de conservation des messages" value={pied.conservation} onChange={(v) => set('conservation', v)} help="Le mot-clé {conservation} : « Vos messages sont conservés … »." />
         <Zone
           label="Prestataires techniques"
           value={pied.prestataires}
@@ -298,7 +312,27 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
           rows={4}
           help="Ceux qui hébergent le site et transmettent les messages : un par ligne, avec leur rôle et leur pays."
         />
-        <Zone label="Texte complémentaire" value={pied.complementConfidentialite} onChange={(v) => set('complementConfidentialite', v)} rows={3} help="Ajouté à la fin de la page. Un paragraphe par ligne vide." />
+        {pied.complementConfidentialite && (
+          <Zone label="Texte complémentaire (ancien)" value={pied.complementConfidentialite} onChange={(v) => set('complementConfidentialite', v)} rows={3} help="Ajouté à la fin de la page. Vous pouvez le déplacer dans une rubrique ci-dessous, puis vider ce champ." />
+        )}
+      </SectionCard>
+
+      <SectionCard id="texte-confidentialite" title="Texte de la politique de confidentialité" note="Toute la page se modifie ici : son titre, son introduction et chaque rubrique." layout="stack">
+        <div className="mt-1 grid gap-3.5 sm:grid-cols-2">
+          <Field label="Petit titre" value={pied.confidentialiteSurtitre} onChange={(v) => set('confidentialiteSurtitre', v)} placeholder="Vos données" />
+          <Field label="Titre de la page" value={pied.confidentialiteTitre} onChange={(v) => set('confidentialiteTitre', v)} placeholder="Politique de confidentialité" />
+        </div>
+        <div className="mt-3.5">
+          <Zone label="Introduction" value={pied.confidentialiteIntro} onChange={(v) => set('confidentialiteIntro', v)} rows={4} />
+        </div>
+        <div className="mt-4">
+          <RubriquesEditor
+            page="confidentialité"
+            rubriques={pied.confidentialiteRubriques}
+            depart={PIED_DEPART.confidentialiteRubriques}
+            onChange={(v) => set('confidentialiteRubriques', v)}
+          />
+        </div>
       </SectionCard>
 
       <SectionCard id="liens-legaux" title="Liens en bas de page" note="Les deux liens de la dernière ligne du pied de page, vers les pages ci-dessus. Ils en sont aussi le titre d’onglet.">
