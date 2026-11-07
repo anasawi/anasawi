@@ -50,7 +50,17 @@ export function ApparenceTab({
   return (
     <>
       <StyleModerneCard style={styleModerne} onChange={onStyleModerne} nom={nom} />
-      <p className="px-1 pt-6 text-[12px] font-semibold uppercase tracking-[0.16em] text-muted-foreground">Site classique</p>
+      {/* L'ancien site garde ses propres réglages, rangés à part pour ne pas
+          se mélanger à la palette du site moderne. */}
+      <details className="group rounded-[20px] bg-block p-5 sm:p-6">
+        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-semibold text-foreground">
+          <span>
+            Ancien site (version classique)
+            <span className="mt-1 block text-[13px] font-normal text-muted-foreground">Sa palette et ses formes, indépendantes du site moderne.</span>
+          </span>
+          <span className="text-muted-foreground transition-transform group-open:rotate-180">▾</span>
+        </summary>
+        <div className="mt-4 space-y-3">
       <PaletteCard
         palette={palette}
         buttonRadius={buttonRadius}
@@ -109,6 +119,8 @@ export function ApparenceTab({
           </div>
         </div>
       </SectionCard>
+        </div>
+      </details>
     </>
   )
 }

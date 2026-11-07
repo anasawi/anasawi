@@ -64,7 +64,7 @@ export function styleModerneCss(style: StyleModerne | undefined): string {
   }
   if (c.ivoire) v['--ad-ivoire'] = c.ivoire
   if (c.sable) {
-    v['--ad-sable'] = c.sable
+    v['--ad-p-sable'] = c.sable
     v['--ad-sable-fonce'] = `color-mix(in srgb, ${c.sable} 86%, #7a5a33)`
   }
   if (style.typo) Object.assign(v, variablesDe(typoDe(style)))

@@ -1,4 +1,5 @@
 import { styleModerneCss, typoDe, type StyleModerne } from '@/lib/style-moderne'
+import { teintesCss } from '@/lib/teintes'
 
 /**
  * Les polices et le style de la VERSION MODERNE, réglés dans
@@ -21,6 +22,10 @@ export function PoliceModerne({ style }: { style?: StyleModerne }): React.ReactE
       <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="" />
       {/* Voulu : chargée sur /moderne et l'éditeur seulement (voir plus haut). */}
       <link rel="stylesheet" href={typo.url} precedence="default" />
+      {/* Les teintes (fond et panneaux des sections). */}
+      <style href="teintes-moderne" precedence="default">
+        {teintesCss()}
+      </style>
       {css && (
         <style href={`style-moderne-${css.length}`} precedence="high">
           {css}

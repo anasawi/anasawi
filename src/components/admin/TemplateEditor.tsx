@@ -22,6 +22,7 @@ import { labelOf } from './SectionRail'
 import { TemplateLibrary } from './TemplateLibrary'
 import type { Breakpoint } from '@/lib/grid'
 import { identityCss } from '@/lib/identity'
+import { parseIdentity } from '@/lib/identity'
 import { cn } from '@/lib/utils'
 import type { SavedSection, Section } from '@/server/db/schema'
 import type { SectionsViewData } from '@/components/site/SectionsView'
@@ -330,6 +331,7 @@ export function TemplateEditor({
                   key={selected.id}
                   section={selected}
                   library={data.media}
+                  styleModerne={parseIdentity(data.settings.identity).moderne}
                   onClose={() => setSelectedId(null)}
                   pushHistory={pushHistory}
                   onDraft={applyDraft}

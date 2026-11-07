@@ -16,6 +16,8 @@ import { Input } from '@/components/ui/input'
 import { Choice } from '@/components/ui/choice'
 import { Label } from '@/components/ui/label'
 import { parseNodeStyles, type NodeStyles } from '@/lib/node-styles'
+import type { StyleModerne } from '@/lib/style-moderne'
+import { GROUPES_TEINTES, TEINTES, teinteHex } from '@/lib/teintes'
 import { cn, slugify } from '@/lib/utils'
 import {
   parseSectionSettings,
@@ -116,6 +118,8 @@ function Group({
 type SectionInspectorProps = {
   section: Section
   library: Media[]
+  /** La palette du site moderne : le nuancier des sections en est tiré. */
+  styleModerne?: StyleModerne
   onClose: () => void
   /** Enregistre l'inverse d'un enregistrement pour le ⌘Z du constructeur. */
   pushHistory?: (entry: HistoryEntry) => void
@@ -152,6 +156,7 @@ type SectionInspectorProps = {
 export function SectionInspector({
   section,
   library,
+  styleModerne,
   onClose,
   pushHistory,
   onDraft,
@@ -225,9 +230,14 @@ export function SectionInspector({
 
   /* Réglages : appliqués au canvas tout de suite, écrits via la file ;
      en cas d'échec, l'état précédent revient et l'erreur s'affiche. */
+  /* La dernière valeur écrite : deux réglages changés coup sur coup ne
+     doivent pas s'écraser (le second partait de l'état d'avant le premier). */
+  const animRef = useRef(anim)
+  animRef.current = anim
   const writeAnim = (patch: Partial<SectionSettings>) => {
-    const prev = anim
-    const next = { ...anim, ...patch }
+    const prev = animRef.current
+    const next = { ...prev, ...patch }
+    animRef.current = next
     setAnim(next)
     onSettings?.(section.id, next)
     void run(() => updateSectionSettings(section.id, next)).then((r) => {
@@ -554,10 +564,14 @@ export function SectionInspector({
               )}
 
               {isRoot && block.theme === 'moderne' && (
-                <>
-                  <FondModerne value={meta.backgroundColor} onChange={(hex) => setMeta((m) => ({ ...m, backgroundColor: hex }))} />
-                  <PanneauModerne value={anim.panneau} onChange={(panneau) => writeAnim({ panneau })} />
-                </>
+                <TeintesSection
+                  sectionId={section.id}
+                  fond={anim.fond}
+                  panneau={anim.panneau}
+                  styleModerne={styleModerne}
+                  onFond={(fond) => writeAnim({ fond })}
+                  onPanneau={(panneau) => writeAnim({ panneau })}
+                />
               )}
 
               {isRoot && block.theme !== 'moderne' && (
@@ -843,74 +857,110 @@ export function SectionInspector({
   )
 }
 
-/* ── Fond et panneaux d'une section moderne : deux nuanciers identiques ── */
+/* ── Fond et panneaux d'une section moderne ─────────────────────────────
+   UN nuancier : les couleurs de la palette (Réglages › Apparence) et leurs
+   nuances. Le second choix (« Panneaux et cadres ») n'apparaît que si la
+   section a des panneaux colorés. */
 
-type Teinte<V extends string> = { value: V; hex: string; nom: string }
+/** La section a-t-elle des panneaux (fonds « sable » qui ne sont pas derrière une photo) ? Lu dans l'aperçu. */
+function usePanneauxUtiles(sectionId: string) {
+  const [utiles, setUtiles] = useState(false)
+  useEffect(() => {
+    const lire = () => {
+      const doc = document.querySelector<HTMLIFrameElement>('iframe')?.contentDocument
+      const racine = doc?.querySelector(`[data-block-id="${sectionId}"]`)
+      if (!racine) return
+      const candidats = racine.querySelectorAll<HTMLElement>('[class*="var(--ad-sable)"], [style*="var(--ad-sable)"]')
+      setUtiles(
+        Array.from(candidats).some((el) => {
+          if (el.querySelector('img, video')) return false
+          const r = el.getBoundingClientRect()
+          return r.width > 24 && r.height > 16
+        }),
+      )
+    }
+    lire()
+    const t = window.setTimeout(lire, 800)
+    return () => window.clearTimeout(t)
+  }, [sectionId])
+  return utiles
+}
 
-/** Un nuancier : cinq pastilles de même forme, en colonnes égales, le nom dessous. */
-function Nuancier<V extends string>({ titre, aide, teintes, value, onChange }: { titre: string; aide: string; teintes: readonly Teinte<V>[]; value: V; onChange: (v: V) => void }) {
+function Nuancier({ titre, aide, value, onChange, styleModerne }: { titre: string; aide: string; value: string; onChange: (id: string) => void; styleModerne?: StyleModerne }) {
+  const choisie = TEINTES.find((t) => t.id === value)
   return (
     <div>
-      <p className="mb-2.5 text-[12.5px] font-medium text-[#6b8186]">{titre}</p>
-      <div role="radiogroup" aria-label={titre} className="grid grid-cols-5 gap-2">
-        {teintes.map((t) => {
-          const actif = value === t.value
-          return (
-            <button key={t.value} type="button" role="radio" aria-checked={actif} title={t.nom} onClick={() => onChange(t.value)} className="group flex min-w-0 flex-col items-center gap-1.5">
-              <span
-                className={
-                  'block h-10 w-10 rounded-full ring-1 ring-black/10 transition-shadow duration-300 ' +
-                  (actif ? 'shadow-[0_0_0_3px_#fff,0_0_0_5px_#176c79]' : 'group-hover:shadow-[0_0_0_3px_#fff,0_0_0_4px_#cfd9db]')
-                }
-                style={{ background: t.hex }}
-              />
-              <span className={'w-full truncate text-center text-[11.5px] leading-4 ' + (actif ? 'font-semibold text-foreground' : 'text-muted-foreground')}>{t.nom}</span>
-            </button>
-          )
-        })}
+      <p className="mb-2.5 flex items-baseline justify-between gap-3 text-[12.5px] font-medium text-[#6b8186]">
+        {titre}
+        {choisie && <span className="text-[12px] font-normal text-muted-foreground">{choisie.nom}</span>}
+      </p>
+      <div role="radiogroup" aria-label={titre} className="space-y-2">
+        {GROUPES_TEINTES.map((g) => (
+          <div key={g.nom} className="grid grid-cols-[84px_1fr] items-center gap-2">
+            <span className="text-[11.5px] text-muted-foreground">{g.nom}</span>
+            <span className="flex gap-2">
+              {g.teintes.map((t) => {
+                const actif = value === t.id
+                return (
+                  <button
+                    key={t.id}
+                    type="button"
+                    role="radio"
+                    aria-checked={actif}
+                    aria-label={t.nom}
+                    title={t.nom}
+                    onClick={() => onChange(t.id)}
+                    className={
+                      'h-8 w-8 rounded-full ring-1 ring-black/10 transition-shadow duration-300 ' +
+                      (actif ? 'shadow-[0_0_0_2.5px_#fff,0_0_0_4.5px_#176c79]' : 'hover:shadow-[0_0_0_2.5px_#fff,0_0_0_3.5px_#cfd9db]')
+                    }
+                    style={{ background: teinteHex(t, styleModerne) }}
+                  />
+                )
+              })}
+            </span>
+          </div>
+        ))}
       </div>
-      <p className="mt-2 text-[12px] leading-[1.5] text-muted-foreground">{aide}</p>
+      <p className="mt-2.5 text-[12px] leading-[1.5] text-muted-foreground">{aide}</p>
     </div>
   )
 }
 
-const FONDS_MODERNES = [
-  { value: '#fbf6ee', hex: '#fbf6ee', nom: 'Fond' },
-  { value: '#f5ecdf', hex: '#f5ecdf', nom: 'Sable' },
-  { value: '#eaf1f4', hex: '#eaf1f4', nom: 'Brume' },
-  { value: '#e2f3f1', hex: '#e2f3f1', nom: 'Turquoise' },
-  { value: '#ffffff', hex: '#ffffff', nom: 'Blanc' },
-] as const
-
-function FondModerne({ value, onChange }: { value: string; onChange: (hex: string) => void }) {
-  const courant = (value || '#fbf6ee').toLowerCase()
+function TeintesSection({
+  sectionId,
+  fond,
+  panneau,
+  styleModerne,
+  onFond,
+  onPanneau,
+}: {
+  sectionId: string
+  fond: string
+  panneau: string
+  styleModerne?: StyleModerne
+  onFond: (id: SectionSettings['fond']) => void
+  onPanneau: (id: SectionSettings['panneau']) => void
+}) {
+  const panneauxUtiles = usePanneauxUtiles(sectionId)
   return (
-    <Nuancier
-      titre="Fond de la section"
-      aide="Les teintes suivent les couleurs choisies dans Réglages › Apparence."
-      teintes={FONDS_MODERNES}
-      value={(courant === '#fcfaf7' ? '#fbf6ee' : courant) as (typeof FONDS_MODERNES)[number]['value']}
-      onChange={onChange}
-    />
-  )
-}
-
-const PANNEAUX = [
-  { value: 'ivoire', hex: '#fbf6ee', nom: 'Fond' },
-  { value: 'sable', hex: '#f5ecdf', nom: 'Sable' },
-  { value: 'brume', hex: '#eaf1f4', nom: 'Brume' },
-  { value: 'turquoise', hex: '#e2f3f1', nom: 'Turquoise' },
-  { value: 'blanc', hex: '#ffffff', nom: 'Blanc' },
-] as const
-
-function PanneauModerne({ value, onChange }: { value: SectionSettings['panneau']; onChange: (v: SectionSettings['panneau']) => void }) {
-  return (
-    <Nuancier
-      titre="Panneaux et cadres"
-      aide="La couleur des blocs posés dans la section : le cadre derrière une photo, les cartes de couleur, les étiquettes."
-      teintes={PANNEAUX}
-      value={value}
-      onChange={onChange}
-    />
+    <div className="space-y-5">
+      <Nuancier
+        titre="Fond de la section"
+        aide="Les couleurs de votre palette et leurs nuances (Réglages › Apparence) : elles suivent la palette si vous la changez."
+        value={fond}
+        onChange={(id) => onFond(id as SectionSettings['fond'])}
+        styleModerne={styleModerne}
+      />
+      {panneauxUtiles && (
+        <Nuancier
+          titre="Panneaux et cadres"
+          aide="La couleur des blocs posés dans la section : le cadre derrière une photo, les cartes de couleur, les étiquettes."
+          value={panneau}
+          onChange={(id) => onPanneau(id as SectionSettings['panneau'])}
+          styleModerne={styleModerne}
+        />
+      )}
+    </div>
   )
 }

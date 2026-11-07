@@ -6,7 +6,10 @@ import { SectionCard } from '../form/SectionCard'
 import { Button } from '@/components/ui/button'
 import { TYPOS, variablesDe } from '@/components/anasawi/typos'
 import { ANIMATIONS, COULEURS_MODERNES, typoDe, type CleCouleur, type StyleModerne } from '@/lib/style-moderne'
+import { TEINTES, teinteHex } from '@/lib/teintes'
 import { cn } from '@/lib/utils'
+
+const BASE_DE: Record<CleCouleur, string> = { nuit: 'nuit', bleu: 'bleu', turquoise: 'turquoise', ivoire: 'ivoire', sable: 'sable' }
 
 /**
  * Le style du SITE MODERNE dans Réglages › Apparence : ses cinq couleurs
@@ -34,8 +37,8 @@ export function StyleModerneCard({ style, onChange, nom }: { style: StyleModerne
 
       <SectionCard
         id="couleurs-moderne"
-        title="Couleurs du site moderne"
-        note="Cinq couleurs. Leurs voiles (le bleu très clair, le sable foncé…) en sont déduits automatiquement."
+        title="Palette"
+        note="Les cinq couleurs du site. Sous chacune, ses nuances : ce sont elles qu’on retrouve dans le nuancier de chaque section (fond, panneaux)."
         layout="stack"
         actions={
           modifiees ? (
@@ -46,7 +49,8 @@ export function StyleModerneCard({ style, onChange, nom }: { style: StyleModerne
           ) : null
         }
       >
-        <div className="mt-4 grid gap-5 lg:grid-cols-[1fr_300px]">
+        <div className="@container mt-4">
+        <div className="grid gap-5 @2xl:grid-cols-[minmax(0,1fr)_260px]">
           <ul className="grid gap-2.5">
             {(Object.keys(COULEURS_MODERNES) as CleCouleur[]).map((k) => {
               const c = COULEURS_MODERNES[k]
@@ -59,6 +63,12 @@ export function StyleModerneCard({ style, onChange, nom }: { style: StyleModerne
                   <span className="min-w-0 flex-1">
                     <span className="block text-[14px] font-semibold text-foreground">{c.libelle}</span>
                     <span className="block truncate text-[12px] text-muted-foreground">{c.aide}</span>
+                    {/* Les nuances de cette couleur, telles que le nuancier des sections les propose. */}
+                    <span className="mt-1.5 flex gap-1">
+                      {TEINTES.filter((t) => t.base === BASE_DE[k] && t.part !== 1).map((t) => (
+                        <span key={t.id} title={t.nom} className="h-3.5 w-6 rounded-full ring-1 ring-black/5" style={{ background: teinteHex(t, style) }} />
+                      ))}
+                    </span>
                   </span>
                   <input
                     value={v}
@@ -100,9 +110,10 @@ export function StyleModerneCard({ style, onChange, nom }: { style: StyleModerne
             </span>
           </div>
         </div>
+        </div>
       </SectionCard>
 
-      <SectionCard id="typographie" title="Typographie du site moderne" note="Une paire : une police pour les titres, une pour le texte. Toutes sont libres et gratuites." layout="stack">
+      <SectionCard id="typographie" title="Typographie" note="Une paire : une police pour les titres, une pour le texte. Toutes sont libres et gratuites." layout="stack">
         <ul className="mt-4 grid gap-2.5 sm:grid-cols-2">
           {TYPOS.map((t) => {
             const actif = t.id === typo.id
@@ -137,7 +148,7 @@ export function StyleModerneCard({ style, onChange, nom }: { style: StyleModerne
         </ul>
       </SectionCard>
 
-      <SectionCard id="animations" title="Animations du site moderne" note="La vivacité des mouvements, pour tout le site moderne." layout="stack">
+      <SectionCard id="animations" title="Animations" note="La vivacité des mouvements, pour tout le site." layout="stack">
         <div role="radiogroup" aria-label="Animations" className="mt-4 grid gap-2 sm:grid-cols-3">
           {ANIMATIONS.map((a) => {
             const actif = (style.animations ?? 'normales') === a.value

@@ -1,5 +1,7 @@
 import { z } from 'zod'
 
+import { IDS_TEINTES } from '@/lib/teintes'
+
 /**
  * Réglages non-contenu d'une section : son animation d'apparition et son
  * ornement décoratif. Des presets, pas un outil d'animation ni un éditeur
@@ -59,7 +61,9 @@ export const sectionSettingsSchema = z
     /** Bord bas de la section — dessiné en haut de la suivante. */
     edge: z.enum(SECTION_EDGES).default('aucun'),
     /** Site moderne : la teinte des panneaux et cadres de la section (le « sable » par défaut). */
-    panneau: z.enum(['sable', 'brume', 'turquoise', 'blanc', 'ivoire']).default('sable'),
+    panneau: z.enum(IDS_TEINTES).default('sable'),
+    /** Site moderne : le fond de la section (une teinte de la palette). */
+    fond: z.enum(IDS_TEINTES).default('fond'),
   })
   .strict()
 
@@ -74,6 +78,7 @@ export const DEFAULT_SECTION_SETTINGS: SectionSettings = {
   ornamentSize: 'moyen',
   edge: 'aucun',
   panneau: 'sable',
+  fond: 'fond',
 }
 
 export function parseSectionSettings(input: unknown): SectionSettings {

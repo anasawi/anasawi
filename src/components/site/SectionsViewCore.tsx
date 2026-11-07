@@ -80,22 +80,10 @@ export type SectionsViewProps = {
   breakpoint?: Breakpoint
 }
 
-/**
- * Le fond d'une section MODERNE (Apparence de la section) : les teintes de
- * la DA suivent les couleurs choisies dans Réglages (variables CSS) ;
- * l'ivoire de départ laisse voir le fond du site.
- */
-const FONDS_MODERNES: Record<string, string | undefined> = {
-  '#fbf6ee': undefined,
-  '#fcfaf7': undefined,
-  '#f5ecdf': 'var(--ad-sable)',
-  '#eaf1f4': 'var(--ad-brume)',
-  '#e2f3f1': 'var(--ad-touche-pale, #e2f3f1)',
-  '#ffffff': '#ffffff',
-}
-function fondModerne(hex: string | null | undefined): string | undefined {
-  const cle = (hex ?? '').toLowerCase()
-  return cle in FONDS_MODERNES ? FONDS_MODERNES[cle] : cle || undefined
+/** Le fond et les panneaux d'une section MODERNE (teintes de la palette, voir lib/teintes.ts) ; rien si ce sont ceux de départ. */
+function reglagesModernes(section: Section) {
+  const r = parseSectionSettings(section.settings)
+  return { fond: r.fond === 'fond' ? undefined : r.fond, panneau: r.panneau === 'sable' ? undefined : r.panneau }
 }
 
 /* ══════════════════════════════════════════════════════════════════════
@@ -515,9 +503,8 @@ export function SectionRootView({
         data-block-root={editable ? 'true' : undefined}
         data-block-inactive={editable && !section.isActive ? 'true' : undefined}
         className={cn('relative', nodeClass(section.id), editable && !section.isActive && 'opacity-40')}
-        data-fond-moderne={fondModerne(section.backgroundColor) ? '' : undefined}
-        data-panneau={parseSectionSettings(section.settings).panneau}
-        style={{ background: fondModerne(section.backgroundColor) }}
+        data-fond={reglagesModernes(section).fond}
+        data-panneau={reglagesModernes(section).panneau}
       >
         {renderBlock(section, index, env)}
       </section>
