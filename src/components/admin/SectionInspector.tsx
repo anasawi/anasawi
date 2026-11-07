@@ -733,8 +733,10 @@ export function SectionInspector({
                 <p className="mt-1.5 text-[12px] leading-relaxed text-muted-foreground">
                   Le mot après le # dans l’adresse de la section (ex.
                   anasawi.com/#contact). Il sert au menu du site et aux
-                  boutons qui mènent ici. Pour ajouter cette section au
-                  menu : Réglages › Menu du site.
+                  boutons qui mènent ici.{' '}
+                  {block.theme === 'moderne'
+                    ? 'Pour la mettre dans le menu : le champ « Dans le menu », plus haut dans Contenu.'
+                    : 'Pour ajouter cette section au menu : Réglages › Menu du site.'}
                 </p>
               </div>
 

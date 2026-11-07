@@ -27,7 +27,9 @@ export function EditorRail({
 }) {
   if (collapsed) {
     return (
-      <div className="flex w-11 shrink-0 flex-col items-center border-r border-border bg-ivory pt-3">
+      /* Téléphone : pas de bande (la page a besoin de toute la largeur) —
+         un bouton « Sections » dans l'en-tête de l'aperçu la remplace. */
+      <div className="flex w-11 shrink-0 flex-col items-center border-r border-border bg-ivory pt-3 max-md:hidden">
         <button
           type="button"
           onClick={onExpand}

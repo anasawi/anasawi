@@ -1,9 +1,12 @@
+import { cookies } from 'next/headers'
+
 import { AdminContent } from '@/components/admin/AdminContent'
 import { PageHeader } from '@/components/admin/PageHeader'
 import { TemplateEditor } from '@/components/admin/TemplateEditor'
 import { PoliceModerne } from '@/components/anasawi/PoliceModerne'
 import { chargerContenu } from '@/components/anasawi/charger'
 import { parseIdentity } from '@/lib/identity'
+import { COOKIE_VERSION, lireVersion } from '@/lib/version-admin'
 import { assurerPageModerne, menuModerne } from '@/server/moderne'
 import {
   getAllFaq,
@@ -33,7 +36,9 @@ export default async function HomeBuilderPage({
   const { section, theme: themeBrut } = await searchParams
   /* Le temps de l'arbitrage, deux sites : le classique (la page
      d'accueil) et le moderne (sa propre page, créée au premier passage). */
-  const theme = themeBrut === 'moderne' ? 'moderne' : 'classique'
+  /* Sans précision dans l'adresse : la version utilisée en dernier. */
+  const theme =
+    themeBrut === 'moderne' || themeBrut === 'classique' ? themeBrut : lireVersion((await cookies()).get(COOKIE_VERSION)?.value)
   if (theme === 'moderne') await assurerPageModerne()
   const [page, media, services, faqItems, settings, saved, partage] =
     await Promise.all([

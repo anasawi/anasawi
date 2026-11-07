@@ -62,8 +62,6 @@ export function Enveloppe({ ctx, children }: { ctx: BlockContext; children: Reac
   return <ModeEdition actif={Boolean(ctx.editable)}>{children}</ModeEdition>
 }
 
-/** Aide commune des champs préremplis. */
-export const SUIT = 'Prérempli avec le texte affiché sur le site.'
 const TITRE = 'Une ligne par retour à la ligne ; le mot clé entre *astérisques*.'
 const MENU = 'Libellé de cette section dans le menu du haut. Vide : absente du menu.'
 
@@ -105,7 +103,7 @@ export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
   description: 'L’accueil : votre nom, quelques mots, et la porte du cabinet qui s’ouvre — avec une tasse dont la vapeur monte.',
   schema: seuilSchema,
   fields: [
-    field.text('surtitre', 'Étiquette au-dessus du nom', { help: SUIT }),
+    field.text('surtitre', 'Étiquette au-dessus du nom'),
     field.text('nom', 'Nom', { help: 'Le premier mot en noir, la suite en accent.' }),
     field.textarea('intro', 'Présentation (sous le nom)'),
     field.media('mediaId', 'Photo de la grande porte'),

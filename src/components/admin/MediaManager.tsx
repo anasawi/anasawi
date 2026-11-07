@@ -451,7 +451,12 @@ export function MediaManager({
                       aria-describedby={`media-nom-${media.id}`}
                       className="relative block aspect-4/3 overflow-hidden rounded-[12px] bg-block transition-shadow duration-300 hover:shadow-[0_10px_30px_rgba(22,73,81,0.12)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
                     >
-                      <MediaThumb media={media} sizes="(max-width: 640px) 50vw, 220px" />
+                      {/* Un logo se montre en entier, posé sur blanc ; une photo remplit sa vignette. */}
+                      <MediaThumb
+                        media={media}
+                        sizes="(max-width: 640px) 50vw, 220px"
+                        className={/^logo\b/i.test(media.alt) || /svg/i.test(media.mimeType) ? 'bg-white object-contain p-3' : 'object-cover'}
+                      />
                       {estVideo && (
                         <span className="absolute bottom-2 left-2 grid h-6 w-6 place-items-center rounded-full bg-white/90 text-foreground">
                           <Clapperboard className="h-3 w-3" strokeWidth={2} />

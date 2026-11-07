@@ -1,10 +1,11 @@
 'use client'
 
-import { MousePointerClick } from 'lucide-react'
+import { PanelLeft } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { AnchorsContext, type AnchorOption } from './anchors-context'
 import { DiscardDialog } from './editor/DiscardDialog'
+import { EditorAccueil } from './editor/EditorAccueil'
 import { EditorRail } from './editor/EditorRail'
 import { EditorStage } from './editor/EditorStage'
 import { EditorTopBar } from './editor/EditorTopBar'
@@ -21,6 +22,7 @@ import { SectionInspector } from './SectionInspector'
 import { labelOf } from './SectionRail'
 import { TemplateLibrary } from './TemplateLibrary'
 import type { Breakpoint } from '@/lib/grid'
+import { retenirVersion } from '@/lib/version-admin'
 import { identityCss } from '@/lib/identity'
 import { parseIdentity } from '@/lib/identity'
 import { cn } from '@/lib/utils'
@@ -79,6 +81,9 @@ export function TemplateEditor({
     savedList,
     setSavedList,
   } = useEditorSections(initialSections, saved)
+
+  /* La version ouverte devient celle de « Mon site » et du tableau de bord. */
+  useEffect(() => retenirVersion(theme), [theme])
 
   const [viewport, setViewport] = useState<Breakpoint>('desktop')
   const [mode, setMode] = useState<'edit' | 'preview'>('edit')
@@ -321,7 +326,7 @@ export function TemplateEditor({
               selected
                 ? /* Sous 1024 px, le formulaire est un volet posé sur
                      l'aperçu : à côté, il ne restait plus de place. */
-                  'max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-30 max-lg:w-[min(380px,94vw)] max-lg:bg-white max-lg:shadow-pop'
+                  'max-lg:absolute max-lg:inset-y-0 max-lg:right-0 max-lg:z-30 max-lg:w-[min(380px,94vw)] max-md:w-full max-lg:bg-white max-lg:shadow-pop'
                 : 'max-lg:hidden',
             )}
           >
@@ -357,19 +362,14 @@ export function TemplateEditor({
                 />
               </AnchorsContext.Provider>
             ) : (
-              <div className="adm-page flex flex-1 flex-col items-start justify-center px-8 py-10 xl:px-10">
-                <span className="mb-4 grid h-[46px] w-[46px] place-items-center rounded-[14px] bg-accent text-[#176c79] animate-[adm-pop_0.5s_cubic-bezier(0.34,1.56,0.64,1)_both]">
-                  <MousePointerClick className="h-[21px] w-[21px]" strokeWidth={1.8} />
-                </span>
-                <p className="text-[14px] font-medium text-[#8aa4a8]">Votre page</p>
-                <p className="mt-1.5 text-[30px] font-semibold leading-[1.2] tracking-[-0.02em] text-foreground">
-                  Choisissez une section
-                </p>
-                <p className="mt-2 max-w-[42ch] text-[16px] leading-[22px] text-muted-foreground">
-                  Cliquez sur une section dans la liste ou dans l’aperçu pour
-                  modifier ses textes, ses photos et son apparence.
-                </p>
-              </div>
+              <EditorAccueil
+                theme={theme}
+                publishState={publishState}
+                onAdd={() => {
+                  insertIndexRef.current = null
+                  setLibraryOpen(true)
+                }}
+              />
             )}
           </div>
         )}
@@ -395,6 +395,17 @@ export function TemplateEditor({
                 >
                   → {labelOf(selected)}
                 </span>
+              )}
+              {editing && narrow && (
+                <button
+                  type="button"
+                  onClick={() => setRailOverlay(true)}
+                  className="ml-auto inline-flex h-8 shrink-0 items-center gap-1.5 rounded-full bg-white px-3 text-[13px] font-medium text-foreground shadow-[0_1px_2px_rgba(22,73,81,0.08)]"
+                >
+                  <PanelLeft className="h-3.5 w-3.5" strokeWidth={1.8} />
+                  Sections
+                  <span className="tabular-nums text-muted-foreground">{roots.length}</span>
+                </button>
               )}
             </div>
         <EditorStage

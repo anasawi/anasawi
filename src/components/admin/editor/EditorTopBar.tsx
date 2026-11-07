@@ -21,20 +21,23 @@ import { cn } from '@/lib/utils'
 
 export const PUBLISH_STATUS: Record<
   PublishState,
-  { label: string; dot: string; pill: string }
+  { label: string; court: string; dot: string; pill: string }
 > = {
   live: {
     label: 'En ligne',
+    court: 'En ligne',
     dot: 'bg-success',
     pill: 'bg-success-soft text-success-ink',
   },
   pending: {
     label: 'Modifications à publier',
+    court: 'À publier',
     dot: 'bg-warning',
     pill: 'bg-warning-soft text-warning-ink',
   },
   never: {
     label: 'Jamais publiée',
+    court: 'Non publiée',
     dot: 'bg-muted-foreground/50',
     pill: 'bg-muted text-muted-foreground',
   },
@@ -109,7 +112,7 @@ export function EditorTopBar({
         <span role="group" aria-label={`Site édité — ${pageTitle}`} className="flex shrink-0 items-center gap-0.5 rounded-[10px] bg-block p-[3px] text-[13px] font-medium">
           {(
             [
-              ['classique', '/admin/accueil', 'Classique'],
+              ['classique', '/admin/accueil?theme=classique', 'Classique'],
               ['moderne', '/admin/accueil?theme=moderne', 'Moderne'],
             ] as const
           ).map(([t, href, libelle]) => (
@@ -133,7 +136,9 @@ export function EditorTopBar({
           )}
         >
           <span className={cn('h-[6px] w-[6px] rounded-full', status.dot)} />
-          {status.label}
+          <span className="max-sm:hidden">{status.label}</span>
+          {/* Téléphone : le nom court, en contenu CSS — un seul texte pour les lecteurs d'écran et les tests. */}
+          <span aria-hidden="true" data-court={status.court} className="after:content-[attr(data-court)] sm:hidden" />
         </span>
         <span
           className="hidden text-[13px] leading-none text-muted-foreground xl:block"

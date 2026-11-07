@@ -1,5 +1,6 @@
 import type { Metadata } from 'next'
 import { redirect } from 'next/navigation'
+import { cookies } from 'next/headers'
 import { Suspense } from 'react'
 import { Toaster } from 'sonner'
 
@@ -9,6 +10,7 @@ import { NavigationProgress } from '@/components/admin/NavigationProgress'
 import { PaletteProvider } from '@/components/admin/PaletteProvider'
 import { auth } from '@/lib/auth'
 import { paletteFromIdentity } from '@/lib/palette'
+import { adresseSite, COOKIE_VERSION, lireVersion } from '@/lib/version-admin'
 import { getSettings, getUnreadCount } from '@/server/queries'
 import { userExists } from '@/server/queries/users'
 
@@ -39,6 +41,7 @@ export default async function AdminLayout({
   /* La palette du site est chargée ici, une fois : tous les sélecteurs de
      couleur du CMS — inspecteur de section, éditeur de page, réglages — y
      puisent leurs nuances au lieu d'une liste figée dans le code. */
+  const version = lireVersion((await cookies()).get(COOKIE_VERSION)?.value)
   const [settings, nonLus] = await Promise.all([
     getSettings(),
     /* La pastille « messages non lus » de la navigation : une requête
@@ -57,7 +60,7 @@ export default async function AdminLayout({
           <NavigationProgress />
         </Suspense>
 
-        <AdminTopBar userName={userName} nonLus={nonLus} />
+        <AdminTopBar userName={userName} nonLus={nonLus} siteHref={adresseSite(version)} />
 
         {/* Repère « contenu principal » pour les lecteurs d'écran : la
             barre du haut est la navigation, ceci est l'écran. */}

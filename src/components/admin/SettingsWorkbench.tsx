@@ -397,7 +397,7 @@ export function SettingsWorkbench({
         const erreur = await faire()
         if (erreur) return erreur
       }
-      toast.success('Enregistré — le site est à jour.')
+      toast.success('Réglages enregistrés — tout le site est à jour.')
       return null
     })
   const barre = {

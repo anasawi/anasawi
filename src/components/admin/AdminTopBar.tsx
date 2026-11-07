@@ -110,6 +110,10 @@ function Espaces({ nonLus }: { nonLus: number }) {
               <span aria-hidden="true" className="max-xl:lg:hidden max-sm:hidden">
                 {espace.label}
               </span>
+              {/* Téléphone : un nom court sous l'icône — une icône seule ne se devine pas. */}
+              <span aria-hidden="true" className="hidden text-[10px] leading-none max-sm:block">
+                {espace.court}
+              </span>
               {espace.href === '/admin/messages' && nonLus > 0 && (
                 <span
                   aria-label={`${nonLus} non lu${nonLus > 1 ? 's' : ''}`}
@@ -128,7 +132,7 @@ function Espaces({ nonLus }: { nonLus: number }) {
 
 /* ── Le compte ──────────────────────────────────────────────────────── */
 
-function Compte({ userName }: { userName: string }) {
+function Compte({ userName, siteHref }: { userName: string; siteHref: string }) {
   const pathname = usePathname()
   const [ouvert, setOuvert] = useState(false)
   const racine = useRef<HTMLDivElement>(null)
@@ -195,7 +199,7 @@ function Compte({ userName }: { userName: string }) {
           <Users className="h-4 w-4 text-muted-foreground" strokeWidth={1.8} />
           Utilisateurs
         </Link>
-        <Link href="/" className={cn(entree, 'lg:hidden')}>
+        <Link href={siteHref} className={cn(entree, 'lg:hidden')}>
           <Eye className="h-4 w-4 text-muted-foreground" strokeWidth={1.8} />
           Voir le site
         </Link>
@@ -215,10 +219,13 @@ function Compte({ userName }: { userName: string }) {
 export function AdminTopBar({
   userName,
   nonLus = 0,
+  siteHref = '/',
 }: {
   userName: string
   /** Messages non lus — la pastille de l'espace Messages. */
   nonLus?: number
+  /** Le site de la version sur laquelle on travaille (moderne ou classique). */
+  siteHref?: string
 }) {
   return (
     <header className="relative z-50 shrink-0 border-b border-[#eef1f2] bg-white/85 backdrop-blur-[14px] backdrop-saturate-[1.4] max-lg:bg-white max-lg:[backdrop-filter:none]">
@@ -241,7 +248,8 @@ export function AdminTopBar({
 
         <div className="flex items-center gap-3 justify-self-end">
           <Link
-            href="/"
+            href={siteHref}
+           
             className={cn(
               'hidden h-8 items-center gap-2 rounded-[6px] px-3 text-[13px] font-medium text-foreground shadow-[inset_0_0_0_1px_var(--color-border)] transition-colors hover:bg-[rgba(22,73,81,0.04)] lg:inline-flex',
               FOCUS,
@@ -250,7 +258,7 @@ export function AdminTopBar({
             <Eye className="h-[14px] w-[14px]" strokeWidth={1.8} />
             Voir le site
           </Link>
-          <Compte userName={userName} />
+          <Compte userName={userName} siteHref={siteHref} />
         </div>
       </nav>
     </header>

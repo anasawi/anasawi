@@ -36,7 +36,7 @@ function porteLeTemoin(): boolean {
  * contenu pour un visiteur.
  */
 export function AdminBar({
-  editHref = '/admin/accueil',
+  editHref = '/admin/accueil?theme=classique',
   className = 'bottom-24 lg:bottom-7',
 }: {
   /** L'éditeur ouvert par « Modifier » (le site moderne a le sien). */

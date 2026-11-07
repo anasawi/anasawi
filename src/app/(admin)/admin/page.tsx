@@ -1,18 +1,22 @@
 import { ChevronRight, Eye, HeartHandshake, Mail, PenLine, Settings } from 'lucide-react'
+import { cookies } from 'next/headers'
 import Link from 'next/link'
 
 import { getBlock } from '@/blocks/registry'
 import { AdminContent } from '@/components/admin/AdminContent'
+import { ChoixVersion } from '@/components/admin/ChoixVersion'
 import { PASTELS, toneOf } from '@/components/admin/editor/sectionTone'
 import { MediaThumb } from '@/components/admin/MediaThumb'
 import { buttonVariants } from '@/components/ui/button'
 import { hasUnpublishedChanges } from '@/lib/publish'
 import { cn, formatDate, truncate } from '@/lib/utils'
+import { adresseSite, COOKIE_VERSION, lireVersion } from '@/lib/version-admin'
 import type { Section } from '@/server/db/schema'
 import {
   getAllServices,
   getHomePageForAdmin,
   getMessages,
+  getModernPageForAdmin,
   getSettings,
   getUnreadCount,
 } from '@/server/queries'
@@ -28,10 +32,10 @@ const labelOf = (s: Section) => s.name ?? getBlock(s.type)?.label ?? 'Section'
 /** Le premier texte parlant d'une section — sa ligne de résumé. */
 function resumeDe(section: Section): string | null {
   const payload = (section.payload ?? {}) as Record<string, unknown>
-  for (const cle of ['title', 'heading', 'titre', 'eyebrow', 'subtitle', 'text', 'body', 'intro', 'quote']) {
+  for (const cle of ['title', 'heading', 'titre', 'nom', 'eyebrow', 'surtitre', 'subtitle', 'text', 'texte', 'body', 'intro', 'quote']) {
     const v = payload[cle]
     if (typeof v === 'string' && v.trim()) {
-      return truncate(v.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim(), 70)
+      return truncate(v.replace(/<[^>]+>/g, ' ').replace(/\*/g, '').replace(/\s+/g, ' ').trim(), 70)
     }
   }
   return null
@@ -84,8 +88,10 @@ function TeteCarte({
 export default async function DashboardPage() {
   /* Tout en parallèle, en un seul aller-retour : le compte des sections
      se lit sur la page elle-même, celui des accompagnements sur la liste. */
+  /* La version sur laquelle on travaille (retenue depuis l'éditeur). */
+  const version = lireVersion((await cookies()).get(COOKIE_VERSION)?.value)
   const [home, settings, messages, services, nonLus] = await Promise.all([
-    getHomePageForAdmin(),
+    version === 'moderne' ? getModernPageForAdmin() : getHomePageForAdmin(),
     getSettings(),
     getMessages(4),
     getAllServices(),
@@ -128,7 +134,10 @@ export default async function DashboardPage() {
           className="absolute -inset-[40%] -z-10 bg-[radial-gradient(closest-side_at_18%_30%,rgba(221,247,247,1),transparent),radial-gradient(closest-side_at_62%_70%,rgba(209,237,224,0.8),transparent),radial-gradient(closest-side_at_92%_25%,rgba(243,221,226,0.85),transparent)] blur-[10px] motion-safe:animate-[adm-drift_18s_ease-in-out_infinite_alternate]"
         />
         <div className="min-w-0">
-          <p className="text-[14px] font-medium leading-[17px] text-[#8aa4a8]">Tableau de bord</p>
+          <div className="flex flex-wrap items-center gap-3">
+            <p className="text-[14px] font-medium leading-[17px] text-[#8aa4a8]">Tableau de bord</p>
+            <ChoixVersion version={version} />
+          </div>
           <h1 className="mt-1.5 text-[30px] font-semibold leading-[1.2] tracking-[-0.02em] sm:text-[36px] sm:leading-[44px]">
             {prenom ? `Bonjour ${prenom}` : 'Bonjour'}{' '}
             <span
@@ -167,11 +176,11 @@ export default async function DashboardPage() {
           </div>
         </div>
         <div className="flex flex-wrap gap-2">
-          <Link href="/" className={buttonVariants({ variant: 'secondary' })}>
+          <Link href={adresseSite(version)} className={buttonVariants({ variant: 'secondary' })}>
             <Eye strokeWidth={1.75} />
             Voir le site
           </Link>
-          <Link href="/admin/accueil" className={buttonVariants()}>
+          <Link href={`/admin/accueil?theme=${version}`} className={buttonVariants()}>
             <PenLine strokeWidth={1.75} />
             Modifier mon site
           </Link>
@@ -184,13 +193,13 @@ export default async function DashboardPage() {
         <section aria-labelledby="votre-page" className="min-h-0 min-w-0 overflow-y-auto overscroll-contain rounded-[20px] [scrollbar-width:thin] bg-white p-5 sm:p-6">
           <div className="mb-3 flex items-baseline justify-between gap-3 px-1">
             <h2 id="votre-page" className="text-[16px] font-semibold text-foreground">
-              Votre page
+              {version === 'moderne' ? 'Votre site moderne' : 'Votre site classique'}
               <span className="ml-2 text-[13px] font-medium text-[#8aa4a8]">
                 {pluriel(racines.length, 'section', 'sections')}
               </span>
             </h2>
             <Link
-              href="/admin/accueil"
+              href={`/admin/accueil?theme=${version}`}
               className="group/lien inline-flex items-center gap-0.5 text-[13px] font-medium text-[#176c79] transition-colors hover:text-foreground"
             >
               Ouvrir l’éditeur
@@ -211,7 +220,7 @@ export default async function DashboardPage() {
                 return (
                   <li key={section.id}>
                     <Link
-                      href={`/admin/accueil?section=${section.id}`}
+                      href={`/admin/accueil?theme=${version}&section=${section.id}`}
                       className={cn(
                         'group flex items-center gap-3.5 rounded-[14px] px-2 py-2.5 transition-colors duration-[250ms] hover:bg-[#f7f8f8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
                         !section.isActive && 'opacity-50',
