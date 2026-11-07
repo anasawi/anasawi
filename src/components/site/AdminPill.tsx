@@ -19,6 +19,17 @@ import { signOutAction } from '@/server/actions/auth'
 
 export type PillMenuItem = { label: string; href: string }
 
+/**
+ * Le verre de la pastille. Chrome et Edge DÉFORMENT ce qui est derrière
+ * (filtre SVG `#adm-verre`), puis le floutent et l'avivent. Safari ne sait
+ * pas déformer : il garde la déclaration préfixée, un grand flou seul.
+ * L'ordre compte — la préfixée d'abord, la standard ensuite.
+ */
+const VERRE: React.CSSProperties = {
+  WebkitBackdropFilter: 'blur(14px) saturate(1.9) brightness(0.92)',
+  backdropFilter: 'url(#adm-verre) blur(1.5px) saturate(1.9) brightness(0.92)',
+}
+
 const RACCOURCIS: PillMenuItem[] = [
   { label: 'Tableau de bord', href: '/admin' },
   { label: 'Mon site', href: '/admin/accueil' },
@@ -116,12 +127,27 @@ export function AdminPill({
           /* Du verre BLEU NUIT : la page se devine dessous, très floue. Un
              liseré clair fait la tranche, une lueur pastel monte du bas. */
           'group/pilule pointer-events-auto relative isolate flex items-center gap-1.5 overflow-hidden rounded-full p-1.5',
-          'bg-[#1b3440]/72 backdrop-blur-2xl backdrop-saturate-[1.6]',
+          'bg-[#1b3440]/30',
           'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.16),0_2px_6px_rgba(16,36,44,0.18),0_20px_48px_-14px_rgba(16,36,44,0.55)]',
           'animate-[adm-pilule-entree_0.9s_cubic-bezier(0.22,1,0.36,1)_both]',
           status && 'pl-3.5',
         )}
+        style={VERRE}
       >
+        {/* Le verre DÉFORMANT : un bruit doux sert de carte de relief, et
+            décale ce qui est derrière — comme à travers un verre soufflé. */}
+        <svg aria-hidden="true" width="0" height="0" className="absolute">
+          <filter id="adm-verre" x="-10%" y="-10%" width="120%" height="120%" colorInterpolationFilters="sRGB">
+            <feTurbulence type="fractalNoise" baseFrequency="0.012 0.03" numOctaves="2" seed="11" result="bruit" />
+            <feGaussianBlur in="bruit" stdDeviation="2.5" result="relief" />
+            <feDisplacementMap in="SourceGraphic" in2="relief" scale="38" xChannelSelector="R" yChannelSelector="G" />
+          </filter>
+        </svg>
+        {/* Le reflet du verre : une lumière en haut, une ombre douce en bas. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0.04)_45%,rgba(0,0,0,0.12)_100%)]"
+        />
         {/* Une lueur irisée, très douce, au fond du verre — l'écho du bouton. */}
         <span
           aria-hidden="true"
