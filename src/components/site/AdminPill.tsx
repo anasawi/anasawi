@@ -153,6 +153,7 @@ export function AdminPill({
           aria-hidden="true"
           className="pointer-events-none absolute inset-0 -z-10 rounded-full bg-[linear-gradient(180deg,rgba(255,255,255,0.22)_0%,rgba(255,255,255,0.04)_45%,rgba(0,0,0,0.12)_100%)]"
         />
+        <Lisere />
         {/* Une lueur irisée, très douce, au fond du verre — l'écho du bouton. */}
         <span
           aria-hidden="true"
@@ -215,11 +216,12 @@ export function AdminPill({
             title={name}
             onClick={() => setOuvert((v) => !v)}
             className={cn(
-              'flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.1] text-[0.8rem] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] transition-[background-color,transform] duration-300 hover:scale-[1.04] hover:bg-white/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
+              'relative flex h-9 w-9 items-center justify-center rounded-full bg-white/[0.1] text-[0.8rem] font-semibold text-white shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12)] transition-[background-color,transform] duration-300 hover:scale-[1.04] hover:bg-white/[0.18] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white/60',
               ouvert && 'bg-white/[0.18]',
             )}
           >
             {initial}
+            <Lisere epaisseur={1.5} />
           </button>
         </div>
       </nav>
@@ -245,6 +247,7 @@ export function AdminPill({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 -z-10 rounded-[18px] bg-[linear-gradient(180deg,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0.03)_40%,rgba(0,0,0,0.1)_100%)]"
             />
+            <Lisere arrondi="rounded-[18px]" />
             <div className="px-2.5 pb-2 pt-1.5">
               <p className="truncate text-[0.82rem] font-semibold text-white">{name}</p>
               {email && <p className="truncate text-[0.74rem] text-white/55">{email}</p>}
@@ -277,6 +280,31 @@ export function AdminPill({
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * Le liseré MULTICOLORE : la tranche du verre, irisée, dont les couleurs
+ * tournent lentement. Un anneau d'un pixel (masque), et dedans un grand
+ * dégradé conique qui pivote.
+ */
+function Lisere({ arrondi = 'rounded-full', epaisseur = 1.5 }: { arrondi?: string; epaisseur?: number }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn('pointer-events-none absolute inset-0 z-10 overflow-hidden opacity-90', arrondi)}
+      style={{
+        padding: epaisseur,
+        mask: 'linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)',
+        WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+        WebkitMaskComposite: 'xor',
+      }}
+    >
+      <span
+        className="absolute left-1/2 top-1/2 aspect-square w-[160%] -translate-x-1/2 -translate-y-1/2 motion-safe:animate-[adm-tourne-rotation_7s_linear_infinite]"
+        style={{ background: 'conic-gradient(from 0deg, #6fd3dc, #8fe0a8, #f0d27a, #ee9cbc, #b3a1f0, #7fb8ee, #6fd3dc)' }}
+      />
+    </span>
   )
 }
 
