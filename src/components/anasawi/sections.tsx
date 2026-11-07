@@ -402,9 +402,12 @@ export function RendezVous({ c, t = TEXTES.mRendezVous(c) }: P & { t?: T<'mRende
  */
 export function Horizon({
   c,
-  liens,
   t = TEXTES.mHorizon(),
-}: P & { liens: { href: string; label: string }[]; t?: T<'mHorizon'> }) {
+}: P & {
+  /** Le menu n'est plus repris dans le pied de page (il est en haut) ; gardé pour les appels existants. */
+  liens?: { href: string; label: string }[]
+  t?: T<'mHorizon'>
+}) {
   const titreColonne = 'text-[11px] font-semibold uppercase tracking-[0.2em] text-white/40'
   const lien = '-my-1 inline-block py-1 text-white/75 transition-colors duration-300 hover:text-white'
   const amis = c.pied.amis.filter((a) => a.nom && a.url)
@@ -431,7 +434,7 @@ export function Horizon({
           </div>
 
           {/* Tout ce qu'on cherche, en colonnes. */}
-          <div className={cn('grid gap-x-10 gap-y-10 py-12 text-[14.5px] sm:grid-cols-2', amis.length ? 'lg:grid-cols-[1.4fr_1fr_1fr_1.2fr]' : 'lg:grid-cols-[1.4fr_1fr_1fr]')}>
+          <div className={cn('grid gap-x-10 gap-y-10 py-12 text-[14.5px] sm:grid-cols-2', amis.length ? 'lg:grid-cols-[1.4fr_1fr_1.2fr]' : 'lg:grid-cols-[1.4fr_1fr]')}>
             <div>
               <span className="flex items-center gap-3 text-[24px] font-bold tracking-[-0.03em]">
                 <span className="grid h-11 w-11 place-items-center rounded-[14px] bg-white">
@@ -482,20 +485,6 @@ export function Horizon({
                 </li>
               </ul>
             </div>
-            {liens.length > 0 && (
-              <nav aria-label="Pied de page">
-                <p className={titreColonne}>{t.colonneSite}</p>
-                <ul className="mt-4 space-y-2.5">
-                  {liens.map((l) => (
-                    <li key={l.href}>
-                      <a href={l.href} className={lien}>
-                        {l.label}
-                      </a>
-                    </li>
-                  ))}
-                </ul>
-              </nav>
-            )}
             {amis.length > 0 && (
               <div>
                 <p className={titreColonne}>{c.pied.amisTitre || 'Collègues'}</p>

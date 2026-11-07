@@ -91,7 +91,13 @@ export const PIED_DEPART: Pied = {
   deontologie:
     'J’ai signé le Code de déontologie de l’[EAP](https://www.europsyche.org/) et de l’[EAGT](https://www.eagt.org/), la [Déclaration de Strasbourg](https://www.ff2p.fr/demander-le-cep/) et la [Charte des usagers de la psychothérapie](https://www.ff2p.fr/ethique-et-deontologie/). Membre individuelle de la [FF2P](https://www.ff2p.fr/) et de l’[EAGT](https://www.eagt.org/). Déclarée, assurée et habilitée à recevoir des chèques.',
   amisTitre: 'Des collègues que je recommande',
-  amis: [],
+  /* Pour l'instant des adresses d'exemple : à remplacer par les vrais sites. */
+  amis: [
+    { id: 'claire', nom: 'Claire Martin', description: 'Psychologue à Rennes', url: 'https://www.example.com/claire-martin' },
+    { id: 'julien', nom: 'Julien Morel', description: 'Gestalt-thérapeute', url: 'https://www.example.com/julien-morel' },
+    { id: 'sophie', nom: 'Sophie Lefèvre', description: 'Professeure de yoga', url: 'https://www.example.com/sophie-lefevre' },
+    { id: 'marc', nom: 'Marc Dubois', description: 'Thérapeute de couple', url: 'https://www.example.com/marc-dubois' },
+  ],
   statut: 'Entrepreneure individuelle',
   siret: '',
   adeli: '',

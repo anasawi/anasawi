@@ -15,6 +15,19 @@ import type { Media } from '@/server/db/schema'
 
 type Ton = 'sombre' | 'clair'
 
+/**
+ * Les logos LIVRÉS avec le site (public/logos), pour les organismes de
+ * départ : ils s'affichent partout — préprod, production — même quand
+ * aucun logo n'a été choisi dans la médiathèque de ce site. Un logo
+ * choisi dans les Réglages passe devant.
+ */
+const LOGOS_LIVRES: Record<string, { url: string; width: number; height: number }> = {
+  eap: { url: '/logos/eap.png', width: 600, height: 239 },
+  eagt: { url: '/logos/eagt.png', width: 600, height: 287 },
+  ff2p: { url: '/logos/ff2p.png', width: 600, height: 141 },
+  fpgt: { url: '/logos/fpgt.png', width: 540, height: 152 },
+}
+
 /** Les organismes, en une rangée de petites cartes : le logo sur fond blanc, ou les initiales. */
 export function Organismes({ pied, logos, ton, className }: { pied: Pied; logos: Record<string, Media>; ton: Ton; className?: string }) {
   const organismes = pied.organismes.filter((o) => o.url || o.nom || o.sigle)
@@ -23,7 +36,7 @@ export function Organismes({ pied, logos, ton, className }: { pied: Pied; logos:
   return (
     <ul aria-label={pied.organismesTitre || 'Organismes'} className={cn('flex flex-wrap items-center gap-2', className)}>
       {organismes.map((o) => {
-        const logo = logos[o.id]
+        const logo = logos[o.id] ?? LOGOS_LIVRES[o.id]
         const carte = cn(
           'group flex h-11 items-center justify-center rounded-[13px] px-3.5 transition-[translate,box-shadow,background-color] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-0.5',
           logo ? 'bg-white shadow-[0_6px_18px_-12px_rgba(0,0,0,0.45)] hover:shadow-[0_12px_26px_-14px_rgba(0,0,0,0.5)]' : sombre ? 'bg-white/[0.07] hover:bg-white/[0.12]' : 'bg-white shadow-[0_1px_2px_rgba(0,0,0,0.05)]',

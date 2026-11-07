@@ -454,7 +454,6 @@ export const mHorizonBlock: BlockDefinition<typeof horizonSchema> = {
     field.text('bouton', 'Bouton'),
     field.text('colonneContact', 'Titre de la colonne « contact »', P),
     field.text('lienMessage', 'Lien vers le formulaire', P),
-    field.text('colonneSite', 'Titre de la colonne « menu »', P),
     field.text('mention', 'Lien vers le site classique', { help: 'Vide : lien masqué.', ...P }),
   ],
   defaults: vides(horizonSchema),
