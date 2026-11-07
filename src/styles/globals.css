@@ -308,6 +308,30 @@
     opacity: 0;
   }
 }
+/* La pastille d'administration du site : elle monte, floue, puis se pose. */
+@keyframes adm-pilule-entree {
+  from {
+    opacity: 0;
+    transform: translateY(14px) scale(0.96);
+    filter: blur(6px);
+  }
+}
+@property --adm-angle {
+  syntax: '<angle>';
+  inherits: false;
+  initial-value: 0deg;
+}
+@keyframes adm-tourne {
+  to {
+    --adm-angle: 360deg;
+  }
+}
+@keyframes adm-pilule-menu {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.97);
+  }
+}
 @keyframes adm-pop {
   from {
     opacity: 0;

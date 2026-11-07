@@ -113,16 +113,44 @@ export function AdminPill({
            d'écran. */
         aria-label="Raccourcis d’administration"
         className={cn(
-          'pointer-events-auto flex items-center gap-1.5 rounded-full border border-black/5 bg-white/92 p-1.5 shadow-[0_6px_28px_-6px_rgba(28,32,30,0.22),0_2px_8px_-2px_rgba(28,32,30,0.12)] backdrop-blur-xl',
-          status && 'pl-4',
+          /* Du verre IRISÉ, comme le bandeau du tableau de bord : un voile
+             blanc très flou, et dessous une lumière arc-en-ciel pastel qui
+             dérive lentement. Le liseré clair fait la tranche du verre. */
+          'group/pilule pointer-events-auto relative isolate flex items-center gap-1.5 overflow-hidden rounded-full p-1.5',
+          'bg-white/35 backdrop-blur-2xl backdrop-saturate-[1.8]',
+          'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.75),inset_0_1px_0_rgba(255,255,255,0.9),0_1px_2px_rgba(22,73,81,0.08),0_18px_44px_-14px_rgba(22,73,81,0.35)]',
+          'animate-[adm-pilule-entree_0.9s_cubic-bezier(0.22,1,0.36,1)_both]',
+          status && 'pl-3.5',
         )}
       >
+        {/* L'arc-en-ciel : cyan, menthe, rose poudré, lavande — flouté, en dérive. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute -inset-[60%] -z-10 bg-[radial-gradient(closest-side_at_14%_40%,rgba(160,232,236,1),transparent),radial-gradient(closest-side_at_40%_72%,rgba(184,232,206,0.95),transparent),radial-gradient(closest-side_at_66%_30%,rgba(248,196,214,1),transparent),radial-gradient(closest-side_at_90%_62%,rgba(206,196,250,1),transparent)] opacity-90 blur-[12px] motion-safe:animate-[adm-drift_14s_ease-in-out_infinite_alternate]"
+        />
+        {/* La tranche du verre : un liseré arc-en-ciel qui tourne doucement. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-0 rounded-full p-px motion-safe:animate-[adm-tourne_9s_linear_infinite]"
+          style={{
+            background: 'conic-gradient(from var(--adm-angle, 0deg), rgba(126,214,220,0.9), rgba(170,226,190,0.9), rgba(246,190,210,0.9), rgba(196,184,248,0.9), rgba(126,214,220,0.9))',
+            mask: 'linear-gradient(#000 0 0) content-box exclude, linear-gradient(#000 0 0)',
+            WebkitMask: 'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+            WebkitMaskComposite: 'xor',
+          }}
+        />
+        {/* Un reflet qui traverse le verre au survol. */}
+        <span
+          aria-hidden="true"
+          className="pointer-events-none absolute inset-y-0 -left-1/3 -z-10 w-1/3 -skew-x-12 bg-gradient-to-r from-transparent via-white/70 to-transparent opacity-0 transition-[left,opacity] duration-[1100ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/pilule:left-[110%] group-hover/pilule:opacity-100"
+        />
+
         {status && (
-          <span className="flex items-center gap-2 pr-1 text-[0.8rem] text-ink-soft">
-            <span
-              aria-hidden="true"
-              className={cn('h-1.5 w-1.5 rounded-full', dotClassName)}
-            />
+          <span className="flex h-8 items-center gap-2 rounded-full bg-white/60 px-3 text-[0.8rem] font-medium text-[#164951] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7)]">
+            <span aria-hidden="true" className="relative grid h-2 w-2 place-items-center">
+              <span className={cn('absolute inset-0 rounded-full opacity-60 motion-safe:animate-[adm-ping_2s_cubic-bezier(0.22,1,0.36,1)_infinite]', dotClassName)} />
+              <span className={cn('relative h-1.5 w-1.5 rounded-full', dotClassName)} />
+            </span>
             {status}
           </span>
         )}
@@ -132,9 +160,9 @@ export function AdminPill({
             href={actionHref}
             target={newTab ? '_blank' : undefined}
             rel={newTab ? 'noopener' : undefined}
-            className="flex items-center gap-2 rounded-full bg-ivory-warm px-4 py-2 text-[0.82rem] font-medium text-ink transition-colors duration-300 hover:bg-ivory-deep"
+            className="group/action relative flex h-9 items-center gap-2 overflow-hidden rounded-full bg-[#164951] px-4 text-[0.82rem] font-medium text-white shadow-[inset_0_1px_0_rgba(255,255,255,0.18),0_6px_16px_-6px_rgba(22,73,81,0.6)] transition-[transform,translate,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:shadow-[inset_0_1px_0_rgba(255,255,255,0.22),0_10px_22px_-8px_rgba(22,73,81,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#164951]"
           >
-            {icon}
+            <span className="transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/action:-rotate-12">{icon}</span>
             {actionLabel}
           </Link>
         ) : (
@@ -142,7 +170,7 @@ export function AdminPill({
              au lieu de mener à une page introuvable. */
           <span
             title={actionDisabledHint}
-            className="flex cursor-default items-center gap-2 rounded-full bg-ivory-warm/60 px-4 py-2 text-[0.82rem] text-ink-soft/70"
+            className="flex h-9 cursor-default items-center gap-2 rounded-full bg-white/50 px-4 text-[0.82rem] text-[#46606c]/70"
           >
             {icon}
             {actionLabel}
@@ -160,54 +188,62 @@ export function AdminPill({
             title={name}
             onClick={() => setOuvert((v) => !v)}
             className={cn(
-              'flex h-8 w-8 items-center justify-center rounded-full bg-ivory-warm text-[0.78rem] font-medium text-ink-soft transition-colors duration-300 hover:bg-ivory-deep hover:text-ink focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-deep/50',
-              ouvert && 'bg-ivory-deep text-ink',
+              'flex h-9 w-9 items-center justify-center rounded-full bg-white/70 text-[0.8rem] font-semibold text-[#164951] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8)] transition-[background-color,transform] duration-300 hover:scale-[1.04] hover:bg-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-[#176c79]/50',
+              ouvert && 'bg-white',
             )}
           >
             {initial}
           </button>
-
-          {ouvert && (
-            <div
-              ref={menu}
-              id={menuId}
-              role="menu"
-              aria-label="Menu du compte"
-              onKeyDown={onMenuKey}
-              className="absolute bottom-[calc(100%+10px)] right-0 w-[230px] rounded-[12px] border border-black/5 bg-white p-1.5 text-left shadow-[0_10px_30px_rgba(28,32,30,0.18)]"
-            >
-              <div className="px-2.5 pb-2 pt-1.5">
-                <p className="truncate text-[0.82rem] font-medium text-ink">{name}</p>
-                {email && <p className="truncate text-[0.74rem] text-ink-soft">{email}</p>}
-              </div>
-              <div role="separator" className="mx-1 mb-1 border-t border-black/5" />
-              {RACCOURCIS.map((item) => (
-                <Link
-                  key={item.href}
-                  href={item.href}
-                  role="menuitem"
-                  tabIndex={-1}
-                  onClick={() => setOuvert(false)}
-                  className="block rounded-md px-2.5 py-2 text-[0.8rem] text-ink transition-colors hover:bg-ivory-warm focus-visible:bg-ivory-warm focus-visible:outline-none"
-                >
-                  {item.label}
-                </Link>
-              ))}
-              <div role="separator" className="mx-1 my-1 border-t border-black/5" />
-              <form action={signOutAction}>
-                <button
-                  type="submit"
-                  role="menuitem"
-                  tabIndex={-1}
-                  className="block w-full rounded-md px-2.5 py-2 text-left text-[0.8rem] text-red-700 transition-colors hover:bg-red-50 focus-visible:bg-red-50 focus-visible:outline-none"
-                >
-                  Se déconnecter
-                </button>
-              </form>
-            </div>
-          )}
         </div>
       </nav>
+
+      {/* Le menu de compte, hors du verre (qui coupe ce qui déborde) : posé
+          au-dessus de la pastille, dans le même verre. */}
+      {ouvert && (
+        <div className="pointer-events-none absolute inset-x-0 bottom-full flex justify-center px-4 pb-2.5">
+          <div
+            ref={menu}
+            id={menuId}
+            role="menu"
+            aria-label="Menu du compte"
+            onKeyDown={onMenuKey}
+            className="pointer-events-auto relative isolate w-[240px] overflow-hidden rounded-[18px] bg-white/[0.92] p-1.5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.8),0_20px_50px_-16px_rgba(22,73,81,0.35)] backdrop-blur-2xl backdrop-saturate-[1.8] animate-[adm-pilule-menu_0.35s_cubic-bezier(0.22,1,0.36,1)_both]"
+          >
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute -inset-[40%] -z-10 bg-[radial-gradient(closest-side_at_20%_20%,rgba(196,240,242,0.7),transparent),radial-gradient(closest-side_at_85%_85%,rgba(246,214,224,0.6),transparent)] blur-[16px]"
+            />
+            <div className="px-2.5 pb-2 pt-1.5">
+              <p className="truncate text-[0.82rem] font-semibold text-[#164951]">{name}</p>
+              {email && <p className="truncate text-[0.74rem] text-[#46606c]">{email}</p>}
+            </div>
+            <div role="separator" className="mx-1 mb-1 border-t border-[#164951]/10" />
+            {RACCOURCIS.map((item) => (
+              <Link
+                key={item.href}
+                href={item.href}
+                role="menuitem"
+                tabIndex={-1}
+                onClick={() => setOuvert(false)}
+                className="block rounded-[10px] px-2.5 py-2 text-[0.8rem] text-[#164951] transition-colors hover:bg-white/80 focus-visible:bg-white/80 focus-visible:outline-none"
+              >
+                {item.label}
+              </Link>
+            ))}
+            <div role="separator" className="mx-1 my-1 border-t border-[#164951]/10" />
+            <form action={signOutAction}>
+              <button
+                type="submit"
+                role="menuitem"
+                tabIndex={-1}
+                className="block w-full rounded-[10px] px-2.5 py-2 text-left text-[0.8rem] text-red-700 transition-colors hover:bg-red-50/80 focus-visible:bg-red-50/80 focus-visible:outline-none"
+              >
+                Se déconnecter
+              </button>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
