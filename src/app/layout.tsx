@@ -11,7 +11,12 @@ const cormorant = Cormorant_Garamond({
   subsets: ['latin', 'latin-ext'],
   display: 'swap',
   variable: '--font-cormorant',
-  weight: ['300', '400', '500'],
+  /* La police VARIABLE entière, pas une liste de graisses : pour une liste,
+     Google sert désormais des fichiers « /l/font?kit=… » sans extension, que
+     next/font ne sait pas lire — le build de Netlify échouait (« Cannot
+     read properties of null (reading '1') »). Le fichier variable couvre
+     les mêmes graisses (300 à 700). */
+  weight: 'variable',
   style: ['normal', 'italic'],
   preload: true,
 })
@@ -20,7 +25,8 @@ const karla = Karla({
   subsets: ['latin', 'latin-ext'],
   display: 'swap',
   variable: '--font-karla',
-  weight: ['400', '500', '600'],
+  /* Variable, pour la même raison que Cormorant (graisses 200 à 800). */
+  weight: 'variable',
   preload: true,
 })
 
