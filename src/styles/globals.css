@@ -316,14 +316,9 @@
     filter: blur(6px);
   }
 }
-@property --adm-angle {
-  syntax: '<angle>';
-  inherits: false;
-  initial-value: 0deg;
-}
-@keyframes adm-tourne {
+@keyframes adm-tourne-rotation {
   to {
-    --adm-angle: 360deg;
+    transform: rotate(360deg);
   }
 }
 @keyframes adm-pilule-menu {
