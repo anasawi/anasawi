@@ -1,5 +1,6 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
 import { AdminPill, PencilIcon } from './AdminPill'
@@ -79,6 +80,22 @@ export function AdminBar({
       controller.abort()
     }
   }, [])
+
+  /* L'administratrice est là : on prépare le passage dans l'éditeur AVANT
+     le clic — la base se réveille, l'écran de l'éditeur se précharge. */
+  const router = useRouter()
+  const admin = Boolean(state?.admin)
+  useEffect(() => {
+    if (!admin) return
+    void fetch('/api/admin-bar/reveil', { credentials: 'same-origin', cache: 'no-store' }).catch(() => undefined)
+    router.prefetch(editHref)
+    /* Pendant une longue lecture, la base se rendort : un réveil toutes
+       les quatre minutes, tant que l'onglet est au premier plan. */
+    const id = window.setInterval(() => {
+      if (document.visibilityState === 'visible') void fetch('/api/admin-bar/reveil', { credentials: 'same-origin', cache: 'no-store' }).catch(() => undefined)
+    }, 4 * 60 * 1000)
+    return () => window.clearInterval(id)
+  }, [admin, editHref, router])
 
   if (!state?.admin) return null
 

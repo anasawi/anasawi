@@ -1,6 +1,6 @@
 'use client'
 
-import Link from 'next/link'
+import Link, { useLinkStatus } from 'next/link'
 import { useEffect, useId, useRef, useState } from 'react'
 
 import { cn } from '@/lib/utils'
@@ -172,6 +172,8 @@ export function AdminPill({
         {actionHref ? (
           <Link
             href={actionHref}
+            /* Préchargé : l'éditeur est prêt avant le clic. */
+            prefetch
             target={newTab ? '_blank' : undefined}
             rel={newTab ? 'noopener' : undefined}
             className="group/action relative isolate flex h-9 items-center gap-2 overflow-hidden rounded-full px-4 text-[0.82rem] font-semibold text-[#164951] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.55),inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-6px_rgba(170,200,240,0.55)] transition-[transform,translate,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7),inset_0_1px_0_rgba(255,255,255,0.95),0_10px_26px_-6px_rgba(200,180,240,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b3440]"
@@ -189,8 +191,7 @@ export function AdminPill({
               aria-hidden="true"
               className="absolute inset-y-0 -left-1/2 -z-10 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-0 transition-[left,opacity] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/action:left-[120%] group-hover/action:opacity-100"
             />
-            <span className="transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/action:-rotate-12">{icon}</span>
-            {actionLabel}
+            <EtatAction icon={icon} label={actionLabel} />
           </Link>
         ) : (
           /* Page jamais publiée : rien à voir en ligne — le bouton le dit
@@ -283,6 +284,27 @@ export function AdminPill({
         </div>
       )}
     </div>
+  )
+}
+
+/**
+ * L'intérieur du bouton d'action : dès le clic, il le DIT (« Ouverture… »,
+ * un petit cercle qui tourne) — on ne reste jamais sans réponse pendant
+ * que l'éditeur arrive.
+ */
+function EtatAction({ icon, label }: { icon: React.ReactNode; label: string }) {
+  const { pending } = useLinkStatus()
+  return (
+    <>
+      <span className="transition-transform duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/action:-rotate-12">
+        {pending ? (
+          <span aria-hidden="true" className="block h-3.5 w-3.5 animate-spin rounded-full border-[1.75px] border-current border-r-transparent" />
+        ) : (
+          icon
+        )}
+      </span>
+      <span aria-live="polite">{pending ? 'Ouverture…' : label}</span>
+    </>
   )
 }
 
