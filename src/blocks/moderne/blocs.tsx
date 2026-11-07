@@ -63,7 +63,7 @@ export function Enveloppe({ ctx, children }: { ctx: BlockContext; children: Reac
 }
 
 const TITRE = 'Une ligne par retour à la ligne ; le mot clé entre *astérisques*.'
-const MENU = 'Libellé de cette section dans le menu du haut. Vide : absente du menu.'
+const MENU = 'Toutes les sections sont dans le menu du haut, dans l’ordre de la page : ceci est le nom de son entrée. Vide : son nom par défaut.'
 
 const t = z.string().default('')
 /** Un champ AJOUTÉ après coup : absent des sections déjà enregistrées, il
@@ -133,7 +133,7 @@ export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
 
 /* ── Respiration ──────────────────────────────────────────────────────── */
 
-const respirationSchema = z.object({ rempli, surtitre: t, titre: t, texte: t, bouton: t, inspirez: n, expirez: n, arreter: n, recommencer: n, compteur: n, bravo: n, repos: n })
+const respirationSchema = z.object({ rempli, menu: n, surtitre: t, titre: t, texte: t, bouton: t, inspirez: n, expirez: n, arreter: n, recommencer: n, compteur: n, bravo: n, repos: n })
 export const mRespirationBlock: BlockDefinition<typeof respirationSchema> = {
   ...commun,
   label: 'Respiration',
@@ -144,6 +144,7 @@ export const mRespirationBlock: BlockDefinition<typeof respirationSchema> = {
     field.textarea('titre', 'Titre', { help: TITRE }),
     field.textarea('texte', 'Texte'),
     field.text('bouton', 'Bouton de l’exercice'),
+    field.text('menu', 'Dans le menu', { help: MENU }),
     field.text('inspirez', 'Dans le cercle : inspiration', P),
     field.text('expirez', 'Dans le cercle : expiration', P),
     field.text('repos', 'Sous le bouton, au repos', P),
@@ -314,7 +315,7 @@ export const mEnPratiqueBlock: BlockDefinition<typeof pratiqueSchema> = {
 
 /* ── Phrase ───────────────────────────────────────────────────────────── */
 
-const phraseSchema = z.object({ rempli, texte: t, auteur: t })
+const phraseSchema = z.object({ rempli, menu: n, texte: t, auteur: t })
 export const mPhraseBlock: BlockDefinition<typeof phraseSchema> = {
   ...commun,
   label: 'Phrase',
@@ -323,6 +324,7 @@ export const mPhraseBlock: BlockDefinition<typeof phraseSchema> = {
   fields: [
     field.textarea('texte', 'La phrase', { help: 'Les mots entre *astérisques* sont en accent.' }),
     field.text('auteur', 'Signature'),
+    field.text('menu', 'Dans le menu', { help: MENU }),
   ],
   defaults: vides(phraseSchema),
   preremplir: (c) => ({ rempli: true, ...TEXTES.mPhrase(c) }),
@@ -372,7 +374,6 @@ export const mConversationBlock: BlockDefinition<typeof conversationSchema> = {
   fields: [
     field.text('surtitre', 'Étiquette'),
     field.textarea('titre', 'Titre', { help: TITRE }),
-    field.text('signature', 'Signature sous la réponse'),
     field.text('suivante', 'Bouton « question suivante »'),
     field.text('menu', 'Dans le menu', { help: MENU }),
   ],

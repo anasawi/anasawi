@@ -1,4 +1,5 @@
 import type { Contenu } from '@/blocks/moderne/contenu'
+import { idSectionModerne } from '@/blocks/moderne/textes'
 import { getBlock } from '@/blocks/registry'
 import type { BlockContext } from '@/blocks/types'
 import { sectionTheme } from '@/lib/color'
@@ -497,7 +498,7 @@ export function SectionRootView({
   if (block.theme === 'moderne') {
     return (
       <section
-        id={section.anchor ?? undefined}
+        id={idSectionModerne(section)}
         aria-label={section.navLabel ?? undefined}
         data-block-id={editable ? section.id : undefined}
         data-block-root={editable ? 'true' : undefined}

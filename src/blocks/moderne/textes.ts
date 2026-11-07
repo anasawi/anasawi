@@ -90,6 +90,7 @@ export const TEXTES = {
     titre: 'Prenez le temps\nd’une *respiration*.',
     texte: 'Un instant pour vous, avant la suite. Suivez le cercle : il gonfle, vous inspirez ; il se pose, vous expirez.',
     bouton: 'Respirer une minute',
+    menu: 'Respirer',
     ...SOUFFLE_PAR_DEFAUT,
   }),
   mRencontre: (c: Contenu) => ({
@@ -117,7 +118,7 @@ export const TEXTES = {
     bouton: 'Réserver cet accompagnement',
   }),
   mEnPratique: () => ({
-    menu: '',
+    menu: 'En pratique',
     surtitre: 'En pratique',
     titre: 'Tout ce qu’il faut\n*savoir*',
     cabinet: 'Le cabinet',
@@ -133,6 +134,7 @@ export const TEXTES = {
     planRecentrer: 'Recentrer',
   }),
   mPhrase: (c: Contenu) => ({
+    menu: 'Conviction',
     texte: phraseAccentuee(c.citation.texte),
     auteur: c.citation.auteur,
   }),
@@ -150,7 +152,7 @@ export const TEXTES = {
     suivante: 'Question suivante',
   }),
   mRendezVous: (c: Contenu) => ({
-    menu: '',
+    menu: 'Rendez-vous',
     surtitre: 'Rendez-vous',
     titre: 'Écrivez-moi,\n*simplement*',
     ouvertAujourdhui: 'Ouvert aujourd’hui · {h}',
@@ -191,6 +193,22 @@ export function textesDe<K extends CleTextes>(cle: K, c: Contenu, saisie: Record
 
 /** Les photos de la promenade par défaut : la photothèque, sans les substituts. */
 export const photosPromenade = (c: Contenu) => c.photos.filter((p) => !/substitution/i.test(p.alt)).slice(0, 9)
+
+/**
+ * L'identifiant HTML d'une section moderne, posé sur son enveloppe — sauf
+ * pour les sections qui portent déjà le leur (ANCRES, ci-dessous) : un
+ * seul id par section. Choisi dans « Options avancées », sinon dérivé de
+ * la section (stable).
+ */
+export function idSectionModerne(s: { id: string; type: string; anchor?: string | null }): string | undefined {
+  if (s.type in ANCRES) return undefined
+  return s.anchor || `s-${s.id.slice(0, 8)}`
+}
+
+/** L'ancre vers laquelle mène l'entrée de menu d'une section moderne. */
+export function ancreSectionModerne(s: { id: string; type: string; anchor?: string | null }): string {
+  return ANCRES[s.type as CleTextes] ?? idSectionModerne(s)!
+}
 
 /** Les entrées du menu : type de section → ancre (posée par la section). */
 export const ANCRES: Partial<Record<CleTextes, string>> = {

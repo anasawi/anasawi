@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowUpRight, Check, Menu, Plus, Sparkles, X } from 'lucide-react'
+import { ArrowUpRight, Check, Mail, Menu, Phone, Plus, Sparkles, User, X } from 'lucide-react'
 import Image from 'next/image'
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
@@ -902,13 +902,11 @@ export function Conversation({
   faq,
   prenom,
   portrait,
-  signature = `${prenom} · répond en personne`,
   suivante = 'Question suivante',
 }: {
   faq: FaqItem[]
   prenom: string
   portrait: Media | null
-  signature?: string
   suivante?: string
 }) {
   const [choisie, setChoisie] = useState(0)
@@ -994,7 +992,6 @@ export function Conversation({
                 </p>
               )}
             </div>
-            <p className="pl-[52px] text-[12px] uppercase tracking-[0.18em] text-[var(--ad-gris)]">{signature}</p>
             <div className="mt-auto flex items-center justify-between gap-4 border-t border-[var(--ad-sable-fonce)] pt-5">
               <span className="text-[13px] tabular-nums text-[var(--ad-gris)]">
                 {choisie + 1} / {faq.length}
@@ -1155,19 +1152,13 @@ export function SemaineListe({ horaires, libelleFerme = 'Fermé' }: { horaires: 
    Le VRAI envoi : elle arrive dans « Messages » de l'administration.
    ══════════════════════════════════════════════════════════════════════ */
 
-/* Sous chaque ligne, un trait d'encre qui se tire de gauche à droite
-   quand on y écrit. */
-function Trait() {
-  return (
-    <span
-      aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-[1.5px] origin-left scale-x-0 bg-[linear-gradient(90deg,var(--ad-bleu),var(--ad-bleu-clair))] transition-transform duration-700 ease-[var(--ad-ease)] peer-focus:scale-x-100"
-    />
-  )
-}
-
-const LIGNE =
-  'peer w-full border-0 border-b border-[var(--ad-sable-fonce)] bg-transparent px-0 py-3 font-[family-name:var(--ad-titre)] font-medium tracking-[-0.01em] text-[18px] text-[var(--ad-nuit)] outline-none transition-[border-color] duration-300 placeholder:text-[var(--ad-gris)]/50 focus:border-[var(--ad-nuit)]'
+/* Les champs de la lettre : des cases douces couleur sable, une icône
+   discrète ; au focus, la case blanchit et s'entoure d'un fin trait bleu. */
+const CASE =
+  'group/case relative flex items-center gap-3 rounded-[18px] bg-[color-mix(in_srgb,var(--ad-sable)_60%,white)] px-4 transition-[background-color,box-shadow] duration-300 ease-[var(--ad-ease)] focus-within:bg-white focus-within:shadow-[0_0_0_1.5px_var(--ad-bleu),0_10px_30px_-18px_rgba(46,66,79,0.45)] hover:bg-[color-mix(in_srgb,var(--ad-sable)_80%,white)] focus-within:hover:bg-white'
+const SAISIE =
+  'min-w-0 flex-1 border-0 bg-transparent py-4 text-[16px] font-medium text-[var(--ad-nuit)] outline-none placeholder:font-normal placeholder:text-[var(--ad-gris)]'
+const ICONE = 'h-[18px] w-[18px] shrink-0 text-[var(--ad-gris)] transition-colors duration-300 group-focus-within/case:text-[var(--ad-bleu)]'
 
 export function Lettre({ prenom, textes }: { prenom: string; textes?: Partial<TextesLettre> }) {
   const t = { ...lettreParDefaut(prenom), ...Object.fromEntries(Object.entries(textes ?? {}).filter(([, v]) => v && String(v).trim())) } as TextesLettre
@@ -1243,60 +1234,65 @@ export function Lettre({ prenom, textes }: { prenom: string; textes?: Partial<Te
     <form
       onSubmit={envoyer}
       className={cn(
-        'relative rounded-[36px] bg-white p-7 shadow-[0_30px_80px_-40px_rgba(46,66,79,0.35)] sm:p-12',
+        'relative overflow-hidden rounded-[36px] bg-white p-6 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_30px_80px_-40px_rgba(46,66,79,0.35)] sm:p-10',
         etat === 'envole' && 'motion-safe:animate-[ad-envol_0.75s_var(--ad-ease)_forwards]',
       )}
     >
-      <p className="font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[30px] text-[var(--ad-nuit)]">{t.salutation}</p>
-      <div className="mt-6 grid gap-x-8 gap-y-2 sm:grid-cols-2">
-        <label className="relative block">
+      {/* Une touche de couleur en haut de la lettre, comme un papier à en-tête. */}
+      <span aria-hidden="true" className="absolute inset-x-0 top-0 h-1.5 bg-[linear-gradient(90deg,var(--ad-bleu),var(--ad-or),var(--ad-bleu-clair))] opacity-80" />
+      <p className="font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[clamp(26px,3vw,32px)] leading-tight text-[var(--ad-nuit)]">{t.salutation}</p>
+      <div className="mt-7 grid gap-3 sm:grid-cols-2">
+        <label className={CASE}>
           <span className="sr-only">Votre nom</span>
-          <input name="name" required minLength={2} autoComplete="name" placeholder={t.nom} className={LIGNE} />
-          <Trait />
+          <User aria-hidden="true" className={ICONE} strokeWidth={1.7} />
+          <input name="name" required minLength={2} autoComplete="name" placeholder={t.nom} className={SAISIE} />
         </label>
-        <label className="relative block">
+        <label className={CASE}>
           <span className="sr-only">Votre téléphone (facultatif)</span>
-          <input name="phone" type="tel" autoComplete="tel" placeholder={t.telephone} className={LIGNE} />
-          <Trait />
+          <Phone aria-hidden="true" className={ICONE} strokeWidth={1.7} />
+          <input name="phone" type="tel" autoComplete="tel" placeholder={t.telephone} className={SAISIE} />
         </label>
-        <label className="relative block sm:col-span-2">
+        <label className={cn(CASE, 'sm:col-span-2')}>
           <span className="sr-only">Votre adresse e-mail</span>
-          <input name="email" type="email" required autoComplete="email" placeholder={t.email} className={LIGNE} />
-          <Trait />
+          <Mail aria-hidden="true" className={ICONE} strokeWidth={1.7} />
+          <input name="email" type="email" required autoComplete="email" placeholder={t.email} className={SAISIE} />
         </label>
-        <label className="block sm:col-span-2">
+        <label className={cn(CASE, 'flex-col items-stretch gap-0 overflow-hidden px-0 sm:col-span-2')}>
           <span className="sr-only">Votre message</span>
           <textarea
             name="message"
             required
             minLength={20}
-            rows={5}
+            rows={6}
             placeholder={t.message}
             onChange={(e) => setLongueur(e.currentTarget.value.trim().length)}
             aria-describedby="lettre-longueur"
-            className={cn(
-              LIGNE,
-              'resize-none border-b-0 bg-[linear-gradient(transparent_calc(2.4em_-_1px),var(--ad-sable-fonce)_calc(2.4em_-_1px),var(--ad-sable-fonce)_2.4em,transparent_2.4em)] bg-[length:100%_2.4em] leading-[2.4em] [background-attachment:local]',
-            )}
+            className={cn(SAISIE, 'resize-none px-5 pb-3 pt-4 leading-[1.65]')}
           />
-          <span
-            id="lettre-longueur"
-            className={cn(
-              'mt-2 flex items-center gap-1.5 text-[12px] transition-colors duration-300',
-              longueur >= 20 ? 'text-[var(--ad-or)]' : 'text-[var(--ad-gris)]',
-            )}
-          >
-            <span className={cn('grid h-3.5 w-3.5 place-items-center rounded-full transition-colors', longueur >= 20 ? 'bg-[var(--ad-or)] text-white' : 'border border-current')}>
-              {longueur >= 20 && <Check className="h-2.5 w-2.5" />}
+          {/* Ce qu'il manque : un fil qui se remplit jusqu'aux vingt caractères. */}
+          <span className="flex items-center justify-between gap-3 px-5 pb-3.5">
+            <span
+              id="lettre-longueur"
+              className={cn('flex items-center gap-1.5 text-[12px] transition-colors duration-300', longueur >= 20 ? 'text-[var(--ad-touche-fonce,var(--ad-or))]' : 'text-[var(--ad-gris)]')}
+            >
+              <span className={cn('grid h-3.5 w-3.5 place-items-center rounded-full transition-colors', longueur >= 20 ? 'bg-[var(--ad-or)] text-white' : 'border border-current')}>
+                {longueur >= 20 && <Check className="h-2.5 w-2.5" />}
+              </span>
+              {longueur >= 20 ? 'C’est parfait.' : `Encore ${20 - longueur} caractère${20 - longueur > 1 ? 's' : ''} au moins`}
             </span>
-            {longueur >= 20 ? 'C’est parfait.' : `Encore ${20 - longueur} caractère${20 - longueur > 1 ? 's' : ''} au moins`}
+            <span aria-hidden="true" className="h-1 w-24 overflow-hidden rounded-full bg-[var(--ad-sable-fonce)]/60">
+              <span
+                className="block h-full rounded-full bg-[var(--ad-or)] transition-[width] duration-500 ease-[var(--ad-ease)]"
+                style={{ width: `${Math.min(100, (longueur / 20) * 100)}%` }}
+              />
+            </span>
           </span>
         </label>
       </div>
       <input name="website" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" />
-      <label className="mt-6 flex items-start gap-3 text-[13px] leading-[1.5] text-[var(--ad-gris)]">
+      <label className="mt-5 flex cursor-pointer items-start gap-3 rounded-[14px] px-1 text-[13px] leading-[1.5] text-[var(--ad-pierre)]">
         <input name="consent" type="checkbox" required className="peer sr-only" />
-        <span className="mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-full border border-[var(--ad-sable-fonce)] transition-colors peer-checked:border-[var(--ad-nuit)] peer-checked:bg-[var(--ad-nuit)] peer-focus-visible:outline-2 peer-focus-visible:outline-[var(--ad-bleu)] [&_svg]:opacity-0 peer-checked:[&_svg]:opacity-100">
+        <span className="mt-0.5 grid h-[18px] w-[18px] shrink-0 place-items-center rounded-[6px] border-[1.5px] border-[var(--ad-sable-fonce)] transition-colors peer-checked:border-[var(--ad-nuit)] peer-checked:bg-[var(--ad-nuit)] peer-focus-visible:outline-2 peer-focus-visible:outline-[var(--ad-bleu)] [&_svg]:opacity-0 peer-checked:[&_svg]:opacity-100">
           <Check className="h-3 w-3 text-white" />
         </span>
         {t.consentement}
@@ -1306,12 +1302,12 @@ export function Lettre({ prenom, textes }: { prenom: string; textes?: Partial<Te
           {erreur}
         </p>
       )}
-      <div className="mt-8 flex flex-wrap items-center justify-between gap-4">
-        <span className="text-[15px] font-medium text-[var(--ad-gris)]">{t.signature}</span>
+      <div className="mt-7 flex flex-wrap items-center justify-between gap-4 border-t border-[var(--ad-sable-fonce)]/70 pt-6">
+        <span className="font-[family-name:var(--ad-titre)] text-[17px] italic text-[var(--ad-pierre)]">{t.signature}</span>
         <button
           type="submit"
           disabled={etat !== 'repos'}
-          className="group inline-flex items-center gap-3 rounded-full bg-[var(--ad-nuit)] py-2 pl-6 pr-2 text-[15px] font-medium text-white transition-opacity disabled:opacity-60"
+          className="group inline-flex items-center gap-3 rounded-full bg-[var(--ad-nuit)] py-2 pl-6 pr-2 text-[15px] font-medium text-white shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-[opacity,transform,translate] duration-500 ease-[var(--ad-ease)] hover:-translate-y-0.5 disabled:opacity-60"
         >
           {etat === 'repos' ? t.bouton : 'Envoi…'}
           <span className="grid h-9 w-9 place-items-center rounded-full bg-[var(--ad-or)] transition-transform duration-500 ease-[var(--ad-ease)] group-hover:rotate-45">
@@ -1452,7 +1448,7 @@ export function Fil({
               <span className="text-[var(--ad-or)]">.</span>
             </span>
           </a>
-          <nav ref={navRef} aria-label="Sections" className="relative flex items-center max-lg:hidden" onMouseLeave={() => setSurvol(null)}>
+          <nav ref={navRef} aria-label="Sections" className="relative flex items-center max-xl:hidden" onMouseLeave={() => setSurvol(null)}>
             {/* La pastille qui glisse d'un lien à l'autre, et qui se
                 remplit d'un dégradé pendant qu'on lit la section. */}
             <span
@@ -1480,7 +1476,8 @@ export function Fil({
                 onBlur={() => setSurvol(null)}
                 aria-current={actif === l.href ? 'location' : undefined}
                 className={cn(
-                  'relative z-[1] whitespace-nowrap rounded-full px-3.5 py-2 text-[14px] transition-colors duration-300',
+                  /* Toutes les sections sont dans le menu : des entrées serrées. */
+                  'relative z-[1] whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] transition-colors duration-300 2xl:px-3.5 2xl:text-[14px]',
                   cible === l.href ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-pierre)]',
                 )}
               >
@@ -1491,17 +1488,17 @@ export function Fil({
           {/* TEMPORAIRE : accès au catalogue des modèles, le temps de les choisir. À retirer ensuite. */}
           <a
             href="/moderne/catalogue"
-            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#e2f3f1] px-3.5 py-2 text-[13px] font-semibold text-[#2f8582] transition-colors duration-500 ease-[var(--ad-ease)] hover:bg-[#4fa9a6] hover:text-white max-lg:hidden"
+            className="inline-flex items-center gap-1.5 whitespace-nowrap rounded-full bg-[#e2f3f1] px-3.5 py-2 text-[13px] font-semibold text-[#2f8582] transition-colors duration-500 ease-[var(--ad-ease)] hover:bg-[#4fa9a6] hover:text-white max-xl:hidden"
           >
             <Sparkles className="h-3.5 w-3.5" strokeWidth={1.8} />
-            Modèles
+            <span className="max-2xl:sr-only">Modèles</span>
           </a>
-          <BasculeVersion actuelle="moderne" className="mr-1 text-[var(--ad-pierre)] max-lg:hidden" />
-          <Aimant force={0.25} className="max-lg:hidden">
+          <BasculeVersion actuelle="moderne" className="mr-1 text-[var(--ad-pierre)] max-2xl:hidden" />
+          <Aimant force={0.25} className="max-xl:hidden">
           <a
             href={rdv}
             className={cn(
-              'whitespace-nowrap rounded-full bg-[var(--ad-nuit)] text-[14px] font-medium text-white transition-[padding] duration-700 ease-[var(--ad-ease)] max-lg:hidden',
+              'whitespace-nowrap rounded-full bg-[var(--ad-nuit)] text-[14px] font-medium text-white transition-[padding] duration-700 ease-[var(--ad-ease)] max-xl:hidden',
               serre ? 'px-4 py-2' : 'px-5 py-2.5',
             )}
           >
@@ -1512,7 +1509,7 @@ export function Fil({
             type="button"
             onClick={() => setOuvert(true)}
             aria-label="Ouvrir le menu"
-            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ad-nuit)] text-white lg:hidden"
+            className="grid h-10 w-10 place-items-center rounded-full bg-[var(--ad-nuit)] text-white xl:hidden"
           >
             <Menu className="h-4 w-4" />
           </button>
@@ -1522,7 +1519,7 @@ export function Fil({
       {/* Le rideau du téléphone. */}
       <div
         className={cn(
-          'fixed inset-0 z-[60] flex flex-col bg-[var(--ad-ivoire)] px-7 pb-10 pt-6 transition-[clip-path] duration-[800ms] ease-[var(--ad-ease)] lg:hidden',
+          'fixed inset-0 z-[60] flex flex-col bg-[var(--ad-ivoire)] px-7 pb-10 pt-6 transition-[clip-path] duration-[800ms] ease-[var(--ad-ease)] xl:hidden',
           ouvert ? '[clip-path:circle(150%_at_calc(100%-44px)_44px)]' : 'pointer-events-none [clip-path:circle(0%_at_calc(100%-44px)_44px)]',
         )}
         aria-hidden={!ouvert}
@@ -1547,7 +1544,7 @@ export function Fil({
               onClick={() => setOuvert(false)}
               tabIndex={ouvert ? 0 : -1}
               className={cn(
-                'font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[46px] leading-[1.15] text-[var(--ad-nuit)] transition-[opacity,transform,translate,scale,rotate] duration-700 ease-[var(--ad-ease)]',
+                'font-[family-name:var(--ad-titre)] font-semibold tracking-[-0.03em] text-[clamp(28px,5.4vh,46px)] leading-[1.15] text-[var(--ad-nuit)] transition-[opacity,transform,translate,scale,rotate] duration-700 ease-[var(--ad-ease)]',
                 ouvert ? 'translate-y-0 opacity-100' : 'translate-y-6 opacity-0',
               )}
               style={{ transitionDelay: ouvert ? `${0.15 + i * 0.06}s` : '0s' }}
@@ -1815,7 +1812,7 @@ export function Compteur({ valeur, duree = 1600 }: { valeur: number; duree?: num
 export type TextesCarte = { afficher: string; cookies: string; explorer: string; recentrer: string }
 const CARTE_PAR_DEFAUT: TextesCarte = { afficher: 'Afficher le plan', cookies: 'Google Maps peut déposer des cookies', explorer: 'Explorer la carte', recentrer: 'Recentrer' }
 
-export function Carte({ adresse, zoom = 15, className, textes = CARTE_PAR_DEFAUT }: { adresse: string; zoom?: number; className?: string; textes?: TextesCarte }) {
+export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT }: { adresse: string; zoom?: number; className?: string; textes?: TextesCarte }) {
   const ref = useRef<HTMLDivElement>(null)
   const [proche, setProche] = useState(false)
   /* `active` : la carte reçoit la souris. `decalee` : on l'a déplacée,

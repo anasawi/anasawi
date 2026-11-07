@@ -18,13 +18,13 @@ export function MenuModerneCard({ pied, onChange }: { pied: Pied; onChange: (nex
     <SectionCard
       id="menu-moderne"
       title="Menu du site"
-      note="Les liens du menu suivent vos sections : chacune a un champ « Dans le menu » (vide, elle n’y figure pas), et le menu suit leur ordre."
+      note="Le menu se fait tout seul : chaque section affichée y a son entrée, dans l’ordre de la page (sauf l’accueil, auquel mène votre nom, et le pied de page). Le nom de chaque entrée se change dans la section, champ « Dans le menu »."
       actions={
         <Link
           href="/admin/accueil?theme=moderne"
           className="inline-flex items-center gap-1 rounded-full bg-white px-3 py-1.5 text-[13px] font-medium text-[#176c79] shadow-[0_1px_2px_rgba(22,73,81,0.06)] hover:underline"
         >
-          Régler les liens dans l’éditeur <ArrowUpRight className="h-3.5 w-3.5" />
+          Renommer les entrées dans l’éditeur <ArrowUpRight className="h-3.5 w-3.5" />
         </Link>
       }
     >

@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-import type { FieldDescriptor } from '../field'
+import { field, type FieldDescriptor } from '../field'
 import type { BlockContext, BlockDefinition } from '../types'
 import { contenuDe, Enveloppe } from './blocs'
 import type { Contenu } from './contenu'
@@ -42,7 +42,8 @@ export function modele<S extends Forme>(def: {
   dataSource?: BlockDefinition<z.ZodObject<S>>['dataSource']
   rendu: (d: z.output<z.ZodObject<S>>, c: Contenu, outils: Outils) => React.ReactNode
 }) {
-  const schema = z.object({ rempli, ...def.forme })
+  /* Chaque modèle a son entrée dans le menu du site : son nom se règle ici. */
+  const schema = z.object({ rempli, menu: z.string().optional(), ...def.forme })
   const bloc: BlockDefinition<typeof schema> = {
     group: 'Sections',
     theme: 'moderne',
@@ -50,9 +51,12 @@ export function modele<S extends Forme>(def: {
     label: def.label,
     description: def.description,
     schema,
-    fields: def.champs,
+    fields: [
+      ...def.champs,
+      field.text('menu', 'Dans le menu', { help: 'Toutes les sections sont dans le menu du haut, dans l’ordre de la page : ceci est le nom de son entrée. Vide : son étiquette.' }),
+    ],
     defaults: schema.parse({}) as z.input<typeof schema>,
-    preremplir: (c) => ({ rempli: true, ...def.depart(c) }),
+    preremplir: (c) => ({ rempli: true, menu: '', ...def.depart(c) }),
     dataSource: def.dataSource,
     Component: ({ data, ctx }) => {
       const c = contenuDe(ctx)

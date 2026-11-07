@@ -4,7 +4,7 @@ import { and, eq, isNull } from 'drizzle-orm'
 
 import { PAGE_MODERNE_PAR_DEFAUT } from '@/blocks/moderne/blocs'
 import type { Contenu } from '@/blocks/moderne/contenu'
-import { ANCRES, estVide, TEXTES, textesDe, type CleTextes } from '@/blocks/moderne/textes'
+import { ancreSectionModerne, estVide, TEXTES, textesDe, type CleTextes } from '@/blocks/moderne/textes'
 import { blockRegistry, getBlock } from '@/blocks/registry'
 import { chargerContenu } from '@/components/anasawi/charger'
 import { projectSection } from '@/lib/snapshot'
@@ -119,18 +119,28 @@ export async function valeursDeDepart(type: string): Promise<Record<string, unkn
   return bloc.preremplir(await chargerContenu({ brouillon: true }))
 }
 
-/** Le menu du site moderne : les sections actives qui y figurent, dans
-    l'ordre, avec le libellé saisi (« Dans le menu »). */
+/**
+ * Le menu du site moderne : TOUTES les sections affichées, dans l'ordre de
+ * la page — sauf l'accueil (le logo y mène) et le pied de page. Rien à
+ * composer à la main : seul le NOM de chaque entrée se modifie (champ
+ * « Dans le menu » de la section ; vide, son nom par défaut).
+ */
 export function menuModerne(lignes: Section[], c: Contenu): { href: string; label: string }[] {
   return lignes
-    .filter((s) => s.isActive && !s.parentId && s.type in ANCRES)
+    .filter((s) => s.isActive && !s.parentId && s.type !== 'mSeuil')
+    .filter((s) => {
+      const bloc = getBlock(s.type)
+      return bloc?.theme === 'moderne' && !bloc.piedDePage
+    })
     .sort((a, b) => a.sortOrder - b.sortOrder)
     .map((s) => {
+      const payload = (s.payload ?? {}) as Record<string, unknown>
       const cle = s.type as CleTextes
-      const textes = textesDe(cle, c, (s.payload ?? {}) as Record<string, unknown>) as { menu?: string }
-      return { href: `#${ANCRES[cle]}`, label: (textes.menu ?? '').trim() }
+      const saisi = (cle in TEXTES ? (textesDe(cle, c, payload) as { menu?: string }).menu : (payload.menu as string | undefined)) ?? ''
+      const etiquette = typeof payload.etiquette === 'string' ? payload.etiquette : ''
+      const parDefaut = (cle in TEXTES ? (TEXTES[cle](c) as { menu?: string }).menu : '') || etiquette || getBlock(s.type)?.label || 'Section'
+      return { href: `#${ancreSectionModerne(s)}`, label: saisi.trim() || parDefaut.replace(/\*/g, '').trim() }
     })
-    .filter((l) => l.label)
 }
 
 export { TEXTES }

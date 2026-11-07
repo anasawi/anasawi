@@ -735,7 +735,7 @@ export function SectionInspector({
                   anasawi.com/#contact). Il sert au menu du site et aux
                   boutons qui mènent ici.{' '}
                   {block.theme === 'moderne'
-                    ? 'Pour la mettre dans le menu : le champ « Dans le menu », plus haut dans Contenu.'
+                    ? 'Elle est dans le menu du site automatiquement ; son nom se change dans le champ « Dans le menu », plus haut dans Contenu.'
                     : 'Pour ajouter cette section au menu : Réglages › Menu du site.'}
                 </p>
               </div>

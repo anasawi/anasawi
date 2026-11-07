@@ -208,9 +208,11 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
         <h2 className="mb-12 text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
           <Lignes lignes={enLignes(t.titre)} />
         </h2>
-        <div className="grid gap-4 md:auto-rows-[minmax(220px,auto)] md:grid-cols-4">
+        {/* Six colonnes : le plan à gauche (moitié), à droite les séances, puis
+            la visio (un tiers) et les jours (deux tiers). */}
+        <div className="grid gap-4 md:auto-rows-[minmax(220px,auto)] md:grid-cols-6">
           {/* Le plan : une vraie carte, teintée aux couleurs du site. */}
-          <Revele className={cn(carte, 'relative overflow-hidden p-0 md:col-span-2 md:row-span-2')}>
+          <Revele className={cn(carte, 'relative overflow-hidden p-0 md:col-span-3 md:row-span-2')}>
             {c.adresse ? (
               <Carte adresse={c.adresse} textes={{ afficher: t.planAfficher, cookies: t.planCookies, explorer: t.planExplorer, recentrer: t.planRecentrer }} className="h-[260px] sm:h-[320px] md:absolute md:inset-0 md:h-auto" />
             ) : (
@@ -238,7 +240,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           </Revele>
 
           {/* Les séances. */}
-          <Revele delai={0.08} className={cn(carte, 'md:col-span-2')}>
+          <Revele delai={0.08} className={cn(carte, 'md:col-span-3')}>
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.seances}</p>
             <ul className="mt-4 flex flex-col gap-2.5">
               {c.services.slice(0, 4).map((s) => (
@@ -258,7 +260,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           </Revele>
 
           {/* La visio, et son onde. */}
-          <Revele delai={0.16} className={cn(carte, 'flex flex-col justify-between')}>
+          <Revele delai={0.16} className={cn(carte, 'flex flex-col justify-between md:col-span-1 md:p-6')}>
             <div aria-hidden="true" className="flex h-12 items-center gap-1">
               {[0.1, 0.35, 0.6, 0.2, 0.45, 0.7, 0.3].map((d, i) => (
                 <span
@@ -275,7 +277,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           </Revele>
 
           {/* Les jours : toute la semaine, aujourd'hui surligné. */}
-          <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6')}>
+          <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6 md:col-span-2')}>
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.consultations}</p>
             <SemaineListe horaires={c.horaires} libelleFerme={t.ferme} />
           </Revele>
@@ -342,7 +344,7 @@ export function SectionConversation({ c, t = TEXTES.mConversation(c) }: P & { t?
           <Lignes lignes={enLignes(t.titre)} />
         </h2>
         <Revele>
-          <Conversation faq={c.faq} prenom={prenomDe(c.nom)} portrait={c.portrait} signature={t.signature} suivante={t.suivante} />
+          <Conversation faq={c.faq} prenom={prenomDe(c.nom)} portrait={c.portrait} suivante={t.suivante} />
         </Revele>
       </div>
     </section>
