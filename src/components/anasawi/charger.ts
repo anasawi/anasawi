@@ -1,3 +1,5 @@
+import { cache } from 'react'
+
 import { construireContenu, type Categorie, type Contenu } from '@/blocks/moderne/contenu'
 import { templateLibrary } from '@/blocks/registry'
 import {
@@ -20,7 +22,14 @@ const CATEGORIES = new Map<string, string>(
  * Le contenu partagé, chargé depuis la base. `brouillon` : les sections
  * VIVANTES de la page classique (éditeur), sinon celles publiées (site).
  */
-export async function chargerContenu({ brouillon = false }: { brouillon?: boolean } = {}): Promise<Contenu> {
+export function chargerContenu({ brouillon = false }: { brouillon?: boolean } = {}): Promise<Contenu> {
+  return charger(brouillon)
+}
+
+/* Mis en cache le temps d'une requête (`cache` de React, clé : le booléen) :
+   l'éditeur le demande deux fois (préremplissage, puis la page), une seule
+   lecture. */
+const charger = cache(async (brouillon: boolean): Promise<Contenu> => {
   const [settings, services, faq, media, dossiers, home] = await Promise.all([
     getSettings(),
     getActiveServices(),
@@ -38,4 +47,4 @@ export async function chargerContenu({ brouillon = false }: { brouillon?: boolea
     sections: home?.sections ?? [],
     categorieDe: (t) => CATEGORIES.get(t) as Categorie | undefined,
   })
-}
+})

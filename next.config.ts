@@ -140,6 +140,12 @@ const nextConfig: NextConfig = {
 
   experimental: {
     optimizePackageImports: ['lucide-react', 'motion'],
+    /* NAVIGATION INSTANTANÉE. Le routeur du navigateur garde les écrans
+       déjà vus (ou préchargés) 60 s : revenir sur un onglet de l'admin
+       s'affiche sans aller-retour serveur. Toute action qui enregistre
+       (revalidation) vide ce cache : on ne voit jamais un écran périmé
+       après une modification. */
+    staleTimes: { dynamic: 60, static: 300 },
   },
 
   async headers() {

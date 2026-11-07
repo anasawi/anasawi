@@ -86,6 +86,9 @@ function Espaces({ nonLus }: { nonLus: number }) {
           <li key={espace.href} className="relative z-[1] max-lg:flex-1">
             <Link
               href={espace.href}
+              /* Préchargés en entier dès l'arrivée : le clic affiche l'écran
+                 tout de suite (voir `staleTimes`, next.config). */
+              prefetch
               onClick={(e) => {
                 if (e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return
                 if (!estCourant(espace.href, adresse)) setCible({ depuis: adresse, vers: espace.href })

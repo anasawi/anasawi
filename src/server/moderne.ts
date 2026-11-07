@@ -26,9 +26,9 @@ import { SLUG_MODERNE } from '@/server/queries'
  */
 export async function assurerPageModerne(): Promise<void> {
   const [existante] = await db.select({ id: pages.id }).from(pages).where(eq(pages.slug, SLUG_MODERNE)).limit(1)
-  const contenu = await chargerContenu({ brouillon: true })
 
   if (!existante) {
+    const contenu = await chargerContenu({ brouillon: true })
     const [page] = await db
       .insert(pages)
       .values({ slug: SLUG_MODERNE, title: 'Accueil — version moderne', status: 'published', isHome: false })
@@ -60,6 +60,22 @@ export async function assurerPageModerne(): Promise<void> {
     .select()
     .from(sections)
     .where(and(eq(sections.pageId, existante.id), isNull(sections.parentId)))
+
+  /* RIEN À FAIRE dans l'immense majorité des ouvertures : pied de page
+     présent, sections préremplies, aucun champ nouveau. On ne charge alors
+     pas le contenu (six lectures) — l'éditeur s'ouvre plus vite. */
+  const aFaire =
+    !lignes.some((s) => s.type === 'mHorizon') ||
+    lignes.some((s) => {
+      const bloc = getBlock(s.type)
+      if (!bloc?.preremplir) return false
+      const payload = (s.payload ?? {}) as Record<string, unknown>
+      if (payload.rempli !== true) return true
+      const forme = (bloc.schema as unknown as { shape?: Record<string, unknown> }).shape
+      return forme ? Object.keys(forme).some((cle) => !(cle in payload)) : false
+    })
+  if (!aFaire) return
+  const contenu = await chargerContenu({ brouillon: true })
 
   /* Le pied de page, s'il manque : en dernier. */
   if (!lignes.some((s) => s.type === 'mHorizon')) {
