@@ -29,6 +29,11 @@ const VERRE: React.CSSProperties = {
   WebkitBackdropFilter: 'blur(14px) saturate(1.9) brightness(0.92)',
   backdropFilter: 'url(#adm-verre) blur(1.5px) saturate(1.9) brightness(0.92)',
 }
+/** Le même verre pour le menu, un peu plus flou : du texte s'y lit. */
+const VERRE_MENU: React.CSSProperties = {
+  WebkitBackdropFilter: 'blur(18px) saturate(1.9) brightness(0.85)',
+  backdropFilter: 'url(#adm-verre) blur(4px) saturate(1.9) brightness(0.85)',
+}
 
 const RACCOURCIS: PillMenuItem[] = [
   { label: 'Tableau de bord', href: '/admin' },
@@ -229,11 +234,16 @@ export function AdminPill({
             role="menu"
             aria-label="Menu du compte"
             onKeyDown={onMenuKey}
-            className="pointer-events-auto relative isolate w-[240px] overflow-hidden rounded-[18px] bg-[#1b3440]/[0.88] p-1.5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),0_24px_56px_-16px_rgba(16,36,44,0.6)] backdrop-blur-2xl backdrop-saturate-[1.8] animate-[adm-pilule-menu_0.35s_cubic-bezier(0.22,1,0.36,1)_both]"
+            style={VERRE_MENU}
+            className="pointer-events-auto relative isolate w-[240px] overflow-hidden rounded-[18px] bg-[#1b3440]/55 p-1.5 text-left shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14),inset_0_1px_0_rgba(255,255,255,0.18),0_24px_56px_-16px_rgba(16,36,44,0.6)] animate-[adm-pilule-menu_0.35s_cubic-bezier(0.22,1,0.36,1)_both]"
           >
             <span
               aria-hidden="true"
               className="pointer-events-none absolute -inset-[40%] -z-10 bg-[radial-gradient(closest-side_at_20%_10%,rgba(120,210,220,0.22),transparent),radial-gradient(closest-side_at_85%_95%,rgba(236,170,200,0.18),transparent)] blur-[16px]"
+            />
+            <span
+              aria-hidden="true"
+              className="pointer-events-none absolute inset-0 -z-10 rounded-[18px] bg-[linear-gradient(180deg,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0.03)_40%,rgba(0,0,0,0.1)_100%)]"
             />
             <div className="px-2.5 pb-2 pt-1.5">
               <p className="truncate text-[0.82rem] font-semibold text-white">{name}</p>
