@@ -17,7 +17,7 @@ import type { Settings } from '@/server/db/schema'
 
 type Ton = 'moderne' | 'classique'
 
-function Cadre({ ton, surtitre, titre, majour, children }: { ton: Ton; surtitre: string; titre: string; majour: Date; children: React.ReactNode }) {
+function Cadre({ ton, surtitre, titre, majour, children }: { ton: Ton; surtitre: string; titre: string; majour: Date | string; children: React.ReactNode }) {
   const moderne = ton === 'moderne'
   return (
     <article
@@ -32,7 +32,8 @@ function Cadre({ ton, surtitre, titre, majour, children }: { ton: Ton; surtitre:
       {surtitre && <p className={cn('text-[12px] font-semibold uppercase tracking-[0.2em]', moderne ? 'text-[var(--ad-or)]' : 'text-stone')}>{surtitre}</p>}
       <h1 className={cn('mt-3', moderne ? 'text-[clamp(40px,5.4vw,68px)] leading-[1.02]' : 'font-serif text-[clamp(38px,5vw,64px)] font-light leading-[1.05]')}>{titre}</h1>
       <p className={cn('!mt-5 text-[14px]', moderne ? '!text-[var(--ad-gris)]' : '!text-stone')}>
-        Dernière mise à jour : {majour.toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
+        Dernière mise à jour : {/* Les réglages passent par le cache de Next : la date y devient du texte. */}
+        {new Date(majour).toLocaleDateString('fr-FR', { day: 'numeric', month: 'long', year: 'numeric' })}
       </p>
       {children}
     </article>
