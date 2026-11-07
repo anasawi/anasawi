@@ -289,7 +289,7 @@ export function MediaManager({
             type="button"
             className={buttonVariants({ variant: 'outline', size: 'sm' })}
             onClick={() => {
-              zoneAjout.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+              zoneAjout.current?.scrollIntoView({ behavior: 'smooth', block: 'nearest' })
               upload.current?.choisir()
             }}
           >
@@ -414,6 +414,43 @@ export function MediaManager({
             )}
           </div>
 
+          {/* ── Ajouter, dans le dossier ouvert — EN HAUT, sur une ligne ── */}
+          <div ref={zoneAjout} className="mb-5 flex flex-col gap-2 sm:flex-row sm:items-center">
+            <div role="group" aria-label="Que voulez-vous ajouter ?" className="flex shrink-0 gap-0.5 self-start rounded-[12px] bg-block p-1 sm:self-auto">
+              {GENRES.map(({ valeur, libelle }) => (
+                <button
+                  key={valeur}
+                  type="button"
+                  aria-pressed={genre === valeur}
+                  onClick={() => setGenre(valeur)}
+                  className={cn(
+                    'inline-flex h-8 items-center gap-1.5 rounded-[9px] px-3 text-[13px] font-medium transition-[background-color,color,box-shadow] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
+                    genre === valeur
+                      ? 'bg-white text-foreground shadow-[0_1px_2px_rgba(22,73,81,0.08)]'
+                      : 'text-muted-foreground hover:text-foreground',
+                  )}
+                >
+                  {valeur === 'video' ? (
+                    <Clapperboard className="h-4 w-4" aria-hidden="true" />
+                  ) : (
+                    <ImagePlus className="h-4 w-4" aria-hidden="true" />
+                  )}
+                  {libelle}
+                </button>
+              ))}
+            </div>
+            <div className="min-w-0 flex-1">
+              <UploadField
+                key={genre}
+                ref={upload}
+                kind={genre}
+                ligne
+                folderId={folderIdCourant}
+                onUploaded={(media) => setItems((prev) => [media, ...prev])}
+              />
+            </div>
+          </div>
+
           {visibles.length === 0 ? (
             <div className="flex flex-col items-center gap-1.5 rounded-[16px] bg-block px-6 py-14 text-center">
               <span className="mb-2 grid h-12 w-12 place-items-center rounded-[14px] bg-white text-[#8aa4a8]">
@@ -490,45 +527,6 @@ export function MediaManager({
             </ul>
           )}
 
-          {/* ── Ajouter, dans le dossier ouvert ─────────────────────── */}
-          <div ref={zoneAjout} className="mt-6 border-t border-[#eef1f2] pt-5">
-            <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-              <p className="text-[14px] font-semibold text-foreground">
-                Ajouter{dossierCourant ? ` dans « ${dossierCourant.name} »` : ''}
-              </p>
-              <div role="group" aria-label="Que voulez-vous ajouter ?" className="flex gap-0.5 rounded-[12px] bg-block p-1">
-                {GENRES.map(({ valeur, libelle }) => (
-                  <button
-                    key={valeur}
-                    type="button"
-                    aria-pressed={genre === valeur}
-                    onClick={() => setGenre(valeur)}
-                    className={cn(
-                      'inline-flex h-8 items-center gap-1.5 rounded-[9px] px-3 text-[13px] font-medium transition-[background-color,color,box-shadow] duration-300 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring',
-                      genre === valeur
-                        ? 'bg-white text-foreground shadow-[0_1px_2px_rgba(22,73,81,0.08)]'
-                        : 'text-muted-foreground hover:text-foreground',
-                    )}
-                  >
-                    {valeur === 'video' ? (
-                      <Clapperboard className="h-4 w-4" aria-hidden="true" />
-                    ) : (
-                      <ImagePlus className="h-4 w-4" aria-hidden="true" />
-                    )}
-                    {libelle}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <UploadField
-              key={genre}
-              ref={upload}
-              kind={genre}
-              compact
-              folderId={folderIdCourant}
-              onUploaded={(media) => setItems((prev) => [media, ...prev])}
-            />
-          </div>
         </section>
       </div>
 

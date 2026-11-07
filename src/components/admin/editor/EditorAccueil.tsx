@@ -61,7 +61,8 @@ export function EditorAccueil({
         className="mt-4 inline-flex h-10 w-fit items-center gap-2 rounded-full bg-white px-4 text-[14px] font-medium text-[#176c79] shadow-[0_0_0_1px_#dfe7e9] transition-shadow hover:shadow-[0_0_0_1.5px_#176c79]"
       >
         <Plus className="h-4 w-4" />
-        Ajouter une section
+        {/* Pas « Ajouter une section » : c'est le nom du bouton de la liste, à gauche. */}
+        Nouvelle section
       </button>
 
       <p className="mt-8 text-[12px] font-semibold uppercase tracking-[0.12em] text-[#8aa4a8]">Ailleurs dans l’administration</p>

@@ -307,7 +307,7 @@ export function MediaLibraryDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <UploadField onUploaded={onAdd} kind={kind} compact />
+        <UploadField onUploaded={onAdd} kind={kind} ligne />
 
         <div className="min-h-0 flex-1 overflow-y-auto">
           {visibles.length === 0 ? (
@@ -376,10 +376,12 @@ export const UploadField = forwardRef<
     onFileChange?: (file: File | null) => void
     /** Version basse, pour un dialogue. */
     compact?: boolean
+    /** Une seule ligne (bouton + « ou glissez ici ») : l'écran Médias, en haut de la grille. */
+    ligne?: boolean
     /** Le dossier où ranger le fichier envoyé (nul : non classé). */
     folderId?: string | null
   }
->(function UploadField({ onUploaded, kind = 'image', onFileChange, compact = false, folderId = null }, ref) {
+>(function UploadField({ onUploaded, kind = 'image', onFileChange, compact = false, ligne = false, folderId = null }, ref) {
   const [file, setFile] = useState<File | null>(null)
   const [alt, setAlt] = useState('')
   const [pending, start] = useTransition()
@@ -591,12 +593,14 @@ export const UploadField = forwardRef<
             choisir(e.dataTransfer.files?.[0] ?? null)
           }}
           onClick={() => inputRef.current?.click()}
+          title={ligne ? aide : undefined}
           className={cn(
             /* La zone de dépôt de l'espace Qeeps : pointillés doux, fond
                transparent sur le bloc gris, blanc au survol, cyan quand un
                fichier arrive. */
-            'flex cursor-pointer flex-col items-center justify-center gap-2.5 rounded-[16px] border-[1.5px] border-dashed text-center transition-[background-color,border-color] duration-200',
-            compact ? 'px-4 py-4' : 'min-h-[150px] px-5 py-8',
+            'flex cursor-pointer items-center justify-center gap-2.5 rounded-[16px] border-[1.5px] border-dashed text-center transition-[background-color,border-color] duration-200',
+            ligne ? 'min-h-[52px] flex-row justify-start gap-3 rounded-[14px] px-2 py-1.5 text-left' : 'flex-col',
+            ligne ? '' : compact ? 'px-4 py-4' : 'min-h-[150px] px-5 py-8',
             survol
               ? 'border-[#176c79] bg-accent'
               : 'border-[#cfd9db] bg-transparent hover:border-[#176c79] hover:bg-white',
@@ -604,6 +608,7 @@ export const UploadField = forwardRef<
         >
           <Button
             type="button"
+            size={ligne ? 'sm' : undefined}
             onClick={(e) => {
               e.stopPropagation()
               inputRef.current?.click()
@@ -612,10 +617,18 @@ export const UploadField = forwardRef<
             {video ? <Clapperboard aria-hidden="true" /> : <ImagePlus aria-hidden="true" />}
             Ajouter une {nom}
           </Button>
-          <p className="text-[14px] font-medium text-foreground">
-            Glissez une {nom} ici ou cliquez pour choisir
-          </p>
-          <p className="max-w-[46ch] text-[12px] leading-[17px] text-muted-foreground">{aide}</p>
+          {ligne ? (
+            <p className="min-w-0 truncate text-[13px] text-muted-foreground">
+              {survol ? `Lâchez la ${nom} ici` : 'ou glissez-la ici'}
+            </p>
+          ) : (
+            <>
+              <p className="text-[14px] font-medium text-foreground">
+                Glissez une {nom} ici ou cliquez pour choisir
+              </p>
+              <p className="max-w-[46ch] text-[12px] leading-[17px] text-muted-foreground">{aide}</p>
+            </>
+          )}
         </div>
       ) : (
         <div className="rounded-[8px] border border-border bg-card p-3">
