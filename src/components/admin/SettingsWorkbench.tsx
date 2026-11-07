@@ -24,7 +24,9 @@ import {
 } from './SeoEditor'
 import { ApparenceTab, type Spacing } from './settings/ApparenceTab'
 import { CoordonneesTab, type CoordonneesForm } from './settings/CoordonneesTab'
+import { MenuModerneCard } from './settings/MenuModerneCard'
 import { PiedTab } from './settings/PiedTab'
+import { Repli } from './form/Repli'
 import { useSaveState } from './settings/hooks/useSaveState'
 import { Button } from '@/components/ui/button'
 import type { Identity } from '@/lib/identity'
@@ -264,9 +266,8 @@ export function SettingsWorkbench({
     setPalette((p) => ({ ...p, [key]: hex }))
   }
 
-  const formulaire = useSaveState()
-  const enregistrerFormulaire = () =>
-    formulaire.lancer(async () => {
+  const faireFormulaire =
+    (async (): Promise<string | null> => {
       const [content, identity] = await Promise.all([
         updateSettings({
           ...form,
@@ -298,7 +299,6 @@ export function SettingsWorkbench({
 
       setFieldErrors({})
       setDirtyForm(false)
-      toast.success('Réglages enregistrés — tout le site est à jour.')
       router.refresh()
       return null
     })
@@ -310,9 +310,8 @@ export function SettingsWorkbench({
   const [menuErrors, setMenuErrors] = useState<Record<string, string[]>>({})
   const menuValide = menuComplet(menuItems)
 
-  const menuSauvegarde = useSaveState()
-  const enregistrerMenu = () =>
-    menuSauvegarde.lancer(async () => {
+  const faireMenu =
+    (async (): Promise<string | null> => {
       const result = await updateNavigation(menuItems)
       if (!result.ok) {
         setMenuErrors(result.fieldErrors ?? {})
@@ -321,7 +320,6 @@ export function SettingsWorkbench({
       }
       setMenuErrors({})
       setDirtyMenu(false)
-      toast.success('Menu enregistré — le site est à jour.')
       router.refresh()
       return null
     })
@@ -334,9 +332,8 @@ export function SettingsWorkbench({
   )
   const [seoErrors, setSeoErrors] = useState<Record<string, string[]>>({})
 
-  const seoSauvegarde = useSaveState()
-  const enregistrerSeo = () =>
-    seoSauvegarde.lancer(async () => {
+  const faireSeo =
+    (async (): Promise<string | null> => {
       if (!referencement) return null
       const result = await updateSeo(referencement.page.id, {
         title: seo.title || null,
@@ -354,7 +351,6 @@ export function SettingsWorkbench({
       }
       setSeoErrors({})
       setDirtySeo(false)
-      toast.success('Référencement enregistré — le site est à jour.')
       router.refresh()
       return null
     })
@@ -363,16 +359,14 @@ export function SettingsWorkbench({
 
   const [dirtyPied, setDirtyPied] = useState(false)
   const [pied, setPied] = useState<Pied>(() => lirePied(settings.pied))
-  const piedSauvegarde = useSaveState()
-  const enregistrerPied = () =>
-    piedSauvegarde.lancer(async () => {
+  const fairePied =
+    (async (): Promise<string | null> => {
       const result = await updatePied(pied)
       if (!result.ok) {
         toast.error(result.error)
         return result.error
       }
       setDirtyPied(false)
-      toast.success('Pied de page enregistré — le site est à jour.')
       router.refresh()
       return null
     })
@@ -385,32 +379,33 @@ export function SettingsWorkbench({
     referencement: dirtySeo,
     pied: dirtyPied,
   }
-  const groupe = groupeDe(onglet)
-  const barre =
-    groupe === 'menu'
-      ? {
-          etat: menuSauvegarde,
-          dirty: dirtyMenu,
-          onSave: enregistrerMenu,
-          bloque: menuValide
-            ? null
-            : 'Chaque lien doit avoir un texte et une destination.',
-        }
-      : groupe === 'pied'
-        ? { etat: piedSauvegarde, dirty: dirtyPied, onSave: enregistrerPied, bloque: null }
-        : groupe === 'referencement'
-        ? {
-            etat: seoSauvegarde,
-            dirty: dirtySeo,
-            onSave: enregistrerSeo,
-            bloque: null,
-          }
-        : {
-            etat: formulaire,
-            dirty: dirtyForm,
-            onSave: enregistrerFormulaire,
-            bloque: null,
-          }
+
+  /* UN SEUL enregistrement pour tous les onglets : ce qui a changé, où
+     que ce soit, part d'un coup. On ne se demande pas « ai-je enregistré
+     l'autre onglet ? ». */
+  const sauvegarde = useSaveState()
+  const enregistrerTout = () =>
+    sauvegarde.lancer(async () => {
+      const etapes: [boolean, () => Promise<string | null>][] = [
+        [dirtyForm, faireFormulaire],
+        [dirtyMenu, faireMenu],
+        [dirtySeo && Boolean(referencement), faireSeo],
+        [dirtyPied, fairePied],
+      ]
+      for (const [aFaire, faire] of etapes) {
+        if (!aFaire) continue
+        const erreur = await faire()
+        if (erreur) return erreur
+      }
+      toast.success('Enregistré — le site est à jour.')
+      return null
+    })
+  const barre = {
+    etat: sauvegarde,
+    dirty: dirtyForm || dirtyMenu || dirtySeo || dirtyPied,
+    onSave: enregistrerTout,
+    bloque: dirtyMenu && !menuValide ? 'Menu du site classique : chaque lien doit avoir un texte et une destination.' : null,
+  }
 
   /* Quitter avec des modifications non enregistrées, dans n'importe quel
      onglet : le navigateur demande confirmation. */
@@ -579,6 +574,14 @@ export function SettingsWorkbench({
               </Panneau>
 
               <Panneau id="menu" actif={onglet === 'menu'}>
+                <MenuModerneCard
+                  pied={pied}
+                  onChange={(next) => {
+                    setDirtyPied(true)
+                    setPied(next)
+                  }}
+                />
+                <Repli titre="Site classique" note="Son menu se compose à la main : les sections de l’accueil classique, dans l’ordre voulu.">
                 <NavigationEditor
                   items={menuItems}
                   suggestions={menu.suggestions}
@@ -591,6 +594,7 @@ export function SettingsWorkbench({
                     setMenuItems(next)
                   }}
                 />
+                </Repli>
               </Panneau>
 
               <Panneau id="pied" actif={onglet === 'pied'}>
@@ -632,7 +636,7 @@ export function SettingsWorkbench({
 
             {/* LA barre d'enregistrement : une seule, au pied du panneau,
                 toujours au même endroit. */}
-            {onglet !== 'synchronisation' && (groupe !== 'referencement' || referencement) && (
+            {onglet !== 'synchronisation' && (
               <BarreEnregistrement
                 dirty={barre.dirty}
                 pending={barre.etat.pending}

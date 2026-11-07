@@ -163,6 +163,7 @@ export function Accueil({
   bouton,
   bouton2,
   invitation,
+  slogan = '',
 }: {
   surtitre: string
   prenom: string
@@ -175,6 +176,8 @@ export function Accueil({
   bouton: string
   bouton2: string
   invitation: string
+  /** La phrase près de la tasse (vide : masquée). */
+  slogan?: string
 }) {
   const [ref, vu] = useVu<HTMLElement>('0%')
   return (
@@ -208,19 +211,21 @@ export function Accueil({
               </span>
             </a>
             {bouton2 && (
-              <a href="#a-propos" className="rounded-full px-5 py-3 text-[15px] font-semibold text-[var(--ad-nuit)] transition-colors hover:bg-white/70">
+              <a href="#apres-accueil" className="rounded-full px-5 py-3 text-[15px] font-semibold text-[var(--ad-nuit)] transition-colors hover:bg-white/70">
                 {bouton2}
               </a>
             )}
           </div>
           {/* L'invitation à s'installer : une tasse, sa vapeur, une phrase. */}
+          {slogan && (
           <p className="mt-12 flex items-center gap-3 font-[family-name:var(--ad-titre)] text-[19px] italic text-[var(--ad-pierre)]" style={apparait(vu, 1)}>
             <span className="relative grid h-11 w-11 place-items-center rounded-full bg-white/80 text-[var(--ad-bleu)] shadow-[0_8px_20px_-12px_rgba(46,66,79,0.3)]">
               <Vapeur className="absolute -top-5 left-1/2 h-6 w-5 -translate-x-1/2 text-[var(--ad-sable-fonce)]" />
               <Coffee className="h-5 w-5" />
             </span>
-            Prenez le temps, installez-vous.
+            {slogan}
           </p>
+          )}
         </div>
 
         {/* Les portes. */}
@@ -248,11 +253,14 @@ export function Accueil({
         </div>
       </div>
       {invitation && (
-        <a href="#a-propos" className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--ad-gris)] lg:flex" style={apparait(vu, 1.6)}>
+        <a href="#apres-accueil" className="absolute bottom-6 left-1/2 hidden -translate-x-1/2 flex-col items-center gap-2 text-[12px] font-semibold uppercase tracking-[0.18em] text-[var(--ad-gris)] lg:flex" style={apparait(vu, 1.6)}>
           {invitation}
           <ArrowDown className="h-4 w-4 motion-safe:animate-[ad-flotter_2.6s_ease-in-out_infinite]" />
         </a>
       )}
+      {/* La cible de « Découvrir » et de l'invitation : juste après l'accueil,
+          quelle que soit la section suivante. */}
+      <span id="apres-accueil" aria-hidden="true" className="absolute bottom-0 left-0 h-px w-px scroll-mt-0" />
     </section>
   )
 }

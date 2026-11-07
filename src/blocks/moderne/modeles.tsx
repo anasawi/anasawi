@@ -341,6 +341,9 @@ export const mMethodeApprocheBlock = modele({
 
 const servicesForme = { etiquette: t, titre: t, texte: t, bouton: t }
 const servicesChamps = [champEtiquette, champTitre, field.textarea('texte', 'Texte près du titre'), field.text('bouton', 'Lien de chaque accompagnement')]
+/* Les variantes sans lien par accompagnement (toute la ligne est cliquable) n'en proposent pas le texte ; la fenêtre n'a pas de texte près du titre. */
+const servicesSansLien = servicesChamps.slice(0, 3)
+const servicesSansTexte = [servicesChamps[0]!, servicesChamps[1]!, servicesChamps[3]!]
 const servicesDepart = (c: Contenu) => ({
   etiquette: 'Accompagnements',
   titre: 'Ce que je vous\n*propose*',
@@ -353,7 +356,7 @@ export const mServicesListeBlock = modele({
   label: 'Accompagnements en liste',
   description: 'Une ligne par accompagnement ; au survol, sa petite porte apparaît.',
   forme: servicesForme,
-  champs: servicesChamps,
+  champs: servicesSansLien,
   depart: servicesDepart,
   dataSource: SOURCE_SERVICES,
   rendu: (d, c, o) => <ServicesListe {...d} rdv={c.rdv} services={c.services} photos={o.photos([], 8)} />,
@@ -363,7 +366,7 @@ export const mServicesPortesBlock = modele({
   label: 'Accompagnements en portes',
   description: 'Chaque accompagnement derrière sa porte en arche, son nom et sa durée dessous.',
   forme: servicesForme,
-  champs: servicesChamps,
+  champs: servicesSansLien,
   depart: servicesDepart,
   dataSource: SOURCE_SERVICES,
   rendu: (d, c, o) => <ServicesPortes {...d} rdv={c.rdv} services={c.services} photos={o.photos([], 8)} />,
@@ -383,7 +386,7 @@ export const mServicesNumerotesBlock = modele({
   label: 'Accompagnements numérotés',
   description: 'Deux colonnes, de grands numéros dessinés au trait qui se remplissent au survol.',
   forme: servicesForme,
-  champs: servicesChamps,
+  champs: servicesSansLien,
   depart: servicesDepart,
   dataSource: SOURCE_SERVICES,
   rendu: (d, c) => <ServicesNumerotes {...d} rdv={c.rdv} services={c.services} photos={[]} />,
@@ -393,7 +396,7 @@ export const mServicesFenetreBlock = modele({
   label: 'Accompagnements à la fenêtre',
   description: 'Les noms à gauche ; à droite, une grande arche dont la photo et la fiche changent en fondu.',
   forme: servicesForme,
-  champs: servicesChamps,
+  champs: servicesSansTexte,
   depart: servicesDepart,
   dataSource: SOURCE_SERVICES,
   rendu: (d, c, o) => <ServicesFenetre {...d} rdv={c.rdv} services={c.services} photos={o.photos([], 8)} />,

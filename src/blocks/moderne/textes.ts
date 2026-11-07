@@ -43,6 +43,27 @@ export const lettreParDefaut = (prenom: string): TextesLettre => ({
   merciTexte: `${prenom} vous répondra personnellement, en général sous 48 heures.`,
 })
 
+/** Les textes de l'exercice de respiration (composant `Souffle`). */
+export type TextesSouffle = {
+  inspirez: string
+  expirez: string
+  arreter: string
+  recommencer: string
+  /** Pendant l'exercice ; « {n} » devient le numéro de la respiration. */
+  compteur: string
+  bravo: string
+  repos: string
+}
+export const SOUFFLE_PAR_DEFAUT: TextesSouffle = {
+  inspirez: 'Inspirez',
+  expirez: 'Expirez',
+  arreter: 'Arrêter',
+  recommencer: 'Recommencer',
+  compteur: 'Respiration {n} / 8',
+  bravo: 'Bravo. Prenez ce calme avec vous.',
+  repos: '8 respirations · 4 s · 4 s',
+}
+
 /** La citation en deux temps : la seconde moitié en accent. */
 function phraseAccentuee(texte: string): string {
   if (texte.includes('*')) return texte
@@ -62,12 +83,14 @@ export const TEXTES = {
     bouton: 'Prendre rendez-vous',
     bouton2: 'Découvrir',
     invitation: 'Défiler pour entrer',
+    slogan: 'Prenez le temps, installez-vous.',
   }),
   mRespiration: () => ({
     surtitre: 'Avant de commencer',
     titre: 'Prenez le temps\nd’une *respiration*.',
     texte: 'Un instant pour vous, avant la suite. Suivez le cercle : il gonfle, vous inspirez ; il se pose, vous expirez.',
     bouton: 'Respirer une minute',
+    ...SOUFFLE_PAR_DEFAUT,
   }),
   mRencontre: (c: Contenu) => ({
     menu: 'Rencontre',
@@ -76,6 +99,7 @@ export const TEXTES = {
     texte: c.apropos.texte,
     citation: c.apropos.citation ?? '',
     legendeCabinet: 'Le cabinet, le matin',
+    signature: prenomDe(c.nom),
     anneau: `${c.metier} · ${c.ville} · ${[...new Set(c.services.map((s) => s.method).filter(Boolean))].slice(0, 2).join(' · ')} · `,
   }),
   mChemin: (c: Contenu) => ({
@@ -93,6 +117,7 @@ export const TEXTES = {
     bouton: 'Réserver cet accompagnement',
   }),
   mEnPratique: () => ({
+    menu: '',
     surtitre: 'En pratique',
     titre: 'Tout ce qu’il faut\n*savoir*',
     cabinet: 'Le cabinet',
@@ -101,6 +126,11 @@ export const TEXTES = {
     visioTitre: 'En visio aussi',
     visioTexte: 'Si vous êtes loin, ou empêché.',
     consultations: 'Consultations',
+    ferme: 'Fermé',
+    planAfficher: 'Afficher le plan',
+    planCookies: 'Google Maps peut déposer des cookies',
+    planExplorer: 'Explorer la carte',
+    planRecentrer: 'Recentrer',
   }),
   mPhrase: (c: Contenu) => ({
     texte: phraseAccentuee(c.citation.texte),
@@ -120,8 +150,12 @@ export const TEXTES = {
     suivante: 'Question suivante',
   }),
   mRendezVous: (c: Contenu) => ({
+    menu: '',
     surtitre: 'Rendez-vous',
     titre: 'Écrivez-moi,\n*simplement*',
+    ouvertAujourdhui: 'Ouvert aujourd’hui · {h}',
+    fermeAujourdhui: 'Le cabinet est fermé aujourd’hui',
+    ferme: 'Fermé',
     ...lettreParDefaut(prenomDe(c.nom)),
   }),
   mHorizon: () => ({
@@ -165,4 +199,6 @@ export const ANCRES: Partial<Record<CleTextes, string>> = {
   mArches: 'accompagnements',
   mPromenade: 'cabinet',
   mConversation: 'questions',
+  mEnPratique: 'pratique',
+  mRendezVous: 'contact',
 }

@@ -291,7 +291,19 @@ export function PiedTab({ pied, onChange, library }: { pied: Pied; onChange: (ne
         }
       >
         <Field label="Durée de conservation des messages" value={pied.conservation} onChange={(v) => set('conservation', v)} help="Complète la phrase « Vos messages sont conservés … »." />
+        <Zone
+          label="Prestataires techniques"
+          value={pied.prestataires}
+          onChange={(v) => set('prestataires', v)}
+          rows={4}
+          help="Ceux qui hébergent le site et transmettent les messages : un par ligne, avec leur rôle et leur pays."
+        />
         <Zone label="Texte complémentaire" value={pied.complementConfidentialite} onChange={(v) => set('complementConfidentialite', v)} rows={3} help="Ajouté à la fin de la page. Un paragraphe par ligne vide." />
+      </SectionCard>
+
+      <SectionCard id="liens-legaux" title="Liens en bas de page" note="Les deux liens de la dernière ligne du pied de page, vers les pages ci-dessus. Ils en sont aussi le titre d’onglet.">
+        <Field label="Lien des mentions légales" value={pied.lienMentions} onChange={(v) => set('lienMentions', v)} placeholder="Mentions légales" />
+        <Field label="Lien de la confidentialité" value={pied.lienConfidentialite} onChange={(v) => set('lienConfidentialite', v)} placeholder="Confidentialité" />
       </SectionCard>
     </>
   )

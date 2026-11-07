@@ -76,8 +76,19 @@ export async function assurerPageModerne(): Promise<void> {
   for (const s of lignes) {
     const bloc = getBlock(s.type)
     const payload = (s.payload ?? {}) as Record<string, unknown>
-    if (!bloc?.preremplir || payload.rempli === true) continue
+    if (!bloc?.preremplir) continue
     const valeurs = bloc.preremplir(contenu)
+    if (payload.rempli === true) {
+      /* Déjà préremplie : seuls les champs AJOUTÉS depuis (absents de
+         l'enregistrement) reçoivent leur texte de départ. */
+      const nouveaux = Object.entries(valeurs).filter(([cle]) => !(cle in payload))
+      if (nouveaux.length)
+        await db
+          .update(sections)
+          .set({ payload: { ...payload, ...Object.fromEntries(nouveaux) }, updatedAt: new Date() })
+          .where(eq(sections.id, s.id))
+      continue
+    }
     const suite: Record<string, unknown> = { ...payload }
     for (const [cle, valeur] of Object.entries(valeurs)) if (estVide(suite[cle])) suite[cle] = valeur
     suite.rempli = true

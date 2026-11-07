@@ -11,8 +11,10 @@ import { getActiveFaq, getActiveServices, getAllMedia, getPublishedModern, getSe
 
 export const revalidate = 3600
 
-export const metadata: Metadata = {
-  title: 'ANASAWI — version moderne',
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  const nom = settings.practitionerName ? `${settings.practitionerName} — ` : ''
+  return { title: settings.defaultSeoTitle || `${nom}${settings.siteName}` }
 }
 
 /**
@@ -38,7 +40,7 @@ export default async function ModernePage() {
 
   return (
     <>
-      <Fil liens={liens} rdv="#contact" logo={c.logo} />
+      <Fil liens={liens} rdv={c.rdv} logo={c.logo} marque={c.marque} bouton={c.pied.boutonMenu} boutonTelephone={c.pied.boutonMenuTelephone} />
       <main>
         <SectionsView sections={sections} data={{ services, faqItems, settings, media, partage }} />
       </main>

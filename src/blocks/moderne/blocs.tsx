@@ -68,6 +68,11 @@ const TITRE = 'Une ligne par retour à la ligne ; le mot clé entre *astérisque
 const MENU = 'Libellé de cette section dans le menu du haut. Vide : absente du menu.'
 
 const t = z.string().default('')
+/** Un champ AJOUTÉ après coup : absent des sections déjà enregistrées, il
+    reste indéfini (pas vide) et la section affiche sa valeur de départ —
+    jusqu'à ce que l'éditeur le préremplisse (voir server/moderne.ts). */
+const n = z.string().optional()
+const P = { petit: true } as const
 /** Posé par le préremplissage : dès lors, un champ vide est VOULU (pastille
     masquée, pas de citation…) et ne reprend plus sa valeur de départ. */
 const rempli = z.boolean().default(false)
@@ -92,6 +97,7 @@ const seuilSchema = z.object({ rempli,
   bouton: t,
   bouton2: t,
   invitation: t,
+  slogan: n,
 })
 export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
   ...commun,
@@ -107,12 +113,13 @@ export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
     field.text('pastille2', 'Pastille du haut', { help: 'Vide : pastille masquée.' }),
     field.text('pastille3', 'Pastille du bas', { help: 'Vide : pastille masquée.' }),
     field.text('bouton', 'Bouton principal'),
-    field.text('bouton2', 'Bouton secondaire'),
-    field.text('invitation', 'Invitation à défiler'),
+    field.text('slogan', 'Phrase près de la tasse', { help: 'Vide : phrase masquée.' }),
+    field.text('bouton2', 'Bouton secondaire', { help: 'Il fait descendre à la section suivante. Vide : masqué.', ...P }),
+    field.text('invitation', 'Invitation à défiler', { help: 'Vide : masquée.', ...P }),
   ],
   defaults: vides(seuilSchema),
   preremplir: (c) => ({ rempli: true, ...TEXTES.mSeuil(c), mediaId: (c.ambiance ?? c.portrait)?.id ?? null, tasseId: tasseParDefaut(c)?.id ?? null }),
-  dataSource: { label: 'Le métier, la ville et les horaires (pastille « ouvert aujourd’hui »)', href: '/admin/reglages' },
+  dataSource: { label: 'Le métier, la ville et le lien de rendez-vous', href: '/admin/reglages' },
   Component: ({ data, ctx }) => {
     const base = contenuDe(ctx)
     const photo = data.mediaId ? ctx.resolveMedia(data.mediaId) : null
@@ -128,7 +135,7 @@ export const mSeuilBlock: BlockDefinition<typeof seuilSchema> = {
 
 /* ── Respiration ──────────────────────────────────────────────────────── */
 
-const respirationSchema = z.object({ rempli, surtitre: t, titre: t, texte: t, bouton: t })
+const respirationSchema = z.object({ rempli, surtitre: t, titre: t, texte: t, bouton: t, inspirez: n, expirez: n, arreter: n, recommencer: n, compteur: n, bravo: n, repos: n })
 export const mRespirationBlock: BlockDefinition<typeof respirationSchema> = {
   ...commun,
   label: 'Respiration',
@@ -139,6 +146,13 @@ export const mRespirationBlock: BlockDefinition<typeof respirationSchema> = {
     field.textarea('titre', 'Titre', { help: TITRE }),
     field.textarea('texte', 'Texte'),
     field.text('bouton', 'Bouton de l’exercice'),
+    field.text('inspirez', 'Dans le cercle : inspiration', P),
+    field.text('expirez', 'Dans le cercle : expiration', P),
+    field.text('repos', 'Sous le bouton, au repos', P),
+    field.text('compteur', 'Pendant l’exercice', { help: '« {n} » devient le numéro de la respiration.', ...P }),
+    field.text('bravo', 'À la fin de l’exercice', P),
+    field.text('arreter', 'Bouton pendant l’exercice', P),
+    field.text('recommencer', 'Bouton à la fin', P),
   ],
   defaults: vides(respirationSchema),
   preremplir: () => ({ rempli: true, ...TEXTES.mRespiration() }),
@@ -161,6 +175,7 @@ const rencontreSchema = z.object({ rempli,
   mediaId: media,
   cabinetId: media,
   legendeCabinet: t,
+  signature: n,
 })
 export const mRencontreBlock: BlockDefinition<typeof rencontreSchema> = {
   ...commun,
@@ -172,6 +187,7 @@ export const mRencontreBlock: BlockDefinition<typeof rencontreSchema> = {
     field.textarea('titre', 'Titre', { help: TITRE }),
     field.richtext('texte', 'Présentation'),
     field.textarea('citation', 'Citation', { help: 'Vide : pas de citation.' }),
+    field.text('signature', 'Signature (sous la citation)', { help: 'Vide : pas de signature.' }),
     field.media('mediaId', 'Portrait'),
     field.media('cabinetId', 'Petite photo du cabinet', { help: 'La petite porte posée devant votre portrait.' }),
     field.text('legendeCabinet', 'Légende de la petite photo', { help: 'Vide : pas de légende.' }),
@@ -252,6 +268,7 @@ export const mArchesBlock: BlockDefinition<typeof archesSchema> = {
 /* ── En pratique ──────────────────────────────────────────────────────── */
 
 const pratiqueSchema = z.object({ rempli,
+  menu: n,
   surtitre: t,
   titre: t,
   cabinet: t,
@@ -260,6 +277,11 @@ const pratiqueSchema = z.object({ rempli,
   visioTitre: t,
   visioTexte: t,
   consultations: t,
+  ferme: n,
+  planAfficher: n,
+  planCookies: n,
+  planExplorer: n,
+  planRecentrer: n,
 })
 export const mEnPratiqueBlock: BlockDefinition<typeof pratiqueSchema> = {
   ...commun,
@@ -275,6 +297,12 @@ export const mEnPratiqueBlock: BlockDefinition<typeof pratiqueSchema> = {
     field.text('visioTitre', 'Carte visio : titre'),
     field.text('visioTexte', 'Carte visio : texte'),
     field.text('consultations', 'Carte des jours : titre'),
+    field.text('ferme', 'Carte des jours : jour sans consultation', P),
+    field.text('planAfficher', 'Plan : bouton pour l’afficher', P),
+    field.text('planCookies', 'Plan : mention sous le bouton', P),
+    field.text('planExplorer', 'Plan : bouton « explorer »', P),
+    field.text('planRecentrer', 'Plan : bouton « recentrer »', P),
+    field.text('menu', 'Dans le menu', { help: MENU }),
   ],
   defaults: vides(pratiqueSchema),
   preremplir: () => ({ rempli: true, ...TEXTES.mEnPratique() }),
@@ -363,6 +391,7 @@ export const mConversationBlock: BlockDefinition<typeof conversationSchema> = {
 /* ── Rendez-vous ──────────────────────────────────────────────────────── */
 
 const rdvSchema = z.object({ rempli,
+  menu: n,
   surtitre: t,
   titre: t,
   salutation: t,
@@ -375,6 +404,9 @@ const rdvSchema = z.object({ rempli,
   bouton: t,
   merciTitre: t,
   merciTexte: t,
+  ouvertAujourdhui: n,
+  fermeAujourdhui: n,
+  ferme: n,
 })
 export const mRendezVousBlock: BlockDefinition<typeof rdvSchema> = {
   ...commun,
@@ -384,6 +416,9 @@ export const mRendezVousBlock: BlockDefinition<typeof rdvSchema> = {
   fields: [
     field.text('surtitre', 'Étiquette'),
     field.textarea('titre', 'Titre', { help: TITRE }),
+    field.text('ouvertAujourdhui', 'Semaine : un jour de consultation', { help: '« {h} » devient les horaires du jour.', ...P }),
+    field.text('fermeAujourdhui', 'Semaine : un jour sans consultation', P),
+    field.text('ferme', 'Semaine : bulle d’un jour fermé', P),
     field.text('salutation', 'Lettre : formule d’appel'),
     field.text('nom', 'Lettre : ligne du nom'),
     field.text('telephone', 'Lettre : ligne du téléphone'),
@@ -394,6 +429,7 @@ export const mRendezVousBlock: BlockDefinition<typeof rdvSchema> = {
     field.text('bouton', 'Lettre : bouton d’envoi'),
     field.text('merciTitre', 'Après l’envoi : titre', { help: 'Le mot clé entre *astérisques*.' }),
     field.textarea('merciTexte', 'Après l’envoi : texte'),
+    field.text('menu', 'Dans le menu', { help: MENU }),
   ],
   defaults: vides(rdvSchema),
   preremplir: (c) => ({ rempli: true, ...TEXTES.mRendezVous(c) }),
@@ -417,14 +453,14 @@ export const mHorizonBlock: BlockDefinition<typeof horizonSchema> = {
   fields: [
     field.textarea('titre', 'Grand titre', { help: TITRE }),
     field.text('bouton', 'Bouton'),
-    field.text('mention', 'Lien vers le site classique'),
-    field.text('colonneContact', 'Titre de la colonne « contact »'),
-    field.text('lienMessage', 'Lien vers le formulaire'),
-    field.text('colonneSite', 'Titre de la colonne « menu »'),
+    field.text('colonneContact', 'Titre de la colonne « contact »', P),
+    field.text('lienMessage', 'Lien vers le formulaire', P),
+    field.text('colonneSite', 'Titre de la colonne « menu »', P),
+    field.text('mention', 'Lien vers le site classique', { help: 'Vide : lien masqué.', ...P }),
   ],
   defaults: vides(horizonSchema),
   preremplir: () => ({ rempli: true, ...TEXTES.mHorizon() }),
-  dataSource: { label: 'Téléphone, e-mail, organismes et collègues', href: '/admin/reglages#pied' },
+  dataSource: { label: 'Téléphone, e-mail, organismes, collègues et liens légaux', href: '/admin/reglages#pied' },
   Component: ({ data, ctx }) => {
     const c = contenuDe(ctx)
     return (

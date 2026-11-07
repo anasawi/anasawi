@@ -95,6 +95,7 @@ export function SectionSeuil({ c, t = TEXTES.mSeuil(c), tasse = tasseParDefaut(c
       bouton={t.bouton}
       bouton2={t.bouton2}
       invitation={t.invitation}
+      slogan={t.slogan}
     />
   )
 }
@@ -115,7 +116,10 @@ export function Respiration({ t = TEXTES.mRespiration() }: Partial<P> & { t?: T<
           </Revele>
         </div>
         {/* Le cercle qui respire — et l'exercice guidé d'une minute. */}
-        <Souffle bouton={t.bouton} />
+        <Souffle
+          bouton={t.bouton}
+          textes={{ inspirez: t.inspirez, expirez: t.expirez, arreter: t.arreter, recommencer: t.recommencer, compteur: t.compteur, bravo: t.bravo, repos: t.repos }}
+        />
       </div>
     </section>
   )
@@ -130,7 +134,7 @@ export function Rencontre({ c, t = TEXTES.mRencontre(c), cabinet = cabinetParDef
       titre={t.titre}
       texte={t.texte}
       citation={t.citation}
-      signature={prenomDe(c.nom)}
+      signature={t.signature}
       portrait={c.portrait}
       cabinet={cabinet}
       legendeCabinet={t.legendeCabinet}
@@ -198,7 +202,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
   const carte =
     'relative isolate overflow-hidden rounded-[28px] bg-white p-7 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)] transition-[box-shadow,translate] duration-500 ease-[var(--ad-ease)] hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(46,66,79,0.06),0_30px_60px_-30px_rgba(46,66,79,0.35)]'
   return (
-    <section className="py-20 md:py-28">
+    <section id="pratique" className="scroll-mt-24 py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
         <h2 className="mb-12 text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
@@ -208,7 +212,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           {/* Le plan : une vraie carte, teintée aux couleurs du site. */}
           <Revele className={cn(carte, 'relative overflow-hidden p-0 md:col-span-2 md:row-span-2')}>
             {c.adresse ? (
-              <Carte adresse={c.adresse} className="h-[260px] sm:h-[320px] md:absolute md:inset-0 md:h-auto" />
+              <Carte adresse={c.adresse} textes={{ afficher: t.planAfficher, cookies: t.planCookies, explorer: t.planExplorer, recentrer: t.planRecentrer }} className="h-[260px] sm:h-[320px] md:absolute md:inset-0 md:h-auto" />
             ) : (
               <div aria-hidden="true" className="h-[200px] bg-[var(--ad-brume)] md:absolute md:inset-0 md:h-auto" />
             )}
@@ -259,7 +263,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
               {[0.1, 0.35, 0.6, 0.2, 0.45, 0.7, 0.3].map((d, i) => (
                 <span
                   key={i}
-                  className="h-full w-1.5 origin-center rounded-full bg-gradient-to-t from-[#46728a] to-[#7ba3b6] motion-safe:animate-[ad-onde_1.2s_ease-in-out_infinite]"
+                  className="h-full w-1.5 origin-center rounded-full bg-gradient-to-t from-[var(--ad-bleu)] to-[var(--ad-bleu-clair)] motion-safe:animate-[ad-onde_1.2s_ease-in-out_infinite]"
                   style={{ animationDelay: `${d}s` }}
                 />
               ))}
@@ -273,7 +277,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           {/* Les jours : toute la semaine, aujourd'hui surligné. */}
           <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6')}>
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.consultations}</p>
-            <SemaineListe horaires={c.horaires} />
+            <SemaineListe horaires={c.horaires} libelleFerme={t.ferme} />
           </Revele>
         </div>
       </div>
@@ -323,9 +327,7 @@ export function SectionPromenade({
   t = TEXTES.mPromenade(),
   photos = photosPromenade(c),
 }: P & { t?: T<'mPromenade'>; photos?: Contenu['photos'] }) {
-  /* L'ancienne légende (« pièces · défilez ») n'a plus de sens : une phrase d'accueil à la place. */
-  const sousTitre = !t.legende || /d[ée]filez/i.test(t.legende) ? TEXTES.mPromenade().legende : t.legende
-  return <CabinetDefile photos={photos} surtitre={t.surtitre ?? TEXTES.mPromenade().surtitre} titre={t.titre} sousTitre={sousTitre} />
+  return <CabinetDefile photos={photos} surtitre={t.surtitre} titre={t.titre} sousTitre={t.legende} />
 }
 
 /* ── Conversation ───────────────────────────────────────────────────── */
@@ -364,7 +366,7 @@ export function RendezVous({ c, t = TEXTES.mRendezVous(c) }: P & { t?: T<'mRende
             <Lignes lignes={enLignes(t.titre)} />
           </h2>
           <Revele delai={0.2} className="mt-12">
-            <Semaine horaires={c.horaires} />
+            <Semaine horaires={c.horaires} textes={{ ouvert: t.ouvertAujourdhui, fermeAujourdhui: t.fermeAujourdhui, ferme: t.ferme }} />
           </Revele>
           <Revele delai={0.3}>
             <ul className="mt-10 divide-y divide-[var(--ad-sable-fonce)] border-y border-[var(--ad-sable-fonce)]">
@@ -434,7 +436,8 @@ export function Horizon({
                   <LogoMark src={c.logo} className="h-8 w-8" />
                 </span>
                 <span>
-                  Anasawi<span className="text-[var(--ad-or)]">.</span>
+                  {c.marque}
+                  <span className="text-[var(--ad-or)]">.</span>
                 </span>
               </span>
               <p className="mt-4 text-white/85">{c.nom}</p>
@@ -509,12 +512,17 @@ export function Horizon({
 
           <div className="mt-8 flex flex-wrap items-center justify-between gap-x-8 gap-y-3 text-[13px] text-white/45">
             <span>
-              © {new Date().getFullYear()} {c.nom} ·{' '}
-              <Link href="/" className="underline-offset-2 hover:text-white hover:underline">
-                {t.mention}
-              </Link>
+              © {new Date().getFullYear()} {c.nom}
+              {t.mention && (
+                <>
+                  {' · '}
+                  <Link href="/" className="underline-offset-2 hover:text-white hover:underline">
+                    {t.mention}
+                  </Link>
+                </>
+              )}
             </span>
-            <LiensLegaux base="/moderne" ton="sombre" />
+            <LiensLegaux base="/moderne" ton="sombre" mentions={c.pied.lienMentions} confidentialite={c.pied.lienConfidentialite} />
           </div>
         </div>
       </footer>

@@ -77,15 +77,27 @@ export function Collegues({ pied, ton, className }: { pied: Pied; ton: Ton; clas
 }
 
 /** La ligne légale : mentions et confidentialité. */
-export function LiensLegaux({ base = '', ton, className }: { base?: string; ton: Ton; className?: string }) {
+export function LiensLegaux({
+  base = '',
+  ton,
+  className,
+  mentions = 'Mentions légales',
+  confidentialite = 'Confidentialité',
+}: {
+  base?: string
+  ton: Ton
+  className?: string
+  mentions?: string
+  confidentialite?: string
+}) {
   const style = cn('-my-1.5 py-1.5 transition-colors', ton === 'sombre' ? 'hover:text-white' : 'hover:text-ink')
   return (
     <nav aria-label="Informations légales" className={cn('flex flex-wrap items-center gap-x-5 gap-y-1', className)}>
       <Link href={`${base}/mentions-legales`} className={style}>
-        Mentions légales
+        {mentions}
       </Link>
       <Link href={`${base}/confidentialite`} className={style}>
-        Confidentialité
+        {confidentialite}
       </Link>
     </nav>
   )

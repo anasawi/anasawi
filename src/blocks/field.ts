@@ -35,6 +35,10 @@ export type FieldDescriptor = {
   addLabel?: string
   /** Occupe toute la largeur du formulaire. */
   full?: boolean
+  /** Un « petit texte » (bouton secondaire, message d'état…) : rangé dans
+      le volet repliable « Petits textes » du formulaire, pour garder
+      l'essentiel en vue. */
+  petit?: boolean
 }
 
 export const field = {

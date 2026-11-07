@@ -193,9 +193,16 @@ export function Confidentialite({ settings, ton }: { settings: Settings; ton: To
       <h2>Qui y a accès ?</h2>
       <p>Moi seule. Pour fonctionner, le site s’appuie sur des prestataires techniques, qui n’utilisent pas vos données pour leur propre compte :</p>
       <ul>
-        <li>Netlify (hébergement du site), États-Unis ;</li>
-        <li>Neon (base de données où sont enregistrés les messages), serveurs situés dans l’Union européenne (Francfort) ;</li>
-        <li>Resend (envoi de l’e-mail qui m’avertit d’un nouveau message), États-Unis.</li>
+        {p.prestataires
+          .split('\n')
+          .map((l) => l.trim().replace(/[;.]$/, ''))
+          .filter(Boolean)
+          .map((l, i, tous) => (
+            <li key={l}>
+              {l}
+              {i === tous.length - 1 ? '.' : ' ;'}
+            </li>
+          ))}
       </ul>
       <p>Les transferts vers les États-Unis sont encadrés par le cadre de protection des données UE–États-Unis (Data Privacy Framework) ou par les clauses contractuelles types de la Commission européenne.</p>
 

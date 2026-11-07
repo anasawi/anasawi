@@ -30,6 +30,8 @@ type TemplateCategory = Categorie
 export type Etape = { titre: string; texte: string }
 
 export type Contenu = {
+  /** Le nom du site tel qu'il s'écrit dans la marque (« Anasawi »), d'après Réglages › Coordonnées. */
+  marque: string
   nom: string
   metier: string
   accroche: string
@@ -162,7 +164,12 @@ export function construireContenu({ settings, services, faq, media, dossiers, se
 
   const methodeEtapes = etapesDe('Ma méthode')
 
+  /* « ANASAWI » s'écrit « Anasawi » dans la marque ; un nom en casse mixte passe tel quel. */
+  const site = (settings.siteName || 'Anasawi').trim()
+  const marque = site === site.toUpperCase() ? site.charAt(0) + site.slice(1).toLowerCase() : site
+
   return {
+    marque,
     nom,
     metier,
     accroche: settings.tagline || 'Un espace stable et confidentiel pour déposer ce qui pèse.',

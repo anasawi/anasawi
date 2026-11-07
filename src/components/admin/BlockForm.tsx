@@ -1,6 +1,6 @@
 'use client'
 
-import { GripVertical, Plus, X } from 'lucide-react'
+import { ChevronDown, GripVertical, Plus, X } from 'lucide-react'
 import Image from 'next/image'
 import { useState } from 'react'
 
@@ -59,26 +59,46 @@ export function BlockForm({
   const set = (name: string, next: unknown) =>
     onChange({ ...value, [name]: next })
 
+  const champ = (field: FieldDescriptor) => {
+    const erreur = errors?.[field.name]?.[0]
+    return (
+      <div key={field.name}>
+        <FieldControl
+          field={field}
+          value={value[field.name]}
+          onChange={(next) => set(field.name, next)}
+          library={library}
+        />
+        {erreur && (
+          <p role="alert" className="mt-1.5 text-[12px] leading-snug text-destructive">
+            {erreur}
+          </p>
+        )}
+      </div>
+    )
+  }
+  const principaux = fields.filter((f) => !f.petit)
+  const petits = fields.filter((f) => f.petit)
+  /* Un petit texte en erreur : le volet s'ouvre de lui-même. */
+  const petitEnErreur = petits.some((f) => errors?.[f.name]?.length)
+
   return (
     <div className="grid grid-cols-1 gap-3.5">
-      {fields.map((field) => {
-        const erreur = errors?.[field.name]?.[0]
-        return (
-          <div key={field.name}>
-            <FieldControl
-              field={field}
-              value={value[field.name]}
-              onChange={(next) => set(field.name, next)}
-              library={library}
-            />
-            {erreur && (
-              <p role="alert" className="mt-1.5 text-[12px] leading-snug text-destructive">
-                {erreur}
-              </p>
-            )}
-          </div>
-        )
-      })}
+      {principaux.map(champ)}
+      {petits.length > 0 && (
+        <details open={petitEnErreur || undefined} className="group/petits rounded-[14px] bg-[#f4f7f8] px-3.5 open:pb-3.5">
+          <summary className="flex cursor-pointer list-none items-center justify-between gap-3 py-3 text-[13px] font-semibold text-foreground [&::-webkit-details-marker]:hidden">
+            <span>
+              Petits textes
+              <span className="ml-1.5 font-normal text-muted-foreground">
+                {petits.length} · boutons secondaires, messages, mentions
+              </span>
+            </span>
+            <ChevronDown aria-hidden="true" className="h-4 w-4 text-muted-foreground transition-transform duration-300 group-open/petits:rotate-180" />
+          </summary>
+          <div className="grid grid-cols-1 gap-3.5">{petits.map(champ)}</div>
+        </details>
+      )}
     </div>
   )
 }

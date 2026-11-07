@@ -1,25 +1,23 @@
 import type { Metadata } from 'next'
 
-import { chargerContenu } from '@/components/anasawi/charger'
-import { Horizon } from '@/components/anasawi/sections'
-import { Fil } from '@/components/anasawi/vivant'
+import { Annexe } from '@/components/anasawi/Annexe'
 import { MentionsLegales } from '@/components/site/PagesLegales'
+import { lirePied } from '@/lib/pied'
 import { getSettings } from '@/server/queries'
 
 export const revalidate = 3600
 
-export const metadata: Metadata = { title: 'Mentions légales — ANASAWI' }
+export async function generateMetadata(): Promise<Metadata> {
+  const settings = await getSettings()
+  return { title: `${lirePied(settings.pied).lienMentions || 'Mentions légales'} — ${settings.siteName}` }
+}
 
 /** Mentions légales (site moderne) — rédigées depuis les Réglages. */
 export default async function Page() {
-  const [settings, c] = await Promise.all([getSettings(), chargerContenu()])
+  const settings = await getSettings()
   return (
-    <>
-      <Fil liens={[{ href: '/moderne', label: 'Retour au site' }]} rdv="/moderne#contact" logo={c.logo} />
-      <main>
-        <MentionsLegales settings={settings} ton="moderne" />
-      </main>
-      <Horizon c={c} liens={[]} />
-    </>
+    <Annexe>
+      <MentionsLegales settings={settings} ton="moderne" />
+    </Annexe>
   )
 }

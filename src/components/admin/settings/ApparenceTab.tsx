@@ -3,6 +3,7 @@
 import { RotateCcw } from 'lucide-react'
 import { useState } from 'react'
 
+import { Repli } from '../form/Repli'
 import { SectionCard } from '../form/SectionCard'
 import { StyleModerneCard } from './StyleModerneCard'
 import { Button } from '@/components/ui/button'
@@ -52,15 +53,7 @@ export function ApparenceTab({
       <StyleModerneCard style={styleModerne} onChange={onStyleModerne} nom={nom} />
       {/* L'ancien site garde ses propres réglages, rangés à part pour ne pas
           se mélanger à la palette du site moderne. */}
-      <details className="group rounded-[20px] bg-block p-5 sm:p-6">
-        <summary className="flex cursor-pointer list-none items-center justify-between gap-3 text-[15px] font-semibold text-foreground">
-          <span>
-            Ancien site (version classique)
-            <span className="mt-1 block text-[13px] font-normal text-muted-foreground">Sa palette et ses formes, indépendantes du site moderne.</span>
-          </span>
-          <span className="text-muted-foreground transition-transform group-open:rotate-180">▾</span>
-        </summary>
-        <div className="mt-4 space-y-3">
+      <Repli titre="Site classique" note="Sa palette et ses formes, indépendantes du site moderne.">
       <PaletteCard
         palette={palette}
         buttonRadius={buttonRadius}
@@ -119,8 +112,7 @@ export function ApparenceTab({
           </div>
         </div>
       </SectionCard>
-        </div>
-      </details>
+      </Repli>
     </>
   )
 }

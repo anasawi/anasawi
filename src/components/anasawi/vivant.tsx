@@ -4,7 +4,7 @@ import { ArrowUpRight, Check, Menu, Plus, Sparkles, X } from 'lucide-react'
 import Image from 'next/image'
 import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState } from 'react'
 
-import { lettreParDefaut, type TextesLettre } from '@/blocks/moderne/textes'
+import { lettreParDefaut, SOUFFLE_PAR_DEFAUT, type TextesLettre, type TextesSouffle } from '@/blocks/moderne/textes'
 import { BasculeVersion } from '@/components/site/BasculeVersion'
 import { useConsentement } from '@/components/site/consentement'
 import { LogoMark } from '@/components/site/Logo'
@@ -561,7 +561,15 @@ export function Chemin({ etapes }: { etapes: { titre: string; texte: string }[] 
    resserrent, et sa fiche apparaît.
    ══════════════════════════════════════════════════════════════════════ */
 
-const TEINTES = ['#efe6d8', '#e6edef', '#f2e8dc', '#e8ebe4', '#ede3d3', '#e4eaec']
+/* Les teintes des arches, tirées de la palette (sable, bleu, turquoise, nuit). */
+const TEINTES = [
+  'color-mix(in srgb, var(--ad-sable) 70%, var(--ad-sable-fonce))',
+  'color-mix(in srgb, var(--ad-bleu) 12%, white)',
+  'var(--ad-sable)',
+  'color-mix(in srgb, var(--ad-or) 12%, white)',
+  'color-mix(in srgb, var(--ad-sable) 40%, var(--ad-sable-fonce))',
+  'color-mix(in srgb, var(--ad-nuit) 9%, white)',
+]
 
 /* La courbe des arches : un départ et une arrivée très doux, un milieu
    franc : le rideau glisse, il ne rebondit pas. */
@@ -1016,7 +1024,15 @@ export function Conversation({
 
 const JOURS = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche']
 
-export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
+export type TextesSemaine = {
+  /** « {h} » devient les horaires du jour. */
+  ouvert: string
+  fermeAujourdhui: string
+  ferme: string
+}
+const SEMAINE_PAR_DEFAUT: TextesSemaine = { ouvert: 'Ouvert aujourd’hui · {h}', fermeAujourdhui: 'Le cabinet est fermé aujourd’hui', ferme: 'Fermé' }
+
+export function Semaine({ horaires, textes = SEMAINE_PAR_DEFAUT }: { horaires: OpeningHour[]; textes?: TextesSemaine }) {
   const [aujourdhui, setAujourdhui] = useState<number | null>(null)
   useEffect(() => setAujourdhui((new Date().getDay() + 6) % 7), [])
   const horaireDe = (j: string) => horaires.find((h) => h.day.toLowerCase().startsWith(j.slice(0, 3)))?.hours ?? null
@@ -1028,10 +1044,10 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
         {aujourdhui !== null && (
           <>
             <span className="relative grid h-3 w-3 place-items-center">
-              {!ferme(duJour) && <span className="absolute inset-0 rounded-full bg-[#6e9a6b] motion-safe:animate-[ad-pouls_1.8s_ease-out_infinite]" />}
-              <span className={cn('relative h-2 w-2 rounded-full', ferme(duJour) ? 'bg-[var(--ad-gris)]' : 'bg-[#6e9a6b]')} />
+              {!ferme(duJour) && <span className="absolute inset-0 rounded-full bg-[var(--ad-or)] motion-safe:animate-[ad-pouls_1.8s_ease-out_infinite]" />}
+              <span className={cn('relative h-2 w-2 rounded-full', ferme(duJour) ? 'bg-[var(--ad-gris)]' : 'bg-[var(--ad-or)]')} />
             </span>
-            {ferme(duJour) ? 'Le cabinet est fermé aujourd’hui' : `Ouvert aujourd’hui · ${duJour}`}
+            {ferme(duJour) ? textes.fermeAujourdhui : textes.ouvert.replace('{h}', duJour ?? '')}
           </>
         )}
       </p>
@@ -1042,7 +1058,7 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
           return (
             <li
               key={j}
-              title={h ?? 'Fermé'}
+              title={h ?? textes.ferme}
               className={cn(
                 'flex min-w-0 flex-col items-center gap-2 rounded-full px-0.5 py-4 text-center transition-colors duration-500 sm:px-1',
                 actif ? 'bg-[var(--ad-nuit)] text-white' : ferme(h) ? 'bg-transparent text-[var(--ad-gris)]/60' : 'bg-[var(--ad-sable)] text-[var(--ad-nuit)]',
@@ -1063,7 +1079,7 @@ export function Semaine({ horaires }: { horaires: OpeningHour[] }) {
  * heures. À l'arrivée, les jours se posent l'un après l'autre ; puis le
  * surlignage sable glisse sous aujourd'hui, et son point vert respire.
  */
-export function SemaineListe({ horaires }: { horaires: OpeningHour[] }) {
+export function SemaineListe({ horaires, libelleFerme = 'Fermé' }: { horaires: OpeningHour[]; libelleFerme?: string }) {
   const ref = useRef<HTMLOListElement>(null)
   const edition = useContext(Edition)
   const [vu, setVu] = useState(false)
@@ -1124,7 +1140,7 @@ export function SemaineListe({ horaires }: { horaires: OpeningHour[] }) {
               title={ferme ? undefined : (h ?? undefined)}
               className={cn('line-clamp-2 min-w-0 text-right tabular-nums [overflow-wrap:anywhere]', !ferme && 'text-[var(--ad-bleu)]', actif && !ferme && 'font-semibold')}
               style={{ ...entree, transition: `opacity .9s ${0.32 + i * 0.07}s, transform 1s ${doux} ${0.32 + i * 0.07}s` }}>
-              {ferme ? 'Fermé' : h}
+              {ferme ? libelleFerme : h}
             </span>
           </li>
         )
@@ -1145,7 +1161,7 @@ function Trait() {
   return (
     <span
       aria-hidden="true"
-      className="pointer-events-none absolute inset-x-0 bottom-0 h-[1.5px] origin-left scale-x-0 bg-[linear-gradient(90deg,#46728a,#7ba3b6)] transition-transform duration-700 ease-[var(--ad-ease)] peer-focus:scale-x-100"
+      className="pointer-events-none absolute inset-x-0 bottom-0 h-[1.5px] origin-left scale-x-0 bg-[linear-gradient(90deg,var(--ad-bleu),var(--ad-bleu-clair))] transition-transform duration-700 ease-[var(--ad-ease)] peer-focus:scale-x-100"
     />
   )
 }
@@ -1313,7 +1329,23 @@ export function Lettre({ prenom, textes }: { prenom: string; textes?: Partial<Te
    rideau ivoire aux grands liens.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string }[]; rdv: string; logo: string | null }) {
+export function Fil({
+  liens,
+  rdv,
+  logo,
+  marque = 'Anasawi',
+  bouton = 'Rendez-vous',
+  boutonTelephone = 'Prendre rendez-vous',
+}: {
+  liens: { href: string; label: string }[]
+  rdv: string
+  logo: string | null
+  /** Le nom du site (Réglages › Coordonnées). */
+  marque?: string
+  /** Le bouton de la barre, et celui du menu du téléphone (Réglages › Menu). */
+  bouton?: string
+  boutonTelephone?: string
+}) {
   const ref = useRef<HTMLDivElement>(null)
   const [serre, setSerre] = useState(false)
   const [ouvert, setOuvert] = useState(false)
@@ -1395,8 +1427,8 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
               <svg aria-hidden="true" viewBox="0 0 40 40" className="absolute inset-0 -rotate-90">
                 <defs>
                   <linearGradient id="ad-anneau" x1="0" y1="0" x2="1" y2="1">
-                    <stop offset="0%" stopColor="#46728a" />
-                    <stop offset="100%" stopColor="#7ba3b6" />
+                    <stop offset="0%" stopColor="var(--ad-bleu)" />
+                    <stop offset="100%" stopColor="var(--ad-bleu-clair)" />
                   </linearGradient>
                 </defs>
                 <circle cx="20" cy="20" r="18.5" fill="none" stroke="var(--ad-sable-fonce)" strokeWidth="1.5" />
@@ -1416,7 +1448,8 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
               <LogoMark src={logo} priority className="h-7 w-7 transition-transform duration-700 ease-[var(--ad-ease)] group-hover/logo:rotate-[-12deg]" />
             </span>
             <span className={cn('transition-[opacity,max-width] duration-700 ease-[var(--ad-ease)]', serre ? 'max-w-0 opacity-0 sm:max-w-[120px] sm:opacity-100' : 'max-w-[120px]')}>
-              Anasawi<span className="text-[var(--ad-or)]">.</span>
+              {marque}
+              <span className="text-[var(--ad-or)]">.</span>
             </span>
           </a>
           <nav ref={navRef} aria-label="Sections" className="relative flex items-center max-lg:hidden" onMouseLeave={() => setSurvol(null)}>
@@ -1432,7 +1465,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
             >
               <span
                 className={cn(
-                  'absolute inset-y-0 left-0 w-full origin-left bg-[linear-gradient(90deg,rgba(70,114,138,0.16),rgba(79,169,166,0.26))] transition-opacity duration-300',
+                  'absolute inset-y-0 left-0 w-full origin-left bg-[linear-gradient(90deg,color-mix(in_srgb,var(--ad-bleu)_16%,transparent),color-mix(in_srgb,var(--ad-or)_26%,transparent))] transition-opacity duration-300',
                   survol && survol !== actif ? 'opacity-0' : 'opacity-100',
                 )}
                 style={{ transform: 'scaleX(var(--sec))' }}
@@ -1472,7 +1505,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
               serre ? 'px-4 py-2' : 'px-5 py-2.5',
             )}
           >
-            Rendez-vous
+            {bouton}
           </a>
           </Aimant>
           <button
@@ -1497,7 +1530,10 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
         <div className="flex items-center justify-between">
           <span className="flex items-center gap-2.5 text-[24px] font-bold tracking-[-0.03em]">
             <LogoMark src={logo} className="h-9 w-9" />
-            Anasawi<span className="-ml-2.5 text-[var(--ad-or)]">.</span>
+            <span>
+              {marque}
+              <span className="text-[var(--ad-or)]">.</span>
+            </span>
           </span>
           <button type="button" onClick={() => setOuvert(false)} aria-label="Fermer le menu" className="grid h-10 w-10 place-items-center rounded-full border border-[var(--ad-sable-fonce)]">
             <X className="h-4 w-4" />
@@ -1528,7 +1564,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
           Voir tous les modèles
         </a>
         <a href={rdv} onClick={() => setOuvert(false)} tabIndex={ouvert ? 0 : -1} className="mt-3 rounded-full bg-[var(--ad-nuit)] py-4 text-center text-[16px] font-medium text-white">
-          Prendre rendez-vous
+          {boutonTelephone}
         </a>
       </div>
     </>
@@ -1543,7 +1579,7 @@ export function Fil({ liens, rdv, logo }: { liens: { href: string; label: string
 
 const DUREE_EXERCICE = 64 // 8 respirations de 8 s
 
-export function Souffle({ bouton = 'Respirer une minute' }: { bouton?: string }) {
+export function Souffle({ bouton = 'Respirer une minute', textes = SOUFFLE_PAR_DEFAUT }: { bouton?: string; textes?: TextesSouffle }) {
   const [debut, setDebut] = useState<number | null>(null)
   const [ecoule, setEcoule] = useState(0)
   useEffect(() => {
@@ -1585,11 +1621,12 @@ export function Souffle({ bouton = 'Respirer une minute' }: { bouton?: string })
         <span
           key={`c-${debut ?? 'repos'}`}
           aria-hidden="true"
-          className="absolute inset-0 rounded-full bg-[radial-gradient(circle_at_40%_34%,#fbf8f2_0%,var(--ad-brume)_58%,#dfe9ed_100%)] shadow-[0_26px_50px_-32px_rgba(46,66,79,0.35)] motion-safe:animate-[ad-souffle_8s_var(--ad-ease-lent)_infinite]"
+          style={{ background: 'radial-gradient(circle at 40% 34%, color-mix(in srgb, var(--ad-ivoire) 60%, white) 0%, var(--ad-brume) 58%, color-mix(in srgb, var(--ad-bleu) 18%, white) 100%)' }}
+          className="absolute inset-0 rounded-full shadow-[0_26px_50px_-32px_rgba(46,66,79,0.35)] motion-safe:animate-[ad-souffle_8s_var(--ad-ease-lent)_infinite]"
         />
         <span key={`t-${debut ?? 'repos'}`} className="relative grid place-items-center font-[family-name:var(--ad-titre)] text-[32px] italic text-[var(--ad-nuit)]">
-          <span className="col-start-1 row-start-1 motion-safe:animate-[ad-inspirez_8s_linear_infinite]">Inspirez</span>
-          <span className="col-start-1 row-start-1 opacity-0 motion-safe:animate-[ad-expirez_8s_linear_infinite]">Expirez</span>
+          <span className="col-start-1 row-start-1 motion-safe:animate-[ad-inspirez_8s_linear_infinite]">{textes.inspirez}</span>
+          <span className="col-start-1 row-start-1 opacity-0 motion-safe:animate-[ad-expirez_8s_linear_infinite]">{textes.expirez}</span>
         </span>
       </div>
       <div className="flex flex-col items-center gap-3 text-center xl:flex-row xl:gap-4 xl:text-left" aria-live="polite">
@@ -1604,13 +1641,13 @@ export function Souffle({ bouton = 'Respirer une minute' }: { bouton?: string })
           }}
           className="group inline-flex items-center gap-3 whitespace-nowrap rounded-full bg-[var(--ad-nuit)] py-2 pl-5 pr-2 text-[14px] font-semibold text-white"
         >
-          {enCours ? 'Arrêter' : fini ? 'Recommencer' : bouton}
+          {enCours ? textes.arreter : fini ? textes.recommencer : bouton}
           <span className="grid h-8 w-8 place-items-center rounded-full bg-white/15">
             {enCours ? <X className="h-3.5 w-3.5" /> : <ArrowUpRight className="h-3.5 w-3.5 transition-transform duration-500 group-hover:rotate-45" />}
           </span>
         </button>
         <span className="text-[13px] tabular-nums text-[var(--ad-gris)]">
-          {enCours ? `Respiration ${respirations} / 8` : fini ? 'Bravo. Prenez ce calme avec vous.' : '8 respirations · 4 s · 4 s'}
+          {enCours ? textes.compteur.replace('{n}', String(respirations)) : fini ? textes.bravo : textes.repos}
         </span>
       </div>
     </div>
@@ -1775,7 +1812,10 @@ export function Compteur({ valeur, duree = 1600 }: { valeur: number; duree?: num
    inerte jusqu'au clic — la molette fait défiler la page, pas la carte.
    ══════════════════════════════════════════════════════════════════════ */
 
-export function Carte({ adresse, zoom = 15, className }: { adresse: string; zoom?: number; className?: string }) {
+export type TextesCarte = { afficher: string; cookies: string; explorer: string; recentrer: string }
+const CARTE_PAR_DEFAUT: TextesCarte = { afficher: 'Afficher le plan', cookies: 'Google Maps peut déposer des cookies', explorer: 'Explorer la carte', recentrer: 'Recentrer' }
+
+export function Carte({ adresse, zoom = 15, className, textes = CARTE_PAR_DEFAUT }: { adresse: string; zoom?: number; className?: string; textes?: TextesCarte }) {
   const ref = useRef<HTMLDivElement>(null)
   const [proche, setProche] = useState(false)
   /* `active` : la carte reçoit la souris. `decalee` : on l'a déplacée,
@@ -1861,7 +1901,7 @@ export function Carte({ adresse, zoom = 15, className }: { adresse: string; zoom
         />
       )}
       {/* La teinte du site, posée sur le gris de la carte — même en exploration. */}
-      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,#46728a,#7ba3b6)] opacity-60 mix-blend-color" />
+      <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,var(--ad-bleu),var(--ad-bleu-clair))] opacity-60 mix-blend-color" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(246,247,249,0.55))]" />
       {/* L'épingle, au centre — là où la carte place l'adresse. */}
       <span
@@ -1879,21 +1919,21 @@ export function Carte({ adresse, zoom = 15, className }: { adresse: string; zoom
       {!accorde && (
         <div className="absolute right-4 top-4 z-10 flex max-w-[240px] flex-col items-end gap-1.5 text-right">
           <button type="button" onClick={accorder} className={bouton}>
-            Afficher le plan
+            {textes.afficher}
           </button>
-          <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] leading-[1.3] text-[var(--ad-pierre)] backdrop-blur">Google Maps peut déposer des cookies</span>
+          <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] leading-[1.3] text-[var(--ad-pierre)] backdrop-blur">{textes.cookies}</span>
         </div>
       )}
       {proche && accorde && (
         <div className="absolute right-4 top-4 z-10 flex gap-2">
           {decalee && (
             <button type="button" onClick={recentrer} disabled={prochaine !== null} className={bouton}>
-              {prochaine !== null ? 'Recentrage…' : 'Recentrer'}
+              {prochaine !== null ? '…' : textes.recentrer}
             </button>
           )}
           {!active && (
             <button type="button" onClick={explorer} className={bouton}>
-              Explorer la carte
+              {textes.explorer}
             </button>
           )}
         </div>

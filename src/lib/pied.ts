@@ -59,6 +59,13 @@ export const piedSchema = z.object({
   conservation: texte(300),
   complementConfidentialite: texte(4000),
   complementMentions: texte(4000),
+  /** « Qui y a accès ? » : les prestataires techniques, un par ligne. */
+  prestataires: texte(2000),
+  /* Les libellés du site moderne hors sections : barre du haut, ligne légale. */
+  boutonMenu: texte(60),
+  boutonMenuTelephone: texte(60),
+  lienMentions: texte(60),
+  lienConfidentialite: texte(60),
 })
 export type Pied = z.infer<typeof piedSchema>
 
@@ -84,6 +91,15 @@ export const PIED_DEPART: Pied = {
   conservation: '3 ans après notre dernier échange',
   complementConfidentialite: '',
   complementMentions: '',
+  prestataires: [
+    'Netlify (hébergement du site), États-Unis',
+    'Neon (base de données où sont enregistrés les messages), serveurs situés dans l’Union européenne (Francfort)',
+    'Resend (envoi de l’e-mail qui m’avertit d’un nouveau message), États-Unis',
+  ].join('\n'),
+  boutonMenu: 'Rendez-vous',
+  boutonMenuTelephone: 'Prendre rendez-vous',
+  lienMentions: 'Mentions légales',
+  lienConfidentialite: 'Confidentialité',
 }
 
 /** Le pied de page enregistré, complété par les valeurs de départ (jamais d'erreur : une valeur abîmée retombe sur son départ). */
