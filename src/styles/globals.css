@@ -773,18 +773,24 @@
      les petits accents (pastilles, traits, pouls). */
   /* Réchauffées encore : un ivoire crème, un sable couleur lin, des gris
      qui tirent vers le brun — l'ambiance d'un salon au soleil du matin. */
-  --ad-ivoire: #fbf6ee;
-  /* Le sable de la PALETTE (jamais redéfini par une section) ; « --ad-sable »
-     est la teinte des panneaux, qu'une section peut changer (lib/teintes.ts). */
+  /* La PALETTE source (« --ad-p-… », réglée dans Réglages › Apparence,
+     jamais redéfinie par une section). Les variables d'usage en partent ;
+     une section peut les changer (fond foncé : textes clairs ; panneaux
+     d'une autre teinte) — voir lib/teintes.ts. */
+  --ad-p-ivoire: #fbf6ee;
   --ad-p-sable: #f5ecdf;
+  --ad-p-nuit: #2e424f;
+  --ad-p-bleu: #46728a;
+  --ad-p-or: #4fa9a6;
+  --ad-ivoire: var(--ad-p-ivoire);
   --ad-sable: var(--ad-p-sable);
   --ad-sable-fonce: #e9dac5;
   --ad-miel: #f0c8a0;
-  --ad-nuit: #2e424f;
-  --ad-bleu: #46728a;
+  --ad-nuit: var(--ad-p-nuit);
+  --ad-bleu: var(--ad-p-bleu);
   --ad-bleu-clair: #7ba3b6;
   --ad-brume: #eaf1f4;
-  --ad-or: #4fa9a6;
+  --ad-or: var(--ad-p-or);
   --ad-pierre: #574d45;
   --ad-gris: #857869;
   /* Typographie DOUCE : Fraunces en version légère et arrondie (axe

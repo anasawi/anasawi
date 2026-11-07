@@ -50,28 +50,35 @@ export function styleModerneCss(style: StyleModerne | undefined): string {
   if (!style) return ''
   const c = style.couleurs ?? {}
   const v: Record<string, string> = {}
-  if (c.nuit) v['--ad-nuit'] = c.nuit
+  /* Les touches turquoise sont aussi redéfinies par `.ad-joie` (globals.css) :
+     elles seules se posent à ce niveau-là. */
+  const touche: Record<string, string> = {}
+  /* Les couleurs d'usage (--ad-nuit, --ad-bleu…) partent de la palette
+     source « --ad-p-… » (globals.css) : on ne règle que la source. */
+  if (c.nuit) v['--ad-p-nuit'] = c.nuit
   if (c.bleu) {
-    v['--ad-bleu'] = c.bleu
+    v['--ad-p-bleu'] = c.bleu
     v['--ad-bleu-clair'] = `color-mix(in srgb, ${c.bleu} 62%, white)`
     v['--ad-brume'] = `color-mix(in srgb, ${c.bleu} 11%, white)`
   }
   if (c.turquoise) {
-    v['--ad-or'] = c.turquoise
-    v['--ad-touche'] = c.turquoise
-    v['--ad-touche-pale'] = `color-mix(in srgb, ${c.turquoise} 16%, white)`
-    v['--ad-touche-fonce'] = `color-mix(in srgb, ${c.turquoise} 78%, black)`
+    v['--ad-p-or'] = c.turquoise
+    touche['--ad-touche'] = c.turquoise
+    touche['--ad-touche-pale'] = `color-mix(in srgb, ${c.turquoise} 16%, white)`
+    touche['--ad-touche-fonce'] = `color-mix(in srgb, ${c.turquoise} 78%, black)`
   }
-  if (c.ivoire) v['--ad-ivoire'] = c.ivoire
+  if (c.ivoire) v['--ad-p-ivoire'] = c.ivoire
   if (c.sable) {
     v['--ad-p-sable'] = c.sable
     v['--ad-sable-fonce'] = `color-mix(in srgb, ${c.sable} 86%, #7a5a33)`
   }
   if (style.typo) Object.assign(v, variablesDe(typoDe(style)))
-  const corps = Object.entries(v)
-    .map(([k, val]) => `${k}:${val};`)
-    .join('')
-  let css = corps ? `.ad,.ad .ad-joie,.ad .ad-accentue{${corps}}` : ''
+  const decl = (o: Record<string, string>) =>
+    Object.entries(o)
+      .map(([k, val]) => `${k}:${val};`)
+      .join('')
+  let css = Object.keys(v).length ? `.ad{${decl(v)}}` : ''
+  if (Object.keys(touche).length) css += `.ad,.ad .ad-joie,.ad .ad-accentue{${decl(touche)}}`
   if (c.ivoire) css += `:root:has(.ad),:root:has(.ad) body{background:${c.ivoire}}`
   if (style.animations === 'coupees')
     css += `.ad *,.ad *::before,.ad *::after{animation-duration:.01ms!important;animation-iteration-count:1!important;animation-delay:0s!important;transition-duration:.01ms!important;transition-delay:0s!important}`

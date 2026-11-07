@@ -628,7 +628,8 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
                  plus haute). Grand écran : une rangée, les largeurs se
                  partagent (flex-grow) — jamais de flex-basis nul en
                  colonne, qui écraserait les hauteurs. */
-              'relative isolate shrink-0 overflow-hidden rounded-[30px] [--mx:0] [--my:0] motion-reduce:!transition-none lg:shrink lg:[flex-basis:0px] lg:[flex-grow:var(--grow)]',
+              /* ad-surface : une surface claire (textes foncés même sur un fond de section foncé). */
+              'ad-surface relative isolate shrink-0 overflow-hidden rounded-[30px] [--mx:0] [--my:0] motion-reduce:!transition-none lg:shrink lg:[flex-basis:0px] lg:[flex-grow:var(--grow)]',
               actif ? 'h-[min(520px,calc(var(--ad-vh)*72))] lg:h-auto' : 'h-[88px] lg:h-auto',
             )}
             style={{

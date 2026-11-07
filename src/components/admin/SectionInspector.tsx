@@ -947,7 +947,7 @@ function TeintesSection({
     <div className="space-y-5">
       <Nuancier
         titre="Fond de la section"
-        aide="Les couleurs de votre palette et leurs nuances (Réglages › Apparence) : elles suivent la palette si vous la changez."
+        aide="Les couleurs de votre palette et leurs nuances (Réglages › Apparence). Sur une couleur foncée, les textes passent en clair d’eux-mêmes."
         value={fond}
         onChange={(id) => onFond(id as SectionSettings['fond'])}
         styleModerne={styleModerne}
