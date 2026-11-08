@@ -184,7 +184,7 @@ export function Accueil({
     <section ref={ref} id="haut" className="relative isolate overflow-hidden">
       {/* Téléphone : la porte D'ABORD, large et basse (une arche d'entrée),
           puis le nom et les boutons — tout l'accueil tient dans l'écran. */}
-      <div className="mx-auto grid max-w-[1240px] items-center gap-7 px-[6vw] pb-12 pt-24 sm:gap-12 sm:pb-16 sm:pt-32 lg:min-h-[calc(var(--ad-vh)*100)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-20 lg:pt-28">
+      <div className="mx-auto grid max-w-[1240px] items-center gap-10 px-[6vw] pb-12 pt-24 sm:gap-12 sm:pb-16 sm:pt-32 lg:min-h-[calc(var(--ad-vh)*100)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-20 lg:pt-28">
         <div>
           {surtitre && (
             <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3.5 py-1.5 text-[13px] font-semibold text-[var(--ad-pierre)] shadow-[0_1px_2px_rgba(46,66,79,0.06),0_8px_20px_-12px_rgba(46,66,79,0.25)]" style={apparait(vu, 0.1)}>
@@ -206,14 +206,14 @@ export function Accueil({
             </p>
           )}
           <div className="mt-6 flex flex-wrap items-center gap-2 sm:mt-9 sm:gap-3" style={apparait(vu, 0.75)}>
-            <a href={rdv} className="group inline-flex items-center gap-2.5 rounded-full bg-[var(--ad-nuit)] py-2 pl-6 pr-2 text-[15px] font-semibold text-white shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-transform duration-500 hover:-translate-y-0.5">
+            <a href={rdv} className="group inline-flex items-center gap-2.5 rounded-full bg-[var(--ad-nuit)] py-2 pl-5 pr-2 text-[15px] sm:pl-6 font-semibold text-white shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-transform duration-500 hover:-translate-y-0.5">
               {bouton}
               <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15 transition-transform duration-500 group-hover:rotate-45">
                 <ArrowUpRight className="h-4 w-4" />
               </span>
             </a>
             {bouton2 && (
-              <a href="#apres-accueil" className="rounded-full px-5 py-3 text-[15px] font-semibold text-[var(--ad-nuit)] transition-colors hover:bg-white/70">
+              <a href="#apres-accueil" className="rounded-full px-3.5 py-3 text-[15px] sm:px-5 font-semibold text-[var(--ad-nuit)] transition-colors hover:bg-white/70">
                 {bouton2}
               </a>
             )}
