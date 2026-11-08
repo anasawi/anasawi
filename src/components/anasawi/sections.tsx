@@ -277,7 +277,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           </Revele>
 
           {/* Les jours : toute la semaine, aujourd'hui surligné. */}
-          <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6 md:col-span-3 lg:col-span-2')}>
+          <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6 md:col-span-6 lg:col-span-2')}>
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.consultations}</p>
             <SemaineListe horaires={c.horaires} libelleFerme={t.ferme} />
           </Revele>

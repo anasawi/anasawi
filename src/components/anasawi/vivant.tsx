@@ -1809,9 +1809,8 @@ export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT
   const ref = useRef<HTMLDivElement>(null)
   const cadreRef = useRef<HTMLIFrameElement>(null)
   const [proche, setProche] = useState(false)
-  /* `decalee` : on a pris la carte en main (clic, glisser) — l'épingle du
-     site ne tombe plus forcément sur l'adresse : on la cache, et
-     « Recentrer » apparaît. */
+  /* `decalee` : on a pris la carte en main (clic, glisser) : « Recentrer »
+     apparaît. Le marqueur est celui de Google, il suit la carte. */
   const [decalee, setDecalee] = useState(false)
   /* Recentrer = recharger la carte. La nouvelle se charge, invisible,
      par-dessus l'ancienne, et ne la remplace qu'une fois prête. */
@@ -1883,19 +1882,6 @@ export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT
       {/* La teinte du site, posée sur le gris de la carte. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,var(--ad-bleu),var(--ad-bleu-clair))] opacity-60 mix-blend-color" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(246,247,249,0.55))]" />
-      {/* L'épingle, au centre — là où la carte place l'adresse. */}
-      <span
-        aria-hidden="true"
-        className={cn(
-          'pointer-events-none absolute left-[var(--centre,50%)] top-1/2 grid -translate-x-1/2 -translate-y-full place-items-center transition-opacity duration-500',
-          decalee && 'opacity-0',
-        )}
-      >
-        <span className="absolute top-full h-20 w-20 -translate-y-1/2 rounded-full bg-[var(--ad-or)]/35 motion-safe:animate-[ad-pouls_2.4s_ease-out_infinite]" />
-        <span className="relative grid h-12 w-12 place-items-center rounded-full rounded-br-none bg-[var(--ad-nuit)] text-white shadow-[0_14px_30px_-10px_rgba(46,66,79,0.6)] [transform:rotate(45deg)]">
-          <span className="h-3 w-3 rounded-full bg-[var(--ad-or)] [transform:rotate(-45deg)]" />
-        </span>
-      </span>
       {decalee && (
         <div className="absolute right-4 top-4 z-10">
           <button type="button" onClick={recentrer} disabled={prochaine !== null} className={bouton}>
