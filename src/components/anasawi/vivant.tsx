@@ -518,7 +518,7 @@ export function Chemin({ etapes }: { etapes: { titre: string; texte: string }[] 
         const allume = `clamp(0, calc((${avance} - ${seuil}) * 14), 1)`
         const gauche = i % 2 === 0
         return (
-          <li key={e.titre} className="relative grid min-h-[220px] items-center pl-14 md:grid-cols-2 md:gap-28 md:pl-0">
+          <li key={e.titre} className="relative grid min-h-[150px] items-center pl-14 sm:min-h-[220px] md:grid-cols-2 md:gap-28 md:pl-0">
             {/* Le jalon, sur le trait. */}
             <span
               aria-hidden="true"
@@ -538,13 +538,13 @@ export function Chemin({ etapes }: { etapes: { titre: string; texte: string }[] 
               </span>
             </span>
             <div
-              className={cn('py-8', gauche ? 'md:col-start-1 md:text-right' : 'md:col-start-2')}
+              className={cn('py-5 sm:py-8', gauche ? 'md:col-start-1 md:text-right' : 'md:col-start-2')}
               style={{
                 opacity: `clamp(0.25, calc(0.25 + ${allume} * 0.75), 1)`,
                 transform: `translateX(calc((1 - ${allume}) * ${gauche ? '-' : ''}16px))`,
               }}
             >
-              <h3 className="text-[34px] md:text-[44px]">{e.titre}</h3>
+              <h3 className="text-[28px] leading-[1.1] sm:text-[34px] md:text-[44px]">{e.titre}</h3>
               {e.texte && <p className={cn('mt-3 max-w-[38ch] text-[16px] leading-[1.7] text-[var(--ad-pierre)]', gauche && 'md:ml-auto')}>{e.texte}</p>}
             </div>
           </li>
@@ -637,7 +637,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
                  colonne, qui écraserait les hauteurs. */
               /* ad-surface : une surface claire (textes foncés même sur un fond de section foncé). */
               'ad-surface relative isolate shrink-0 overflow-hidden rounded-[30px] [--mx:0] [--my:0] motion-reduce:!transition-none lg:shrink lg:[flex-basis:0px] lg:[flex-grow:var(--grow)]',
-              actif ? 'h-[min(520px,calc(var(--ad-vh)*72))] lg:h-auto' : 'h-[88px] lg:h-auto',
+              actif ? 'h-[min(480px,calc(var(--ad-vh)*64))] sm:h-[min(520px,calc(var(--ad-vh)*72))] lg:h-auto' : 'h-[72px] sm:h-[88px] lg:h-auto',
             )}
             style={{
               ['--grow' as string]: actif ? OUVERTURE : 1,
@@ -739,7 +739,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
 
             {/* Fermée : le numéro et le titre, debout. */}
             <div
-              className="pointer-events-none absolute inset-x-0 bottom-0 z-[6] flex items-end gap-3 p-6 text-[var(--ad-nuit)] lg:flex-col-reverse lg:items-center lg:gap-4 lg:px-0"
+              className="pointer-events-none absolute inset-x-0 bottom-0 z-[6] flex items-end gap-3 px-5 py-4 text-[var(--ad-nuit)] sm:p-6 lg:flex-col-reverse lg:items-center lg:gap-4 lg:px-0"
               style={{
                 opacity: actif ? 0 : 1,
                 transform: actif ? 'translate3d(0,24px,0)' : 'translate3d(0,0,0)',
@@ -749,14 +749,14 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
               }}
             >
               <span className="font-[family-name:var(--ad-titre)] text-[18px] font-semibold tracking-[-0.03em] opacity-60">{String(i + 1).padStart(2, '0')}</span>
-              <span className="font-[family-name:var(--ad-titre)] text-[24px] font-semibold leading-[1.05] tracking-[-0.03em] lg:rotate-180 lg:[writing-mode:vertical-rl]">{s.title}</span>
+              <span className="font-[family-name:var(--ad-titre)] text-[21px] font-semibold leading-[1.05] tracking-[-0.03em] sm:text-[24px] lg:rotate-180 lg:[writing-mode:vertical-rl]">{s.title}</span>
             </div>
 
             {/* Ouverte : la fiche, posée à la largeur finale (aucune
                 recomposition), qui se dévoile ligne à ligne. */}
             <div
               className={cn(
-                'absolute bottom-0 left-0 z-20 w-full p-7 lg:w-[var(--ouvert)] lg:p-9',
+                'absolute bottom-0 left-0 z-20 w-full p-6 sm:p-7 lg:w-[var(--ouvert)] lg:p-9',
                 sombre ? 'text-white' : 'text-[var(--ad-nuit)]',
                 !actif && 'pointer-events-none',
               )}
@@ -772,7 +772,7 @@ export function Arches({ services, rdv, bouton = 'Réserver cet accompagnement' 
                 {s.group && <span className="rounded-full border border-current/40 px-3 py-1 backdrop-blur-sm">{s.group.label}</span>}
                 {s.duration && <span className="rounded-full border border-current/40 px-3 py-1 backdrop-blur-sm">{s.duration.split(/[·—]/)[0]}</span>}
               </div>
-              <h3 className="max-w-[14ch] text-[40px] leading-[0.98] lg:text-[58px]">
+              <h3 className="max-w-[14ch] text-[32px] leading-[0.98] sm:text-[40px] lg:text-[58px]">
                 {mots.map((mot, k) => (
                   <span key={k} className="inline-block overflow-hidden pb-[0.1em] align-bottom">
                     <span
@@ -953,7 +953,7 @@ export function Conversation({
           </li>
         ))}
       </ul>
-      <div className="relative flex min-h-[340px] flex-col rounded-[36px] bg-[var(--ad-sable)] p-6 sm:p-9" aria-live="polite">
+      <div className="relative flex min-h-[300px] flex-col rounded-[28px] bg-[var(--ad-sable)] p-5 sm:min-h-[340px] sm:rounded-[36px] sm:p-9" aria-live="polite">
         {q && (
           <div key={q.id} className="flex flex-1 flex-col gap-5">
             <p className="ml-auto max-w-[80%] rounded-[22px] rounded-br-[6px] bg-white px-5 py-3.5 text-[15px] leading-[1.5] text-[var(--ad-nuit)] shadow-[0_8px_24px_-12px_rgba(46,66,79,0.25)] origin-bottom-right motion-safe:animate-[ad-bulle_0.55s_cubic-bezier(0.34,1.4,0.64,1)_backwards]">
@@ -1590,8 +1590,8 @@ export function Souffle({ bouton = 'Respirer une minute', textes = SOUFFLE_PAR_D
   const respirations = Math.min(8, Math.floor(ecoule / 8) + (enCours ? 1 : 0))
 
   return (
-    <div className="flex flex-col items-center gap-8">
-      <div className="relative grid aspect-square w-full max-w-[400px] place-items-center">
+    <div className="flex flex-col items-center gap-6 sm:gap-8">
+      <div className="relative grid aspect-square w-full max-w-[260px] place-items-center sm:max-w-[400px]">
         <span aria-hidden="true" className="absolute inset-0 rounded-full border border-[var(--ad-sable-fonce)]" />
         {/* L'anneau de l'exercice. */}
         <svg aria-hidden="true" viewBox="0 0 100 100" className="absolute inset-0 -rotate-90">

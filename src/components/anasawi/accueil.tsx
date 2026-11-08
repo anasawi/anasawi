@@ -182,7 +182,9 @@ export function Accueil({
   const [ref, vu] = useVu<HTMLElement>('0%')
   return (
     <section ref={ref} id="haut" className="relative isolate overflow-hidden">
-      <div className="mx-auto grid min-h-[calc(var(--ad-vh)*100)] max-w-[1240px] items-center gap-12 px-[6vw] pb-16 pt-32 lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-20 lg:pt-28">
+      {/* Téléphone : la porte D'ABORD, large et basse (une arche d'entrée),
+          puis le nom et les boutons — tout l'accueil tient dans l'écran. */}
+      <div className="mx-auto grid max-w-[1240px] items-center gap-7 px-[6vw] pb-12 pt-24 sm:gap-12 sm:pb-16 sm:pt-32 lg:min-h-[calc(var(--ad-vh)*100)] lg:grid-cols-[1.05fr_0.95fr] lg:gap-20 lg:px-12 lg:pb-20 lg:pt-28">
         <div>
           {surtitre && (
             <p className="inline-flex items-center gap-2 rounded-full bg-white/80 px-3.5 py-1.5 text-[13px] font-semibold text-[var(--ad-pierre)] shadow-[0_1px_2px_rgba(46,66,79,0.06),0_8px_20px_-12px_rgba(46,66,79,0.25)]" style={apparait(vu, 0.1)}>
@@ -190,7 +192,7 @@ export function Accueil({
               {surtitre}
             </p>
           )}
-          <h1 className="mt-6 text-[clamp(52px,7.4vw,112px)] leading-[0.98]">
+          <h1 className="mt-4 text-[clamp(46px,7.4vw,112px)] leading-[0.98] sm:mt-6">
             <span className="block" style={apparait(vu, 0.25)}>
               {prenom}
             </span>
@@ -199,11 +201,11 @@ export function Accueil({
             </em>
           </h1>
           {intro && (
-            <p className="mt-7 max-w-[44ch] text-[17px] leading-[1.75] text-[var(--ad-pierre)] lg:text-[18px]" style={apparait(vu, 0.6)}>
+            <p className="mt-4 max-w-[44ch] text-[16px] leading-[1.65] text-[var(--ad-pierre)] sm:mt-7 sm:text-[17px] sm:leading-[1.75] lg:text-[18px]" style={apparait(vu, 0.6)}>
               {intro}
             </p>
           )}
-          <div className="mt-9 flex flex-wrap items-center gap-3" style={apparait(vu, 0.75)}>
+          <div className="mt-6 flex flex-wrap items-center gap-2 sm:mt-9 sm:gap-3" style={apparait(vu, 0.75)}>
             <a href={rdv} className="group inline-flex items-center gap-2.5 rounded-full bg-[var(--ad-nuit)] py-2 pl-6 pr-2 text-[15px] font-semibold text-white shadow-[0_16px_32px_-18px_rgba(46,66,79,0.8)] transition-transform duration-500 hover:-translate-y-0.5">
               {bouton}
               <span className="grid h-9 w-9 place-items-center rounded-full bg-white/15 transition-transform duration-500 group-hover:rotate-45">
@@ -218,7 +220,7 @@ export function Accueil({
           </div>
           {/* L'invitation à s'installer : une tasse, sa vapeur, une phrase. */}
           {slogan && (
-          <p className="mt-12 flex items-center gap-3 font-[family-name:var(--ad-titre)] text-[19px] italic text-[var(--ad-pierre)]" style={apparait(vu, 1)}>
+          <p className="mt-12 hidden items-center gap-3 font-[family-name:var(--ad-titre)] text-[19px] italic text-[var(--ad-pierre)] sm:flex" style={apparait(vu, 1)}>
             <span className="relative grid h-11 w-11 place-items-center rounded-full bg-white/80 text-[var(--ad-bleu)] shadow-[0_8px_20px_-12px_rgba(46,66,79,0.3)]">
               <Vapeur className="absolute -top-5 left-1/2 h-6 w-5 -translate-x-1/2 text-[var(--ad-sable-fonce)]" />
               <Coffee className="h-5 w-5" />
@@ -229,10 +231,10 @@ export function Accueil({
         </div>
 
         {/* Les portes. */}
-        <div className="relative mx-auto w-full max-w-[460px] max-lg:max-w-[340px] lg:justify-self-end">
-          <Porte media={photo} vu={vu} delai={0.2} lente priorite sizes="(max-width: 1024px) 80vw, 460px" className="aspect-[4/5] w-full" />
+        <div className="relative mx-auto w-full max-w-[460px] max-sm:order-first max-lg:max-w-[340px] max-sm:max-w-none lg:justify-self-end">
+          <Porte media={photo} vu={vu} delai={0.2} lente priorite sizes="(max-width: 640px) 90vw, (max-width: 1024px) 80vw, 460px" className="aspect-[5/4] w-full sm:aspect-[4/5]" />
           {tasse && (
-            <div className="absolute -bottom-8 -left-3 w-[40%] max-w-[190px] motion-safe:animate-[ad-flotter_7s_ease-in-out_infinite] lg:-left-20">
+            <div className="absolute -bottom-6 -left-2 w-[30%] max-w-[190px] motion-safe:animate-[ad-flotter_7s_ease-in-out_infinite] sm:-bottom-8 sm:-left-3 sm:w-[40%] lg:-left-20">
               <Porte media={tasse} vu={vu} delai={0.9} chambranle="aucun" lisere sizes="190px" className="aspect-[3/4] w-full" />
               <Vapeur className="absolute -top-12 left-1/2 h-14 w-12 -translate-x-1/2 text-[var(--ad-sable-fonce)]" />
             </div>
@@ -241,8 +243,8 @@ export function Accueil({
             <span
               key={p}
               className={cn(
-                'absolute inline-flex items-center gap-2 rounded-full bg-white/95 px-3.5 py-2 text-[13px] font-semibold text-[var(--ad-nuit)] shadow-[0_14px_30px_-16px_rgba(46,66,79,0.45)]',
-                i === 0 ? '-right-2 top-[18%] lg:-right-10' : 'bottom-[14%] -right-2 lg:-right-6',
+                'absolute inline-flex items-center gap-2 rounded-full bg-white/95 px-3 py-1.5 text-[12px] font-semibold text-[var(--ad-nuit)] shadow-[0_14px_30px_-16px_rgba(46,66,79,0.45)] sm:px-3.5 sm:py-2 sm:text-[13px]',
+                i === 0 ? 'right-2 top-[12%] sm:-right-2 sm:top-[18%] lg:-right-10' : 'bottom-[10%] right-2 sm:bottom-[14%] sm:-right-2 lg:-right-6',
               )}
               style={apparait(vu, 1.3 + i * 0.2)}
             >
@@ -295,11 +297,11 @@ export function RencontreDouce({
   const lignes = titre.split('\n').filter((l) => l.trim())
   const paragraphes = texte.replace(/<[^>]+>/g, '\n').split(/\n+/).map((p) => p.trim()).filter(Boolean)
   return (
-    <section ref={ref} id="a-propos" className="relative isolate scroll-mt-24 overflow-hidden py-24 lg:py-32">
+    <section ref={ref} id="a-propos" className="relative isolate scroll-mt-24 overflow-hidden py-14 sm:py-24 lg:py-32">
       {/* Un mur sable, comme une alcôve derrière les portes. */}
       <div aria-hidden="true" className="absolute inset-y-10 left-0 -z-10 w-[58%] bg-[var(--ad-sable)] max-lg:inset-x-0 max-lg:bottom-auto max-lg:h-[46%] max-lg:w-full" style={{ borderRadius: '0 48px 48px 0', opacity: vu ? 1 : 0, transition: 'opacity 1.4s' }} />
-      <div className="mx-auto grid max-w-[1240px] items-center gap-16 px-[6vw] lg:grid-cols-[0.9fr_1.1fr] lg:gap-24 lg:px-12">
-        <div className="relative mx-auto w-full max-w-[420px] max-lg:max-w-[300px]">
+      <div className="mx-auto grid max-w-[1240px] items-center gap-14 px-[6vw] sm:gap-16 lg:grid-cols-[0.9fr_1.1fr] lg:gap-24 lg:px-12">
+        <div className="relative mx-auto w-full max-w-[420px] max-lg:max-w-[300px] max-sm:max-w-[250px]">
           <Porte media={portrait} vu={vu} delai={0.1} sizes="(max-width: 1024px) 70vw, 420px" className="aspect-[3/4] w-full" />
           {cabinet && (
             <figure className="absolute -bottom-10 -right-3 w-[42%] max-w-[180px] lg:-right-16" style={apparait(vu, 1)}>
@@ -322,7 +324,7 @@ export function RencontreDouce({
               </span>
             ))}
           </h2>
-          <div className="mt-8 flex max-w-[52ch] flex-col gap-4 text-[17px] leading-[1.8] text-[var(--ad-pierre)]">
+          <div className="mt-6 flex max-w-[52ch] flex-col gap-4 text-[16px] leading-[1.7] text-[var(--ad-pierre)] sm:mt-8 sm:text-[17px] sm:leading-[1.8]">
             {paragraphes.map((p, i) => (
               <p key={i} style={apparait(vu, 0.5 + i * 0.12)}>
                 {p.replace(/\*/g, '')}
@@ -330,11 +332,11 @@ export function RencontreDouce({
             ))}
           </div>
           {citation && (
-            <blockquote className="relative mt-10 max-w-[52ch] rounded-[28px] bg-[var(--ad-sable)] px-8 py-7" style={apparait(vu, 0.8)}>
+            <blockquote className="relative mt-8 max-w-[52ch] rounded-[24px] bg-[var(--ad-sable)] px-6 py-6 sm:mt-10 sm:rounded-[28px] sm:px-8 sm:py-7" style={apparait(vu, 0.8)}>
               <span aria-hidden="true" className="absolute -top-6 left-6 font-[family-name:var(--ad-titre)] text-[84px] leading-none text-[var(--ad-sable-fonce)]">
                 “
               </span>
-              <p className="relative font-[family-name:var(--ad-titre)] text-[21px] italic leading-[1.5] text-[var(--ad-nuit)]">{citation.replace(/\*/g, '')}</p>
+              <p className="relative font-[family-name:var(--ad-titre)] text-[19px] italic leading-[1.5] text-[var(--ad-nuit)] sm:text-[21px]">{citation.replace(/\*/g, '')}</p>
             </blockquote>
           )}
           {signature && (

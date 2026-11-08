@@ -104,15 +104,15 @@ export function SectionSeuil({ c, t = TEXTES.mSeuil(c), tasse = tasseParDefaut(c
 
 export function Respiration({ t = TEXTES.mRespiration() }: Partial<P> & { t?: T<'mRespiration'> }) {
   return (
-    <section className="relative overflow-hidden py-20 md:py-28">
-      <div className="mx-auto grid max-w-[1240px] items-center gap-16 px-[6vw] lg:px-12 md:grid-cols-2">
+    <section className="relative overflow-hidden py-14 sm:py-20 md:py-28">
+      <div className="mx-auto grid max-w-[1240px] items-center gap-10 px-[6vw] sm:gap-16 lg:px-12 md:grid-cols-2">
         <div>
           {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
           <h2 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
             <Lignes lignes={enLignes(t.titre)} />
           </h2>
           <Revele delai={0.3}>
-            <p className="mt-8 max-w-[42ch] text-[17px] leading-[1.75] text-[var(--ad-pierre)]">{t.texte}</p>
+            <p className="mt-5 max-w-[42ch] text-[16px] leading-[1.7] text-[var(--ad-pierre)] sm:mt-8 sm:text-[17px] sm:leading-[1.75]">{t.texte}</p>
           </Revele>
         </div>
         {/* Le cercle qui respire — et l'exercice guidé d'une minute. */}
@@ -146,9 +146,9 @@ export function Rencontre({ c, t = TEXTES.mRencontre(c), cabinet = cabinetParDef
 
 export function SectionChemin({ c, t = TEXTES.mChemin(c) }: P & { t?: T<'mChemin'> }) {
   return (
-    <section id="methode" className="scroll-mt-24 py-20 md:py-28">
+    <section id="methode" className="scroll-mt-24 py-14 sm:py-20 md:py-28">
       <div className="mx-auto max-w-[1100px] px-[6vw] lg:px-12">
-        <div className="mb-16 text-center md:mb-24">
+        <div className="mb-8 text-center sm:mb-16 md:mb-24">
           <div className="flex justify-center">
             {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
           </div>
@@ -171,7 +171,7 @@ export function SectionChemin({ c, t = TEXTES.mChemin(c) }: P & { t?: T<'mChemin
 
 export function SectionArches({ c, t = TEXTES.mArches(c) }: P & { t?: T<'mArches'> }) {
   return (
-    <section id="accompagnements" className="scroll-mt-24 py-20 md:py-28">
+    <section id="accompagnements" className="scroll-mt-24 py-14 sm:py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         <div className="mb-14 flex flex-wrap items-end justify-between gap-6">
           <div>
@@ -200,12 +200,12 @@ export function SectionArches({ c, t = TEXTES.mArches(c) }: P & { t?: T<'mArches
     vivantes — le plan qui bat, l'onde de la visio, les séances. */
 export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPratique'> }) {
   const carte =
-    'relative isolate overflow-hidden rounded-[28px] bg-white p-7 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)] transition-[box-shadow,translate] duration-500 ease-[var(--ad-ease)] hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(46,66,79,0.06),0_30px_60px_-30px_rgba(46,66,79,0.35)]'
+    'relative isolate overflow-hidden rounded-[24px] bg-white p-6 sm:rounded-[28px] sm:p-7 shadow-[0_1px_2px_rgba(46,66,79,0.05),0_20px_50px_-30px_rgba(46,66,79,0.25)] transition-[box-shadow,translate] duration-500 ease-[var(--ad-ease)] hover:-translate-y-1 hover:shadow-[0_2px_4px_rgba(46,66,79,0.06),0_30px_60px_-30px_rgba(46,66,79,0.35)]'
   return (
-    <section id="pratique" className="scroll-mt-24 py-20 md:py-28">
+    <section id="pratique" className="scroll-mt-24 py-14 sm:py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
-        <h2 className="mb-12 text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
+        <h2 className="mb-8 text-[clamp(38px,4.6vw,62px)] leading-[1.04] sm:mb-12">
           <Lignes lignes={enLignes(t.titre)} />
         </h2>
         {/* Six colonnes : le plan à gauche (moitié), à droite les séances, puis
@@ -214,7 +214,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           {/* Le plan : une vraie carte, teintée aux couleurs du site. */}
           <Revele className={cn(carte, 'relative overflow-hidden p-0 md:col-span-3 md:row-span-2')}>
             {c.adresse ? (
-              <Carte adresse={c.adresse} textes={{ afficher: t.planAfficher, cookies: t.planCookies, explorer: t.planExplorer, recentrer: t.planRecentrer }} className="h-[260px] sm:h-[320px] md:absolute md:inset-0 md:h-auto" />
+              <Carte adresse={c.adresse} textes={{ afficher: t.planAfficher, cookies: t.planCookies, explorer: t.planExplorer, recentrer: t.planRecentrer }} className="h-[240px] sm:h-[320px] md:absolute md:inset-0 md:h-auto" />
             ) : (
               <div aria-hidden="true" className="h-[200px] bg-[var(--ad-brume)] md:absolute md:inset-0 md:h-auto" />
             )}
@@ -260,8 +260,8 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           </Revele>
 
           {/* La visio, et son onde. */}
-          <Revele delai={0.16} className={cn(carte, 'flex flex-col justify-between md:col-span-3 lg:col-span-1 lg:p-6')}>
-            <div aria-hidden="true" className="flex h-12 items-center gap-1">
+          <Revele delai={0.16} className={cn(carte, 'flex items-center gap-5 max-md:py-5 md:col-span-3 md:flex-col md:items-stretch md:justify-between lg:col-span-1 lg:p-6')}>
+            <div aria-hidden="true" className="flex h-10 shrink-0 items-center gap-1 md:h-12">
               {[0.1, 0.35, 0.6, 0.2, 0.45, 0.7, 0.3].map((d, i) => (
                 <span
                   key={i}
@@ -337,7 +337,7 @@ export function SectionPromenade({
 export function SectionConversation({ c, t = TEXTES.mConversation(c) }: P & { t?: T<'mConversation'> }) {
   if (!c.faq.length) return null
   return (
-    <section id="questions" className="scroll-mt-24 py-20 md:py-28">
+    <section id="questions" className="scroll-mt-24 py-14 sm:py-20 md:py-28">
       <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
         <h2 className="mb-14 text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
@@ -360,24 +360,24 @@ export function RendezVous({ c, t = TEXTES.mRendezVous(c) }: P & { t?: T<'mRende
     c.adresse && { icone: <MapPin />, texte: c.adresse, href: `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(c.adresse)}` },
   ].filter(Boolean) as { icone: React.ReactNode; texte: string; href: string }[]
   return (
-    <section id="contact" className="scroll-mt-24 py-20 md:py-28">
-      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-16 px-[6vw] lg:px-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
+    <section id="contact" className="scroll-mt-24 py-14 sm:py-20 md:py-28">
+      <div className="mx-auto grid max-w-[1240px] grid-cols-[minmax(0,1fr)] gap-10 px-[6vw] sm:gap-16 lg:px-12 lg:grid-cols-[minmax(0,0.8fr)_minmax(0,1.2fr)]">
         <div>
           {t.surtitre && <Surtitre>{t.surtitre}</Surtitre>}
           <h2 className="text-[clamp(38px,4.6vw,62px)] leading-[1.04]">
             <Lignes lignes={enLignes(t.titre)} />
           </h2>
-          <Revele delai={0.2} className="mt-12">
+          <Revele delai={0.2} className="mt-8 sm:mt-12">
             <Semaine horaires={c.horaires} textes={{ ouvert: t.ouvertAujourdhui, fermeAujourdhui: t.fermeAujourdhui, ferme: t.ferme }} />
           </Revele>
           <Revele delai={0.3}>
-            <ul className="mt-10 divide-y divide-[var(--ad-sable-fonce)] border-y border-[var(--ad-sable-fonce)]">
+            <ul className="mt-8 divide-y divide-[var(--ad-sable-fonce)] border-y border-[var(--ad-sable-fonce)] sm:mt-10">
               {lignes.map((l) => (
                 <li key={l.texte}>
                   <a href={l.href} className="group flex items-center gap-4 py-4 text-[15px] text-[var(--ad-nuit)] [&_svg]:h-4 [&_svg]:w-4">
                     <span className="text-[var(--ad-or)]">{l.icone}</span>
                     <span className="min-w-0 flex-1 [overflow-wrap:anywhere]">{l.texte}</span>
-                    <ArrowUpRight className="opacity-0 transition-[opacity,transform,translate,scale,rotate] duration-500 ease-[var(--ad-ease)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100" />
+                    <ArrowUpRight className="opacity-40 transition-[opacity,transform,translate,scale,rotate] duration-500 ease-[var(--ad-ease)] group-hover:-translate-y-0.5 group-hover:translate-x-0.5 group-hover:opacity-100 lg:opacity-0" />
                   </a>
                 </li>
               ))}

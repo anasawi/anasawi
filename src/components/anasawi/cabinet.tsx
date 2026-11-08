@@ -167,7 +167,7 @@ export function CabinetDefile({
     <section
       ref={ref}
       id={id}
-      className="scroll-mt-24 overflow-hidden py-20 md:py-28"
+      className="scroll-mt-24 overflow-hidden py-14 sm:py-20 md:py-28"
     >
       <div className="mx-auto max-w-[1240px] px-[6vw] lg:px-12">
         <Entete
