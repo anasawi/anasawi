@@ -1472,8 +1472,9 @@ export function Fil({
                   /* Toutes les sections sont dans le menu : des entrées serrées. */
                   'relative z-[1] whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] transition-colors duration-300 2xl:px-3.5 2xl:text-[14px]',
                   /* Comme le bouton « Modèles » : fond turquoise pâle, texte turquoise foncé. */
-                  cible === l.href ? 'font-medium text-[color-mix(in_srgb,var(--ad-or)_78%,black)]' : 'text-[var(--ad-pierre)]',
+                  cible === l.href ? 'font-medium' : 'text-[var(--ad-pierre)]',
                 )}
+                style={cible === l.href ? { color: 'color-mix(in srgb, var(--ad-or) 78%, black)' } : undefined}
               >
                 {l.label}
               </a>
