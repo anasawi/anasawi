@@ -77,13 +77,13 @@ function Entete({
    lentement, comme quand on marche dans un couloir. Et qu'on peut faire
    défiler SOI-MÊME : au doigt, à la souris (glisser), au pavé tactile, ou
    avec les flèches. Elle ne s'arrête que pendant qu'on la mène soi-même,
-   et reprend son pas quelques secondes après.
+   et reprend son pas aussitôt après.
    ══════════════════════════════════════════════════════════════════════ */
 
 /** Pixels par seconde du défilement automatique. */
 const PAS = 30
 /** Le temps de repos après une action, avant de reprendre la marche. */
-const REPOS = 2600
+const REPOS = 400
 
 export function CabinetDefile({
   photos,
@@ -97,7 +97,7 @@ export function CabinetDefile({
   const liste = photos.slice(0, 8);
   const tour = [...liste, ...liste];
   /* L'état de la marche, hors React (60 images par seconde). */
-  const etat = useRef({ attente: 0, glisse: null as null | { x: number; depart: number; bouge: boolean } });
+  const etat = useRef({ attente: 0, doigt: false, glisse: null as null | { x: number; depart: number; bouge: boolean } });
 
   const toucher = () => {
     etat.current.attente = performance.now() + REPOS;
@@ -118,7 +118,7 @@ export function CabinetDefile({
       const e = etat.current;
       /* La marche ne s'arrête QUE pendant qu'on la mène soi-même (glisser,
          défiler, flèches) — pas au simple survol : la galerie vit toujours. */
-      if (!calme && !e.glisse && maintenant > e.attente) {
+      if (!calme && !e.glisse && !e.doigt && maintenant > e.attente) {
         reste += (PAS * dt) / 1000;
         const entier = Math.floor(reste);
         if (entier) {
@@ -195,8 +195,12 @@ export function CabinetDefile({
                la molette qui fait descendre la page ne fige pas la galerie. */
             if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) toucher();
           }}
-          onTouchStart={toucher}
-          onTouchMove={toucher}
+          onTouchStart={() => (etat.current.doigt = true)}
+          onTouchEnd={() => {
+            etat.current.doigt = false;
+            toucher();
+          }}
+          onTouchCancel={() => (etat.current.doigt = false)}
           onClickCapture={(e) => {
             /* Un glisser n'est pas un clic. */
             if (etat.current.glisse?.bouge) e.preventDefault();
