@@ -1,4 +1,5 @@
 import { compare } from 'bcryptjs'
+import { after } from 'next/server'
 import { eq, sql } from 'drizzle-orm'
 import NextAuth from 'next-auth'
 import Credentials from 'next-auth/providers/credentials'
@@ -75,10 +76,14 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
         const valid = await compare(parsed.data.password, user.passwordHash)
         if (!valid) return null
 
-        await db
-          .update(users)
-          .set({ lastLoginAt: new Date() })
-          .where(eq(users.id, user.id))
+        /* La date de dernière connexion s'écrit APRÈS la réponse : la
+           connexion n'attend pas cette écriture. */
+        after(() =>
+          db
+            .update(users)
+            .set({ lastLoginAt: new Date() })
+            .where(eq(users.id, user.id)),
+        )
 
         return {
           id: user.id,

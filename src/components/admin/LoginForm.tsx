@@ -1,6 +1,6 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useEffect } from 'react'
 import { useFormStatus } from 'react-dom'
 
 import { Button } from '@/components/ui/button'
@@ -20,6 +20,12 @@ function SubmitButton() {
 
 export function LoginForm() {
   const [state, formAction] = useActionState(signInAction, {})
+
+  /* Pendant qu'on tape : la base et le serveur se réveillent, et le
+     tableau de bord se prépare — la connexion n'attend plus personne. */
+  useEffect(() => {
+    void fetch('/api/connexion/reveil', { cache: 'no-store' }).catch(() => undefined)
+  }, [])
 
   return (
     <form action={formAction} className="space-y-5">
