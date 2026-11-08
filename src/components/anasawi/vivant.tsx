@@ -1453,18 +1453,12 @@ export function Fil({
             <span
               aria-hidden="true"
               className={cn(
-                'absolute inset-y-0 overflow-hidden rounded-full bg-[var(--ad-sable)] transition-[left,width,opacity] duration-[650ms] ease-[cubic-bezier(0.34,1.45,0.64,1)]',
+                /* Une pastille turquoise unie (plus de dégradé de lecture). */
+                'absolute inset-y-0 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ad-or)_22%,white)] transition-[left,width,opacity] duration-[650ms] ease-[cubic-bezier(0.34,1.45,0.64,1)]',
                 pastille ? 'opacity-100' : 'opacity-0',
               )}
               style={pastille ? { left: pastille.left, width: pastille.width } : { left: 0, width: 0 }}
             >
-              <span
-                className={cn(
-                  'absolute inset-y-0 left-0 w-full origin-left bg-[linear-gradient(90deg,color-mix(in_srgb,var(--ad-bleu)_16%,transparent),color-mix(in_srgb,var(--ad-or)_26%,transparent))] transition-opacity duration-300',
-                  survol && survol !== actif ? 'opacity-0' : 'opacity-100',
-                )}
-                style={{ transform: 'scaleX(var(--sec))' }}
-              />
             </span>
             {liens.map((l) => (
               <a
