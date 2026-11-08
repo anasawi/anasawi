@@ -1,5 +1,6 @@
 import { isVideoMimeType } from '@/lib/media-kind'
 import { lirePied, type Pied } from '@/lib/pied'
+import { avecPhotosDAttente } from '@/lib/photos-accompagnements'
 import type {
   FaqItem,
   Media,
@@ -214,7 +215,8 @@ export function construireContenu({ settings, services, faq, media, dossiers, se
         'On ne répare pas les gens. On les écoute, jusqu’à ce qu’ils s’entendent.',
       auteur: lire('Textes', ['attribution', 'caption']) ?? nom,
     },
-    services,
+    /* Un accompagnement sans photo choisie en reçoit une d'attente (Unsplash). */
+    services: avecPhotosDAttente(services),
     faq,
     photos,
     dossiers: dossiers.filter((d) => photos.some((m) => m.folderId === d.id)),
