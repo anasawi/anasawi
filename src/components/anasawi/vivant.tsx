@@ -1454,7 +1454,7 @@ export function Fil({
               aria-hidden="true"
               className={cn(
                 /* Une pastille turquoise unie (plus de dégradé de lecture). */
-                'absolute inset-y-0 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ad-or)_22%,white)] transition-[left,width,opacity] duration-[650ms] ease-[cubic-bezier(0.34,1.45,0.64,1)]',
+                'absolute inset-y-0 overflow-hidden rounded-full bg-[color-mix(in_srgb,var(--ad-or)_16%,white)] transition-[left,width,opacity] duration-[650ms] ease-[cubic-bezier(0.34,1.45,0.64,1)]',
                 pastille ? 'opacity-100' : 'opacity-0',
               )}
               style={pastille ? { left: pastille.left, width: pastille.width } : { left: 0, width: 0 }}
@@ -1471,7 +1471,8 @@ export function Fil({
                 className={cn(
                   /* Toutes les sections sont dans le menu : des entrées serrées. */
                   'relative z-[1] whitespace-nowrap rounded-full px-2.5 py-2 text-[13.5px] transition-colors duration-300 2xl:px-3.5 2xl:text-[14px]',
-                  cible === l.href ? 'text-[var(--ad-nuit)]' : 'text-[var(--ad-pierre)]',
+                  /* Comme le bouton « Modèles » : fond turquoise pâle, texte turquoise foncé. */
+                  cible === l.href ? 'font-medium text-[color-mix(in_srgb,var(--ad-or)_78%,black)]' : 'text-[var(--ad-pierre)]',
                 )}
               >
                 {l.label}
