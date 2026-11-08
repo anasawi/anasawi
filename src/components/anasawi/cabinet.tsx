@@ -76,12 +76,12 @@ function Entete({
    LA PROMENADE LENTE — une rangée de portes qui glisse sans fin, très
    lentement, comme quand on marche dans un couloir. Et qu'on peut faire
    défiler SOI-MÊME : au doigt, à la souris (glisser), au pavé tactile, ou
-   avec les flèches. Elle s'arrête dès qu'on la touche, et reprend son pas
-   quelques secondes après.
+   avec les flèches. Elle ne s'arrête que pendant qu'on la mène soi-même,
+   et reprend son pas quelques secondes après.
    ══════════════════════════════════════════════════════════════════════ */
 
 /** Pixels par seconde du défilement automatique. */
-const PAS = 26
+const PAS = 30
 /** Le temps de repos après une action, avant de reprendre la marche. */
 const REPOS = 2600
 
@@ -97,7 +97,7 @@ export function CabinetDefile({
   const liste = photos.slice(0, 8);
   const tour = [...liste, ...liste];
   /* L'état de la marche, hors React (60 images par seconde). */
-  const etat = useRef({ survol: false, attente: 0, glisse: null as null | { x: number; depart: number; bouge: boolean } });
+  const etat = useRef({ attente: 0, glisse: null as null | { x: number; depart: number; bouge: boolean } });
 
   const toucher = () => {
     etat.current.attente = performance.now() + REPOS;
@@ -116,7 +116,9 @@ export function CabinetDefile({
       const dt = Math.min(64, maintenant - avant);
       avant = maintenant;
       const e = etat.current;
-      if (!calme && !e.survol && !e.glisse && maintenant > e.attente) {
+      /* La marche ne s'arrête QUE pendant qu'on la mène soi-même (glisser,
+         défiler, flèches) — pas au simple survol : la galerie vit toujours. */
+      if (!calme && !e.glisse && maintenant > e.attente) {
         reste += (PAS * dt) / 1000;
         const entier = Math.floor(reste);
         if (entier) {
@@ -180,11 +182,7 @@ export function CabinetDefile({
       <div
         className="group relative"
         style={{ opacity: vu ? 1 : 0, transition: "opacity 1.4s .3s" }}
-        onMouseEnter={() => (etat.current.survol = true)}
-        onMouseLeave={() => {
-          etat.current.survol = false;
-          finGlisse();
-        }}
+        onMouseLeave={finGlisse}
       >
         <div
           ref={piste}
@@ -192,7 +190,11 @@ export function CabinetDefile({
           onPointerMove={onPointerMove}
           onPointerUp={finGlisse}
           onPointerCancel={finGlisse}
-          onWheel={toucher}
+          onWheel={(e) => {
+            /* Seul un défilement HORIZONTAL (pavé tactile) est une prise en main ;
+               la molette qui fait descendre la page ne fige pas la galerie. */
+            if (Math.abs(e.deltaX) > Math.abs(e.deltaY)) toucher();
+          }}
           onTouchStart={toucher}
           onTouchMove={toucher}
           onClickCapture={(e) => {
