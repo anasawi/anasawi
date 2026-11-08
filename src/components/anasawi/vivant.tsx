@@ -6,7 +6,6 @@ import { createContext, useContext, useEffect, useLayoutEffect, useRef, useState
 
 import { lettreParDefaut, SOUFFLE_PAR_DEFAUT, type TextesLettre, type TextesSouffle } from '@/blocks/moderne/textes'
 import { BasculeVersion } from '@/components/site/BasculeVersion'
-import { useConsentement } from '@/components/site/consentement'
 import { LogoMark } from '@/components/site/Logo'
 import { cn } from '@/lib/utils'
 import type { FaqItem, Media, OpeningHour, ServiceWithMedia } from '@/server/db/schema'
@@ -1814,21 +1813,20 @@ const CARTE_PAR_DEFAUT: TextesCarte = { afficher: 'Afficher le plan', cookies: '
 
 export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT }: { adresse: string; zoom?: number; className?: string; textes?: TextesCarte }) {
   const ref = useRef<HTMLDivElement>(null)
+  const cadreRef = useRef<HTMLIFrameElement>(null)
   const [proche, setProche] = useState(false)
-  /* `active` : la carte reçoit la souris. `decalee` : on l'a déplacée,
-     l'épingle du site ne tombe plus sur l'adresse — on la cache jusqu'au
-     recentrage. Sortir de la carte ne recharge rien : la vue reste où on
-     l'a laissée, sans flash ni saut. */
-  const [active, setActive] = useState(false)
+  /* `decalee` : on a pris la carte en main (clic, glisser) — l'épingle du
+     site ne tombe plus forcément sur l'adresse : on la cache, et
+     « Recentrer » apparaît. */
   const [decalee, setDecalee] = useState(false)
   /* Recentrer = recharger la carte. La nouvelle se charge, invisible,
      par-dessus l'ancienne, et ne la remplace qu'une fois prête. */
   const [vue, setVue] = useState(0)
   const [prochaine, setProchaine] = useState<number | null>(null)
   const src = `https://www.google.com/maps?q=${encodeURIComponent(adresse)}&z=${zoom}&output=embed`
-  /* Google Maps dépose des cookies : le plan ne se charge qu'après un clic (voir consentement.tsx). */
-  const [accorde, accorder] = useConsentement()
 
+  /* La carte se charge en approchant de la section, et se manipule
+     directement (glisser, zoomer) — sans bouton pour l'activer. */
   useEffect(() => {
     const el = ref.current
     if (!el) return
@@ -1845,14 +1843,19 @@ export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT
     return () => io.disconnect()
   }, [])
 
-  const explorer = () => {
-    setActive(true)
-    setDecalee(true)
-  }
-  const recentrer = () => {
-    setActive(false)
-    setProchaine(vue + 1)
-  }
+  /* Un clic ou un glisser DANS la carte donne le focus à son cadre : la
+     page perd le focus. C'est le signe qu'on la manipule. */
+  useEffect(() => {
+    const surBlur = () => {
+      window.setTimeout(() => {
+        if (document.activeElement && document.activeElement === cadreRef.current) setDecalee(true)
+      }, 0)
+    }
+    window.addEventListener('blur', surBlur)
+    return () => window.removeEventListener('blur', surBlur)
+  }, [])
+
+  const recentrer = () => setProchaine(vue + 1)
 
   /* Plus haute que le cadre de 300 px, centrée : la fiche que Google pose
      en haut à gauche et ses boutons du bas sortent du cadre. */
@@ -1862,22 +1865,8 @@ export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT
     'rounded-full bg-white/85 px-3.5 py-1.5 text-[12px] font-semibold text-[var(--ad-nuit)] shadow-[0_6px_18px_-10px_rgba(46,66,79,0.5)] backdrop-blur transition-colors hover:bg-white'
 
   return (
-    <div ref={ref} className={cn('relative isolate overflow-hidden bg-[var(--ad-brume)]', className)} onMouseLeave={() => setActive(false)}>
-      {!accorde && (
-        /* En attendant l'accord : un plan dessiné, des rues à peine tracées. */
-        <svg aria-hidden="true" className="pointer-events-none absolute inset-0 h-full w-full text-white" preserveAspectRatio="xMidYMid slice" viewBox="0 0 400 300">
-          <g fill="none" stroke="currentColor" strokeLinecap="round">
-            <path d="M-20 210 C 80 190, 150 230, 240 180 S 360 120, 430 140" strokeWidth="9" opacity=".9" />
-            <path d="M120 -10 C 130 80, 100 160, 150 320" strokeWidth="6" opacity=".8" />
-            <path d="M-10 80 L 420 40" strokeWidth="4" opacity=".7" />
-            <path d="M260 -10 C 250 90, 300 170, 280 320" strokeWidth="4" opacity=".7" />
-            <path d="M-10 130 L 130 120 M 160 260 L 420 230 M 40 -10 L 70 320 M 330 -10 L 360 320" strokeWidth="2.5" opacity=".6" />
-          </g>
-        </svg>
-      )}
-      {proche && accorde && (
-        <iframe key={vue} title={`Plan d’accès : ${adresse}`} src={src} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className={cn(cadre, !active && 'pointer-events-none')} />
-      )}
+    <div ref={ref} className={cn('relative isolate overflow-hidden bg-[var(--ad-brume)]', className)}>
+      {proche && <iframe ref={cadreRef} key={vue} title={`Plan d’accès : ${adresse}`} src={src} loading="lazy" referrerPolicy="no-referrer-when-downgrade" className={cadre} />}
       {prochaine !== null && (
         <iframe
           key={prochaine}
@@ -1897,7 +1886,7 @@ export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT
           className={cn(cadre, 'pointer-events-none opacity-0')}
         />
       )}
-      {/* La teinte du site, posée sur le gris de la carte — même en exploration. */}
+      {/* La teinte du site, posée sur le gris de la carte. */}
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[linear-gradient(140deg,var(--ad-bleu),var(--ad-bleu-clair))] opacity-60 mix-blend-color" />
       <div aria-hidden="true" className="pointer-events-none absolute inset-0 bg-[radial-gradient(ellipse_at_center,transparent_40%,rgba(246,247,249,0.55))]" />
       {/* L'épingle, au centre — là où la carte place l'adresse. */}
@@ -1913,26 +1902,11 @@ export function Carte({ adresse, zoom = 13, className, textes = CARTE_PAR_DEFAUT
           <span className="h-3 w-3 rounded-full bg-[var(--ad-or)] [transform:rotate(-45deg)]" />
         </span>
       </span>
-      {!accorde && (
-        <div className="absolute right-4 top-4 z-10 flex max-w-[240px] flex-col items-end gap-1.5 text-right">
-          <button type="button" onClick={accorder} className={bouton}>
-            {textes.afficher}
+      {decalee && (
+        <div className="absolute right-4 top-4 z-10">
+          <button type="button" onClick={recentrer} disabled={prochaine !== null} className={bouton}>
+            {prochaine !== null ? '…' : textes.recentrer}
           </button>
-          <span className="rounded-full bg-white/70 px-2.5 py-1 text-[11px] leading-[1.3] text-[var(--ad-pierre)] backdrop-blur">{textes.cookies}</span>
-        </div>
-      )}
-      {proche && accorde && (
-        <div className="absolute right-4 top-4 z-10 flex gap-2">
-          {decalee && (
-            <button type="button" onClick={recentrer} disabled={prochaine !== null} className={bouton}>
-              {prochaine !== null ? '…' : textes.recentrer}
-            </button>
-          )}
-          {!active && (
-            <button type="button" onClick={explorer} className={bouton}>
-              {textes.explorer}
-            </button>
-          )}
         </div>
       )}
     </div>

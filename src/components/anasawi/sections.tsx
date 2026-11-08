@@ -260,7 +260,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           </Revele>
 
           {/* La visio, et son onde. */}
-          <Revele delai={0.16} className={cn(carte, 'flex flex-col justify-between md:col-span-1 md:p-6')}>
+          <Revele delai={0.16} className={cn(carte, 'flex flex-col justify-between md:col-span-3 lg:col-span-1 lg:p-6')}>
             <div aria-hidden="true" className="flex h-12 items-center gap-1">
               {[0.1, 0.35, 0.6, 0.2, 0.45, 0.7, 0.3].map((d, i) => (
                 <span
@@ -277,7 +277,7 @@ export function EnPratique({ c, t = TEXTES.mEnPratique() }: P & { t?: T<'mEnPrat
           </Revele>
 
           {/* Les jours : toute la semaine, aujourd'hui surligné. */}
-          <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6 md:col-span-2')}>
+          <Revele delai={0.24} className={cn(carte, 'flex flex-col gap-3 px-6 py-6 md:col-span-3 lg:col-span-2')}>
             <p className="text-[13px] font-semibold text-[var(--ad-gris)]">{t.consultations}</p>
             <SemaineListe horaires={c.horaires} libelleFerme={t.ferme} />
           </Revele>

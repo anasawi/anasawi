@@ -93,7 +93,7 @@ export const CONFIDENTIALITE_DEPART: Rubrique[] = [
   r(
     'cookies',
     'Cookies',
-    'Ce site ne dépose aucun cookie de mesure d’audience ni de publicité : il n’y a donc rien à accepter en arrivant. Le plan d’accès (Google Maps) et, le cas échéant, une vidéo (YouTube ou Vimeo) sont fournis par d’autres sites qui peuvent déposer leurs propres cookies : ils ne se chargent que si vous cliquez pour les afficher, et seulement pour la page consultée.\n\nUn cookie strictement nécessaire est utilisé uniquement pour l’espace d’administration du site (connexion de l’éditrice) ; il ne concerne pas les visiteurs.',
+    'Ce site ne dépose aucun cookie de mesure d’audience ni de publicité. Le plan d’accès est fourni par Google Maps, qui peut déposer ses propres cookies lorsque le plan s’affiche ; le cas échéant, une vidéo (YouTube ou Vimeo) ne se charge que si vous cliquez pour l’afficher.\n\nUn cookie strictement nécessaire est utilisé uniquement pour l’espace d’administration du site (connexion de l’éditrice) ; il ne concerne pas les visiteurs.',
   ),
   r(
     'droits',
