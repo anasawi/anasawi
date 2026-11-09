@@ -316,6 +316,21 @@
     filter: blur(6px);
   }
 }
+@keyframes adm-tache-1 {
+  to {
+    transform: translate(28%, 18%) scale(1.15);
+  }
+}
+@keyframes adm-tache-2 {
+  to {
+    transform: translate(-30%, -22%) scale(0.9);
+  }
+}
+@keyframes adm-tache-3 {
+  to {
+    transform: translate(-22%, 26%) scale(1.1);
+  }
+}
 @keyframes adm-glisse {
   from {
     background-position: 0% 50%;

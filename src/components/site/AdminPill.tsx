@@ -179,15 +179,24 @@ export function AdminPill({
             rel={newTab ? 'noopener' : undefined}
             className="group/action relative isolate flex h-9 items-center gap-2 overflow-hidden rounded-full px-4 text-[0.82rem] font-semibold text-[#164951] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.55),inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-6px_rgba(170,200,240,0.55)] transition-[transform,translate,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7),inset_0_1px_0_rgba(255,255,255,0.95),0_10px_26px_-6px_rgba(200,180,240,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b3440]"
           >
-            {/* Une AURORE pastel : turquoise, bleu ciel, lavande, rose — qui glisse
-                lentement de gauche à droite — un peu plus vite au survol. */}
+            {/* Des TACHES DE COULEUR fondues, comme une aquarelle : turquoise,
+                rose poudré, bleu ciel, sur un fond perle. Elles flottent
+                lentement — un peu plus vite au survol. */}
+            <span aria-hidden="true" className="absolute inset-0 -z-10 bg-[#eef4f6]" />
             <span
               aria-hidden="true"
-              className="absolute inset-0 -z-10 bg-[length:200%_100%] motion-safe:animate-[adm-glisse_9s_ease-in-out_infinite_alternate] group-hover/action:[animation-duration:3s]"
-              style={{ backgroundImage: 'linear-gradient(110deg, #86d6cb 0%, #93c9f2 28%, #b8a9f2 52%, #f1b4cc 76%, #86d6cb 100%)' }}
+              className="absolute -left-[20%] top-[-60%] -z-10 h-[220%] w-[70%] rounded-full bg-[#7fd8cd] opacity-90 blur-[10px] motion-safe:animate-[adm-tache-1_7s_ease-in-out_infinite_alternate] group-hover/action:[animation-duration:2.5s]"
+            />
+            <span
+              aria-hidden="true"
+              className="absolute left-[30%] top-[10%] -z-10 h-[200%] w-[60%] rounded-full bg-[#f4b8cf] opacity-85 blur-[10px] motion-safe:animate-[adm-tache-2_9s_ease-in-out_infinite_alternate] group-hover/action:[animation-duration:3s]"
+            />
+            <span
+              aria-hidden="true"
+              className="absolute -right-[15%] top-[-80%] -z-10 h-[200%] w-[55%] rounded-full bg-[#a9c3f6] opacity-90 blur-[10px] motion-safe:animate-[adm-tache-3_8s_ease-in-out_infinite_alternate] group-hover/action:[animation-duration:2.8s]"
             />
             {/* Un voile laiteux pour l'adoucir, et un reflet qui passe au survol. */}
-            <span aria-hidden="true" className="absolute inset-0 -z-10 bg-white/10" />
+            <span aria-hidden="true" className="absolute inset-0 -z-10 bg-white/15" />
             <span
               aria-hidden="true"
               className="absolute inset-y-0 -left-1/2 -z-10 w-1/2 -skew-x-12 bg-gradient-to-r from-transparent via-white/80 to-transparent opacity-0 transition-[left,opacity] duration-[900ms] ease-[cubic-bezier(0.22,1,0.36,1)] group-hover/action:left-[120%] group-hover/action:opacity-100"
