@@ -316,6 +316,14 @@
     filter: blur(6px);
   }
 }
+@keyframes adm-glisse {
+  from {
+    background-position: 0% 50%;
+  }
+  to {
+    background-position: 100% 50%;
+  }
+}
 @keyframes adm-tourne-rotation {
   to {
     transform: rotate(360deg);

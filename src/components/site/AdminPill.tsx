@@ -178,12 +178,12 @@ export function AdminPill({
             rel={newTab ? 'noopener' : undefined}
             className="group/action relative isolate flex h-9 items-center gap-2 overflow-hidden rounded-full px-4 text-[0.82rem] font-semibold text-[#164951] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.55),inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-6px_rgba(170,200,240,0.55)] transition-[transform,translate,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7),inset_0_1px_0_rgba(255,255,255,0.95),0_10px_26px_-6px_rgba(200,180,240,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b3440]"
           >
-            {/* L'ARC-EN-CIEL : cyan, menthe, rose, lavande, en dégradé qui tourne
-                lentement — et plus vite au survol. */}
+            {/* Un DÉGRADÉ sobre : turquoise d'eau vers bleu brume, qui glisse
+                lentement de gauche à droite — un peu plus vite au survol. */}
             <span
               aria-hidden="true"
-              className="absolute -inset-[120%] -z-10 motion-safe:animate-[adm-tourne-rotation_8s_linear_infinite] group-hover/action:[animation-duration:2.5s]"
-              style={{ background: 'conic-gradient(from 0deg, #8fdde3, #b2e8bf, #f3e09c, #f2b3cb, #c7b8f4, #9fcbf2, #8fdde3)' }}
+              className="absolute inset-0 -z-10 bg-[length:200%_100%] motion-safe:animate-[adm-glisse_9s_ease-in-out_infinite_alternate] group-hover/action:[animation-duration:3s]"
+              style={{ backgroundImage: 'linear-gradient(110deg, #9fd8d2 0%, #b9d9e6 35%, #cfd8f0 55%, #b4dcd8 80%, #9fd8d2 100%)' }}
             />
             {/* Un voile laiteux pour l'adoucir, et un reflet qui passe au survol. */}
             <span aria-hidden="true" className="absolute inset-0 -z-10 bg-white/10" />
