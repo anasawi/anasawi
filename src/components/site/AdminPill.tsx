@@ -132,8 +132,9 @@ export function AdminPill({
           /* Du verre BLEU NUIT : la page se devine dessous, très floue. Un
              liseré clair fait la tranche, une lueur pastel monte du bas. */
           'group/pilule pointer-events-auto relative isolate flex items-center gap-1.5 overflow-hidden rounded-full p-1.5',
-          'bg-[#1b3440]/30',
-          'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.12),inset_0_1px_0_rgba(255,255,255,0.16),0_2px_6px_rgba(16,36,44,0.18),0_20px_48px_-14px_rgba(16,36,44,0.55)]',
+          /* Assez de bleu nuit pour se voir aussi sur un fond clair. */
+          'bg-[#1b3440]/[0.62]',
+          'shadow-[inset_0_0_0_1px_rgba(255,255,255,0.14),inset_0_1px_0_rgba(255,255,255,0.18),0_0_0_1px_rgba(16,36,44,0.18),0_4px_10px_rgba(16,36,44,0.22),0_22px_50px_-14px_rgba(16,36,44,0.6)]',
           'animate-[adm-pilule-entree_0.9s_cubic-bezier(0.22,1,0.36,1)_both]',
           status && 'pl-3.5',
         )}
@@ -178,12 +179,12 @@ export function AdminPill({
             rel={newTab ? 'noopener' : undefined}
             className="group/action relative isolate flex h-9 items-center gap-2 overflow-hidden rounded-full px-4 text-[0.82rem] font-semibold text-[#164951] shadow-[inset_0_0_0_1px_rgba(255,255,255,0.55),inset_0_1px_0_rgba(255,255,255,0.9),0_6px_20px_-6px_rgba(170,200,240,0.55)] transition-[transform,translate,box-shadow] duration-500 ease-[cubic-bezier(0.22,1,0.36,1)] hover:-translate-y-px hover:shadow-[inset_0_0_0_1px_rgba(255,255,255,0.7),inset_0_1px_0_rgba(255,255,255,0.95),0_10px_26px_-6px_rgba(200,180,240,0.7)] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#1b3440]"
           >
-            {/* Un DÉGRADÉ sobre : turquoise d'eau vers bleu brume, qui glisse
+            {/* Une AURORE pastel : turquoise, bleu ciel, lavande, rose — qui glisse
                 lentement de gauche à droite — un peu plus vite au survol. */}
             <span
               aria-hidden="true"
               className="absolute inset-0 -z-10 bg-[length:200%_100%] motion-safe:animate-[adm-glisse_9s_ease-in-out_infinite_alternate] group-hover/action:[animation-duration:3s]"
-              style={{ backgroundImage: 'linear-gradient(110deg, #9fd8d2 0%, #b9d9e6 35%, #cfd8f0 55%, #b4dcd8 80%, #9fd8d2 100%)' }}
+              style={{ backgroundImage: 'linear-gradient(110deg, #86d6cb 0%, #93c9f2 28%, #b8a9f2 52%, #f1b4cc 76%, #86d6cb 100%)' }}
             />
             {/* Un voile laiteux pour l'adoucir, et un reflet qui passe au survol. */}
             <span aria-hidden="true" className="absolute inset-0 -z-10 bg-white/10" />
