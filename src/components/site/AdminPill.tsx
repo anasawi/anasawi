@@ -256,16 +256,16 @@ export function AdminPill({
               aria-hidden="true"
               className="pointer-events-none absolute inset-0 -z-10 rounded-[18px] bg-[linear-gradient(180deg,rgba(255,255,255,0.16)_0%,rgba(255,255,255,0.03)_40%,rgba(0,0,0,0.1)_100%)]"
             />
-            {/* Le compte, sur un voile MULTICOLORE très discret : l'arc-en-ciel
-                de « Modifier », à peine perceptible sous le verre bleu nuit. */}
-            <div className="relative isolate mb-1 overflow-hidden rounded-[12px] px-2.5 py-2">
-              <span
-                aria-hidden="true"
-                className="absolute left-1/2 top-1/2 -z-10 aspect-square w-[180%] -translate-x-1/2 -translate-y-1/2 opacity-[0.22] blur-[10px] motion-safe:animate-[adm-tourne-rotation_16s_linear_infinite]"
-                style={{ background: 'conic-gradient(from 0deg, #8fdde3, #b2e8bf, #f3e09c, #f2b3cb, #c7b8f4, #9fcbf2, #8fdde3)' }}
-              />
-              <p className="truncate text-[0.82rem] font-semibold text-white">{name}</p>
-              {email && <p className="truncate text-[0.74rem] text-white/60">{email}</p>}
+            {/* Le compte, sur la même AQUARELLE que « Modifier » : des taches
+                turquoise, rose poudré et bleu ciel qui flottent sur un fond perle. */}
+            <div className="relative isolate mb-1.5 overflow-hidden rounded-[13px] px-3 py-2.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+              <span aria-hidden="true" className="absolute inset-0 -z-10 bg-[#eef4f6]" />
+              <span aria-hidden="true" className="absolute -left-[15%] -top-[70%] -z-10 h-[200%] w-[55%] rounded-full bg-[#7fd8cd] opacity-90 blur-[14px] motion-safe:animate-[adm-tache-1_8s_ease-in-out_infinite_alternate]" />
+              <span aria-hidden="true" className="absolute left-[35%] top-[20%] -z-10 h-[180%] w-[45%] rounded-full bg-[#f4b8cf] opacity-80 blur-[14px] motion-safe:animate-[adm-tache-2_10s_ease-in-out_infinite_alternate]" />
+              <span aria-hidden="true" className="absolute -right-[12%] -top-[90%] -z-10 h-[200%] w-[45%] rounded-full bg-[#a9c3f6] opacity-90 blur-[14px] motion-safe:animate-[adm-tache-3_9s_ease-in-out_infinite_alternate]" />
+              <span aria-hidden="true" className="absolute inset-0 -z-10 bg-white/15" />
+              <p className="truncate text-[0.84rem] font-semibold text-[#164951]">{name}</p>
+              {email && <p className="truncate text-[0.74rem] text-[#164951]/70">{email}</p>}
             </div>
             {RACCOURCIS.map((item) => (
               <Link
