@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowLeftRight, Check, IdCard, Menu, PanelBottom, Palette, Search } from 'lucide-react'
+import { ArrowLeftRight, Check, IdCard, Menu, PanelBottom, Palette, Search, Users } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { toast } from 'sonner'
@@ -13,6 +13,8 @@ import {
 } from './NavigationEditor'
 import { AdminContent } from './AdminContent'
 import { SynchroWorkbench } from './SynchroWorkbench'
+import { UsersManager } from './UsersManager'
+import type { UtilisateurListe } from '@/server/queries/users'
 import { PASTELS } from './editor/pastels'
 import { PageHeader } from './PageHeader'
 import { PaletteProvider } from './PaletteProvider'
@@ -112,6 +114,14 @@ const ONGLETS = [
     tone: PASTELS[5]!,
   },
   {
+    id: 'utilisateurs',
+    label: 'Utilisateurs',
+    resume: 'Comptes et rôles',
+    description: 'Qui peut se connecter, et ce que chacun peut faire.',
+    icone: Users,
+    tone: PASTELS[8]!,
+  },
+  {
     id: 'synchronisation',
     label: 'Synchronisation',
     resume: 'Préprod ⇄ production',
@@ -155,6 +165,7 @@ export function SettingsWorkbench({
   menu,
   referencement,
   synchro,
+  utilisateurs,
 }: {
   settings: Settings
   identity: Identity
@@ -162,6 +173,8 @@ export function SettingsWorkbench({
   menu: NavigationEditorProps
   referencement: SeoEditorProps | null
   synchro: { config: ConfigSynchro | null; phrase: string; proprietaire: boolean }
+  /** Les comptes (onglet Utilisateurs). */
+  utilisateurs: UtilisateurListe[]
 }) {
   const router = useRouter()
   const [onglet, setOnglet] = useState<Onglet>('coordonnees')
@@ -171,6 +184,7 @@ export function SettingsWorkbench({
     menu: null,
     pied: null,
     referencement: null,
+    utilisateurs: null,
     synchronisation: null,
   })
 
@@ -449,7 +463,7 @@ export function SettingsWorkbench({
           >
             {ONGLETS.map((o) => {
               const actif = onglet === o.id
-              const modifie = o.id !== 'synchronisation' && dirtyDe[groupeDe(o.id)]
+              const modifie = o.id !== 'synchronisation' && o.id !== 'utilisateurs' && dirtyDe[groupeDe(o.id)]
               const Icone = o.icone
               return (
                 <button
@@ -628,6 +642,10 @@ export function SettingsWorkbench({
                 )}
               </Panneau>
 
+              <Panneau id="utilisateurs" actif={onglet === 'utilisateurs'}>
+                <UsersManager initial={utilisateurs} integre />
+              </Panneau>
+
               <Panneau id="synchronisation" actif={onglet === 'synchronisation'}>
                 {/* Monté à la première ouverture seulement : il interroge l'autre site. */}
                 {onglet === 'synchronisation' && <SynchroWorkbench {...synchro} />}
@@ -636,7 +654,7 @@ export function SettingsWorkbench({
 
             {/* LA barre d'enregistrement : une seule, au pied du panneau,
                 toujours au même endroit. */}
-            {onglet !== 'synchronisation' && (
+            {onglet !== 'synchronisation' && onglet !== 'utilisateurs' && (
               <BarreEnregistrement
                 dirty={barre.dirty}
                 pending={barre.etat.pending}

@@ -64,6 +64,8 @@ export const MESSAGES = {
     'Cette personne a déjà choisi son mot de passe : seule la personne propriétaire du site peut lui refaire un lien.',
   supprimerProprietaire: 'Seule la personne propriétaire du site peut supprimer un compte propriétaire.',
   dernierProprietaire: 'Impossible de supprimer le dernier compte propriétaire du site.',
+  changerRoleReserve: 'Seul un compte propriétaire peut changer les rôles.',
+  dernierProprietaireRole: 'Il faut au moins un compte propriétaire : donnez d’abord ce rôle à une autre personne.',
   invitationInvalide:
     'Ce lien n’est plus valable. Demandez-en un nouveau à la personne qui vous a invité·e.',
 } as const

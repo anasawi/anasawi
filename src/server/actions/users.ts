@@ -9,7 +9,7 @@ import { adminAction } from './admin'
 import { MESSAGES } from './messages'
 import { fail, formError, guard, isUuid, ok, type ActionResult } from './types'
 import { db } from '@/server/db'
-import { invitations, users } from '@/server/db/schema'
+import { invitations, userRoleEnum, users, type UserRole } from '@/server/db/schema'
 import {
   encryptInvitationToken,
   generateInvitationToken,
@@ -155,6 +155,31 @@ export async function deleteUser(userId: string): Promise<ActionResult<void>> {
 
     await db.delete(users).where(eq(users.id, userId))
     revalidatePath('/admin/utilisateurs')
+    return ok()
+  })
+}
+
+/**
+ * Le RÔLE d'une personne : propriétaire (tout, y compris les comptes et
+ * la synchronisation préprod ⇄ production) ou éditeur (le contenu du
+ * site). Seul un propriétaire change les rôles, et il en reste toujours
+ * au moins un.
+ */
+export async function changerRole(userId: string, role: UserRole): Promise<ActionResult<void>> {
+  return adminAction(async (moi) => {
+    if (moi.role !== 'owner') return fail(MESSAGES.changerRoleReserve)
+    if (!isUuid(userId)) return fail(MESSAGES.personneIntrouvable)
+    if (!userRoleEnum.enumValues.includes(role)) return fail(MESSAGES.personneIntrouvable)
+    const [cible] = await db.select({ id: users.id, role: users.role }).from(users).where(eq(users.id, userId)).limit(1)
+    if (!cible) return fail(MESSAGES.personneIntrouvable)
+    if (cible.role === role) return ok()
+    if (cible.role === 'owner' && role !== 'owner') {
+      const [{ n } = { n: 0 }] = await db.select({ n: count() }).from(users).where(eq(users.role, 'owner'))
+      if (n <= 1) return fail(MESSAGES.dernierProprietaireRole)
+    }
+    await db.update(users).set({ role }).where(eq(users.id, userId))
+    revalidatePath('/admin/utilisateurs')
+    revalidatePath('/admin/reglages')
     return ok()
   })
 }

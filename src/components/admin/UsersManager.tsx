@@ -23,6 +23,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { formatDate } from '@/lib/utils'
 import {
+  changerRole,
   createUser,
   deleteUser,
   renewInvitation,
@@ -46,7 +47,13 @@ import type { UtilisateurListe } from '@/server/queries/users'
 type Draft = { name: string; email: string }
 const VIDE: Draft = { name: '', email: '' }
 
-export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
+/** Ce que chaque rôle permet — dit en clair, à côté du choix. */
+const ROLES = [
+  { valeur: 'owner', libelle: 'Propriétaire', aide: 'Tout : le site, les comptes et la synchronisation préprod ⇄ production.' },
+  { valeur: 'editor', libelle: 'Éditeur', aide: 'Le contenu du site : textes, photos, accompagnements, réglages.' },
+] as const
+
+export function UsersManager({ initial, integre = false }: { initial: UtilisateurListe[]; /** Dans un onglet des Réglages : sans grand titre. */ integre?: boolean }) {
   const router = useRouter()
   const { pending, fieldErrors: erreurs, run } = useActionForm()
   const [draft, setDraft] = useState<Draft | null>(null)
@@ -54,6 +61,16 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
   const [lien, setLien] = useState<{ nom: string; url: string } | null>(null)
 
   const origine = typeof window === 'undefined' ? '' : window.location.origin
+  /* Seul un propriétaire change les rôles. */
+  const moiProprietaire = initial.some((u) => u.moi && u.role === 'owner')
+
+  function role(u: UtilisateurListe, valeur: 'owner' | 'editor') {
+    if (u.role === valeur) return
+    run(() => changerRole(u.id, valeur), {
+      success: `${u.name} est maintenant ${valeur === 'owner' ? 'propriétaire' : 'éditeur·rice'}.`,
+      onSuccess: () => router.refresh(),
+    })
+  }
 
   function creer() {
     if (!draft) return
@@ -78,17 +95,33 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
 
   return (
     <>
-      <PageHeader
-        overline="Accès à l’administration"
-        title="Utilisateurs"
-        description={`${initial.length} ${initial.length > 1 ? 'personnes peuvent' : 'personne peut'} se connecter · chacune choisit son mot de passe`}
-        action={
+      {integre ? (
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-3">
+          <p className="max-w-[60ch] text-[13px] leading-[19px] text-muted-foreground">
+            {ROLES.map((r) => (
+              <span key={r.valeur} className="block">
+                <strong className="font-semibold text-foreground">{r.libelle}</strong> — {r.aide}
+              </span>
+            ))}
+          </p>
           <Button size="sm" onClick={() => setDraft(VIDE)}>
             <Plus />
             Inviter une personne
           </Button>
-        }
-      />
+        </div>
+      ) : (
+        <PageHeader
+          overline="Accès à l’administration"
+          title="Utilisateurs"
+          description={`${initial.length} ${initial.length > 1 ? 'personnes peuvent' : 'personne peut'} se connecter · chacune choisit son mot de passe`}
+          action={
+            <Button size="sm" onClick={() => setDraft(VIDE)}>
+              <Plus />
+              Inviter une personne
+            </Button>
+          }
+        />
+      )}
 
       {initial.length === 0 ? (
         <div className="rounded-[24px] bg-block px-6 py-16 text-center">
@@ -126,6 +159,35 @@ export function UsersManager({ initial }: { initial: UtilisateurListe[] }) {
                   {u.moi && <span className="ml-2 text-[13px] text-muted-foreground">(vous)</span>}
                 </p>
                 <p className="truncate text-[13px] text-muted-foreground">{u.email}</p>
+              </div>
+              {/* Le rôle : modifiable par un propriétaire, affiché sinon. */}
+              <div className="shrink-0">
+                {moiProprietaire ? (
+                  <div role="radiogroup" aria-label={`Rôle de ${u.name}`} className="flex gap-0.5 rounded-[10px] bg-block p-[3px]">
+                    {ROLES.map((r) => (
+                      <button
+                        key={r.valeur}
+                        type="button"
+                        role="radio"
+                        aria-checked={u.role === r.valeur}
+                        title={r.aide}
+                        disabled={pending}
+                        onClick={() => role(u, r.valeur)}
+                        className={
+                          u.role === r.valeur
+                            ? 'h-7 rounded-[8px] bg-white px-2.5 text-[12.5px] font-medium text-foreground shadow-[0_1px_2px_rgba(22,73,81,0.08)]'
+                            : 'h-7 rounded-[8px] px-2.5 text-[12.5px] font-medium text-muted-foreground transition-colors hover:text-foreground'
+                        }
+                      >
+                        {r.libelle}
+                      </button>
+                    ))}
+                  </div>
+                ) : (
+                  <span className="rounded-full bg-block px-2.5 py-1 text-[12px] font-medium text-muted-foreground" title={ROLES.find((r) => r.valeur === u.role)?.aide}>
+                    {ROLES.find((r) => r.valeur === u.role)?.libelle}
+                  </span>
+                )}
               </div>
               <div className="basis-[180px] text-[13px]">
                 {u.actif ? (

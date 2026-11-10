@@ -138,7 +138,15 @@ export function SynchroWorkbench({
   }
 
   if (!proprietaire) {
-    return <p className="text-[14px] text-muted-foreground">Réservé au compte propriétaire du site.</p>
+    return (
+      <p className="text-[14px] leading-[1.6] text-muted-foreground">
+        Réservé aux comptes <strong className="font-semibold text-foreground">propriétaires</strong>. Une personne propriétaire peut vous donner ce rôle dans l’onglet{' '}
+        <a href="#utilisateurs" className="font-medium text-[#176c79] underline-offset-2 hover:underline">
+          Utilisateurs
+        </a>
+        .
+      </p>
+    )
   }
 
   if (!config) {
