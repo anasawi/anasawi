@@ -258,14 +258,14 @@ export function AdminPill({
             />
             {/* Le compte, sur la même AQUARELLE que « Modifier » : des taches
                 turquoise, rose poudré et bleu ciel qui flottent sur un fond perle. */}
-            <div className="relative isolate mb-1.5 overflow-hidden rounded-[13px] px-3 py-2.5 shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
+            <div className="relative isolate mb-1 overflow-hidden rounded-[11px] px-3 py-1.5 leading-tight shadow-[inset_0_0_0_1px_rgba(255,255,255,0.5)]">
               <span aria-hidden="true" className="absolute inset-0 -z-10 bg-[#eef4f6]" />
               <span aria-hidden="true" className="absolute -left-[15%] -top-[70%] -z-10 h-[200%] w-[55%] rounded-full bg-[#7fd8cd] opacity-90 blur-[14px] motion-safe:animate-[adm-tache-1_8s_ease-in-out_infinite_alternate]" />
               <span aria-hidden="true" className="absolute left-[35%] top-[20%] -z-10 h-[180%] w-[45%] rounded-full bg-[#f4b8cf] opacity-80 blur-[14px] motion-safe:animate-[adm-tache-2_10s_ease-in-out_infinite_alternate]" />
               <span aria-hidden="true" className="absolute -right-[12%] -top-[90%] -z-10 h-[200%] w-[45%] rounded-full bg-[#a9c3f6] opacity-90 blur-[14px] motion-safe:animate-[adm-tache-3_9s_ease-in-out_infinite_alternate]" />
               <span aria-hidden="true" className="absolute inset-0 -z-10 bg-white/15" />
-              <p className="truncate text-[0.84rem] font-semibold text-[#164951]">{name}</p>
-              {email && <p className="truncate text-[0.74rem] text-[#164951]/70">{email}</p>}
+              <p className="truncate text-[0.8rem] font-semibold text-[#164951]">{name}</p>
+              {email && <p className="truncate text-[0.72rem] text-[#164951]/70">{email}</p>}
             </div>
             {RACCOURCIS.map((item) => (
               <Link
